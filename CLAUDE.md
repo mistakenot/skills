@@ -6,6 +6,7 @@ This is my public repository of useful, reusable skills. These are designed to b
 
 - Must be multi-agent compatible. (Claude Code, Codex, Opencode, etc)
 - Skill descriptions MUST contain a clear `Use when...` section, and can optionally also include a `Don't use when...` section
+- Assume that all agents support: Agent Skills, Sub-Agents.
 
 ## Tooling
 
