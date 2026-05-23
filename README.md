@@ -1,0 +1,65 @@
+# Skills
+
+A collection of reusable agent skills that implement the **Portable Task Workflow** -- an AI-agent-driven feature delivery lifecycle from requirements through merged PR.
+
+```
+requirements.md -> solution.md -> context.md -> plan.md -> worktree execution -> PR -> review -> merge -> feedback
+```
+
+Planning happens on `main`. Implementation happens on feature branches in isolated git worktrees. Each stage is a discrete skill invoked via slash command.
+
+## Available Skills
+
+| Skill | Description |
+|---|---|
+| `new-task` | Create a new task folder with `requirements.md` from user input |
+| `new-solution` | Write a solution design (`solution.md`) by exploring approaches and tradeoffs |
+| `new-plan` | Write `context.md` and `plan.md` by gathering codebase context and breaking work into phases |
+| `execute-task` | Autonomously implement a planned task end-to-end using worktree isolation |
+| `delegate-task` | Dispatch task execution to an idle Claude Code pane in a tmux session |
+| `executor-status-check` | Monitor all executor panes in a tmux session and report status |
+| `commit-task` | Verify completeness of planning docs and commit them to main |
+| `complete-task` | Finalize a feature branch and merge it to main with PR, testing, and cleanup |
+| `code-review` | Perform a structured code review with severity labels |
+| `review-task` | Review task planning documents and leave structured inline comments |
+| `address-feedback` | Work through open PR review threads by fixing code and resolving threads |
+| `resolve-comments` | Resolve inline review comment threads in markdown planning docs |
+| `review-resolve` | Process inline comment threads in markdown files |
+| `task-feedback-analyser` | Extract recurring patterns from completed task feedback into workflow rules |
+
+## Installation
+
+Install individual skills into your project using `npx skills`:
+
+```sh
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/<skill-name> -y
+```
+
+For example, to install the `new-task` skill:
+
+```sh
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/new-task -y
+```
+
+### Install all skills
+
+```sh
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/new-task -y
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/new-solution -y
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/new-plan -y
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/execute-task -y
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/delegate-task -y
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/executor-status-check -y
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/commit-task -y
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/complete-task -y
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/code-review -y
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/review-task -y
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/address-feedback -y
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/resolve-comments -y
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/review-resolve -y
+npx skills install https://github.com/mistakenot/skills/tree/main/skills/task-feedback-analyser -y
+```
+
+## Development
+
+Files in `./skills/` are compiled output. Edit the source files in `./src/` and run `python src/compile.py` to regenerate.
