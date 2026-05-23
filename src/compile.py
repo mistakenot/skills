@@ -210,6 +210,7 @@ if __name__ == "__main__":
         skill("new-solution",           refs=[overview, ref("template-solution.md"), ref("artifact-guidelines.md")]),
         skill("new-plan",               refs=[overview, ref("template-context.md"), ref("template-plan.md"), ref("artifact-guidelines.md")]),
         skill("review-task",            refs=[overview, ref("review-format.md")]),
+        skill("request-codex-review",   refs=[overview, ref("review-format.md")]),
         skill("resolve-comments",       refs=[overview, ref("review-format.md")]),
         skill("commit-task",            refs=[overview, ref("commit-conventions.md")]),
         skill("execute-task",           refs=[overview, ref("template-pr-body.md"), ref("worktree-conventions.md"), ref("commit-conventions.md")]),
