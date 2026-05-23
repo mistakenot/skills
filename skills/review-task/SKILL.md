@@ -1,35 +1,13 @@
 ---
 name: review-task
-description: "Review task planning docs and leave inline comments. Use when the user asks to 'review task docs', 'review the plan', 'review task 042', 'check the planning docs', or provides a task ID/folder for doc review. This reviews planning documents (requirements.md, solution.md, context.md, plan.md), not code. Don't use when the user wants a code review of implementation changes."
+description: "Reviews task planning documents (requirements.md, solution.md, context.md, plan.md) and leaves structured inline comments flagging problems and improvements. Use when 'review task docs', 'review the plan', 'review task 042', 'check the planning docs', or a task ID/folder for doc review. Not applicable for code review of implementation changes."
 ---
 
 # Review Task Docs
 
 Review all planning documents for a task and leave structured inline comments flagging problems, questions, and improvements. This is a planning review -- you use the full codebase as ground truth to verify claims in the docs.
 
-## Workflow Overview
-
-This skill is part of a multi-stage task workflow. Here's the full pipeline:
-
-```
-Plan (on main)                Execute (on feature branch)         Review & Complete
-─────────────────             ──────────────────────────          ─────────────────
-/new-task                     /execute-task $ID                   /address-feedback
-  → requirements.md             → worktree + branch              /code-review
-/new-solution                    → subagent per phase             /complete-task
-  → solution.md                  → PR                              → feedback.md
-/new-plan                                                          → merge
-  → context.md + plan.md     /delegate-task (optional)
-/review-task (optional)       /executor-status-check (optional)
-/resolve-comments (optional)
-/commit-task
-```
-
-**Conventions:**
-- Task folder: `docs/tasks/$ID-$NAME/` (3-digit ID, kebab-case name)
-- Branch: `task/$ID-$NAME`
-- Planning happens on `main`. Execution happens in isolated worktrees.
-- Each stage hard-stops for user review before proceeding to the next.
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Input
 
@@ -97,52 +75,4 @@ After leaving all comments, provide:
 
 ## Comment Format
 
-# Review Comment Format
-
-## Comment Syntax
-
-Comments use markdown HTML comments with status, priority, and role tags.
-
-### Raising an issue (UNRESOLVED)
-
-```markdown
-<!-- UNRESOLVED(P1): Title of issue
-REVIEW: Description of the concern with evidence.
--->
-```
-
-### Resolving an issue (RESOLVED)
-
-```markdown
-<!-- RESOLVED(P1): Title of issue
-REVIEW: Original concern.
-AUTHOR: What was changed to address it.
--->
-```
-
-### Rejecting an issue (REJECTED)
-
-```markdown
-<!-- REJECTED(P1): Title of issue
-REVIEW: Original concern.
-AUTHOR: Why this doesn't apply, with reference.
--->
-```
-
-## Priority Levels
-
-- **P1**: Blocking -- must be fixed before proceeding
-- **P2**: Important -- should be fixed, but not a hard blocker
-- **P3**: Minor suggestion -- nice to have
-
-## Roles
-
-- **REVIEW**: The reviewer's comment (the concern or question)
-- **AUTHOR**: The author's response (fix description or rejection rationale)
-
-## Rules
-
-- Comments are **append-only** (track full decision history, never delete or overwrite previous entries)
-- **One thread per issue** -- don't combine multiple concerns into a single comment
-- Place comments directly below the offending content with blank lines above and below
-- Only comment on real issues (structure, security, assumptions), not formatting
+See [references/review-format.md](references/review-format.md) for comment syntax, priority levels, and rules.

@@ -1,13 +1,13 @@
 ---
 name: executor-status-check
-description: "Use when the user wants to monitor all executor panes and get a status report of running, completed, stuck, or idle tasks."
+description: "Monitors all executor panes in a tmux session and reports the status of running, completed, stuck, or idle tasks. Use when 'check executors', 'executor status', 'how are tasks going', or when monitoring background task progress."
 ---
 
 # Executor Status Check
 
 Monitor all executor panes in a tmux session and report status.
 
-{{ ref:workflow-overview.md }}
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Input
 

@@ -1,13 +1,13 @@
 ---
 name: new-plan
-description: "Write context and execution plan for an existing task. Use when the user asks to 'write a plan', 'new plan', 'create the plan', 'plan the task', or after solution.md has been approved. Don't use when solution.md doesn't exist yet."
+description: "Writes context.md and plan.md for an existing task by gathering codebase context and breaking the solution into executable phases. Use when 'write a plan', 'new plan', 'create the plan', 'plan the task', or after solution.md has been approved. Not applicable when solution.md doesn't exist yet."
 ---
 
 # New Plan
 
 Read requirements + solution, gather codebase context, write `context.md` and `plan.md`.
 
-{{ ref:workflow-overview.md }}
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Process
 
@@ -54,12 +54,12 @@ Present both context.md and plan.md to the user. Do NOT proceed to execution or 
 
 ## Context Template and Rules
 
-{{ ref:template-context.md }}
+See [references/template-context.md](references/template-context.md) for the full template and rules.
 
 ## Plan Template and Rules
 
-{{ ref:template-plan.md }}
+See [references/template-plan.md](references/template-plan.md) for the full template and rules.
 
 ## Artifact Guidelines
 
-{{ ref:artifact-guidelines.md }}
+See [references/artifact-guidelines.md](references/artifact-guidelines.md) for artifact creation rules and examples.

@@ -1,13 +1,13 @@
 ---
 name: review-task
-description: "Review task planning docs and leave inline comments. Use when the user asks to 'review task docs', 'review the plan', 'review task 042', 'check the planning docs', or provides a task ID/folder for doc review. This reviews planning documents (requirements.md, solution.md, context.md, plan.md), not code. Don't use when the user wants a code review of implementation changes."
+description: "Reviews task planning documents (requirements.md, solution.md, context.md, plan.md) and leaves structured inline comments flagging problems and improvements. Use when 'review task docs', 'review the plan', 'review task 042', 'check the planning docs', or a task ID/folder for doc review. Not applicable for code review of implementation changes."
 ---
 
 # Review Task Docs
 
 Review all planning documents for a task and leave structured inline comments flagging problems, questions, and improvements. This is a planning review -- you use the full codebase as ground truth to verify claims in the docs.
 
-{{ ref:workflow-overview.md }}
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Input
 
@@ -75,4 +75,4 @@ After leaving all comments, provide:
 
 ## Comment Format
 
-{{ ref:review-format.md }}
+See [references/review-format.md](references/review-format.md) for comment syntax, priority levels, and rules.

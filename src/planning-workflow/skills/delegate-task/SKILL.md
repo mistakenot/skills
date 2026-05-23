@@ -1,13 +1,13 @@
 ---
 name: delegate-task
-description: "Use when the user wants to dispatch task execution to an idle Claude Code pane in a tmux session, keeping the current session free for other work."
+description: "Dispatches task execution to an idle Claude Code pane in a tmux session, freeing the current session for other work. Use when 'delegate task', 'send to executor', or when the user wants to hand off a task to a background pane."
 ---
 
 # Delegate Task
 
 Dispatch execution to an idle Claude Code pane in a tmux session.
 
-{{ ref:workflow-overview.md }}
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Input
 

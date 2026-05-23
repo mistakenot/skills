@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make)",
+      "Bash(make compile)",
+      "Bash(make lint)",
+      "Bash(make check)",
+      "Bash(python src/compile.py)",
+      "Bash(autoskill:*)",
+      "Bash(autoskill:*)"
+    ]
+  }
+}

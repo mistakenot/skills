@@ -1,13 +1,13 @@
 ---
 name: code-review
-description: "Use when the user asks for a structured code review of changes with severity labels. Covers correctness, security, performance, error handling, testing, and architecture."
+description: "Performs a structured code review of changes with severity labels covering correctness, security, performance, error handling, testing, and architecture. Use when 'code review', 'review this PR', 'review changes', or when a structured review of implementation changes is needed."
 ---
 
 # Code Review
 
 Structured review of code changes with severity labels.
 
-{{ ref:workflow-overview.md }}
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Severity Levels
 

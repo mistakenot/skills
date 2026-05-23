@@ -1,13 +1,13 @@
 ---
 name: commit-task
-description: "Verify and commit task planning docs to main. Use when the user asks to 'commit the task', 'finalize the task', 'commit task docs', or after all planning docs have been reviewed and approved. Don't use when implementation has already started or when the user wants to commit code changes."
+description: "Verifies completeness of all planning docs and commits them to main. Use when 'commit the task', 'finalize the task', 'commit task docs', or after all planning docs have been reviewed and approved. Not applicable when implementation has already started or for committing code changes."
 ---
 
 # Commit Task
 
 Verify completeness of all planning docs and commit them to `main`. This is the final planning stage -- it does NOT create a feature branch or start implementation.
 
-{{ ref:workflow-overview.md }}
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Process
 
@@ -45,4 +45,4 @@ Do NOT create a feature branch. Do NOT start implementation.
 
 ## Commit Conventions
 
-{{ ref:commit-conventions.md }}
+See [references/commit-conventions.md](references/commit-conventions.md) for commit message format and rules.

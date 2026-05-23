@@ -1,35 +1,13 @@
 ---
 name: code-review
-description: "Use when the user asks for a structured code review of changes with severity labels. Covers correctness, security, performance, error handling, testing, and architecture."
+description: "Performs a structured code review of changes with severity labels covering correctness, security, performance, error handling, testing, and architecture. Use when 'code review', 'review this PR', 'review changes', or when a structured review of implementation changes is needed."
 ---
 
 # Code Review
 
 Structured review of code changes with severity labels.
 
-## Workflow Overview
-
-This skill is part of a multi-stage task workflow. Here's the full pipeline:
-
-```
-Plan (on main)                Execute (on feature branch)         Review & Complete
-─────────────────             ──────────────────────────          ─────────────────
-/new-task                     /execute-task $ID                   /address-feedback
-  → requirements.md             → worktree + branch              /code-review
-/new-solution                    → subagent per phase             /complete-task
-  → solution.md                  → PR                              → feedback.md
-/new-plan                                                          → merge
-  → context.md + plan.md     /delegate-task (optional)
-/review-task (optional)       /executor-status-check (optional)
-/resolve-comments (optional)
-/commit-task
-```
-
-**Conventions:**
-- Task folder: `docs/tasks/$ID-$NAME/` (3-digit ID, kebab-case name)
-- Branch: `task/$ID-$NAME`
-- Planning happens on `main`. Execution happens in isolated worktrees.
-- Each stage hard-stops for user review before proceeding to the next.
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Severity Levels
 

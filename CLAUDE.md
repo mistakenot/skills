@@ -8,6 +8,10 @@ This is my public repository of useful, reusable skills. These are designed to b
 - Skill descriptions MUST contain a clear `Use when...` section, and can optionally also include a `Don't use when...` section
 - Assume that all agents support: Agent Skills, Sub-Agents.
 
+## Editing skills
+
+Files in `./skills/` are compiled output. Always check `./src/` for the original source first and edit there instead. After editing, run `python src/compile.py` to regenerate the compiled skills.
+
 ## Tooling
 
 - We use `autoskill` for scaffolding and linting skills.

@@ -1,35 +1,13 @@
 ---
 name: new-task
-description: "Create a new task with requirements. Use when the user asks to 'create a task', 'new task', 'start a task', 'write requirements', or describes a feature/fix they want planned. Don't use when the user wants to execute an existing task or review existing docs."
+description: "Creates a new task folder with requirements.md from user input. Use when 'create a task', 'new task', 'start a task', 'write requirements', or when a user describes a feature/fix to plan. Not applicable when executing an existing task or reviewing existing docs."
 ---
 
 # New Task
 
 Create `docs/tasks/$ID-$NAME/requirements.md` from user input.
 
-## Workflow Overview
-
-This skill is part of a multi-stage task workflow. Here's the full pipeline:
-
-```
-Plan (on main)                Execute (on feature branch)         Review & Complete
-─────────────────             ──────────────────────────          ─────────────────
-/new-task                     /execute-task $ID                   /address-feedback
-  → requirements.md             → worktree + branch              /code-review
-/new-solution                    → subagent per phase             /complete-task
-  → solution.md                  → PR                              → feedback.md
-/new-plan                                                          → merge
-  → context.md + plan.md     /delegate-task (optional)
-/review-task (optional)       /executor-status-check (optional)
-/resolve-comments (optional)
-/commit-task
-```
-
-**Conventions:**
-- Task folder: `docs/tasks/$ID-$NAME/` (3-digit ID, kebab-case name)
-- Branch: `task/$ID-$NAME`
-- Planning happens on `main`. Execution happens in isolated worktrees.
-- Each stage hard-stops for user review before proceeding to the next.
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Guiding Principles
 
@@ -52,35 +30,4 @@ Before writing anything, apply these checks:
 
 ## Requirements Template and Rules
 
-# Requirements Template
-
-```markdown
-# Task $ID: $NAME
-
-## Problem
-1-2 sentences describing what's wrong or what's needed.
-
-## Goals
-- Bullet list of what this task achieves
-
-## Acceptance Criteria
-
-**AC-1**: $title
-- Given: $precondition
-- When: $action
-- Then: $expected_result
-
-**AC-2**: ...
-
-## Out of Scope
-- Product-level boundaries (what this task explicitly does NOT do)
-
-## Open Questions
-- [ ] $question (answered: $answer)
-```
-
-## Rules
-
-- ~1 page max; split larger work into multiple tasks
-- ACs use Given/When/Then or casual bullets (match team preference)
-- Open Questions must be resolved before moving to solution stage
+See [references/template-requirements.md](references/template-requirements.md) for the full template and rules.

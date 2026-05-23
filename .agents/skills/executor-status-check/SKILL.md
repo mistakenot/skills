@@ -1,35 +1,13 @@
 ---
 name: executor-status-check
-description: "Use when the user wants to monitor all executor panes and get a status report of running, completed, stuck, or idle tasks."
+description: "Monitors all executor panes in a tmux session and reports the status of running, completed, stuck, or idle tasks. Use when 'check executors', 'executor status', 'how are tasks going', or when monitoring background task progress."
 ---
 
 # Executor Status Check
 
 Monitor all executor panes in a tmux session and report status.
 
-## Workflow Overview
-
-This skill is part of a multi-stage task workflow. Here's the full pipeline:
-
-```
-Plan (on main)                Execute (on feature branch)         Review & Complete
-─────────────────             ──────────────────────────          ─────────────────
-/new-task                     /execute-task $ID                   /address-feedback
-  → requirements.md             → worktree + branch              /code-review
-/new-solution                    → subagent per phase             /complete-task
-  → solution.md                  → PR                              → feedback.md
-/new-plan                                                          → merge
-  → context.md + plan.md     /delegate-task (optional)
-/review-task (optional)       /executor-status-check (optional)
-/resolve-comments (optional)
-/commit-task
-```
-
-**Conventions:**
-- Task folder: `docs/tasks/$ID-$NAME/` (3-digit ID, kebab-case name)
-- Branch: `task/$ID-$NAME`
-- Planning happens on `main`. Execution happens in isolated worktrees.
-- Each stage hard-stops for user review before proceeding to the next.
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Input
 

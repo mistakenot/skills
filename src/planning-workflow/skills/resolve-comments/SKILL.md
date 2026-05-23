@@ -1,13 +1,13 @@
 ---
 name: resolve-comments
-description: "Resolve inline review comments in task planning docs. Use when the user asks to 'resolve comments', 'address comments', 'fix review comments', 'go through comments', or after a review has left comments on task docs. Don't use when the user wants to address PR code review feedback (use address-feedback instead)."
+description: "Resolves inline review comment threads in markdown planning docs by fixing content, rejecting invalid concerns, or escalating blockers. Use when 'resolve comments', 'address comments', 'fix review comments', 'go through comments', or after a review has left comments on task docs. Not applicable for PR code review feedback (use address-feedback instead)."
 ---
 
 # Resolve Comments
 
 Process inline comment threads in markdown planning docs -- resolve, reject, or continue each thread.
 
-{{ ref:workflow-overview.md }}
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Process
 
@@ -57,4 +57,4 @@ After processing all threads, report:
 
 ## Comment Format
 
-{{ ref:review-format.md }}
+See [references/review-format.md](references/review-format.md) for comment syntax, priority levels, and rules.

@@ -1,13 +1,13 @@
 ---
 name: execute-task
-description: "Use when the user invokes /execute-task $ID to autonomously implement a planned task. Reads task docs, creates a worktree, dispatches subagents per phase, tracks progress, and opens a PR."
+description: "Autonomously implements a planned task end-to-end using the coordinator-subagent pattern. Reads task docs, creates a worktree, dispatches subagents per phase, tracks progress, and opens a PR. Use when 'execute task', 'implement task', or after planning docs have been committed."
 ---
 
 # Execute Task
 
 Autonomous end-to-end implementation using the coordinator-subagent pattern.
 
-{{ ref:workflow-overview.md }}
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Input
 
@@ -77,12 +77,12 @@ If session ends mid-execution, a new session reads `plan.md` -- checked phases a
 
 After all phases complete (or after stopping on failure):
 
-{{ ref:template-pr-body.md }}
+See [references/template-pr-body.md](references/template-pr-body.md) for the PR body template.
 
 ## Worktree Conventions
 
-{{ ref:worktree-conventions.md }}
+See [references/worktree-conventions.md](references/worktree-conventions.md) for worktree setup and teardown rules.
 
 ## Commit Conventions
 
-{{ ref:commit-conventions.md }}
+See [references/commit-conventions.md](references/commit-conventions.md) for commit message format and rules.

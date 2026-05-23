@@ -1,35 +1,13 @@
 ---
 name: address-feedback
-description: "Use when the user wants to work through all open PR review threads: fix code, reply to reviewers, and resolve threads. Handles the full cycle of fetching threads via GraphQL, applying fixes, replying via REST API, and resolving via GraphQL mutation."
+description: "Works through all open PR review threads by fixing code, replying to reviewers, and resolving threads. Use when 'address feedback', 'fix PR comments', 'resolve review threads', or after a code review has left feedback on the PR."
 ---
 
 # Address Feedback
 
 Work through all open PR review threads: fix code, reply, resolve.
 
-## Workflow Overview
-
-This skill is part of a multi-stage task workflow. Here's the full pipeline:
-
-```
-Plan (on main)                Execute (on feature branch)         Review & Complete
-─────────────────             ──────────────────────────          ─────────────────
-/new-task                     /execute-task $ID                   /address-feedback
-  → requirements.md             → worktree + branch              /code-review
-/new-solution                    → subagent per phase             /complete-task
-  → solution.md                  → PR                              → feedback.md
-/new-plan                                                          → merge
-  → context.md + plan.md     /delegate-task (optional)
-/review-task (optional)       /executor-status-check (optional)
-/resolve-comments (optional)
-/commit-task
-```
-
-**Conventions:**
-- Task folder: `docs/tasks/$ID-$NAME/` (3-digit ID, kebab-case name)
-- Branch: `task/$ID-$NAME`
-- Planning happens on `main`. Execution happens in isolated worktrees.
-- Each stage hard-stops for user review before proceeding to the next.
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Input
 

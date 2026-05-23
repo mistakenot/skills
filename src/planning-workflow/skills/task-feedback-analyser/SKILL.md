@@ -1,13 +1,13 @@
 ---
 name: task-feedback-analyser
-description: "Use when the user wants to extract recurring patterns from completed task feedback into workflow rules. Scans feedback.md files and review threads, clusters by theme, and drafts rules with a strict 3-example minimum."
+description: "Extracts recurring patterns from completed task feedback into generalizable workflow rules. Scans feedback.md files and review threads, clusters by theme, and drafts rules with a strict 3-example minimum. Use when 'analyse feedback', 'extract rules', 'find patterns in feedback', or when reviewing historical task outcomes."
 ---
 
 # Task Feedback Analyser
 
 Extract recurring patterns from completed task feedback into generalizable workflow rules.
 
-{{ ref:workflow-overview.md }}
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Process
 
@@ -36,7 +36,7 @@ Drop themes that don't meet the bar. Report dropped themes so the user knows the
 
 Write each rule in imperative form with a `use_when` trigger and verbatim evidence:
 
-{{ ref:template-rule.md }}
+See [references/template-rule.md](references/template-rule.md) for the rule template format.
 
 ### Step 5: Update rules file
 

@@ -1,5 +1,5 @@
 ---
-hash: "bc12f178"
+hash: "54996df5"
 id: "230ae987"
 read_when: "setting up the task workflow in a new repo, or understanding the end-to-end plan-to-merge lifecycle"
 summary: "Self-contained reference for implementing the full AI-agent-driven feature delivery workflow from requirements through merged PR with feedback, designed for reuse across repos."

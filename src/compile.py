@@ -45,6 +45,8 @@ def module(name: str, *skills: Skill) -> Module:
 # ---------------------------------------------------------------------------
 
 REF_PATTERN = re.compile(r"^\{\{\s*ref:(.+?)\s*\}\}$", re.MULTILINE)
+# Also matches markdown links to references/ (e.g. [references/foo.md](references/foo.md))
+REF_LINK_PATTERN = re.compile(r"\[references/(.+?)\]\(references/", re.MULTILINE)
 MAX_OUTPUT_CHARS = 15_000
 
 
@@ -115,6 +117,7 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
 
             # Cross-check template tags vs DSL declarations
             used_refs = set(m.strip() for m in REF_PATTERN.findall(template))
+            used_refs |= set(m.strip() for m in REF_LINK_PATTERN.findall(template))
             declared_refs = {r.filename for r in sk.refs}
 
             for tag_name in used_refs - declared_refs:

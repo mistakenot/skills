@@ -1,13 +1,13 @@
 ---
 name: new-task
-description: "Create a new task with requirements. Use when the user asks to 'create a task', 'new task', 'start a task', 'write requirements', or describes a feature/fix they want planned. Don't use when the user wants to execute an existing task or review existing docs."
+description: "Creates a new task folder with requirements.md from user input. Use when 'create a task', 'new task', 'start a task', 'write requirements', or when a user describes a feature/fix to plan. Not applicable when executing an existing task or reviewing existing docs."
 ---
 
 # New Task
 
 Create `docs/tasks/$ID-$NAME/requirements.md` from user input.
 
-{{ ref:workflow-overview.md }}
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Guiding Principles
 
@@ -30,4 +30,4 @@ Before writing anything, apply these checks:
 
 ## Requirements Template and Rules
 
-{{ ref:template-requirements.md }}
+See [references/template-requirements.md](references/template-requirements.md) for the full template and rules.

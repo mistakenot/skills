@@ -1,35 +1,13 @@
 ---
 name: task-feedback-analyser
-description: "Use when the user wants to extract recurring patterns from completed task feedback into workflow rules. Scans feedback.md files and review threads, clusters by theme, and drafts rules with a strict 3-example minimum."
+description: "Extracts recurring patterns from completed task feedback into generalizable workflow rules. Scans feedback.md files and review threads, clusters by theme, and drafts rules with a strict 3-example minimum. Use when 'analyse feedback', 'extract rules', 'find patterns in feedback', or when reviewing historical task outcomes."
 ---
 
 # Task Feedback Analyser
 
 Extract recurring patterns from completed task feedback into generalizable workflow rules.
 
-## Workflow Overview
-
-This skill is part of a multi-stage task workflow. Here's the full pipeline:
-
-```
-Plan (on main)                Execute (on feature branch)         Review & Complete
-─────────────────             ──────────────────────────          ─────────────────
-/new-task                     /execute-task $ID                   /address-feedback
-  → requirements.md             → worktree + branch              /code-review
-/new-solution                    → subagent per phase             /complete-task
-  → solution.md                  → PR                              → feedback.md
-/new-plan                                                          → merge
-  → context.md + plan.md     /delegate-task (optional)
-/review-task (optional)       /executor-status-check (optional)
-/resolve-comments (optional)
-/commit-task
-```
-
-**Conventions:**
-- Task folder: `docs/tasks/$ID-$NAME/` (3-digit ID, kebab-case name)
-- Branch: `task/$ID-$NAME`
-- Planning happens on `main`. Execution happens in isolated worktrees.
-- Each stage hard-stops for user review before proceeding to the next.
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Process
 
@@ -58,24 +36,7 @@ Drop themes that don't meet the bar. Report dropped themes so the user knows the
 
 Write each rule in imperative form with a `use_when` trigger and verbatim evidence:
 
-# Rule Template
-
-```markdown
-## RULE-$NNN: $imperative_statement
-
-$explanation
-
-**Use when:** $trigger_condition
-
-**Evidence:**
-- Task $A: $verbatim_excerpt
-- Task $B: $verbatim_excerpt
-- Task $C: $verbatim_excerpt
-```
-
-- `$NNN` is a sequential ID continuing from the highest existing rule
-- The imperative statement is a clear, actionable directive (e.g. "Always add tenant_id filter to repository queries")
-- `$verbatim_excerpt` is a direct quote from the feedback or review thread -- never paraphrase
+See [references/template-rule.md](references/template-rule.md) for the rule template format.
 
 ### Step 5: Update rules file
 

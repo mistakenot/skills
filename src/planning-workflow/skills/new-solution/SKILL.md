@@ -1,13 +1,13 @@
 ---
 name: new-solution
-description: "Write a solution design for an existing task. Use when the user asks to 'write a solution', 'design the solution', 'new solution', 'explore approaches', or after requirements have been approved. Don't use when requirements.md doesn't exist yet."
+description: "Writes a solution design (solution.md) for an existing task by exploring approaches and tradeoffs. Use when 'write a solution', 'design the solution', 'new solution', 'explore approaches', or after requirements have been approved. Not applicable when requirements.md doesn't exist yet."
 ---
 
 # New Solution
 
 Read approved requirements, explore approaches, write `solution.md`.
 
-{{ ref:workflow-overview.md }}
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Guiding Principles
 
@@ -30,8 +30,8 @@ Read approved requirements, explore approaches, write `solution.md`.
 
 ## Solution Template and Rules
 
-{{ ref:template-solution.md }}
+See [references/template-solution.md](references/template-solution.md) for the full template and rules.
 
 ## Artifact Guidelines
 
-{{ ref:artifact-guidelines.md }}
+See [references/artifact-guidelines.md](references/artifact-guidelines.md) for artifact creation rules and examples.
