@@ -29,35 +29,18 @@ Planning happens on `main`. Implementation happens on feature branches in isolat
 
 ## Installation
 
-Install individual skills into your project using `npx skills`:
-
-```sh
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/<skill-name> -y
-```
-
-For example, to install the `new-task` skill:
-
-```sh
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/new-task -y
-```
-
 ### Install all skills
 
 ```sh
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/new-task -y
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/new-solution -y
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/new-plan -y
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/execute-task -y
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/delegate-task -y
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/executor-status-check -y
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/commit-task -y
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/complete-task -y
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/code-review -y
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/review-task -y
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/address-feedback -y
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/resolve-comments -y
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/review-resolve -y
-npx skills install https://github.com/mistakenot/skills/tree/main/skills/task-feedback-analyser -y
+npx skills install mistakenot/skills -s '*' -a claude-code codex -y
+```
+
+This installs every skill into `.claude/skills/` and `.agents/skills/` only.
+
+### Install a single skill
+
+```sh
+npx skills install mistakenot/skills -s new-task -a claude-code codex -y
 ```
 
 ## Development
