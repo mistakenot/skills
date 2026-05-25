@@ -23,6 +23,12 @@ Invoke Codex in full-auto mode to review the task docs:
 ```bash
 CWD="<ABSOLUTE_REPO_ROOT>"
 TASK_ID="<TASK_ID>"
+TASK_DIR=$(find "$CWD/docs/tasks" -maxdepth 1 -type d -name "${TASK_ID}-*" | head -1)
+if [ -z "$TASK_DIR" ]; then
+    echo "no task folder found for ID $TASK_ID"
+    exit 1
+fi
+TASK_NAME=$(basename "$TASK_DIR")
 LAST_MSG_FILE="/tmp/codex-$TASK_ID-review.txt"
 LOG_FILE="/tmp/codex-$TASK_ID-review.log"
 
@@ -30,7 +36,7 @@ codex exec \
     --cd "$CWD" \
     --full-auto \
     -o "$LAST_MSG_FILE" \
-    "\$review-task-docs $TASK_ID" \
+    "\$review-task $TASK_NAME" \
     2>&1 | tee "$LOG_FILE" >/dev/null
 CODEX_EXIT=${PIPESTATUS[0]}
 echo "codex exit code: $CODEX_EXIT"
@@ -41,8 +47,7 @@ echo "codex exit code: $CODEX_EXIT"
 Count review comments Codex left in the task docs:
 
 ```bash
-TASK_DOC_DIR="$CWD/docs/tasks/$TASK_ID"
-COMMENT_COUNT=$(rg -n "<!-- (UNRESOLVED|RESOLVED|REJECTED)\(P[123]\):" "$TASK_DOC_DIR"/*.md | wc -l)
+COMMENT_COUNT=$(rg -n "<!-- (UNRESOLVED|RESOLVED|REJECTED)\(P[123]\):" "$TASK_DIR"/*.md | wc -l)
 echo "review comment count: $COMMENT_COUNT"
 ```
 
@@ -74,7 +79,7 @@ Do NOT resolve feedback by manually editing or deleting comment threads. Comment
 Confirm that `resolve-comments` ran by checking for author replies:
 
 ```bash
-AUTHOR_REPLY_COUNT=$(rg -n "AUTHOR:" "$TASK_DOC_DIR"/*.md | wc -l)
+AUTHOR_REPLY_COUNT=$(rg -n "AUTHOR:" "$TASK_DIR"/*.md | wc -l)
 echo "author reply count: $AUTHOR_REPLY_COUNT"
 if [ "$AUTHOR_REPLY_COUNT" -eq 0 ]; then
     echo "resolve-comments was not applied; run /resolve-comments $TASK_ID"
