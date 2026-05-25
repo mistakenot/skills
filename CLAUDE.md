@@ -15,6 +15,7 @@ Files in `./skills/` are compiled output. Always check `./src/` for the original
 ## Tooling
 
 - We use `autoskill` for scaffolding and linting skills.
+- See @Makefile for available build/lint/install commands.
 
 **autoskill** — Author and lint reusable agent skills. Run `autoskill quickstart` to learn more.
 

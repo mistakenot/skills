@@ -222,4 +222,12 @@ if __name__ == "__main__":
         skill("task-feedback-analyser", refs=[overview, ref("template-rule.md")]),
     )
 
-    compile([planning])
+    ideation = module("ideation",
+        skill("generate-10-ideas"),
+    )
+
+    maintenance = module("maintenance",
+        skill("revise-readme"),
+    )
+
+    compile([planning, ideation, maintenance])
