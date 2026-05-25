@@ -230,4 +230,8 @@ if __name__ == "__main__":
         skill("revise-readme"),
     )
 
-    compile([planning, ideation, maintenance])
+    exploration = module("exploration",
+        skill("tech-spike"),
+    )
+
+    compile([planning, ideation, maintenance, exploration])

@@ -22,27 +22,37 @@ Planning happens on `main`. Implementation happens on feature branches in isolat
 | `complete-task` | Finalize a feature branch and merge it to main with PR, testing, and cleanup |
 | `code-review` | Perform a structured code review with severity labels |
 | `review-task` | Review task planning documents and leave structured inline comments |
+| `request-codex-review` | Send task planning docs to Codex for review, then resolve any comments |
 | `address-feedback` | Work through open PR review threads by fixing code and resolving threads |
 | `resolve-comments` | Resolve inline review comment threads in markdown planning docs |
 | `review-resolve` | Process inline comment threads in markdown files |
 | `task-feedback-analyser` | Extract recurring patterns from completed task feedback into workflow rules |
+| `generate-10-ideas` | Brainstorm 10 ideas by generating 100 candidates and filtering to the top 10 |
+| `revise-readme` | Update README and documentation to reflect the current state of the project |
 
 ## Installation
 
-### Install all skills
+### Install all skills (from remote)
 
 ```sh
 npx skills install mistakenot/skills -s '*' -a claude-code codex -y
 ```
 
-This installs every skill into `.claude/skills/` and `.agents/skills/` only.
-
-### Install a single skill
+### Install a single skill (from remote)
 
 ```sh
 npx skills install mistakenot/skills -s new-task -a claude-code codex -y
 ```
 
+This installs into `.claude/skills/` and `.agents/skills/`.
+
 ## Development
 
-Files in `./skills/` are compiled output. Edit the source files in `./src/` and run `python src/compile.py` to regenerate.
+Files in `./skills/` are compiled output. Edit the source files in `./src/` and run the Makefile targets:
+
+```sh
+make compile   # Compile src/ -> skills/
+make install   # Compile + install locally into .claude/skills/ and .agents/skills/
+make lint      # Lint all skills with autoskill
+make check     # Compile + lint (pre-commit check)
+```
