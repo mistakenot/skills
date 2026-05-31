@@ -5,8 +5,38 @@ This is my public repository of useful, reusable skills. These are designed to b
 ## Design principles
 
 - Must be multi-agent compatible. (Claude Code, Codex, Opencode, etc)
-- Skill descriptions MUST contain a clear `Use when...` section, and can optionally also include a `Don't use when...` section
 - Assume that all agents support: Agent Skills, Sub-Agents.
+
+## Writing skill descriptions
+
+The description field is the routing signal — the agent reads it to decide whether to load the skill. It is not documentation. Every word must earn its place.
+
+### Structure: What → When → Don't
+
+Every description should contain three elements in this order:
+
+1. **What**: Concrete output/action (not how it works internally)
+2. **When**: Specific trigger phrases users will actually say
+3. **Don't**: Explicit boundary preventing mis-triggers, naming the alternative skill
+
+Example:
+```
+Writes a solution design (solution.md) for an existing task by exploring
+approaches and tradeoffs. Use when 'write a solution', 'design the solution',
+'new solution', 'explore approaches', or after requirements have been approved.
+Not applicable when requirements.md doesn't exist yet.
+```
+
+### Rules
+
+- **Third person only.** The description is injected into the system prompt. First/second person ("I can help", "You can use this") causes discovery failures.
+- **Directives, not suggestions.** "Use when..." not "Can be used when..." — agents follow imperative instructions more reliably.
+- **Front-load key terms.** Put the most important trigger words early, in case descriptions are truncated at scale.
+- **Name competing skills explicitly** in the "Don't" clause. "Not applicable for PR code review feedback (use address-feedback instead)" is much better than just "Not applicable for PR code review feedback."
+- **Less is more.** Research shows compressing descriptions while keeping routing-critical content actually improves activation by reducing noise. Remove background explanations of how the skill works internally.
+- **Keep descriptions under ~200 characters** at our current scale (~30 skills). As the catalog grows past 60, target ~130 characters.
+- **Explain WHY in the body, not the description.** The description is for matching, not comprehension. Put reasoning and context in SKILL.md body.
+- **Include 3-5 realistic trigger phrases** users will actually type — these are the highest-signal tokens in the description.
 
 ## Editing skills
 
