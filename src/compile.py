@@ -207,7 +207,7 @@ if __name__ == "__main__":
 
     planning = module("planning-workflow",
         skill("new-task",               refs=[overview, ref("template-requirements.md")]),
-        skill("new-solution",           refs=[overview, ref("template-solution.md"), ref("artifact-guidelines.md")]),
+        skill("new-solution",           refs=[overview, ref("template-solution.md"), ref("template-context.md"), ref("artifact-guidelines.md")]),
         skill("new-plan",               refs=[overview, ref("template-context.md"), ref("template-plan.md"), ref("artifact-guidelines.md")]),
         skill("review-task",            refs=[overview, ref("review-format.md")]),
         skill("request-codex-review",   refs=[overview, ref("review-format.md")]),
