@@ -51,6 +51,8 @@ Prefer: lowest context usage, most recently completed work.
 tmux send-keys -t $SESSION.N '/clear' Enter
 sleep 3
 tmux send-keys -t $SESSION.N '/execute-task $ID' Enter
+sleep 1
+tmux send-keys -t $SESSION.N '/rename' Enter
 ```
 
 ### Step 6: Verify kickoff
