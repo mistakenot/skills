@@ -5,7 +5,7 @@ description: "Dispatches task execution to an idle Claude Code pane in a tmux se
 
 # Delegate Task
 
-Dispatch execution to an idle Claude Code pane in a tmux session.
+Dispatch execution to an idle Claude Code pane in a tmux session using `ntm`.
 
 > Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
@@ -13,56 +13,60 @@ Dispatch execution to an idle Claude Code pane in a tmux session.
 
 Task ID (numeric) and optionally a tmux session name (defaults to `$PROJECT--execute`).
 
-## Idle Pane Detection
-
-A pane is idle when ALL of these are true:
-
-- Running a `claude` process
-- Ends with empty prompt (no text after prompt marker)
-- Status shows `(main)` branch
-- No active tool calls, spinners, or "Composing..." indicators
-- Not mid-conversation
-
 ## Dispatch Workflow
 
-### Step 1: List panes
+### Step 1: Check agent activity
 
 ```bash
-tmux list-panes -t $SESSION -F '#{pane_index} #{pane_current_command} #{pane_pid}'
+ntm status $SESSION --json
 ```
 
-### Step 2: Capture each pane
+Parse the JSON output. Each pane entry includes the agent type, current command, and activity state. A pane is idle when its state is not `busy` and the agent is a Claude instance on `(main)`.
+
+If no panes are idle, report what each pane is doing and stop. Do not interrupt active work.
+
+### Step 2: Send command
+
+Use `ntm send` with `--smart` to auto-route to the best idle agent (least-loaded strategy):
 
 ```bash
-tmux capture-pane -t $SESSION.N -p -S -30 | tail -30
+ntm send $SESSION --smart --cc --json '/clear'
 ```
 
-### Step 3: Assess idleness
-
-Apply all detection criteria above to each captured pane output.
-
-### Step 4: Pick best idle pane
-
-Prefer: lowest context usage, most recently completed work.
-
-### Step 5: Send command
+Wait 3 seconds, then send the execution command and rename:
 
 ```bash
-tmux send-keys -t $SESSION.N '/clear' Enter
-sleep 3
-tmux send-keys -t $SESSION.N '/execute-task $ID' Enter
-sleep 1
-tmux send-keys -t $SESSION.N '/rename' Enter
+ntm send $SESSION --pane=$PANE --json '/execute-task $ID'
 ```
 
-### Step 6: Verify kickoff
+Wait 1 second:
 
-Wait 10 seconds, then capture pane to confirm the command was received and execution started.
+```bash
+ntm send $SESSION --pane=$PANE --json '/rename'
+```
 
-### Step 7: Report
+If the first `/clear` used `--smart`, note which pane index was selected from the JSON response and use `--pane=$PANE` for subsequent sends.
+
+### Step 3: Verify kickoff
+
+Capture the pane output to confirm execution started:
+
+```bash
+ntm copy $SESSION:$PANE --last 30 --quiet --output /dev/stdout
+```
+
+Check that the output shows the execute-task command was received and work has begun.
+
+### Step 4: Report
 
 Output which pane was selected, confirmation that the command was sent, and what the pane is currently doing.
 
-## No Idle Panes
+Tell the user how to check on progress later:
 
-If no panes meet the idle criteria, report what each pane is currently doing and stop. Do not interrupt active work.
+```
+To read recent output from this session:
+  ntm copy $SESSION:$PANE --last 50
+  ntm copy $SESSION:$PANE --code        # extract just code blocks
+  ntm grep 'error\|warning' $SESSION    # search across all panes
+  ntm watch $SESSION --pane=$PANE       # stream output live
+```
