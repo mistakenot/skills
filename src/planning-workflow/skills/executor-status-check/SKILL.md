@@ -5,7 +5,7 @@ description: "Monitors all executor panes in a tmux session and reports the stat
 
 # Executor Status Check
 
-Monitor all executor panes in a tmux session and report status.
+Monitor all executor panes in a tmux session using `ntm` and report status.
 
 > Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
@@ -20,9 +20,35 @@ Optional tmux session name (defaults to `$PROJECT--execute`).
 - **stuck**: errors with no recovery, permission prompts, context exhausted (95%+)
 - **idle**: empty prompt, no streaming output
 
-## Per-Pane Extraction
+## Workflow
 
-For each pane, capture last 30 lines and extract:
+### Step 1: Get structured pane metadata
+
+```bash
+ntm status $SESSION --json
+```
+
+Parse the JSON. Each pane entry includes `index`, `title`, `type`, `command`, `context_tokens`, `context_limit`, `context_percent`, and `context_model`. Use `context_percent` to detect context exhaustion (95%+ = stuck). The `title` field often contains the task name.
+
+### Step 2: Scan for status markers across all panes
+
+```bash
+ntm grep '(execute-task|phase|Phase|PR |error|stuck|permission|Task complete)' $SESSION --cc -i
+```
+
+This searches all Claude panes at once. Match lines reveal task IDs, phase progress, errors, and completion markers without capturing each pane individually.
+
+### Step 3: Capture detail for ambiguous panes
+
+For any pane whose status is unclear from the grep results, capture more output:
+
+```bash
+ntm copy $SESSION:$PANE --last 50 --quiet --output /dev/stdout
+```
+
+### Step 4: Extract per-pane status
+
+For each pane, determine:
 
 - **Task ID**: from `/execute-task NNN`, branch name `task/NNN-`, or file paths `docs/tasks/NNN-`
 - **Description**: read first heading from task's `plan.md`
@@ -33,18 +59,12 @@ For each pane, capture last 30 lines and extract:
   - PR merged -> `/clear`
   - stuck -> describe the blocker
 
-## Probing
-
-For panes running long or showing unclear progress, capture more output lines to determine actual state.
-
-## Output Format
-
-Present results as a table:
+### Step 5: Present results
 
 ```
-| Pane | Task | Description | Status | Last Message | Next Step |
-|------|------|-------------|--------|--------------|-----------|
-| 0    | 434  | Add widget  | completed | PR #87 created | /address-feedback |
-| 1    | 435  | Fix auth    | in progress | Running e2e tests | -- |
-| 2    | --   | --          | idle   | -- | -- |
+| Pane | Task | Description | Status | Context | Last Message | Next Step |
+|------|------|-------------|--------|---------|--------------|-----------|
+| 0    | 434  | Add widget  | completed | 8%  | PR #87 created | /address-feedback |
+| 1    | 435  | Fix auth    | in progress | 42% | Running e2e tests | -- |
+| 2    | --   | --          | idle   | 1%  | -- | -- |
 ```
