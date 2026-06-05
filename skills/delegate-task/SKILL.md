@@ -33,7 +33,7 @@ Use `ntm send` with `--smart` to auto-route to the best idle agent (least-loaded
 ntm send $SESSION --smart --cc --json '/clear'
 ```
 
-Wait 3 seconds, then send the execution command and rename:
+Wait 5 seconds, then send the execution command and rename:
 
 ```bash
 ntm send $SESSION --pane=$PANE --json '/execute-task $ID'
