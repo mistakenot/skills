@@ -18,7 +18,7 @@ Send task planning docs to Codex for review, then resolve any comments it leaves
 
 ### Step 1: Run Codex Review
 
-Invoke Codex in full-auto mode to review the task docs:
+Invoke Codex to review the task docs:
 
 ```bash
 CWD="<ABSOLUTE_REPO_ROOT>"
@@ -34,7 +34,7 @@ LOG_FILE="/tmp/codex-$TASK_ID-review.log"
 
 codex exec \
     --cd "$CWD" \
-    --full-auto \
+    --sandbox workspace-write \
     -o "$LAST_MSG_FILE" \
     "\$review-task $TASK_NAME" \
     2>&1 | tee "$LOG_FILE" >/dev/null
