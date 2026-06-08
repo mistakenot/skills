@@ -22,6 +22,8 @@ Update the README and other project documentation to accurately reflect the curr
 
 4. **Verify completeness** — Re-read the updated docs and cross-check against the actual project structure to ensure nothing was missed. Every feature, command, option, and configuration that exists in the project should appear in the docs. If it exists, it gets documented — no exceptions.
 
+5. **Commit** — Stage all changed documentation files and commit with a concise message describing what was updated. Use present tense (e.g., "Update README with X documentation"). Do not push unless asked.
+
 ## README Structure
 
 A good README flows from quick orientation to full reference. Follow this order:
