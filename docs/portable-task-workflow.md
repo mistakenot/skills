@@ -42,7 +42,7 @@ Creates `docs/tasks/$ID-$NAME/requirements.md` from user input.
 2. Read project docs relevant to the domain
 3. Create task folder with 3-digit sequential ID
 4. Write requirements.md
-5. Use interactive questions to resolve Open Questions with user, using `AskUserQuestion` tool if Claude.
+5. Assume there are latent requirements in the user's head that they haven't communicated in their prompt. Use interactive questions to surface unstated assumptions, clarify ambiguity, and resolve Open Questions with the user, using `AskUserQuestion` tool if Claude.
 6. Hard-stop -- user reviews before proceeding
 
 **Requirements template:**
@@ -88,7 +88,8 @@ Reads approved requirements, explores approaches, writes `solution.md`.
 4. User picks approach
 5. Write solution.md
 6. Create artifact files if needed (wireframes, architecture diagrams) -- see Artifact Guidelines
-7. Hard-stop -- user reviews
+7. Validate assumptions -- review every design decision and identify any not clearly dictated by (a) the requirements or (b) pre-established repo patterns. Use interactive questions to double-check those assumptions with the user before presenting the doc. No need to confirm decisions that are obvious from context.
+8. Hard-stop -- user reviews
 
 **Solution template:**
 
