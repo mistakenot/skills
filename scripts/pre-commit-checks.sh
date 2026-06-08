@@ -14,7 +14,16 @@ step() { printf "${YELLOW}=> %s${NC}\n" "$1"; }
 pass() { printf "${GREEN}   OK${NC}\n"; }
 fail() { printf "${RED}   FAIL${NC}\n"; errors=$((errors + 1)); }
 
-# 1. Lint skills
+# 1. Compile skills from src/ and stage output
+step "compile skills"
+if python3 src/compile.py 2>&1; then
+  git add skills/
+  pass
+else
+  fail
+fi
+
+# 2. Lint skills
 step "autoskill lint"
 if autoskill lint --text 2>&1; then
   pass
@@ -22,7 +31,7 @@ else
   fail
 fi
 
-# 2. Check for stale doc hashes
+# 3. Check for stale doc hashes
 step "autodoc stale"
 stale_output=$(autodoc stale --json 2>&1)
 if [ "$stale_output" = "[]" ] || [ -z "$stale_output" ]; then
@@ -32,7 +41,7 @@ else
   fail
 fi
 
-# 3. Rebuild search index (non-blocking)
+# 4. Rebuild search index (non-blocking)
 step "autodoc search reindex"
 if autodoc search reindex 2>&1; then
   pass
@@ -40,7 +49,7 @@ else
   fail
 fi
 
-# 4. Sync skills into agent configs and stage generated files
+# 5. Sync skills into agent configs and stage generated files
 step "autoskill sync"
 if autoskill sync 2>&1; then
   # Stage any files sync may have generated/updated

@@ -1,11 +1,11 @@
 ---
-name: request-codex-review
-description: "Runs a code review of task planning docs via Codex, then resolves any comments left. Use when 'request codex review', 'get codex review', 'codex review task', 'have codex review', or when a second pair of eyes is needed on task docs before execution."
+name: request-claude-review
+description: "Runs a code review of task planning docs via Claude Code, then resolves any comments left. Use when 'request claude review', 'get claude review', 'claude review task', 'have claude review', or when a second pair of eyes is needed on task docs before execution."
 ---
 
-# Request Codex Review
+# Request Claude Review
 
-Send task planning docs to Codex for review, then resolve any comments it leaves.
+Send task planning docs to Claude Code for review, then resolve any comments it leaves.
 
 > Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
@@ -16,9 +16,9 @@ Send task planning docs to Codex for review, then resolve any comments it leaves
 
 ## Process
 
-### Step 1: Run Codex Review
+### Step 1: Run Claude Review
 
-Invoke Codex to review the task docs:
+Invoke Claude Code in print mode to review the task docs:
 
 ```bash
 CWD="<ABSOLUTE_REPO_ROOT>"
@@ -29,22 +29,22 @@ if [ -z "$TASK_DIR" ]; then
     exit 1
 fi
 TASK_NAME=$(basename "$TASK_DIR")
-LAST_MSG_FILE="/tmp/codex-$TASK_ID-review.txt"
-LOG_FILE="/tmp/codex-$TASK_ID-review.log"
+LAST_MSG_FILE="/tmp/claude-$TASK_ID-review.txt"
+LOG_FILE="/tmp/claude-$TASK_ID-review.log"
 
-codex exec \
-    --cd "$CWD" \
-    --sandbox workspace-write \
-    -o "$LAST_MSG_FILE" \
-    "\$review-task $TASK_NAME" \
-    2>&1 | tee "$LOG_FILE" >/dev/null
-CODEX_EXIT=${PIPESTATUS[0]}
-echo "codex exit code: $CODEX_EXIT"
+claude \
+    --add-dir "$CWD" \
+    -p \
+    --dangerously-skip-permissions \
+    "/review-task $TASK_NAME" \
+    2>&1 | tee "$LOG_FILE" > "$LAST_MSG_FILE"
+CLAUDE_EXIT=${PIPESTATUS[0]}
+echo "claude exit code: $CLAUDE_EXIT"
 ```
 
 ### Step 2: Check for Comments
 
-Count review comments Codex left in the task docs:
+Count review comments Claude left in the task docs:
 
 ```bash
 COMMENT_COUNT=$(rg -n "<!-- (UNRESOLVED|RESOLVED|REJECTED)\(P[123]\):" "$TASK_DIR"/*.md | wc -l)
@@ -53,11 +53,11 @@ echo "review comment count: $COMMENT_COUNT"
 
 ### Step 3: Handle Failure
 
-If Codex exited non-zero or left no comments, inspect the log to diagnose:
+If Claude exited non-zero or left no comments, inspect the log to diagnose:
 
 ```bash
-if [ "$CODEX_EXIT" -ne 0 ] || [ "$COMMENT_COUNT" -eq 0 ]; then
-    echo "codex failed or no comments found; inspect log output"
+if [ "$CLAUDE_EXIT" -ne 0 ] || [ "$COMMENT_COUNT" -eq 0 ]; then
+    echo "claude failed or no comments found; inspect log output"
     tail -n 200 "$LOG_FILE"
 fi
 ```
@@ -89,7 +89,7 @@ fi
 ### Step 6: Report
 
 Summarize:
-- Whether Codex review succeeded
+- Whether Claude review succeeded
 - Comment count by priority (P1/P2/P3)
 - How many threads were resolved, rejected, or left unresolved
 - Any threads needing user input

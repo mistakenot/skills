@@ -1,3 +1,4 @@
 .tmp
 skills-lock.json
 .ntm
+node_modules/

@@ -1,0 +1,27 @@
+{
+  "name": "skills",
+  "version": "1.0.0",
+  "description": "A collection of reusable agent skills that implement the **Portable Task Workflow** -- an AI-agent-driven feature delivery lifecycle from requirements through merged PR.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mistakenot/skills.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mistakenot/skills/issues"
+  },
+  "homepage": "https://github.com/mistakenot/skills#readme",
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
