@@ -32,9 +32,10 @@ TASK_NAME=$(basename "$TASK_DIR")
 LAST_MSG_FILE="/tmp/claude-$TASK_ID-review.txt"
 LOG_FILE="/tmp/claude-$TASK_ID-review.log"
 
-claude -p \
-    --dangerously-skip-permissions \
+claude \
     --add-dir "$CWD" \
+    -p \
+    --dangerously-skip-permissions \
     "/review-task $TASK_NAME" \
     2>&1 | tee "$LOG_FILE" > "$LAST_MSG_FILE"
 CLAUDE_EXIT=${PIPESTATUS[0]}
