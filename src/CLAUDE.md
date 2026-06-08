@@ -70,6 +70,18 @@ The `compile()` function:
 4. Checks that the final rendered SKILL.md is under a size limit (default 15,000 chars) to avoid bloated skill files
 5. Renders templates and copies refs to `./skills/<name>/`
 
+## Install script generation
+
+The compiler also generates `install.sh` at the repo root. This script lets downstream consumers install all skills or a specific module:
+
+```bash
+./install.sh                              # all skills
+./install.sh --module planning-workflow   # just planning skills
+./install.sh --agent claude-code          # override target agents
+```
+
+The module→skill mappings are baked into the case block at compile time, so the script is always in sync with the DSL declarations. The repo slug is set via the `REPO` constant in `compile.py`.
+
 ## Pre-compile checks
 
 - All ref files referenced in the DSL exist in the module's `refs/` directory
