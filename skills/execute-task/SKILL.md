@@ -79,6 +79,10 @@ After all phases complete (or after stopping on failure):
 
 See [references/template-pr-body.md](references/template-pr-body.md) for the PR body template.
 
+## Address CI Feedback
+
+After opening the PR, wait 5 minutes for CI and automated reviewers to post feedback, then run `/address-feedback` to resolve any threads they created.
+
 ## Worktree Conventions
 
 See [references/worktree-conventions.md](references/worktree-conventions.md) for worktree setup and teardown rules.
