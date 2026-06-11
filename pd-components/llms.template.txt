@@ -1,0 +1,238 @@
+# pd-components v{{VERSION}}
+
+> Light-DOM web components for rich single-file HTML planning documents.
+> One classic script tag, no build step, works from file:// pages. The HTML
+> source is the canonical data — write it like markup, the components render
+> it into an interactive doc.
+
+Current release: `{{TAG}}`. Pin every generated doc to this exact tag (jsDelivr
+caches tags immutably, so old docs never change appearance under the reader).
+
+## Boilerplate
+
+Every doc starts with exactly this head. Use a CLASSIC script tag (not
+type="module" — module scripts are CORS-blocked when the file is opened via
+file://).
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NNN: Doc title</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="{{CDN_BASE}}/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="NNN: Doc title" status="draft" generated="YYYY-MM-DD">
+    ...
+  </pd-doc>
+</body>
+</html>
+```
+
+Tailwind is optional — include it only if the doc has freeform/wireframe
+content. pd-* components style themselves.
+
+## Authoring rules
+
+- The raw HTML is read back by agents: keep it semantic and lean. Structure
+  lives in pd-* elements and ids, never in utility-class div soup. Tailwind
+  classes belong ONLY inside freeform/wireframe content.
+- Give every pd-section a stable, kebab-case id. Threads and deep links anchor
+  to these ids; content can then be freely rewritten without orphaning its
+  discussion.
+- Content is edited in place; threads are APPEND-ONLY. Never delete or rewrite
+  an existing pd-comment — append a new one and update the thread's status
+  attribute. Resolved threads collapse automatically in the UI; the history
+  stays in the file.
+- Place a pd-thread in the source directly after the element it discusses, and
+  set anchor to that element's id (or a pd-file's path).
+- doc status attribute: draft | in-review | approved.
+
+## Components
+
+### <pd-doc title status generated>
+Document shell: header, tab navigation (when it contains pd-tab children),
+floating "Copy for agent" bar for pending comments, provenance footer.
+Direct children: either pd-tab elements, or sections directly.
+
+### <pd-tab name>
+One page of a tabbed doc. Tab buttons show a badge with the count of open
+threads inside. Deep links: #tab:Name, or any #element-id inside the tab.
+
+```html
+<pd-tab name="Solution"> ...sections... </pd-tab>
+```
+
+Tab roles (a deliberate audience split — follow it):
+- **Solution = the end state** once the work is done. Human-consumed: someone
+  checking the final outcome. The file-change tree (pd-files), API outlines,
+  and final code snippets belong here.
+- **Plan = the recipe** to get there. Agent-consumed: planning/executing. Keep
+  it self-sufficient (pd-phase already lists its files inline).
+
+### <pd-section id title>
+Titled section with anchor link and a "+ comment" button (reviewers queue
+comments in the browser). Body is freeform HTML: p, ul, table, pre, pd-mermaid…
+
+```html
+<pd-section id="approach" title="Approach">
+  <p>We add a token-bucket limiter at the gateway…</p>
+</pd-section>
+```
+
+### <pd-thread anchor status title priority> / <pd-comment by>
+Append-only review thread. status: unresolved (default) | resolved | rejected.
+priority: p1 (blocking) | p2 (important) | p3 (minor). by: review | author |
+a person's name. Open threads render a reply box; closed ones collapse.
+
+```html
+<pd-thread anchor="approach" status="resolved" priority="p2" title="Why not sliding window?">
+  <pd-comment by="review">Token bucket allows bursts — is that acceptable for the API tier?</pd-comment>
+  <pd-comment by="author">Yes — bursts up to bucket size are within SLA; documented in the Approach section.</pd-comment>
+</pd-thread>
+```
+
+### <pd-files> / <pd-file path change>
+File-change list. Write flat pd-file children (cheap to append); renders as a
+collapsible tree with +/~/− markers, per-file notes, and open-thread badges
+for threads whose anchor equals the file path. change: add | edit | delete.
+
+```html
+<pd-files>
+  <pd-file path="src/gateway/limiter.ts" change="add">Token bucket implementation</pd-file>
+  <pd-file path="src/gateway/index.ts" change="edit">Wire limiter into request pipeline</pd-file>
+  <pd-file path="src/legacy/throttle.ts" change="delete">Superseded</pd-file>
+</pd-files>
+```
+
+### <pd-stepper> / <pd-phase n title files status>
+Clickable, non-linear plan walkthrough. Selecting a phase shows its body and
+highlights its files (comma-separated paths matching pd-file paths) in every
+pd-files on the page. status: done | active | todo. Arrow keys navigate.
+
+```html
+<pd-stepper>
+  <pd-phase n="1" title="Limiter core" files="src/gateway/limiter.ts" status="done">
+    <p>Implement and unit-test the bucket…</p>
+  </pd-phase>
+  <pd-phase n="2" title="Gateway wiring" files="src/gateway/index.ts" status="active">
+    <p>Apply per-route config…</p>
+  </pd-phase>
+</pd-stepper>
+```
+
+### <pd-mermaid caption>
+Renders mermaid source (bundled beautiful-mermaid — no extra fetch, follows
+light/dark mode). Supported types: flowchart/graph, sequenceDiagram,
+stateDiagram(-v2), classDiagram, erDiagram, xychart-beta. Do NOT use other
+types (gantt, pie, mindmap…) — they fall back to a source-code block. Put the
+mermaid source as plain text content; indentation is fine.
+
+```html
+<pd-mermaid caption="Request path">
+flowchart LR
+  C[Client] --> G[Gateway] --> S[Service]
+</pd-mermaid>
+```
+
+### <pd-code lang path lines highlight caption>
+Syntax-highlighted snippet (highlight.js bundled — no extra fetch). lang:
+go|ts|js|python|json|bash|yaml|sql|rust|diff (others auto-detect). path: shows
+a filename header + copy button. lines: boolean, adds line numbers. highlight:
+emphasize line ranges, e.g. "2-3,7". Put the code as the element's text
+content. If the code contains <, >, or &, wrap it in a nested
+<script type="text/plain"> to avoid HTML-escaping.
+
+```html
+<pd-code lang="go" path="internal/events/log.go" lines highlight="3-4" caption="Append under flock">
+func AppendEvent(dir string, ev Event) error {
+	f, _ := os.OpenFile(shard(dir), os.O_RDWR|os.O_CREATE, 0o644)
+	flock(f, LOCK_EX)
+	ev.Seq = lastSeq(f) + 1
+	return writeLine(f, ev)
+}
+</pd-code>
+```
+
+### <pd-api kind name lang path caption> / <pd-member kind sig>
+Token-efficient outline of a code symbol — the public surface only
+(signatures + doc comments, no bodies). Generic by design: `kind` on the
+container (class|struct|interface|module|enum|routes|schema|…) and on each
+member (constructor|method|field|…) are free-form labels rendered as badges,
+so the same component outlines a Go struct, a TS class, a REST route table, or
+a SQL schema. Member signature goes in the `sig` attribute; the doc comment is
+the member's text content. Signatures are syntax-highlighted with `lang`.
+Prefer this over a full pd-code dump when the reader only needs the API shape.
+
+```html
+<pd-api kind="struct" name="loop.Service" lang="go" path="internal/loop/service.go" caption="Agent-facing state machine">
+  <pd-member kind="constructor" sig="NewService(log *events.Log, pb *rules.Playbook) *Service">Binds the loop to the canonical log and folded snapshot.</pd-member>
+  <pd-member kind="method" sig="Retrieve(intent string, domains []string, limit int) ([]Predicate, error)">Match + mint rt-ids; append one retrieval event; predicates only.</pd-member>
+  <pd-member kind="field" sig="Lookback time.Duration">No-session gate fallback window (default 24h).</pd-member>
+</pd-api>
+```
+
+### <pd-ac id title phases tests>
+Acceptance-criteria card with traceability chips. phases: comma-separated
+phase numbers covering it; tests: comma-separated test files.
+
+```html
+<pd-ac id="AC-1" title="Requests over the limit get 429" phases="1,2" tests="e2e/rate-limit.spec.ts">
+  <ul>
+    <li>Given a client at its request budget</li>
+    <li>When it sends one more request within the window</li>
+    <li>Then the gateway responds 429 with a Retry-After header</li>
+  </ul>
+</pd-ac>
+```
+
+### <pd-decisions title>
+Auto-generated decision log: lists every resolved/rejected thread in the doc
+with its outcome. Place once, usually in the first tab. No children needed.
+
+```html
+<pd-decisions></pd-decisions>
+```
+
+### <pd-wire label h> / <pd-note>
+Wireframe primitives for mockup sections. pd-wire is a labeled placeholder box
+(h = min-height, e.g. "8rem"); pd-note is an annotation callout. Combine with
+freeform Tailwind HTML for layout (grids, flex rows).
+
+```html
+<div class="grid grid-cols-3 gap-2">
+  <pd-wire label="Nav" h="14rem"></pd-wire>
+  <div class="col-span-2">
+    <pd-wire label="Settings form" h="10rem"></pd-wire>
+    <pd-wire label="Save / Cancel" h="3rem"></pd-wire>
+  </div>
+</div>
+<pd-note>Form fields mirror the team config schema; nav reuses the app shell.</pd-note>
+```
+
+## Merging reviewer comments
+
+Reviewers queue comments in the browser and paste an export block to you:
+
+```
+=== DOC COMMENTS — paste to your agent to merge into the doc ===
+doc: 021: API rate limiting
+[1] REPLY to thread "Why not sliding window?" (anchor: approach)
+    Fine, but document the burst size limit.
+[2] NEW p1 comment on "Files" (anchor: files)
+    The limiter must also cover the websocket gateway.
+=== END DOC COMMENTS ===
+```
+
+To merge, edit the HTML source:
+- REPLY → append `<pd-comment by="review">…</pd-comment>` to the named thread.
+  If you then address it, append your own `<pd-comment by="author">` and set
+  status="resolved" (or "rejected" with reasoning). Never edit old comments.
+- NEW → create a `<pd-thread anchor="…" priority="…" title="…">` (title:
+  short summary you write) directly after the anchored element, containing the
+  comment.
+- After merging, tell the user; their browser copy clears pending comments via
+  the Clear button (localStorage — a reload after your edit shows merged state).

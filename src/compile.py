@@ -326,6 +326,7 @@ if __name__ == "__main__":
 
     ideation = module("ideation",
         skill("generate-10-ideas"),
+        skill("fan-out-user-simulation"),
     )
 
     maintenance = module("maintenance",
@@ -336,4 +337,8 @@ if __name__ == "__main__":
         skill("tech-spike"),
     )
 
-    compile([planning, ideation, maintenance, exploration])
+    rich_docs = module("rich-docs",
+        skill("planning-doc"),
+    )
+
+    compile([planning, ideation, maintenance, exploration, rich_docs])

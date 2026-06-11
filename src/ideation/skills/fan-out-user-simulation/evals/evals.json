@@ -1,0 +1,41 @@
+{
+  "skill_name": "fan-out-user-simulation",
+  "evals": [
+    {
+      "id": 0,
+      "eval_name": "skills-repo-meta",
+      "prompt": "I maintain this repository of reusable agent skills (you're in it now — /home/vscode/src/skills). I'm trying to decide what to build next for the catalog. Run a fan-out user simulation to explore what a range of different users would want from it. Run fully autonomously — don't wait for my approval on anything.",
+      "expected_output": "A simulation report at ./simulations/<date>-*.md with a diverse 7-persona cohort, per-simulant traces in conversation-excerpt format, and a synthesis with convergence-ranked recommendations, wildcards, friction log, and churn signals.",
+      "files": [],
+      "assertions": [
+        "Report file written: a markdown simulation report exists in outputs/",
+        "Cohort of 7 distinct personas with names, roles, and a cohort table",
+        "Diversity requirements met: cohort includes a newcomer, a power/lead user, a skeptic/evaluator, and an adjacent-domain visitor, with varied time horizons",
+        "Turn-by-turn traces: every persona has a session trace with at least 5 interaction turns including mocked product responses",
+        "Product allowed to fail: at least one trace shows the product erroring, confusing, or disappointing the user",
+        "Invented features tagged: functionality that doesn't exist yet is marked [INVENTED] in traces",
+        "Convergence-ranked synthesis: recommendations cite how many simulants independently hit each need (k/N) and quote verbatim trace lines as evidence",
+        "Wildcards, friction log, and churn signals sections all present in the report"
+      ]
+    },
+    {
+      "id": 1,
+      "eval_name": "cli-tool-focus-hint",
+      "prompt": "Here's my CLI time tracker, tlog (/home/vscode/src/fan-out-user-simulation-workspace/fixtures/tlog). I want to figure out what to build next, with a focus on reporting and how people get their data out. Simulate a cohort of users using it. Fully autonomous please — no need to check in with me.",
+      "expected_output": "A simulation report with traces formatted as CLI command/output code blocks, personas relevant to a freelancer time tracker, focus respected (reporting/export), invented-feature usage tagged [INVENTED], and a ranked synthesis.",
+      "files": ["/home/vscode/src/fan-out-user-simulation-workspace/fixtures/tlog/README.md"],
+      "assertions": [
+        "Report file written: a markdown simulation report exists in outputs/",
+        "Cohort of 7 distinct personas with names, roles, and a cohort table",
+        "Diversity requirements met: cohort includes a newcomer, a power/lead user, a skeptic/evaluator, and an adjacent-domain visitor, with varied time horizons",
+        "Turn-by-turn traces: every persona has a session trace with at least 5 interaction turns including mocked product responses",
+        "Product allowed to fail: at least one trace shows the product erroring, confusing, or disappointing the user",
+        "Invented features tagged: functionality that doesn't exist yet is marked [INVENTED] in traces",
+        "Convergence-ranked synthesis: recommendations cite how many simulants independently hit each need (k/N) and quote verbatim trace lines as evidence",
+        "Wildcards, friction log, and churn signals sections all present in the report",
+        "CLI trace format: traces are rendered as fenced code blocks of command + invented output",
+        "Focus hint respected: top recommendations centre on reporting and data export"
+      ]
+    }
+  ]
+}
