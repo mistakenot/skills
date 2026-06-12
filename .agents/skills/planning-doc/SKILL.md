@@ -21,7 +21,7 @@ The component library evolves independently of this skill. Always fetch the
 current reference before authoring:
 
 ```bash
-curl -fsSL https://cdn.jsdelivr.net/gh/mistakenot/skills@main/web/dist/llms.txt
+curl -fsSL https://cdn.jsdelivr.net/gh/mistakenot/skills@main/pd-components/dist/llms.txt
 ```
 
 It contains the page boilerplate, the release tag to pin, every component with
@@ -30,8 +30,8 @@ Follow it exactly — in particular, import the bundle pinned to the release tag
 it names, never `@main`.
 
 If the fetch fails (offline/sandboxed): inside the skills repo itself, read
-`web/dist/llms.txt`; elsewhere, fall back to the cheat sheet at the bottom of
-this skill and flag to the user that the reference may be stale.
+`pd-components/dist/llms.txt`; elsewhere, fall back to the cheat sheet at the
+bottom of this skill and flag to the user that the reference may be stale.
 
 ## Step 2: Author the doc
 
@@ -39,7 +39,9 @@ this skill and flag to the user that the reference may be stale.
    planning docs (requirements/solution/plan markdown) being rendered richly.
 2. Choose the structure. Multi-topic docs get one `<pd-tab>` per concern
    (e.g. Overview / Solution / Plan / Wireframe); small docs skip tabs and put
-   sections directly in `<pd-doc>`.
+   sections directly in `<pd-doc>`. Mind the tab roles: **Solution is the end
+   state** (human-reviewed — file tree, API outlines, final snippets live
+   here); **Plan is the recipe** (agent-consumed — keep it self-sufficient).
 3. Prefer the rich components over prose. A plan with phases belongs in a
    `<pd-stepper>` (set each phase's `files` so the file tree highlights);
    file changes belong in `<pd-files>`; flows and architectures belong in
@@ -87,9 +89,10 @@ Reviewers comment in the browser and paste back an export block delimited by
 
 Classic scripts in head (never `type="module"`):
 `https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4` and
-`https://cdn.jsdelivr.net/gh/mistakenot/skills@web-v0.1.0/web/dist/pd.min.js` (defer).
+`https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.2.0/pd-components/dist/pd.min.js` (defer).
 
-- `<pd-doc title status generated>` shell · `<pd-tab name>` page
+- `<pd-doc title status pr generated>` shell · `<pd-tab name>` page
+  pr: `"pending"` → placeholder; a URL → clickable badge. Update when PR opens.
 - `<pd-section id title>` titled/anchorable section, freeform body
 - `<pd-thread anchor status{unresolved|resolved|rejected} priority{p1|p2|p3} title>`
   with `<pd-comment by{review|author|name}>` children — append-only
@@ -97,5 +100,9 @@ Classic scripts in head (never `type="module"`):
 - `<pd-stepper>` + `<pd-phase n title files status{done|active|todo}>`
 - `<pd-mermaid caption>` source as text content; flowchart/graph, sequence,
   state, class, ER, xychart only
+- `<pd-code lang path lines highlight caption>` highlighted snippet (code as
+  text content; use a nested `<script type="text/plain">` if it contains `<>&`)
+- `<pd-api kind name lang path>` + `<pd-member kind sig>note</pd-member>` —
+  API/outline: signatures + comments only, generic `kind` badges
 - `<pd-ac id title phases tests>` acceptance-criteria card
 - `<pd-decisions>` auto decision log · `<pd-wire label h>` / `<pd-note>` wireframes

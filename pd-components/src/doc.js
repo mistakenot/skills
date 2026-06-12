@@ -17,9 +17,24 @@ class PdDoc extends PdElement {
     ]);
     this.prepend(header);
 
+    this._initPrLink(header);
     this._initTabs(header);
     this._initFooter();
     this._initExportBar(title);
+  }
+
+  _initPrLink(header) {
+    const pr = this.getAttribute('pr');
+    if (!pr) return;
+    const bar = el('div', { class: 'pd-pr-link' });
+    if (pr === 'pending') {
+      bar.append(el('span', { class: 'pd-pr-pending' }, 'PR not available yet'));
+    } else {
+      const num = pr.match(/\/pull\/(\d+)/);
+      const label = num ? `PR #${num[1]}` : 'Pull Request';
+      bar.append(el('a', { href: pr, target: '_blank', rel: 'noopener', class: 'pd-pr-badge' }, label));
+    }
+    header.after(bar);
   }
 
   _initTabs(header) {
@@ -38,7 +53,8 @@ class PdDoc extends PdElement {
       btn.dataset.name = name;
       nav.append(btn);
     });
-    header.after(nav);
+    const insertAfter = this.querySelector('.pd-pr-link') || header;
+    insertAfter.after(nav);
     this._tabs = tabs;
     this._nav = nav;
 

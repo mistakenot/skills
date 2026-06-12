@@ -91,7 +91,8 @@ Classic scripts in head (never `type="module"`):
 `https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4` and
 `https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.2.0/pd-components/dist/pd.min.js` (defer).
 
-- `<pd-doc title status generated>` shell · `<pd-tab name>` page
+- `<pd-doc title status pr generated>` shell · `<pd-tab name>` page
+  pr: `"pending"` → placeholder; a URL → clickable badge. Update when PR opens.
 - `<pd-section id title>` titled/anchorable section, freeform body
 - `<pd-thread anchor status{unresolved|resolved|rejected} priority{p1|p2|p3} title>`
   with `<pd-comment by{review|author|name}>` children — append-only

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pre-commit checks: run autodoc and autoskill validation steps.
+# Pre-commit checks: run auto doc and auto skill validation steps.
 # Can be run standalone or via the git pre-commit hook.
 set -uo pipefail
 
@@ -24,16 +24,16 @@ else
 fi
 
 # 2. Lint skills
-step "autoskill lint"
-if autoskill lint --text 2>&1; then
+step "auto skill lint"
+if auto skill lint --text 2>&1; then
   pass
 else
   fail
 fi
 
 # 3. Check for stale doc hashes
-step "autodoc stale"
-stale_output=$(autodoc stale --json 2>&1)
+step "auto doc stale"
+stale_output=$(auto doc stale --json 2>&1)
 if [ "$stale_output" = "[]" ] || [ -z "$stale_output" ]; then
   pass
 else
@@ -42,16 +42,16 @@ else
 fi
 
 # 4. Rebuild search index (non-blocking)
-step "autodoc search reindex"
-if autodoc search reindex 2>&1; then
+step "auto doc search reindex"
+if auto doc search reindex 2>&1; then
   pass
 else
   fail
 fi
 
 # 5. Sync skills into agent configs and stage generated files
-step "autoskill sync"
-if autoskill sync 2>&1; then
+step "auto skill sync"
+if auto skill sync 2>&1; then
   # Stage any files sync may have generated/updated
   git add -N .agents/ 2>/dev/null || true
   changed=$(git diff --name-only .agents/ 2>/dev/null || true)

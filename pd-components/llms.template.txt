@@ -25,7 +25,8 @@ file://).
   <script src="{{CDN_BASE}}/pd.min.js" defer></script>
 </head>
 <body>
-  <pd-doc title="NNN: Doc title" status="draft" generated="YYYY-MM-DD">
+  <!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
+  <pd-doc title="NNN: Doc title" status="draft" pr="pending" generated="YYYY-MM-DD">
     ...
   </pd-doc>
 </body>
@@ -53,10 +54,15 @@ content. pd-* components style themselves.
 
 ## Components
 
-### <pd-doc title status generated>
-Document shell: header, tab navigation (when it contains pd-tab children),
-floating "Copy for agent" bar for pending comments, provenance footer.
+### <pd-doc title status pr generated>
+Document shell: header, PR link bar, tab navigation (when it contains pd-tab
+children), floating "Copy for agent" bar for pending comments, provenance footer.
 Direct children: either pd-tab elements, or sections directly.
+
+pr: "pending" shows a muted placeholder; a URL (e.g.
+"https://github.com/org/repo/pull/42") renders a clickable badge. Omit entirely
+if no PR tracking is needed. When the executor opens a PR, it should update
+pr="pending" to the actual URL.
 
 ### <pd-tab name>
 One page of a tabbed doc. Tab buttons show a badge with the count of open
