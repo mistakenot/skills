@@ -341,4 +341,8 @@ if __name__ == "__main__":
         skill("planning-doc"),
     )
 
-    compile([planning, ideation, maintenance, exploration, rich_docs])
+    reflection = module("reflection",
+        skill("learning-diary"),
+    )
+
+    compile([planning, ideation, maintenance, exploration, rich_docs, reflection])
