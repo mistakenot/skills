@@ -13,6 +13,7 @@ This task is itself the walking skeleton of the skill bundle — same doctrine t
 - Extend compile-time validation: cards with missing/invalid frontmatter keys or missing required body sections fail the build with a clear error.
 - Stand up the eval harness skeleton (`src/assurance/evals/`) with one case: "build a calculator CLI that can add numbers", run headless with and without the skill installed, producing a comparison report.
 - Wire build + eval into the Makefile.
+- Adopt `uv` as the repo's Python tooling (per the user's "use uv for python" direction): add `pyproject.toml` + `uv.lock` with `pytest` in a dev dependency group, and route Python invocations through `uv run` — including the existing `Makefile` and `scripts/pre-commit-checks.sh` compile steps. This makes `uv` a requirement on the commit path; the stdlib-only build uses `uv run --no-dev` so ordinary commits don't pull the test toolchain.
 
 ## Acceptance Criteria
 
@@ -34,7 +35,13 @@ This task is itself the walking skeleton of the skill bundle — same doctrine t
 **AC-4**: Eval runs with the skill
 - Given: the compiled skill installed into a headless agent environment
 - When: `evals/run.sh` executes the calculator-cli case with the skill
-- Then: the agent's output project is captured, and mechanical checks (T1: expected harness files exist; T2: the project's test command runs and exits correctly) produce a scorecard
+- Then: the agent's output project is captured, and mechanical checks (T1: expected harness files exist; T2: the project's test command is run and its exit code is captured and recorded in the scorecard — a non-zero exit, or no test command at all, is a valid recorded outcome, not an eval failure) produce a scorecard
+
+<!-- RESOLVED(P3): "exits correctly" is ambiguous for an agent-built project
+REVIEW: For the baseline arm especially, the agent may produce a broken or test-less project, so a non-zero exit (or no test command at all) is an expected, informative outcome — not a failure of the eval. "Exits correctly" reads as "must exit 0". The solution interprets this as "record the exit code" (T2), which is the right reading. Recommend rewording the AC to "the exit code is captured and recorded in the scorecard" so it doesn't imply the eval fails when the agent's project does.
+AUTHOR: Reworded AC-4 T2 to "the project's test command is run and its exit code is captured and recorded in the scorecard — a non-zero exit, or no test command at all, is a valid recorded outcome, not an eval failure." This matches the solution's T2 reading and is reinforced by the new "no recognised test command" scorecard state (solution §D, P2 thread).
+-->
+
 
 **AC-5**: Baseline comparison
 - Given: the same case prompt
@@ -50,6 +57,12 @@ This task is itself the walking skeleton of the skill bundle — same doctrine t
 - Given: the repo Makefile
 - When: `make compile` / `make eval-assurance` (name TBD) run
 - Then: build and eval are reproducible single commands
+
+<!-- RESOLVED(P2): Requirements don't capture the repo-wide uv migration the solution treats as in-scope
+REVIEW: solution.md + plan.md introduce a uv adoption (new pyproject.toml + uv.lock, all python invocations via `uv run`) that migrates BOTH Makefile:6 and scripts/pre-commit-checks.sh:19 — i.e. uv becomes a hard dependency on the commit path for the whole repo, not just this module. Requirements/AC-6 only mention `make compile` / `make eval-assurance` and say nothing about uv, pytest, or pyproject. Verified: the repo is currently stdlib-only with no pyproject/lockfile and pytest is not installed. This is a defensible decision (driven by the user's "use uv for python" preference) but it expands the blast radius well beyond the "walking skeleton" framing. Requirements should record uv adoption + the commit-path change as an explicit goal/scope item so the contract matches what's being built.
+AUTHOR: Added an explicit Goals bullet recording uv adoption (pyproject + uv.lock + pytest dev group, `uv run` everywhere) and the commit-path change, with the `uv run --no-dev` mitigation so the stdlib-only build doesn't drag the test toolchain onto every commit (see the related solution P2 thread). The contract now matches the build.
+-->
+
 
 ## Out of Scope
 
