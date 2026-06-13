@@ -69,8 +69,4 @@ Files in `./skills/` are compiled output. Always check `./src/` for the original
 **docs/reviews**
 
 - [Skill Review — 2026-05-23](docs/reviews/2026-05-23.md): Review scores across all planning workflow skills with P1/P2/P3 issue counts. Read when: reviewing skill quality history or checking past review findings
-
-**docs/tasks/001-assurance-skill-walking-skeleton**
-
-- [requirements.md](docs/tasks/001-assurance-skill-walking-skeleton/requirements.md)
 <!-- autodoc: end -->

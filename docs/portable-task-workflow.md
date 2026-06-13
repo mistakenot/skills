@@ -1,5 +1,5 @@
 ---
-hash: "ccc78130"
+hash: "325c230f"
 id: "230ae987"
 read_when: "setting up the task workflow in a new repo, or understanding the end-to-end plan-to-merge lifecycle"
 summary: "Self-contained reference for implementing the full AI-agent-driven feature delivery workflow from requirements through merged PR with feedback, designed for reuse across repos."
@@ -33,7 +33,7 @@ Planning happens on `main`. Implementation happens on feature branches in isolat
 
 ## Stage 1: Planning (on `main`)
 
-### 1.1 Requirements (`/new-task`)
+### 1.1 Requirements (`/v1-new-task`)
 
 Creates `docs/tasks/$ID-$NAME/requirements.md` from user input.
 
@@ -77,7 +77,7 @@ Creates `docs/tasks/$ID-$NAME/requirements.md` from user input.
 - ACs use Given/When/Then or casual bullets (match team preference)
 - Open Questions must be resolved before moving to solution stage
 
-### 1.2 Solution (`/new-solution`)
+### 1.2 Solution (`/v1-new-solution`)
 
 Reads approved requirements, explores approaches, writes `solution.md`.
 
@@ -128,7 +128,7 @@ Reads approved requirements, explores approaches, writes `solution.md`.
 - Test Coverage table maps every AC to a test type and file
 - Include bare-bones code outlines (types, signatures) in Files section for complex changes
 
-### 1.3 Context + Plan (`/new-plan`)
+### 1.3 Context + Plan (`/v1-new-plan`)
 
 Reads requirements + solution, gathers codebase context, writes execution plan.
 
@@ -237,7 +237,7 @@ Phase 1 (DB) --> Phase 2 (Backend) --> Phase 4 (E2E)
 - Execution Sequence shows the dependency DAG for parallel dispatch
 - Checkboxes track progress and enable session resumption
 
-### 1.4 Review (`/review-task-docs`)
+### 1.4 Review (`/v1-review-task-docs`)
 
 Optional review stage where a reviewer (human or AI) reads all four docs and leaves inline comments.
 
@@ -282,7 +282,7 @@ AUTHOR: Why this doesn't apply, with reference.
 - Place comments directly below offending content with blank lines above/below
 - Only comment on real issues (structure, security, assumptions), not formatting
 
-### 1.5 Commit Task Docs (`/commit-task`)
+### 1.5 Commit Task Docs (`/v1-commit-task`)
 
 Final planning stage. Verifies completeness and commits to `main`.
 
@@ -302,13 +302,13 @@ git commit -m "docs(tasks): add task $ID-$NAME planning docs"
 **Rules:**
 - Do NOT create a feature branch (that happens at execution)
 - Do NOT start implementation
-- Output: "To execute this task, run: `/execute-task $ID`"
+- Output: "To execute this task, run: `/v1-execute-task $ID`"
 
 ---
 
 ## Stage 2: Execution (on feature branch in worktree)
 
-### 2.1 Execute Task (`/execute-task $ID`)
+### 2.1 Execute Task (`/v1-execute-task $ID`)
 
 Autonomous end-to-end implementation using the coordinator-subagent pattern.
 
@@ -387,7 +387,7 @@ EOF
 )"
 ```
 
-### 2.2 Delegation (`/delegate-task`)
+### 2.2 Delegation (`/v1-delegate-task`)
 
 Dispatch execution to an idle Claude Code pane in a tmux session, keeping the main session free.
 
@@ -409,14 +409,14 @@ Dispatch execution to an idle Claude Code pane in a tmux session, keeping the ma
    ```bash
    tmux send-keys -t $SESSION.N '/clear' Enter
    sleep 3
-   tmux send-keys -t $SESSION.N '/execute-task $ID' Enter
+   tmux send-keys -t $SESSION.N '/v1-execute-task $ID' Enter
    ```
 6. Wait 10s, capture pane to verify kickoff
 7. Report: which pane, confirmation command sent, what pane is currently doing
 
 If no idle panes: report what each pane is doing and stop.
 
-### 2.3 Status Check (`/executor-status-check`)
+### 2.3 Status Check (`/v1-executor-status-check`)
 
 Monitor all executor panes and report status.
 
@@ -427,16 +427,16 @@ Monitor all executor panes and report status.
 - **idle**: empty prompt, no streaming output
 
 **Per-pane extraction:**
-- **Task ID**: from `/execute-task NNN`, branch name `task/NNN-`, or file paths `docs/tasks/NNN-`
+- **Task ID**: from `/v1-execute-task NNN`, branch name `task/NNN-`, or file paths `docs/tasks/NNN-`
 - **Description**: read first heading from task's plan.md
 - **Last message**: summary of last agent output block
-- **Suggested next step**: completed+PR open -> `/address-feedback`, feedback resolved -> `/complete-task`, PR merged -> `/clear`
+- **Suggested next step**: completed+PR open -> `/v1-address-feedback`, feedback resolved -> `/v1-complete-task`, PR merged -> `/clear`
 
 **Output format:**
 ```
 | Pane | Task | Description | Status | Last Message | Next Step |
 |------|------|-------------|--------|--------------|-----------|
-| 0    | 434  | Add widget  | completed | PR #87 created | /address-feedback |
+| 0    | 434  | Add widget  | completed | PR #87 created | /v1-address-feedback |
 | 1    | 435  | Fix auth    | in progress | Running e2e tests | -- |
 | 2    | --   | --          | idle   | -- | -- |
 ```
@@ -447,7 +447,7 @@ Monitor all executor panes and report status.
 
 ## Stage 3: Review & Feedback (on feature branch)
 
-### 3.1 Address PR Feedback (`/address-feedback`)
+### 3.1 Address PR Feedback (`/v1-address-feedback`)
 
 Work through all open PR review threads: fix code, reply, resolve.
 
@@ -538,14 +538,14 @@ Structured review of code changes with severity labels.
 
 ## Stage 4: Completion (on feature branch)
 
-### 4.1 Complete Task (`/complete-task`)
+### 4.1 Complete Task (`/v1-complete-task`)
 
 Finalize feature branch and merge to main.
 
 **Prerequisites:** on feature branch (not main), clean working tree, open PR exists.
 
 **Steps:**
-1. **Address remaining PR feedback**: check for unresolved threads, invoke `/address-feedback` if any
+1. **Address remaining PR feedback**: check for unresolved threads, invoke `/v1-address-feedback` if any
 2. **Run affected tests**: typecheck (always), unit tests (if changed), e2e tests (if frontend/server functions changed)
 3. **Push fixes**: if any new commits
 4. **Write task feedback**: create `feedback.md` in task folder (see template below)
@@ -747,17 +747,17 @@ docs/rules.md           # Stage 5.1 (accumulated workflow rules)
 ## Typical Command Sequence
 
 ```
-/new-task                    # user reviews requirements.md
-/new-solution                # user reviews solution.md
-/new-plan                    # user reviews context.md + plan.md
-/review-task-docs $ID        # optional: AI or human review
-/resolve-comments $ID        # address review feedback in docs
-/commit-task                 # commit docs to main
+/v1-new-task                    # user reviews requirements.md
+/v1-new-solution                # user reviews solution.md
+/v1-new-plan                    # user reviews context.md + plan.md
+/v1-review-task-docs $ID        # optional: AI or human review
+/v1-resolve-comments $ID        # address review feedback in docs
+/v1-commit-task                 # commit docs to main
 /clear
-/execute-task $ID            # or: /delegate-task /execute-task $ID
-/executor-status-check       # monitor progress (if delegated)
-/address-feedback            # fix PR review comments
-/complete-task               # merge, feedback, cleanup
+/v1-execute-task $ID            # or: /v1-delegate-task /v1-execute-task $ID
+/v1-executor-status-check       # monitor progress (if delegated)
+/v1-address-feedback            # fix PR review comments
+/v1-complete-task               # merge, feedback, cleanup
 ```
 
 ---
@@ -776,9 +776,9 @@ To implement this workflow in another project:
 8. **Feedback loop**: After completing ~10 tasks, run feedback analysis to extract generalizable rules
 
 **Minimum viable version** (no tmux, no delegation):
-- `/new-task` + `/new-plan` (combine solution into plan stage)
-- `/commit-task`
-- `/execute-task` (without subagents -- single agent executes all phases linearly)
-- `/complete-task`
+- `/v1-new-task` + `/v1-new-plan` (combine solution into plan stage)
+- `/v1-commit-task`
+- `/v1-execute-task` (without subagents -- single agent executes all phases linearly)
+- `/v1-complete-task`
 
 Scale up delegation and parallel execution as the team grows.

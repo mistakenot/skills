@@ -1,5 +1,5 @@
 ---
-hash: "a6013634"
+hash: "ed8ba5bb"
 id: "bdd0f6ee"
 read_when: "deciding how the assurance-strategist eval harness isolates with-skill vs without-skill arms, or wanting the evidence behind the headless clean-room recipe (what was run, observed, and concluded)"
 summary: "Tech spike (task 001) verifying clean-room isolation for headless `claude -p` eval runs: auth via copied credentials, config-dir relocation, skill discovery, the two required isolation conditions, and the built-in command floor. Verdict GO (conditional). The reusable recipe distilled from this lives in headless-claude-cli-evals.md."
@@ -44,7 +44,7 @@ fewer-permission-prompts / loop / schedule / claude-api / run / init / review / 
 SKILLS_END
 CLAUDE_MD: none
 ```
-No project skills (`new-task`, `execute-task`, `planning-doc`, …) and no CLAUDE.md.
+No project skills (`v1-new-task`, `v1-execute-task`, `planning-doc`, …) and no CLAUDE.md.
 
 **Two conditions discovered the hard way:**
 
