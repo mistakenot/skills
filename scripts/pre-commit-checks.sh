@@ -17,7 +17,7 @@ fail() { printf "${RED}   FAIL${NC}\n"; errors=$((errors + 1)); }
 # 1. Compile skills from src/ and stage output
 step "compile skills"
 if python3 src/compile.py 2>&1; then
-  git add skills/
+  git add skills/ install.sh
   pass
 else
   fail
@@ -52,13 +52,16 @@ fi
 # 5. Sync skills into agent configs and stage generated files
 step "auto skill sync"
 if auto skill sync 2>&1; then
-  # Stage any files sync may have generated/updated
-  git add -N .agents/ 2>/dev/null || true
-  changed=$(git diff --name-only .agents/ 2>/dev/null || true)
-  if [ -n "$changed" ]; then
-    git add .agents/
-    printf "   Staged updated agent configs\n"
-  fi
+  # Stage all files that sync may have generated/updated
+  for path in .agents/ .claude/skills/ AGENTS.md CLAUDE.md; do
+    if [ -e "$path" ]; then
+      git add -N "$path" 2>/dev/null || true
+      changed=$(git diff --name-only "$path" 2>/dev/null || true)
+      if [ -n "$changed" ]; then
+        git add "$path"
+      fi
+    fi
+  done
   pass
 else
   fail
