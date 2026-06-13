@@ -25,6 +25,7 @@ All checks must pass before committing:
 - [ ] **Plan consistent with solution**: the approach in solution.md matches the phases and steps in plan.md
 - [ ] **Context covers plan references**: files and patterns referenced in plan.md are documented in context.md
 - [ ] **No unresolved P1 comments**: if review comments exist, no `UNRESOLVED(P1)` threads remain
+- [ ] **Epic frontmatter consistent**: if any doc has `epic:` frontmatter, all four docs have the same value
 
 If any check fails, report the failures and stop. Do not commit incomplete docs.
 

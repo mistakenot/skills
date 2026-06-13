@@ -20,7 +20,7 @@ Read requirements + solution, gather codebase context, write `context.md` and `p
 - Check `docs/tasks/` for related completed tasks
 - Note relevant decisions or patterns from past work
 
-Merge findings into the existing `context.md` -- append a **Related Tasks** section if one doesn't exist, or update it. Also verify that file paths from solution.md and existing context.md still hold (flag any that have drifted).
+Merge findings into the existing `context.md` -- append a **Related Tasks** section if one doesn't exist, or update it. Also verify that file paths from solution.md and existing context.md still hold (flag any that have drifted). Ensure context.md has `epic:` frontmatter if requirements.md does.
 
 ### Phase 2: Write plan.md
 
@@ -32,7 +32,8 @@ Using requirements.md, solution.md, and the freshly written context.md:
 4. Every step must have an explicit verify check (not just "run typecheck" but "verify: typecheck passes, new route returns 200")
 5. End each phase with a commit step and verification (typecheck, tests, lint)
 6. Define success criteria that map back to acceptance criteria
-7. Create artifact files if needed (architecture diagrams, sequence diagrams for complex flows)
+7. If requirements.md has `epic:` frontmatter, copy it to plan.md
+8. Create artifact files if needed (architecture diagrams, sequence diagrams for complex flows)
 
 Strong success criteria let subagents loop independently. Weak criteria ("make it work") cause confusion and wasted cycles. Each step should be verifiable without human judgement.
 

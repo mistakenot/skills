@@ -55,6 +55,7 @@ For each doc, verify claims against the actual codebase:
 - File paths are consistent across solution.md, context.md, and plan.md
 - Types/interfaces in context.md match what solution.md proposes to use
 - The approach in solution.md matches the plan steps in plan.md
+- If any doc has `epic:` frontmatter, all four docs must have the same `epic:` value. If requirements.md has no `epic:`, none of the others should either.
 
 ### Step 4: Leave Comments
 
