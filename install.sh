@@ -52,7 +52,7 @@ if [[ -z "$MODULE" ]]; then
 else
   case "$MODULE" in
     planning-workflow)
-      SKILLS="v1-new-task,v1-new-solution,v1-new-plan,v1-review-task,v1-request-codex-review,v1-request-claude-review,v1-resolve-comments,v1-commit-task,v1-execute-task,v1-delegate-task,v1-executor-status-check,v1-address-feedback,v1-complete-task,v1-code-review,v1-task-feedback-analyser"
+      SKILLS="new-task,new-solution,new-plan,review-task,request-codex-review,request-claude-review,resolve-comments,commit-task,execute-task,delegate-task,executor-status-check,address-feedback,complete-task,code-review,task-feedback-analyser"
       ;;
     ideation)
       SKILLS="generate-10-ideas,fan-out-user-simulation"
