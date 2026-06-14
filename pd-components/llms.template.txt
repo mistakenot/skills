@@ -38,9 +38,12 @@ content. pd-* components style themselves.
 
 ## Authoring rules
 
-- The raw HTML is read back by agents: keep it semantic and lean. Structure
-  lives in pd-* elements and ids, never in utility-class div soup. Tailwind
-  classes belong ONLY inside freeform/wireframe content.
+- **Use `<md>` for prose content** (paragraphs, lists, links, inline code,
+  tables). Agents read and generate markdown natively at lower token cost than
+  HTML. Reserve raw HTML for pd-* structural elements and Tailwind wireframe
+  layouts.
+- Structure lives in pd-* elements and ids, never in utility-class div soup.
+  Tailwind classes belong ONLY inside freeform/wireframe content.
 - Give every pd-section a stable, kebab-case id. Threads and deep links anchor
   to these ids; content can then be freely rewritten without orphaning its
   discussion.
@@ -81,11 +84,45 @@ Tab roles (a deliberate audience split — follow it):
 
 ### <pd-section id title>
 Titled section with anchor link and a "+ comment" button (reviewers queue
-comments in the browser). Body is freeform HTML: p, ul, table, pre, pd-mermaid…
+comments in the browser). Body is `<md>` blocks and pd-* elements.
 
 ```html
 <pd-section id="approach" title="Approach">
-  <p>We add a token-bucket limiter at the gateway…</p>
+  <md>
+Token-bucket limiter as gateway middleware, backed by Redis.
+Bursts up to bucket size are allowed; sustained rate is capped at the refill rate.
+  </md>
+</pd-section>
+```
+
+### <md>
+Client-side markdown block. Use for prose content inside pd-* containers —
+paragraphs, lists, inline code, links, tables. Replaces verbose HTML (`<p>`,
+`<ul><li>`, `<code>`, `<a href>`) with compact markdown, rendered by marked
+(loaded from CDN on demand — no extra script tag needed).
+
+Use `<md>` for: section bodies, phase descriptions, AC criteria, notes —
+anything that would otherwise be `<p>`, `<ul>`, `<table>`, `<a>`, or inline
+`<code>`.
+
+Keep raw HTML for: pd-* components (pd-mermaid, pd-code, pd-files, etc.),
+wireframe layouts (Tailwind), content requiring HTML attributes.
+
+Caveat: the browser parses `<md>` content before marked runs. Literal angle
+brackets (e.g. `<SomeTag>` in inline code) are interpreted as HTML tags. Use
+`&lt;`/`&gt;` for literal angle brackets.
+
+```html
+<pd-section id="limits" title="Rate limits">
+  <md>
+Per-client rate limiting at the gateway, backed by Redis:
+
+- **Free plan**: 100 req/min
+- **Partner plan**: 1000 req/min
+- Exceeding the limit returns `429` with a `Retry-After` header
+
+See the [design doc](https://example.com/design) for background.
+  </md>
 </pd-section>
 ```
 
@@ -122,10 +159,10 @@ pd-files on the page. status: done | active | todo. Arrow keys navigate.
 ```html
 <pd-stepper>
   <pd-phase n="1" title="Limiter core" files="src/gateway/limiter.ts" status="done">
-    <p>Implement and unit-test the bucket…</p>
+    <md>Implement and unit-test the bucket…</md>
   </pd-phase>
   <pd-phase n="2" title="Gateway wiring" files="src/gateway/index.ts" status="active">
-    <p>Apply per-route config…</p>
+    <md>Apply per-route config…</md>
   </pd-phase>
 </pd-stepper>
 ```
@@ -187,11 +224,11 @@ phase numbers covering it; tests: comma-separated test files.
 
 ```html
 <pd-ac id="AC-1" title="Requests over the limit get 429" phases="1,2" tests="e2e/rate-limit.spec.ts">
-  <ul>
-    <li>Given a client at its request budget</li>
-    <li>When it sends one more request within the window</li>
-    <li>Then the gateway responds 429 with a Retry-After header</li>
-  </ul>
+  <md>
+- Given a client at its request budget
+- When it sends one more request within the window
+- Then the gateway responds `429` with a `Retry-After` header
+  </md>
 </pd-ac>
 ```
 

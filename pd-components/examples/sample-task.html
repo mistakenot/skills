@@ -12,25 +12,27 @@
 
     <pd-tab name="Overview">
       <pd-section id="problem" title="Problem">
-        <p>Public API consumers can exhaust backend capacity. Three incidents last quarter were caused by
-        a single integration retry-storming the <code>/v1/search</code> endpoint. We need per-client rate
-        limiting at the gateway before opening the partner program.</p>
+        <md>
+Public API consumers can exhaust backend capacity. Three incidents last quarter were caused by
+a single integration retry-storming the `/v1/search` endpoint. We need per-client rate
+limiting at the gateway before opening the partner program.
+        </md>
       </pd-section>
 
       <pd-section id="acceptance-criteria" title="Acceptance criteria">
         <pd-ac id="AC-1" title="Requests over the limit get 429" phases="1,2" tests="e2e/rate-limit.spec.ts">
-          <ul>
-            <li>Given a client that has used its request budget for the window</li>
-            <li>When it sends one more request</li>
-            <li>Then the gateway responds 429 with a <code>Retry-After</code> header</li>
-          </ul>
+          <md>
+- Given a client that has used its request budget for the window
+- When it sends one more request
+- Then the gateway responds `429` with a `Retry-After` header
+          </md>
         </pd-ac>
         <pd-ac id="AC-2" title="Limits are configurable per plan" phases="2" tests="unit/limiter-config.spec.ts">
-          <ul>
-            <li>Given clients on the free and partner plans</li>
-            <li>When both exceed the free-plan limit</li>
-            <li>Then only the free-plan client is throttled</li>
-          </ul>
+          <md>
+- Given clients on the free and partner plans
+- When both exceed the free-plan limit
+- Then only the free-plan client is throttled
+          </md>
         </pd-ac>
       </pd-section>
 
@@ -39,8 +41,10 @@
 
     <pd-tab name="Solution">
       <pd-section id="approach" title="Approach">
-        <p>Token-bucket limiter as gateway middleware, backed by Redis (one bucket per client key).
-        Bursts up to bucket size are allowed; sustained rate is capped at the refill rate.</p>
+        <md>
+Token-bucket limiter as gateway middleware, backed by Redis (one bucket per client key).
+Bursts up to bucket size are allowed; sustained rate is capped at the refill rate.
+        </md>
         <pd-mermaid caption="Request path with the limiter in place">
 flowchart LR
   C[Client] --> G[Gateway]
@@ -89,17 +93,23 @@ flowchart LR
       <pd-section id="phases" title="Phases">
         <pd-stepper>
           <pd-phase n="1" title="Limiter core" files="src/gateway/limiter.ts,src/gateway/limiter.spec.ts" status="done">
-            <p>Implement the token bucket against Redis with a clean interface
-            (<code>take(key): Promise&lt;Allowed | RetryAfter&gt;</code>). Unit tests cover refill timing,
-            burst behaviour, and concurrent takes.</p>
+            <md>
+Implement the token bucket against Redis with a clean interface
+(`take(key): Promise&lt;Allowed | RetryAfter&gt;`). Unit tests cover refill timing,
+burst behaviour, and concurrent takes.
+            </md>
           </pd-phase>
           <pd-phase n="2" title="Gateway wiring" files="src/gateway/index.ts,src/config/plans.ts" status="active">
-            <p>Mount as middleware, resolve the client's plan to a limit config, emit 429 +
-            <code>Retry-After</code>. Remove the legacy throttle.</p>
+            <md>
+Mount as middleware, resolve the client's plan to a limit config, emit `429` +
+`Retry-After`. Remove the legacy throttle.
+            </md>
           </pd-phase>
           <pd-phase n="3" title="E2E and rollout" files="e2e/rate-limit.spec.ts,src/legacy/throttle.ts" status="todo">
-            <p>End-to-end tests for both ACs, then enable in staging at 10× production limits for a
-            week before tightening.</p>
+            <md>
+End-to-end tests for both ACs, then enable in staging at 10× production limits for a
+week before tightening.
+            </md>
           </pd-phase>
         </pd-stepper>
       </pd-section>

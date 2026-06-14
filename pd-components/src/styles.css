@@ -397,3 +397,7 @@ pd-doc code { font-family: ui-monospace, monospace; font-size: 0.88em; backgroun
 pd-doc pre code { background: none; padding: 0; }
 pd-doc pre { background: var(--pd-surface); border: 1px solid var(--pd-border); border-radius: 0.5rem; padding: 0.75rem; overflow-x: auto; }
 pd-doc a { color: var(--pd-accent); }
+
+/* ---- markdown blocks ---- */
+
+md { display: block; }

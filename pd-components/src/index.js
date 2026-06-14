@@ -10,6 +10,7 @@ import './stepper.js';
 import './mermaid.js';
 import './code.js';
 import './misc.js';
+import './md.js';
 
 const style = document.createElement('style');
 style.dataset.pdComponents = __PD_VERSION__;
