@@ -317,7 +317,7 @@ if __name__ == "__main__":
         skill("commit-task",            refs=[overview, ref("commit-conventions.md")]),
         skill("execute-task",           refs=[overview, ref("template-pr-body.md"), ref("worktree-conventions.md"), ref("commit-conventions.md")]),
         skill("delegate-task",          refs=[overview]),
-        skill("executor-status-check",  refs=[overview]),
+        skill("status-report",          refs=[overview]),
         skill("address-feedback",       refs=[overview]),
         skill("complete-task",          refs=[overview, ref("template-feedback.md"), ref("commit-conventions.md")]),
         skill("code-review",            refs=[overview]),

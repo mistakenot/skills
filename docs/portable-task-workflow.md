@@ -1,5 +1,5 @@
 ---
-hash: "ccc78130"
+hash: "7238a8e8"
 id: "230ae987"
 read_when: "setting up the task workflow in a new repo, or understanding the end-to-end plan-to-merge lifecycle"
 summary: "Self-contained reference for implementing the full AI-agent-driven feature delivery workflow from requirements through merged PR with feedback, designed for reuse across repos."
@@ -416,7 +416,7 @@ Dispatch execution to an idle Claude Code pane in a tmux session, keeping the ma
 
 If no idle panes: report what each pane is doing and stop.
 
-### 2.3 Status Check (`/executor-status-check`)
+### 2.3 Status Check (`/status-report`)
 
 Monitor all executor panes and report status.
 
@@ -755,7 +755,7 @@ docs/rules.md           # Stage 5.1 (accumulated workflow rules)
 /commit-task                 # commit docs to main
 /clear
 /execute-task $ID            # or: /delegate-task /execute-task $ID
-/executor-status-check       # monitor progress (if delegated)
+/status-report       # monitor progress (if delegated)
 /address-feedback            # fix PR review comments
 /complete-task               # merge, feedback, cleanup
 ```
