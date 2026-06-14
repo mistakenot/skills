@@ -15,17 +15,41 @@ Task ID (numeric) and optionally a tmux session name (defaults to `$PROJECT--exe
 
 ## Dispatch Workflow
 
-### Step 1: Check agent activity
+### Step 1: Find an eligible pane
 
 ```bash
 ntm status $SESSION --json
 ```
 
-Parse the JSON output. Each pane entry includes the agent type, current command, and activity state. A pane is idle when its state is not `busy` and the agent is a Claude instance on `(main)`.
+Parse the JSON output to get the list of panes. Then inspect each candidate pane:
 
-If no panes are idle, report what each pane is doing and stop. Do not interrupt active work.
+```bash
+ntm copy $SESSION:$PANE --last 20 --quiet --output /dev/stdout
+```
 
-### Step 2: Send command
+A pane is eligible when **all** of the following are true:
+
+1. **Not busy** — the pane output shows a prompt waiting for input, not an active task in progress.
+2. **On `main`** — the pane's status line or prompt shows `(main)`, not a feature/worktree branch. A pane on a feature branch almost always means a prior task is in flight (open PR, awaiting review/merge). **Never target a pane that is not on `main`**, even if it appears idle — an open/unmerged PR or feature branch disqualifies it.
+3. **No open PR** — there is no evidence of an unmerged PR from a prior task.
+
+If a candidate is idle but on a feature branch, skip it and report why (e.g. "pane 2 skipped: on branch `task-505` with open PR").
+
+If no panes are eligible, report what each pane is doing and stop. Do not interrupt active work.
+
+> **Warning:** A pane sitting in another task's worktree has a stale checkout. If dispatched there, the executor may read outdated task docs before creating its own worktree. Always ensure the target pane is on `main`.
+
+### Step 2: Ensure task docs are pushed
+
+Before dispatching, verify that the task's planning docs have been pushed to `origin/main`. The executor will create a fresh worktree from `origin/main` and needs access to the docs.
+
+```bash
+git log origin/main --oneline -5 -- tasks/$ID/
+```
+
+If the task docs are not on `origin/main`, push them first or warn the user.
+
+### Step 3: Send command
 
 Use `ntm send` with `--smart` to auto-route to the best idle agent (least-loaded strategy):
 
@@ -47,7 +71,7 @@ ntm send $SESSION --pane=$PANE --json '/rename'
 
 If the first `/clear` used `--smart`, note which pane index was selected from the JSON response and use `--pane=$PANE` for subsequent sends.
 
-### Step 3: Verify kickoff
+### Step 4: Verify kickoff
 
 Capture the pane output to confirm execution started:
 
@@ -57,7 +81,7 @@ ntm copy $SESSION:$PANE --last 30 --quiet --output /dev/stdout
 
 Check that the output shows the execute-task command was received and work has begun.
 
-### Step 4: Report
+### Step 5: Report
 
 Output which pane was selected, confirmation that the command was sent, and what the pane is currently doing.
 
