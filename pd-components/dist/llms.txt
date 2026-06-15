@@ -88,10 +88,10 @@ comments in the browser). Body is `<md>` blocks and pd-* elements.
 
 ```html
 <pd-section id="approach" title="Approach">
-  <md>
+  <md><script type="text/plain">
 Token-bucket limiter as gateway middleware, backed by Redis.
 Bursts up to bucket size are allowed; sustained rate is capped at the refill rate.
-  </md>
+  </script></md>
 </pd-section>
 ```
 
@@ -108,21 +108,24 @@ anything that would otherwise be `<p>`, `<ul>`, `<table>`, `<a>`, or inline
 Keep raw HTML for: pd-* components (pd-mermaid, pd-code, pd-files, etc.),
 wireframe layouts (Tailwind), content requiring HTML attributes.
 
-Caveat: the browser parses `<md>` content before marked runs. Literal angle
-brackets (e.g. `<SomeTag>` in inline code) are interpreted as HTML tags. Use
-`&lt;`/`&gt;` for literal angle brackets.
+**Always wrap `<md>` content in `<script type="text/plain">`** to prevent the
+browser's HTML parser from interpreting angle brackets as tags. Without the
+wrapper, markdown containing `<textarea>`, `<script>`, `<style>`, or any HTML
+tag name in backtick-code will break the document structure — the parser treats
+them as real HTML elements before marked ever runs.
 
 ```html
 <pd-section id="limits" title="Rate limits">
-  <md>
+  <md><script type="text/plain">
 Per-client rate limiting at the gateway, backed by Redis:
 
 - **Free plan**: 100 req/min
 - **Partner plan**: 1000 req/min
 - Exceeding the limit returns `429` with a `Retry-After` header
+- Custom props via a `<textarea>` JSON editor
 
 See the [design doc](https://example.com/design) for background.
-  </md>
+  </script></md>
 </pd-section>
 ```
 
@@ -159,10 +162,10 @@ pd-files on the page. status: done | active | todo. Arrow keys navigate.
 ```html
 <pd-stepper>
   <pd-phase n="1" title="Limiter core" files="src/gateway/limiter.ts" status="done">
-    <md>Implement and unit-test the bucket…</md>
+    <md><script type="text/plain">Implement and unit-test the bucket…</script></md>
   </pd-phase>
   <pd-phase n="2" title="Gateway wiring" files="src/gateway/index.ts" status="active">
-    <md>Apply per-route config…</md>
+    <md><script type="text/plain">Apply per-route config…</script></md>
   </pd-phase>
 </pd-stepper>
 ```
@@ -224,11 +227,11 @@ phase numbers covering it; tests: comma-separated test files.
 
 ```html
 <pd-ac id="AC-1" title="Requests over the limit get 429" phases="1,2" tests="e2e/rate-limit.spec.ts">
-  <md>
+  <md><script type="text/plain">
 - Given a client at its request budget
 - When it sends one more request within the window
 - Then the gateway responds `429` with a `Retry-After` header
-  </md>
+  </script></md>
 </pd-ac>
 ```
 
