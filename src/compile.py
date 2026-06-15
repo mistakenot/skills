@@ -517,4 +517,8 @@ if __name__ == "__main__":
         skill("beta-new-plan",     refs=[ref("beta-workflow-overview.md"), ref("tab-plan.md")]),
     )
 
-    compile([planning, ideation, maintenance, exploration, rich_docs, reflection, beta_planning])
+    assurance = module("assurance",
+        skill("assurance-strategist", refs=[ref("technique-unit-testing.md")]),
+    )
+
+    compile([planning, ideation, maintenance, exploration, rich_docs, reflection, beta_planning, assurance])
