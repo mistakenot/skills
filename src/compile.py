@@ -359,7 +359,10 @@ else
       exit 1
       ;;
   esac
-  npx skills add "$REPO" -s "$SKILLS" -a $AGENTS -y
+  IFS=',' read -ra SKILL_ARRAY <<< "$SKILLS"
+  for S in "${{SKILL_ARRAY[@]}}"; do
+    npx skills add "$REPO" -s "$S" -a $AGENTS -y
+  done
 fi
 '''
 
