@@ -261,12 +261,21 @@ class TestRealModuleCompiles:
 
     def test_real_module_compiles(self, tmp_path):
         """Compile the real assurance module into a temp output dir."""
-        # Use the real src/ directory but redirect output to tmp_path
+        import shutil
+
         real_src_dir = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "..")
         )
-        out_dir = str(tmp_path / "repo" / "skills")
-        os.makedirs(out_dir, exist_ok=True)
+        # Copy the real assurance module into a nested temp layout so
+        # _generate_install_script writes install.sh into tmp, not the repo.
+        src_dir = tmp_path / "repo" / "src"
+        out_dir = tmp_path / "repo" / "skills"
+        src_dir.mkdir(parents=True)
+        out_dir.mkdir(parents=True)
+        shutil.copytree(
+            os.path.join(real_src_dir, "assurance"),
+            str(src_dir / "assurance"),
+        )
 
         modules = [
             compile.module(
@@ -279,7 +288,7 @@ class TestRealModuleCompiles:
         ]
 
         # Should not raise
-        compile.compile(modules, src_dir=real_src_dir, out_dir=out_dir)
+        compile.compile(modules, src_dir=str(src_dir), out_dir=str(out_dir))
 
         # The compiled SKILL.md should exist and contain a generated table row
         compiled = os.path.join(out_dir, "assurance-strategist", "SKILL.md")

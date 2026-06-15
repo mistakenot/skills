@@ -93,7 +93,7 @@ def get_skill_version() -> str:
         return "unknown"
 
 
-def render_report(run_dir: Path) -> str:
+def render_report(run_dir: Path, case: str = "") -> str:
     """Render the full report.md content from a run directory."""
     # Read arm outputs
     baseline_out = read_json_file(run_dir / "baseline" / "out.json")
@@ -136,7 +136,7 @@ def render_report(run_dir: Path) -> str:
     lines = [
         "# Eval Report",
         "",
-        f"- **Case**: calculator-cli",
+        f"- **Case**: {case or run_dir.name}",
         f"- **Model**: {model}",
         f"- **Skill version**: {skill_version}",
         f"- **Timestamp**: {timestamp}",
@@ -237,7 +237,8 @@ def main():
         print(f"Error: {run_dir} is not a directory", file=sys.stderr)
         sys.exit(1)
 
-    report = render_report(run_dir)
+    case = os.environ.get("CASE", "")
+    report = render_report(run_dir, case=case)
     report_path = run_dir / "report.md"
     report_path.write_text(report)
     print(f"Report written to {report_path}")

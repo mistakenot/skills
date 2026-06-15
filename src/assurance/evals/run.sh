@@ -47,6 +47,10 @@ if [ "$AGENT_RUNNER" = "live" ] && [ ! -d "$SKILL_DIR" ]; then
   exit 1
 fi
 
+TEMP_DIRS=()
+cleanup() { for d in "${TEMP_DIRS[@]}"; do rm -rf "$d"; done; }
+trap cleanup EXIT
+
 mkdir -p "$RESULTS_DIR/baseline" "$RESULTS_DIR/withskill"
 
 echo "=== Assurance Eval Harness ==="
@@ -115,9 +119,9 @@ run_agent_arm_live() {
   local arm="$1"
   local out_dir="$2"
 
-  # Clean-room setup: workspace OUTSIDE the repo tree
   local BASE
   BASE=$(mktemp -d)
+  TEMP_DIRS+=("$BASE")
   local CFG="$BASE/config"
   local WS="$BASE/ws"
   mkdir -p "$CFG" "$WS"
@@ -206,9 +210,9 @@ $(if [ -f "$results_dir/withskill/out.json" ]; then jq -r '.result // "(no resul
 ### Mechanical scorecard
 $(cat "$results_dir/withskill/scorecard.json" 2>/dev/null || echo "(not available)")"
 
-  # Clean-room for the grader (no skill)
   local BASE
   BASE=$(mktemp -d)
+  TEMP_DIRS+=("$BASE")
   local CFG="$BASE/config"
   local WS="$BASE/ws"
   mkdir -p "$CFG" "$WS"
@@ -252,7 +256,7 @@ echo ""
 
 # Generate report
 echo "── Report ──"
-export MODEL
+export MODEL CASE
 (cd "$REPO_ROOT" && uv run --no-dev python "$SCRIPT_DIR/grade_report.py" "$RESULTS_DIR")
 
 echo ""
