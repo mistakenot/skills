@@ -13,7 +13,7 @@ Install skills from mistakenot/skills.
 
 Options:
   --module <name>   Install only skills from a specific module.
-                    Available modules: assurance
+                    Available modules: planning-workflow, ideation, maintenance, exploration, rich-docs, reflection, assurance
   --agent <agents>  Override target agents (default: claude-code codex).
                     Use '*' for all agents.
   -h, --help        Show this help message.
@@ -51,12 +51,30 @@ if [[ -z "$MODULE" ]]; then
   npx skills add "$REPO" -s '*' -a $AGENTS -y
 else
   case "$MODULE" in
+    planning-workflow)
+      SKILLS="new-task,new-solution,new-plan,review-task,request-codex-review,request-claude-review,resolve-comments,commit-task,execute-task,new-mini-task,delegate-task,status-report,address-feedback,complete-task,code-review,task-feedback-analyser"
+      ;;
+    ideation)
+      SKILLS="generate-10-ideas,fan-out-user-simulation"
+      ;;
+    maintenance)
+      SKILLS="revise-readme"
+      ;;
+    exploration)
+      SKILLS="tech-spike"
+      ;;
+    rich-docs)
+      SKILLS="planning-doc"
+      ;;
+    reflection)
+      SKILLS="learning-diary"
+      ;;
     assurance)
       SKILLS="assurance-strategist"
       ;;
     *)
       echo "Unknown module: $MODULE" >&2
-      echo "Available modules: assurance" >&2
+      echo "Available modules: planning-workflow, ideation, maintenance, exploration, rich-docs, reflection, assurance" >&2
       exit 1
       ;;
   esac
