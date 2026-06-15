@@ -42,11 +42,17 @@ skills/
 
 ## Templating
 
-SKILL.md files support one directive:
+SKILL.md files support two directives:
 
-- `{{ ref:<filename> }}` — replaced with the full contents of `refs/<filename>` from the same module. The referenced file is also copied to `references/<filename>` in the compiled output.
+- `{{ ref:<filename> }}` — replaced with the full contents of `refs/<filename>` from the same module. The referenced file is also copied to `references/<filename>` in the compiled output. Must appear on its own line (line-anchored).
 
-The `{{ ref: }}` tag must appear on its own line. It is replaced inline (no extra wrapping).
+- `{{ skill:<name> }}` — replaced with the compiled skill name. Appears inline (not line-anchored) — typically used mid-sentence, e.g. `run /{{ skill:beta-new-solution }}`. Works in both SKILL.md templates and ref files.
+
+  **Resolution rules:**
+  - Bare name (e.g. `{{ skill:beta-new-solution }}`) — resolves if the skill exists in exactly one module. If the name exists in multiple modules, the compiler errors and requires the qualified form.
+  - Qualified name (e.g. `{{ skill:rich-docs/planning-doc }}`) — resolves in the named module. Errors if the module or skill is not found.
+
+  **Validation:** The compiler validates all `{{ skill:X }}` references in Phase 1 (before writing any output). Unknown skills, unknown modules, and ambiguous bare names all produce errors.
 
 ## DSL (compile.py)
 
@@ -88,5 +94,6 @@ The module→skill mappings are baked into the case block at compile time, so th
 - All skill template files exist in the module's `skills/<name>/` directory
 - Every `{{ ref:X }}` tag in a template has a corresponding ref in the DSL declaration
 - Every ref in the DSL declaration is actually used by a `{{ ref:X }}` tag in the template (warn, don't fail)
+- Every `{{ skill:X }}` tag in templates and ref files resolves to a known skill (error on unknown or ambiguous)
 - YAML frontmatter in each SKILL.md contains required fields: `name`, `description`
 - Final rendered output is under the size limit

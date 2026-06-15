@@ -48,7 +48,19 @@ def module(name: str, *skills: Skill) -> Module:
 REF_PATTERN = re.compile(r"^\{\{\s*ref:(.+?)\s*\}\}$", re.MULTILINE)
 # Also matches markdown links to references/ (e.g. [references/foo.md](references/foo.md))
 REF_LINK_PATTERN = re.compile(r"\[references/(.+?)\]\(references/", re.MULTILINE)
+# Inline directive: {{ skill:<name> }} or {{ skill:<module>/<name> }}
+SKILL_REF_PATTERN = re.compile(r"\{\{\s*skill:(.+?)\s*\}\}")
 MAX_OUTPUT_CHARS = 15_000
+
+
+def _replace_skill_ref(m: re.Match) -> str:
+    """Replace {{ skill:X }} with the bare skill name (stripping module qualifier)."""
+    raw = m.group(1).strip()
+    if "/" in raw:
+        _, skill_name = raw.split("/", 1)
+    else:
+        skill_name = raw
+    return skill_name
 
 
 def _parse_frontmatter(text: str) -> dict | None:
@@ -127,6 +139,57 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
             for tag_name in declared_refs - used_refs:
                 warnings.append(f"{tag} Ref '{tag_name}' declared but never used in template")
 
+    # Build global skill lookup: skill_name -> [module_names]
+    skill_lookup: dict[str, list[str]] = {}
+    for mod in modules:
+        for sk in mod.skills:
+            skill_lookup.setdefault(sk.name, []).append(mod.name)
+
+    # Validate {{ skill:X }} references in templates and ref files
+    for mod in modules:
+        mod_dir = os.path.join(src_dir, mod.name)
+        refs_dir = os.path.join(mod_dir, "refs")
+        skills_dir = os.path.join(mod_dir, "skills")
+
+        if not os.path.isdir(mod_dir):
+            continue
+
+        for sk in mod.skills:
+            tag = f"[{mod.name}/{sk.name}]"
+            template_path = os.path.join(skills_dir, sk.name, "SKILL.md")
+
+            # Collect all content to scan: template + ref files
+            contents_to_scan: list[tuple[str, str]] = []  # (label, content)
+            if os.path.isfile(template_path):
+                with open(template_path) as f:
+                    contents_to_scan.append((f"{tag} template", f.read()))
+            for r in sk.refs:
+                ref_path = os.path.join(refs_dir, r.filename)
+                if os.path.isfile(ref_path):
+                    with open(ref_path) as f:
+                        contents_to_scan.append((f"{tag} ref '{r.filename}'", f.read()))
+
+            for label, content in contents_to_scan:
+                for m in SKILL_REF_PATTERN.finditer(content):
+                    raw = m.group(1).strip()
+                    if "/" in raw:
+                        mod_name, skill_name = raw.split("/", 1)
+                        # Verify module exists
+                        mod_names = {md.name for md in modules}
+                        if mod_name not in mod_names:
+                            errors.append(f"{label}: {{{{ skill:{raw} }}}} references unknown module '{mod_name}'")
+                        elif skill_name not in {s.name for md in modules if md.name == mod_name for s in md.skills}:
+                            errors.append(f"{label}: {{{{ skill:{raw} }}}} references unknown skill '{skill_name}' in module '{mod_name}'")
+                    else:
+                        matches = skill_lookup.get(raw, [])
+                        if len(matches) == 0:
+                            errors.append(f"{label}: {{{{ skill:{raw} }}}} references unknown skill '{raw}'")
+                        elif len(matches) > 1:
+                            errors.append(
+                                f"{label}: {{{{ skill:{raw} }}}} is ambiguous — skill '{raw}' exists in modules: "
+                                f"{', '.join(sorted(matches))}. Use qualified form {{{{ skill:<module>/{raw} }}}}"
+                            )
+
     # Print warnings
     for w in warnings:
         print(f"  WARN: {w}", file=sys.stderr)
@@ -162,6 +225,9 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
 
             rendered = REF_PATTERN.sub(replace_ref, content)
 
+            # Expand {{ skill:X }} tags
+            rendered = SKILL_REF_PATTERN.sub(_replace_skill_ref, rendered)
+
             # Size check
             if len(rendered) > MAX_OUTPUT_CHARS:
                 errors.append(
@@ -176,15 +242,21 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
             with open(os.path.join(skill_out, "SKILL.md"), "w") as f:
                 f.write(rendered)
 
-            # Copy referenced files to references/
+            # Copy referenced files to references/ (substituting {{ skill:X }} if present)
             if sk.refs:
                 refs_out = os.path.join(skill_out, "references")
                 os.makedirs(refs_out, exist_ok=True)
                 for r in sk.refs:
-                    shutil.copy2(
-                        os.path.join(refs_dir, r.filename),
-                        os.path.join(refs_out, r.filename),
-                    )
+                    src_path = os.path.join(refs_dir, r.filename)
+                    dst_path = os.path.join(refs_out, r.filename)
+                    with open(src_path) as f:
+                        ref_content = f.read()
+                    if SKILL_REF_PATTERN.search(ref_content):
+                        rendered_ref = SKILL_REF_PATTERN.sub(_replace_skill_ref, ref_content)
+                        with open(dst_path, "w") as f:
+                            f.write(rendered_ref)
+                    else:
+                        shutil.copy2(src_path, dst_path)
 
             compiled += 1
             print(f"  {sk.name} ({len(rendered):,} chars)")
