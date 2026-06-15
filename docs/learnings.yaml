@@ -1,0 +1,486 @@
+baseline:
+  recorded: 2026-06-15
+  summary: |
+    Senior/staff engineer with deep experience across backend/systems,
+    frontend/product, and DevOps/platform. TypeScript-heavy daily stack.
+    Power user of AI coding tools (Claude Code, etc.) for 1+ year —
+    comfortable with agent basics including simple multi-agent patterns,
+    basic prompt engineering, and Claude Code skills.
+  domains:
+    - backend/systems
+    - frontend/product
+    - DevOps/platform
+  languages:
+    - TypeScript
+    - JavaScript
+  tools:
+    - Claude Code
+    - Codex
+  ai_experience: |
+    Heavy daily use of AI coding tools for 1+ year. Comfortable with
+    agent workflows, skill authoring basics, simple multi-agent patterns.
+    Agent basics are already well in the toolkit.
+  frontier: |
+    AI agent design at scale — skill authoring, multi-agent orchestration,
+    eval strategies, prompt engineering at scale. Quality/assurance for AI
+    outputs — testing AI behavior, building confidence in agent work.
+    Scaling dev workflows — making AI-assisted workflows reproducible,
+    teachable, and robust across teams.
+
+mining:
+  last_run: 2026-06-15T00:00:00Z
+  last_commit: f1f073feffb08e6a3657f0aee9e047a4ec33db29
+  ranges_mined:
+    - from_commit: 31dcd20
+      to_commit: f1f073fe
+      from_date: 2026-04-17
+      to_date: 2026-06-15
+      entries_added: 11
+      mined_at: 2026-06-15T00:00:00Z
+
+learnings:
+
+  - id: L001
+    title: "Skill descriptions are routing signals, not documentation"
+    date_discovered: 2026-05-23
+    date_recorded: 2026-06-15
+    category: ai-prompting
+    commits:
+      - c0eb178721
+      - bd6935b04b
+    related_learnings:
+      - L007
+    problem: |
+      When a skill catalog grows past a handful of entries, agents start
+      mis-triggering — activating the wrong skill for a request, or failing
+      to activate the right one. The intuitive fix is to write more
+      descriptive, explanatory descriptions. But that makes things worse:
+      longer descriptions add noise that drowns out the routing-critical
+      tokens the agent pattern-matches against.
+    solution: |
+      Structure every skill description as three elements in strict order:
+      What (concrete output), When (3-5 literal trigger phrases users
+      actually type), Don't (explicit boundary naming the competing skill).
+      Use third person, imperative voice. Front-load key terms. Keep
+      descriptions under ~200 chars at 30 skills, ~130 chars at 60+.
+      The "Don't" clause must name the alternative skill explicitly:
+      "Not applicable for PR code review feedback (use address-feedback
+      instead)" — because ambiguity at skill boundaries is exactly where
+      mis-triggers happen.
+    evidence: |
+      From CLAUDE.md: "Research shows compressing descriptions while
+      keeping routing-critical content actually improves activation by
+      reducing noise." The skill review (bd6935b) enforced third-person
+      voice after discovering that first/second person ("I can help",
+      "You can use this") caused discovery failures.
+    takeaway: |
+      Treat skill descriptions as search index entries, not documentation.
+      The signal-to-noise ratio of the description determines activation
+      quality. Less explanation, more directive. Name competitors in the
+      "Don't" clause so the agent has a disambiguation path. This applies
+      to any system where an LLM routes between capabilities — tool
+      descriptions, function docstrings for tool-use, MCP tool metadata.
+
+  - id: L002
+    title: "cwd walk-up silently contaminates headless eval baselines"
+    date_discovered: 2026-06-12
+    date_recorded: 2026-06-15
+    category: testing
+    commits:
+      - 8ea4266214
+    related_learnings:
+      - L004
+      - L005
+    problem: |
+      When building an eval harness for agent skills (with-skill vs
+      without-skill arms), the baseline arm must be a clean room — no
+      skills, no project instructions, no inherited context. The intuitive
+      workspace location is a .tmp/ subdirectory inside the repo. But
+      Claude Code walks the directory tree upward from cwd and discovers
+      the parent repo's CLAUDE.md, installed skills, and project config —
+      regardless of CLAUDE_CONFIG_DIR overrides. The baseline arm silently
+      inherits 30+ skills and becomes indistinguishable from the test arm.
+    solution: |
+      The eval workspace must be outside the repo tree entirely:
+      BASE=$(mktemp -d) in /tmp or similar. Never .tmp/ inside the repo.
+      Additionally, --setting-sources '' (which looks like the strongest
+      isolation lever) silently disables the skill-under-test in the
+      with-skill arm too, making both arms identical for the wrong reason.
+      The correct isolation is cwd placement, not settings flags.
+    evidence: |
+      From docs/assurance-eval-isolation-spike.md: "The biggest risk was
+      NOT auth (worked first try) — it was the cwd walk-up leaking
+      project context. The intuitive choice (.tmp/ per the tech-spike
+      convention) is exactly the wrong place for the eval workspace."
+    takeaway: |
+      Any tool that discovers context by walking the filesystem (Claude
+      Code, ESLint, Git, Docker) will contaminate an eval if the workspace
+      is nested inside the project. For clean-room evals: always use an
+      external temp directory. Test your isolation by checking what the
+      agent can actually see, not what you told it to ignore.
+
+  - id: L003
+    title: "Two-wave fan-out: generate hypotheses, then falsify in parallel"
+    date_discovered: 2026-06-14
+    date_recorded: 2026-06-15
+    category: ai-prompting
+    commits:
+      - 3fcf09e073
+    related_learnings:
+      - L004
+    problem: |
+      When running parallel agent simulations (e.g. simulated users
+      exploring a product), each agent generates claims independently —
+      "feature X is missing", "workflow Y is broken." These claims are
+      hypotheses, not verified facts. Without verification, the report is
+      a list of plausible-sounding hallucinations mixed with real findings,
+      and the reader has no way to distinguish them.
+    solution: |
+      After the first fan-out (generation), spawn a second parallel wave
+      of verifier agents — one per claim. Each verifier searches the
+      actual codebase to confirm or refute the claim. Refuted claims are
+      dropped entirely and listed in a "Dropped claims" section for
+      epistemic honesty. This is a three-tier architecture: orchestrator
+      → simulants (parallel) → verifiers (parallel per claim).
+      Convergence across independent simulants becomes meaningful only
+      after verification: when 3+ agents independently flag the same
+      missing feature AND the verifier confirms it's actually missing,
+      that's a real demand signal.
+    evidence: |
+      From fan-out-user-simulation SKILL.md: "Simulant claims are
+      hypotheses. Before they reach the report, verify them against the
+      actual codebase... drop refuted claims entirely — they don't appear
+      in the report."
+    takeaway: |
+      Never trust the output of a generative agent wave without a
+      verification wave. The pattern generalises: any multi-agent research
+      workflow should separate hypothesis generation from falsification,
+      running both in parallel. The dropped-claims section is key — it
+      makes the filtering visible rather than silent, so readers can
+      audit the verification quality.
+
+  - id: L004
+    title: "Structural separation of implementer and evaluator at full autonomy"
+    date_discovered: 2026-06-12
+    date_recorded: 2026-06-15
+    category: architecture
+    commits:
+      - 8ea4266214
+      - 3f73aa0d55
+    related_learnings:
+      - L002
+      - L003
+      - L005
+      - L006
+    problem: |
+      In human-reviewed workflows, the human is the trust mechanism — they
+      review the PR, the test results, the behavior. Under 100% autonomy
+      (no human in the loop), that trust mechanism is gone. Empirically,
+      builder agents grading their own work are reliably over-positive.
+      They report success because they intended to succeed, not because
+      they verified it.
+    solution: |
+      Make the separation structural, not advisory. The generated harness
+      physically separates the implementer (who produces evidence
+      artifacts) from the evaluator (a distinct process that judges them).
+      In the eval harness design: the grader-lite is a third claude -p
+      call with no skill and a rubric, producing scored JSON against both
+      arms' outputs — structurally separate from the with-skill and
+      baseline runs. This is encoded in the harness architecture, not
+      left as a recommendation.
+    evidence: |
+      From docs/assurance-strategist-research-diary.md: "Under 100%
+      autonomy this becomes a structural requirement of the generated
+      harness: evidence is produced by the implementer but judged by a
+      separate evaluator agent/process."
+    takeaway: |
+      "Don't grade your own homework" is a principle everyone knows.
+      The insight is making it structural: the architecture physically
+      prevents the implementer from being the evaluator, rather than
+      relying on prompting or guidelines. Apply this to any fully
+      autonomous agent system — CI pipelines, automated deployments,
+      agent-driven code review.
+
+  - id: L005
+    title: "Walking skeleton for test infrastructure — plant a failing test first"
+    date_discovered: 2026-06-12
+    date_recorded: 2026-06-15
+    category: testing
+    commits:
+      - 3f73aa0d55
+    related_learnings:
+      - L002
+      - L004
+    problem: |
+      The silent killer in test infrastructure is the harness that
+      swallows failures: continue-on-error CI steps, unpropagated exit
+      codes, vacuously-passing async assertions. An agent-built test
+      harness that has never failed proves nothing about its ability to
+      catch failures. You can have 100% green tests and zero confidence
+      that failures would be reported.
+    solution: |
+      Before trusting any test harness, plant two fake tests: one that
+      always fails (assert false == true) and one that always passes.
+      The failing fake is the critical half — it proves that failure
+      propagates correctly: non-zero exit codes bubble through make
+      verify, CI goes red, evidence artifacts emit even on failure.
+      Remove both fakes after confirming. This is Alistair Cockburn's
+      walking-skeleton pattern applied not to the app architecture but
+      to the test infrastructure itself.
+    evidence: |
+      From docs/assurance-strategist-research-diary.md: "The failing fake
+      is the critical half — it proves failures propagate: non-zero exit
+      codes bubble through make verify, CI goes red, evidence artifacts
+      are emitted even on failure. The silent killer in test infra is the
+      harness that swallows failures."
+    takeaway: |
+      Always verify that your test infrastructure can fail before
+      trusting it to pass. This is especially critical for agent-built
+      harnesses where the builder might not have tested the failure path.
+      The meta-level (testing the tests) is where autonomous systems
+      silently break. A test suite that has never gone red is not a
+      passing test suite — it's an untested test suite.
+
+  - id: L006
+    title: "Five-axis framework for assurance strategy decomposition"
+    date_discovered: 2026-06-12
+    date_recorded: 2026-06-15
+    category: architecture
+    commits:
+      - 8ea4266214
+      - 3f73aa0d55
+    related_learnings:
+      - L004
+      - L005
+      - L008
+    problem: |
+      "Test maturity" is commonly treated as a single dial from low to
+      high. But this conflates independent dimensions. A long-lived
+      product in active redesign (high longevity, high volatility) needs
+      a fundamentally different test strategy than a stable product with
+      infrequent changes (high longevity, low volatility). The single-axis
+      model can't represent these distinct quadrants.
+    solution: |
+      Decompose assurance strategy into orthogonal axes: Criticality
+      (per subsystem — how bad is a bug?), Volatility (per subsystem —
+      how often does it change?), Longevity (per project — how long will
+      it run?), Accountability (per project — what are the compliance
+      requirements?). A fifth axis (Autonomy) was initially included but
+      recognized as a constant (always 100% in this system), reducing to
+      four. This decomposition revealed that "assertion precision" and
+      "harness durability" are separate dials that "maturity" conflated:
+      a markdown playbook in CI is durable but loose; a precise Playwright
+      test run ad-hoc is strict but ephemeral. Both are legitimate
+      strategies for different quadrants.
+    evidence: |
+      From docs/assurance-strategist-research-diary.md: "Markdown playbook
+      run in CI on every PR = durable but loose (high longevity, high
+      volatility). Precise Playwright test run ad hoc by the agent =
+      strict but ephemeral (low longevity, low volatility). Both quadrants
+      are legitimate strategies → assertion precision and harness
+      durability are separate axes."
+    takeaway: |
+      When a design dimension feels like a simple dial (low→high), check
+      whether it's actually bundling orthogonal axes. Decomposing a proxy
+      dimension often reveals legitimate quadrants that the single axis
+      couldn't represent, and those quadrants suggest qualitatively
+      different strategies rather than just "more rigorous" vs "less
+      rigorous."
+
+  - id: L007
+    title: "Compile-time size limits enforce progressive disclosure in skills"
+    date_discovered: 2026-05-23
+    date_recorded: 2026-06-15
+    category: ai-prompting
+    commits:
+      - bd6935b04b
+      - db86aab643
+    related_learnings:
+      - L001
+      - L008
+    problem: |
+      Agent skills that inline all their documentation pay full token cost
+      on every activation, even when most detail is irrelevant to the
+      current step. The original skill compilation replaced {{ ref:X }}
+      tags with the full contents of reference files, producing ~60k
+      characters across 13 skills. Every invocation loaded everything.
+    solution: |
+      Replace inline expansions with markdown links to reference files.
+      Reference files are copied alongside the compiled skill but only
+      loaded when the agent needs that specific step. The compiler
+      (compile.py) enforces a 15,000-char hard limit on rendered output —
+      skills that exceed it fail to compile. This makes progressive
+      disclosure a build-time architectural invariant, not a guideline.
+      The compiler also validates cross-references ({{ ref:X }} tags must
+      match DSL declarations, unused refs are warned), preventing drift
+      between skill templates and their reference libraries.
+    evidence: |
+      From compile.py: MAX_OUTPUT_CHARS = 15_000 and the validation
+      phase that checks declared refs match template tags. The skill
+      review (bd6935b) dropped total compiled output from ~60k to ~34k
+      chars by switching from inline expansion to linked references.
+    takeaway: |
+      If you're authoring agent skills or tool instructions, treat context
+      as a budget with a hard cap. Don't rely on authors to self-regulate
+      — enforce limits at compile/build time. Progressive disclosure
+      (surface the routing info, defer the detail) is the pattern; a size
+      limit in the build system is the enforcement mechanism. This applies
+      to any system where LLM context is a scarce resource.
+
+  - id: L008
+    title: "YAML frontmatter as a queryable index for agent knowledge libraries"
+    date_discovered: 2026-06-12
+    date_recorded: 2026-06-15
+    category: ai-prompting
+    commits:
+      - 3f73aa0d55
+    related_learnings:
+      - L006
+      - L007
+    problem: |
+      When an agent needs to select from a large catalog of options
+      (testing techniques, design patterns, skill templates), it must
+      either load all entries into context (expensive, context-busting)
+      or guess blindly which ones to open (unreliable). Neither scales
+      past ~10 entries.
+    solution: |
+      Give each catalog entry YAML frontmatter with typed filter fields
+      (oracle type, archetypes, criticality-min, volatility-fit, etc.).
+      A compile-time directive ({{ index:techniques }}) generates a
+      routing table from all entries' frontmatter. The orchestrating
+      skill uses intake answers to filter the catalog mechanically —
+      only matched entries are opened. This is database-style indexing
+      applied to a knowledge library: the frontmatter is the index, the
+      body is the data, and the agent queries the index before loading
+      any data.
+    evidence: |
+      From docs/assurance-strategist-research-diary.md: "The strategist
+      must not load 30 cards to pick 6. Filterable facts live in YAML
+      frontmatter; the SKILL.md technique index is generated from it.
+      Intake answers filter the catalog mechanically before any card is
+      opened."
+    takeaway: |
+      For any agent knowledge system that grows past ~10 entries, add a
+      structured index layer. The pattern: filterable metadata in a
+      standard format (frontmatter, headers, structured comments), a
+      generated index that the agent can scan cheaply, and a load-on-
+      demand pattern for the full content. This is the agent equivalent
+      of database indexes — essential for scaling context-bound systems.
+
+  - id: L009
+    title: "Thin router pattern — frontmatter dispatch for workflow variants"
+    date_discovered: 2026-06-15
+    date_recorded: 2026-06-15
+    category: workflow
+    commits:
+      - 1bc5918b4a
+    related_learnings:
+      - L011
+    problem: |
+      A full 4-document planning ceremony (requirements → solution →
+      context → plan) has overhead that's unjustified for small changes
+      like fixing a typo in a skill description or adding a config value.
+      But having two separate entry points (execute-task-full and
+      execute-task-mini) fragments the user interface and adds cognitive
+      load — the user has to know which command to run.
+    solution: |
+      Keep a single execute-task entry point that reads the plan.md
+      frontmatter and detects workflow: mini. It then loads the
+      appropriate instruction set from a reference file. The skill itself
+      is a thin router — it dispatches to the right behavior based on
+      content inspection, not user selection. Mini-tasks have a single
+      plan.md with acceptance criteria and a context dump, skipping the
+      full ceremony.
+    evidence: |
+      From commit 1bc5918: "Compressed planning workflow: /new-mini-task
+      creates a single plan.md with acceptance criteria, context dump, and
+      executor instructions — skipping the full requirements/solution/plan
+      ceremony. Execute-task becomes a thin router that detects workflow:
+      mini frontmatter."
+    takeaway: |
+      When a workflow has heavyweight and lightweight variants, don't
+      create separate entry points. Use content inspection (frontmatter,
+      file presence, config values) to dispatch from a single command.
+      The user gets one interface; the system adapts to the content. This
+      pattern applies broadly: CLI tools that detect project type, CI
+      pipelines that scale steps to change size, editors that adapt to
+      file type.
+
+  - id: L010
+    title: "Git branch state as multi-agent dispatch eligibility signal"
+    date_discovered: 2026-06-14
+    date_recorded: 2026-06-15
+    category: debugging
+    commits:
+      - ab234ed588
+    related_learnings: []
+    problem: |
+      When delegating tasks to idle Claude Code panes in a tmux session,
+      an idle-looking pane on a feature branch is a trap. A feature branch
+      almost always means a previous task is in flight (open PR awaiting
+      review/merge). If dispatched there, the executor reads outdated task
+      docs from that branch before creating its own worktree — silently
+      polluting the new task's context with stale data.
+    solution: |
+      Add a branch-state eligibility check: a pane is only eligible for
+      dispatch if it's on the main branch. Additionally, verify that
+      task docs are pushed to origin/main before dispatch, since the
+      executor creates a worktree from origin/main and needs current docs.
+      The fix also moved from relying on ntm status fields (which didn't
+      expose branch state) to inspecting pane output directly via
+      ntm copy.
+    evidence: |
+      From commit ab234ed: "A pane sitting in another task's worktree has
+      a stale checkout. If dispatched there, the executor may read
+      outdated task docs before creating its own worktree. Always ensure
+      the target pane is on main."
+    takeaway: |
+      In multi-agent orchestration with shared workspaces (tmux panes,
+      containers, worktrees), "idle" is not sufficient for "available."
+      The workspace state (which branch, which directory, what's staged)
+      is an eligibility criterion. This is analogous to container
+      orchestration health checks — a container can be running but not
+      ready. Check workspace state, not just process state.
+
+  - id: L011
+    title: "Assumption surfacing as a distinct phase between design and approval"
+    date_discovered: 2026-06-08
+    date_recorded: 2026-06-15
+    category: workflow
+    commits:
+      - "53222358f7"
+      - 9c6bcdfbe3
+    related_learnings:
+      - L009
+    problem: |
+      When an agent writes a solution design, it makes dozens of implicit
+      decisions — data structure choices, API shapes, error handling
+      strategies, scope boundaries. Many of these are reasonable defaults
+      that the user would agree with. But some are ghost assumptions: the
+      agent chose an approach the user didn't ask for, and the mismatch
+      only surfaces during implementation review, when it's expensive to
+      change. The user reviews the design and sees nothing wrong — because
+      the assumptions aren't visible.
+    solution: |
+      After writing the design, before presenting it, the agent reviews
+      every decision and identifies any not clearly dictated by (a) the
+      requirements or (b) established repo patterns. Only those decisions
+      are surfaced for explicit confirmation via AskUserQuestion, with a
+      free-text "Other" option so the user isn't constrained to the
+      agent's enumerated choices. User responses are recorded in
+      solution.md for traceability. The same principle applies at the
+      requirements stage: proactively surface latent requirements the
+      user hasn't stated.
+    evidence: |
+      From commit 53222358: "If you chose an approach, structure, behavior,
+      or tradeoff that the user didn't explicitly ask for and that isn't a
+      clear convention in the codebase, you MUST surface it." Commit
+      9c6bcdf added the free-text option to every AskUserQuestion call
+      to prevent the agent's choices from constraining the user's.
+    takeaway: |
+      The distinction between "decisions the agent made" and "decisions
+      the user made" is a first-class concern in autonomous workflows.
+      Build an explicit assumption-surfacing step between design and
+      approval. The agent's job isn't just to present a design — it's to
+      flag which parts of the design are its own invention vs. derived
+      from requirements. This reduces regret cost and builds trust.

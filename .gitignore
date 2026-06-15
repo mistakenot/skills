@@ -10,3 +10,4 @@ src/assurance/evals/results/**
 !src/assurance/evals/results/.gitkeep
 .venv/
 __pycache__/
+.claude/worktrees
