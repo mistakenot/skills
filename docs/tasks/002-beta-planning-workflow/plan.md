@@ -178,14 +178,14 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
 
 ### Phase C: Beta-planning module — skill templates
 
-- [ ] Step C.1: Write `src/beta-planning/skills/beta-new-task/SKILL.md`:
+- [x] Step C.1: Write `src/beta-planning/skills/beta-new-task/SKILL.md`:
   - Frontmatter: `name: beta-new-task`, description with trigger phrases
   - Link to `[references/beta-workflow-overview.md](references/beta-workflow-overview.md)`
   - Process steps: scan skills, read project docs, determine ID, derive name, create folder, create plan.html from boilerplate (per `[references/html-boilerplate.md](references/html-boilerplate.md)`), populate Requirements tab (per `[references/tab-requirements.md](references/tab-requirements.md)`), resolve open questions, hard-stop with `{{ skill:beta-new-solution }}` reference
   - Guiding principles (same as current new-task: ask don't guess, push back on unclear)
   - Verify: frontmatter valid, all `{{ skill:X }}` refs will resolve, all `[references/X]` match DSL declarations.
 
-- [ ] Step C.2: Write `src/beta-planning/skills/beta-new-solution/SKILL.md`:
+- [x] Step C.2: Write `src/beta-planning/skills/beta-new-solution/SKILL.md`:
   - Frontmatter: `name: beta-new-solution`, description with trigger phrases
   - Link to `[references/beta-workflow-overview.md](references/beta-workflow-overview.md)`
   - Process steps split into 3 stages:
@@ -195,13 +195,13 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
   - Guiding principles (same as current new-solution: simplest approach, surface tradeoffs)
   - Verify: frontmatter valid, all refs match DSL, two explicit hard-stops in process.
 
-- [ ] Step C.3: Write `src/beta-planning/skills/beta-new-plan/SKILL.md`:
+- [x] Step C.3: Write `src/beta-planning/skills/beta-new-plan/SKILL.md`:
   - Frontmatter: `name: beta-new-plan`, description with trigger phrases
   - Link to `[references/beta-workflow-overview.md](references/beta-workflow-overview.md)`
   - Process steps: read plan.html + context.md, enrich context with git history (CB3 subagent), write Plan tab (per `[references/tab-plan.md](references/tab-plan.md)`), backfill pd-ac traceability attributes in Verification tab, hard-stop telling user the planning phase is complete and to commit manually (since `/commit-task` and `/review-task` don't support beta HTML format yet)
   - Verify: frontmatter valid, all refs match DSL, backfill step is explicit.
 
-- [ ] Step C.4: Register module in `src/compile.py` `__main__` block:
+- [x] Step C.4: Register module in `src/compile.py` `__main__` block:
   ```python
   beta_planning = module("beta-planning",
       skill("beta-new-task",     refs=[ref("beta-workflow-overview.md"), ref("html-boilerplate.md"),
@@ -214,15 +214,15 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
   Add `beta_planning` to the `compile([...])` call.
   - Verify: `make compile` succeeds, `skills/beta-new-task/SKILL.md`, `skills/beta-new-solution/SKILL.md`, `skills/beta-new-plan/SKILL.md` are produced with references copied.
 
-- [ ] Step C.5: Verify `{{ skill:X }}` substitution in compiled output:
+- [x] Step C.5: Verify `{{ skill:X }}` substitution in compiled output:
   - Check `skills/beta-new-task/SKILL.md` — hard-stop message contains literal `beta-new-solution` (not the `{{ skill:... }}` tag)
   - Check `skills/beta-new-task/references/beta-workflow-overview.md` — pipeline diagram contains literal skill names (refs were substituted)
   - Verify: no `{{ skill:` patterns remain in any compiled output under `skills/beta-*/`.
 
-- [ ] Step C.6: Run `autoskill lint` on the three new skills.
+- [x] Step C.6: Run `autoskill lint` on the three new skills.
   - Verify: all pass without errors.
 
-- [ ] Step C.7: Commit: `feat(002): phase C — beta-planning skill templates`
+- [x] Step C.7: Commit: `feat(002): phase C — beta-planning skill templates`
   - Verify: `make check` passes (compile + lint).
 
 ### Phase D: Planning-doc update + final validation
