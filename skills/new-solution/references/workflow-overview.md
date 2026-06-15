@@ -1,7 +1,8 @@
 ## Workflow Overview
 
-This skill is part of a multi-stage task workflow. Here's the full pipeline:
+This skill is part of a multi-stage task workflow. There are two paths:
 
+### Full Workflow
 ```
 Plan (on main)                Execute (on feature branch)         Review & Complete
 ─────────────────             ──────────────────────────          ─────────────────
@@ -17,8 +18,20 @@ Plan (on main)                Execute (on feature branch)         Review & Compl
 /commit-task
 ```
 
+### Mini Workflow (fast path)
+```
+Plan (on main)                Execute (on feature branch)         Review & Complete
+─────────────────             ──────────────────────────          ─────────────────
+/new-mini-task                /execute-task $ID                   /address-feedback
+  → plan.md only                → worktree + branch              /complete-task
+  (AC + context dump)            → self-directed execution          → merge
+                                 → self-review + PR
+                              /delegate-task (optional)
+```
+
 **Conventions:**
 - Task folder: `docs/tasks/$ID-$NAME/` (3-digit ID, kebab-case name)
 - Branch: `task/$ID-$NAME`
 - Planning happens on `main`. Execution happens in isolated worktrees.
 - Each stage hard-stops for user review before proceeding to the next.
+- Mini-tasks use a single `plan.md` with `workflow: mini` frontmatter instead of separate requirements/solution/context/plan docs.
