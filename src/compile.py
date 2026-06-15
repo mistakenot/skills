@@ -418,4 +418,12 @@ if __name__ == "__main__":
         skill("learning-diary"),
     )
 
-    compile([planning, ideation, maintenance, exploration, rich_docs, reflection])
+    beta_planning = module("beta-planning",
+        skill("beta-new-task",     refs=[ref("beta-workflow-overview.md"), ref("html-boilerplate.md"),
+                                         ref("tab-requirements.md")]),
+        skill("beta-new-solution", refs=[ref("beta-workflow-overview.md"), ref("tab-verification.md"),
+                                         ref("tab-solution.md"), ref("template-context.md")]),
+        skill("beta-new-plan",     refs=[ref("beta-workflow-overview.md"), ref("tab-plan.md")]),
+    )
+
+    compile([planning, ideation, maintenance, exploration, rich_docs, reflection, beta_planning])
