@@ -1,3 +1,10 @@
+---
+hash: "e5d84480"
+read_when: "running evals, adding new eval cases, or understanding how the with-skill vs without-skill comparison works"
+summary: "Two-arm differential eval harness for the assurance-strategist skill: architecture, how to run (stub vs live), mechanical checks (T1/T2), grader dimensions, how to add new cases and dimensions."
+title: "Assurance Eval System"
+---
+
 # Assurance Eval System
 
 Two-arm differential eval harness for the `assurance-strategist` skill. Compares agent output with and without the skill installed against the same build prompt, producing a scored comparison report.
