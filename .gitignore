@@ -3,3 +3,10 @@ skills-lock.json
 .ntm
 node_modules/
 planning-doc-workspace/
+src/assurance/evals/results/**
+!src/assurance/evals/results/
+!src/assurance/evals/results/**/
+!src/assurance/evals/results/**/report.md
+!src/assurance/evals/results/.gitkeep
+.venv/
+__pycache__/
