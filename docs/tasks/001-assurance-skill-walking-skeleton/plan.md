@@ -31,7 +31,7 @@ Bootstrap a uv-managed python project, extend `src/compile.py` with a generated 
 
 ## How to Test
 - [ ] `uv run pytest src/assurance/tests/test_compiler.py` — AC-2 + AC-3 green
-- [ ] `make compile` — all existing 5 modules + `assurance-strategist` compile; generated index row present; card copied to `references/`, linked not inlined (AC-1)
+- [ ] `make compile` — all existing 6 modules + `assurance-strategist` compile; generated index row present; card copied to `references/`, linked not inlined (AC-1)
 - [ ] `make eval-assurance AGENT_RUNNER=stub` — deterministic pipeline smoke: report.md with all three sections (no live calls)
 - [ ] `make eval-assurance` — live two-arm run; report.md with real T1/T2 + grader scores (AC-4/5/5b evidence)
 
@@ -49,7 +49,7 @@ Phase A (uv + build wiring)
 ### Phase A: uv project + build wiring
 - [ ] Step A.1: `uv init` (or hand-write) `pyproject.toml` — project name, `requires-python = ">=3.12"`, a `[dependency-groups] dev = ["pytest"]` (or `[tool.uv]` dev-dependencies). Keep runtime deps empty (compiler is stdlib-only).
 - [ ] Step A.2: `uv lock` to generate `uv.lock`; `uv sync` to materialize the env. Verify: `uv run python -c "import sys; print(sys.version)"` runs; `uv run pytest --version` prints a version (pytest resolved).
-- [ ] Step A.3: `Makefile` — change `compile:` recipe to `uv run --no-dev python src/compile.py` (`--no-dev` keeps the stdlib-only build off the dev/pytest group); add `test:` → `uv run pytest src/assurance/tests/` (the only target that uses the dev group); add `eval-assurance: compile` → `bash src/assurance/evals/run.sh`. Leave **both** the `lint:` line (`autoskill lint`) and the `check: compile lint` target untouched (out of scope; do NOT wire `test` into `check`). Verify: `make compile` compiles all existing modules with no regression (output lists the 5 existing modules' skills; exit 0).
+- [ ] Step A.3: `Makefile` — change `compile:` recipe to `uv run --no-dev python src/compile.py` (`--no-dev` keeps the stdlib-only build off the dev/pytest group); add `test:` → `uv run pytest src/assurance/tests/` (the only target that uses the dev group); add `eval-assurance: compile` → `bash src/assurance/evals/run.sh`. Leave **both** the `lint:` line (`autoskill lint`) and the `check: compile lint` target untouched (out of scope; do NOT wire `test` into `check`). Verify: `make compile` compiles all existing modules with no regression (output lists the 6 existing modules' skills; exit 0).
 - [ ] Step A.4: `scripts/pre-commit-checks.sh` — change the compile step `python3 src/compile.py` → `uv run --no-dev python src/compile.py` (so commits don't sync/require the pytest dev group). Verify: `bash scripts/pre-commit-checks.sh` reaches the compile step and it passes (other steps may need `auto` CLIs; confirm compile sub-step prints OK).
 - [ ] Step A.5: `.gitignore` — add the "ignore all but" pattern so run artifacts are ignored but per-run `report.md` (verdict carrier) stays tracked, plus `.venv/`:
   ```
@@ -114,7 +114,7 @@ AUTHOR: Updated D.1 to use a nested temp layout (`tmp_path/repo/src` + `tmp_path
 - [ ] **AC-5**: same run produces the baseline arm and a with-vs-without comparison report.
 - [ ] **AC-5b**: report shows mechanical + grader scores side by side and a preserved `## Human verdict` section.
 - [ ] **AC-6**: `make compile` and `make eval-assurance` each run as a single command.
-- [ ] `make test` green; `make compile` green (no regression to existing 5 modules); stub eval run deterministic.
+- [ ] `make test` green; `make compile` green (no regression to existing 6 modules); stub eval run deterministic.
 
 ## Open Questions
 - (none — Q1–Q4 resolved in requirements; the four solution-stage design choices confirmed 2026-06-13; uv adopted per user direction)

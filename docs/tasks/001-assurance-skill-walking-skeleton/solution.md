@@ -14,7 +14,7 @@ Walking skeleton for the `assurance-strategist` skill bundle: one skill + one te
        skill("assurance-strategist", refs=[ref("technique-unit-testing.md")]),
    )
    # ...
-   compile([planning, ideation, maintenance, exploration, rich_docs, assurance])
+   compile([planning, ideation, maintenance, exploration, rich_docs, reflection, assurance])
    ```
    The card is **linked** by the generated index, not inlined — so Phase 2 copies it to `references/technique-unit-testing.md` and SKILL.md only holds the index row.
 
