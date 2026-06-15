@@ -1,9 +1,9 @@
-.PHONY: compile lint check install pd-components
+.PHONY: compile lint check install pd-components test eval-assurance
 
 # Compiles skill source files from ./src/ into ./skills/ output.
 # Run after editing any skill source in ./src/.
 compile:
-	python3 src/compile.py
+	uv run --no-dev python src/compile.py
 
 # Compiles then installs all skills into claude-code and codex agents.
 # Run to publish updated skills to agents after making changes.
@@ -23,3 +23,13 @@ lint:
 # Runs compile + lint as a pre-commit check.
 # Run before pushing to ensure everything is valid.
 check: compile lint
+
+# Runs pytest for assurance module tests.
+# Run to validate compiler extensions and card schema.
+test:
+	uv run pytest src/assurance/tests/
+
+# Runs the two-arm assurance eval harness.
+# Run after compiling to produce a with-vs-without comparison report.
+eval-assurance: compile
+	bash src/assurance/evals/run.sh

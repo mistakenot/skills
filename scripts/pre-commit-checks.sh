@@ -16,7 +16,7 @@ fail() { printf "${RED}   FAIL${NC}\n"; errors=$((errors + 1)); }
 
 # 1. Compile skills from src/ and stage output
 step "compile skills"
-if python3 src/compile.py 2>&1; then
+if uv run --no-dev python src/compile.py 2>&1; then
   git add skills/ install.sh
   pass
 else
