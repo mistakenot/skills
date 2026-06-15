@@ -47,10 +47,9 @@ if [ "$AGENT_RUNNER" = "live" ] && [ ! -d "$SKILL_DIR" ]; then
   exit 1
 fi
 
-TEMP_DIRS=()
-cleanup() { for d in "${TEMP_DIRS[@]}"; do rm -rf "$d"; done; }
-trap cleanup EXIT
-
+INSPECT_DIR="$REPO_ROOT/.tmp/eval-assurance"
+rm -rf "$INSPECT_DIR/baseline" "$INSPECT_DIR/withskill"
+mkdir -p "$INSPECT_DIR/baseline" "$INSPECT_DIR/withskill"
 mkdir -p "$RESULTS_DIR/baseline" "$RESULTS_DIR/withskill"
 
 echo "=== Assurance Eval Harness ==="
@@ -60,6 +59,33 @@ echo "Model:   $MODEL"
 echo "Run ID:  $RUN_ID"
 echo "Results: $RESULTS_DIR"
 echo ""
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+extract_result_md() {
+  local out_dir="$1"
+  if [ -f "$out_dir/out.json" ]; then
+    jq -r '.result // ""' "$out_dir/out.json" > "$out_dir/out.md"
+  fi
+}
+
+check_skill_used() {
+  local arm="$1"
+  local out_dir="$2"
+  local skill_name="assurance-strategist"
+
+  if [ ! -f "$out_dir/stream.jsonl" ]; then
+    echo "  [check] No stream.jsonl for $arm — cannot verify skill usage"
+    return
+  fi
+
+  if grep -q "\"name\":\"Skill\"" "$out_dir/stream.jsonl" &&
+     grep "\"name\":\"Skill\"" "$out_dir/stream.jsonl" | grep -q "\"skill\":\"$skill_name\""; then
+    echo "  [check] $arm: skill '$skill_name' was INVOKED ✓"
+  else
+    echo "  [check] $arm: skill '$skill_name' was NOT invoked ✗"
+  fi
+}
 
 # ── Runner seam ──────────────────────────────────────────────────────────────
 
@@ -119,9 +145,9 @@ run_agent_arm_live() {
   local arm="$1"
   local out_dir="$2"
 
+  # Workspace must be outside the repo tree (claude walks up and finds .git)
   local BASE
   BASE=$(mktemp -d)
-  TEMP_DIRS+=("$BASE")
   local CFG="$BASE/config"
   local WS="$BASE/ws"
   mkdir -p "$CFG" "$WS"
@@ -143,11 +169,15 @@ run_agent_arm_live() {
   prompt=$(cat "$CASE_DIR/prompt.md")
 
   ( cd "$WS" && CLAUDE_CONFIG_DIR="$CFG" claude -p "$prompt" \
-      --output-format json \
+      --output-format stream-json \
+      --verbose \
       --strict-mcp-config \
       --permission-mode bypassPermissions \
       --model "$MODEL" \
-      < /dev/null > "$out_dir/out.json" 2> "$out_dir/err.txt" ) || true
+      < /dev/null > "$out_dir/stream.jsonl" 2> "$out_dir/err.txt" ) || true
+
+  # Extract the final result envelope (same shape as --output-format json)
+  grep '"type":"result"' "$out_dir/stream.jsonl" | tail -1 > "$out_dir/out.json" 2>/dev/null || true
 
   # Run mechanical checks against the workspace
   if [ -f "$CASE_DIR/checks.sh" ]; then
@@ -155,7 +185,10 @@ run_agent_arm_live() {
     bash "$CASE_DIR/checks.sh" "$WS" > "$out_dir/scorecard.json"
   fi
 
-  echo "  [live] $arm arm complete (temp dir: $BASE)"
+  # Copy workspace to inspect dir so it survives after the run
+  cp -r "$WS" "$INSPECT_DIR/$arm/ws"
+
+  echo "  [live] $arm arm complete (inspect: $INSPECT_DIR/$arm/ws)"
 }
 
 run_grader() {
@@ -212,7 +245,6 @@ $(cat "$results_dir/withskill/scorecard.json" 2>/dev/null || echo "(not availabl
 
   local BASE
   BASE=$(mktemp -d)
-  TEMP_DIRS+=("$BASE")
   local CFG="$BASE/config"
   local WS="$BASE/ws"
   mkdir -p "$CFG" "$WS"
@@ -237,6 +269,8 @@ run_agent_arm "baseline" "$RESULTS_DIR/baseline"
 if [ "$AGENT_RUNNER" = "stub" ] && [ -d "$RESULTS_DIR/baseline/workspace" ]; then
   bash "$CASE_DIR/checks.sh" "$RESULTS_DIR/baseline/workspace" > "$RESULTS_DIR/baseline/scorecard.json"
 fi
+extract_result_md "$RESULTS_DIR/baseline"
+check_skill_used "baseline" "$RESULTS_DIR/baseline"
 
 echo ""
 echo "── With-skill arm ──"
@@ -246,6 +280,8 @@ run_agent_arm "withskill" "$RESULTS_DIR/withskill"
 if [ "$AGENT_RUNNER" = "stub" ] && [ -d "$RESULTS_DIR/withskill/workspace" ]; then
   bash "$CASE_DIR/checks.sh" "$RESULTS_DIR/withskill/workspace" > "$RESULTS_DIR/withskill/scorecard.json"
 fi
+extract_result_md "$RESULTS_DIR/withskill"
+check_skill_used "withskill" "$RESULTS_DIR/withskill"
 
 echo ""
 
@@ -261,4 +297,5 @@ export MODEL CASE
 
 echo ""
 echo "=== Done ==="
-echo "Report: $RESULTS_DIR/report.md"
+echo "Report:     $RESULTS_DIR/report.md"
+echo "Workspaces: $INSPECT_DIR/baseline/ws  $INSPECT_DIR/withskill/ws"

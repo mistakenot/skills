@@ -93,6 +93,24 @@ def get_skill_version() -> str:
         return "unknown"
 
 
+def check_skill_used(stream_path: Path, skill_name: str = "assurance-strategist") -> bool | None:
+    """Check if a skill was invoked in a stream-json transcript.
+
+    Returns True if invoked, False if stream exists but skill not found,
+    None if no stream file.
+    """
+    if not stream_path.exists():
+        return None
+    try:
+        for line in stream_path.read_text().splitlines():
+            if '"name":"Skill"' in line or '"name": "Skill"' in line:
+                if f'"skill":"{skill_name}"' in line or f'"skill": "{skill_name}"' in line:
+                    return True
+        return False
+    except Exception:
+        return None
+
+
 def render_report(run_dir: Path, case: str = "") -> str:
     """Render the full report.md content from a run directory."""
     # Read arm outputs
@@ -147,6 +165,13 @@ def render_report(run_dir: Path, case: str = "") -> str:
     for arm_name, arm_out in [("baseline", baseline_out), ("withskill", withskill_out)]:
         if arm_out and "total_cost_usd" in arm_out:
             lines.append(f"- **{arm_name} cost**: ${arm_out['total_cost_usd']:.4f}")
+
+    # Skill usage check
+    ws_skill_used = check_skill_used(run_dir / "withskill" / "stream.jsonl")
+    if ws_skill_used is True:
+        lines.append("- **Skill invoked**: yes")
+    elif ws_skill_used is False:
+        lines.append("- **Skill invoked**: **NO** (skill was available but not triggered)")
     lines.append("")
 
     # Mechanical scorecard table
