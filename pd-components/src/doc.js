@@ -98,8 +98,8 @@ class PdDoc extends PdElement {
       class: 'pd-btn pd-btn-primary',
       onclick: async () => {
         const ok = await copyText(store.serialize(title));
-        copyBtn.textContent = ok ? 'Copied ✓' : 'Select & copy above';
-        setTimeout(() => { copyBtn.textContent = 'Copy for agent'; }, 2000);
+        if (ok) store.clear();
+        else copyBtn.textContent = 'Select & copy above';
       },
     }, 'Copy for agent');
     const clearBtn = el('button', {
