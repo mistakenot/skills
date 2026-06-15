@@ -24,8 +24,7 @@ Planning happens on `main`. Implementation happens on feature branches in isolat
 | `review-task` | Review task planning documents and leave structured inline comments |
 | `request-codex-review` | Send task planning docs to Codex for review, then resolve any comments |
 | `address-feedback` | Work through open PR review threads by fixing code and resolving threads |
-| `resolve-comments` | Resolve inline review comment threads in markdown planning docs |
-| `review-resolve` | Process inline comment threads in markdown files |
+| `resolve-comments` | Resolve inline review comment threads in planning docs (markdown and HTML) |
 | `task-feedback-analyser` | Extract recurring patterns from completed task feedback into workflow rules |
 | `generate-10-ideas` | Brainstorm 10 ideas by generating 100 candidates and filtering to the top 10 |
 | `revise-readme` | Update README and documentation to reflect the current state of the project |
