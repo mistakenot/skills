@@ -52,6 +52,26 @@ REF_LINK_PATTERN = re.compile(r"\[references/(.+?)\]\(references/", re.MULTILINE
 SKILL_REF_PATTERN = re.compile(r"\{\{\s*skill:(.+?)\s*\}\}")
 MAX_OUTPUT_CHARS = 15_000
 
+INDEX_PATTERN = re.compile(r"^\{\{\s*index:techniques\s*\}\}$", re.MULTILINE)
+CARD_PREFIX = "technique-"
+REQUIRED_CARD_KEYS = ["name", "summary", "oracle", "archetypes", "criticality-min",
+                      "volatility-fit", "harness", "pairs-with", "upgrade-looser",
+                      "upgrade-stricter", "cost-author", "cost-maintain", "cost-run"]
+REQUIRED_CARD_SECTIONS = [
+    "What it is & what it catches/misses",
+    "When to prescribe / when not",
+    "Prerequisites",
+    "Design decisions",
+    "Derivation guidance",
+    "Minimum viable instance vs full rigor",
+    "Harness changes",
+    "How to get to a walking skeleton",
+    "Acceptance criteria to embed",
+    "Composition",
+    "Failure modes & retirement triggers",
+    "Tool pointers",
+]
+
 
 def _replace_skill_ref(m: re.Match) -> str:
     """Replace {{ skill:X }} with the bare skill name (stripping module qualifier)."""
@@ -76,6 +96,68 @@ def _parse_frontmatter(text: str) -> dict | None:
             key, _, value = line.partition(":")
             fm[key.strip()] = value.strip().strip('"').strip("'")
     return fm
+
+
+def _validate_card(path: str) -> list[str]:
+    """Return a list of error strings for a malformed technique card."""
+    with open(path) as f:
+        text = f.read()
+
+    errs: list[str] = []
+    filename = os.path.basename(path)
+
+    fm = _parse_frontmatter(text)
+    if fm is None:
+        errs.append(f"Card '{filename}' missing frontmatter")
+        return errs
+
+    for key in REQUIRED_CARD_KEYS:
+        if not fm.get(key):
+            errs.append(f"Card '{filename}' missing required key '{key}'")
+
+    headings = re.findall(r"^## (.+)$", text, re.MULTILINE)
+    heading_set = set(headings)
+
+    for title in REQUIRED_CARD_SECTIONS:
+        if title not in heading_set:
+            errs.append(f"Card '{filename}' missing required section '## {title}'")
+
+    found_order = [h for h in headings if h in set(REQUIRED_CARD_SECTIONS)]
+    canonical_order = [s for s in REQUIRED_CARD_SECTIONS if s in heading_set]
+    if found_order != canonical_order:
+        for actual, expected in zip(found_order, canonical_order):
+            if actual != expected:
+                errs.append(f"Card '{filename}' section '## {actual}' is out of order (expected '## {expected}')")
+                break
+
+    return errs
+
+
+def render_techniques_index(sk: Skill, refs_dir: str) -> str:
+    """Markdown table generated from each technique-*.md card's frontmatter."""
+    cards = [r for r in sk.refs if r.filename.startswith(CARD_PREFIX)]
+
+    rows: list[str] = []
+    for card in cards:
+        card_path = os.path.join(refs_dir, card.filename)
+        with open(card_path) as f:
+            fm = _parse_frontmatter(f.read())
+        if fm is None:
+            continue
+        link = f"[{fm.get('name', card.filename)}](references/{card.filename})"
+        rows.append(
+            f"| {fm.get('name', '')} "
+            f"| {fm.get('summary', '')} "
+            f"| {fm.get('oracle', '')} "
+            f"| {fm.get('archetypes', '')} "
+            f"| {fm.get('criticality-min', '')} "
+            f"| {fm.get('volatility-fit', '')} "
+            f"| {link} |"
+        )
+
+    header = "| Technique | What it catches | Oracle | Archetypes | Crit | Volatility | Link |"
+    sep = "| --- | --- | --- | --- | --- | --- | --- |"
+    return "\n".join([header, sep] + rows)
 
 
 def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | None = None) -> None:
@@ -113,6 +195,9 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
                 ref_path = os.path.join(refs_dir, r.filename)
                 if not os.path.isfile(ref_path):
                     errors.append(f"{tag} Ref file not found: {ref_path}")
+                elif r.filename.startswith(CARD_PREFIX):
+                    for err in _validate_card(ref_path):
+                        errors.append(f"{tag} {err}")
 
             # Read template
             with open(template_path) as f:
@@ -131,6 +216,8 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
             # Cross-check template tags vs DSL declarations
             used_refs = set(m.strip() for m in REF_PATTERN.findall(template))
             used_refs |= set(m.strip() for m in REF_LINK_PATTERN.findall(template))
+            if INDEX_PATTERN.search(template):
+                used_refs |= {r.filename for r in sk.refs if r.filename.startswith(CARD_PREFIX)}
             declared_refs = {r.filename for r in sk.refs}
 
             for tag_name in used_refs - declared_refs:
@@ -224,6 +311,7 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
                     return f.read().rstrip("\n")
 
             rendered = REF_PATTERN.sub(replace_ref, content)
+            rendered = INDEX_PATTERN.sub(lambda m: render_techniques_index(sk, refs_dir), rendered)
 
             # Expand {{ skill:X }} tags
             rendered = SKILL_REF_PATTERN.sub(_replace_skill_ref, rendered)
