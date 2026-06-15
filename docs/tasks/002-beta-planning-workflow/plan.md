@@ -227,15 +227,15 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
 
 ### Phase D: Planning-doc update + final validation
 
-- [ ] Step D.1: Edit `src/rich-docs/skills/planning-doc/SKILL.md`:
+- [x] Step D.1: Edit `src/rich-docs/skills/planning-doc/SKILL.md`:
   - Add a pd-meta preservation rule in the authoring rules section (or as a new bullet near "Content is edited in place; threads are APPEND-ONLY"): "Preserve `<script type="application/json" id="pd-meta">` blocks when editing existing docs. Never modify, move, or delete the pd-meta block — it tracks task lifecycle state managed by the planning workflow."
   - Bump the emergency cheat-sheet pin from `pd-v0.2.0` to `pd-v0.3.0` (line 92) to match the current release.
   - Verify: rule is clear, cheat-sheet pin matches `pd-components/dist/llms.txt` release tag, doesn't conflict with existing content.
 
-- [ ] Step D.2: Recompile to pick up planning-doc change: `make compile`.
+- [x] Step D.2: Recompile to pick up planning-doc change: `make compile`.
   - Verify: `skills/planning-doc/SKILL.md` contains the new preservation rule. All other skills unchanged.
 
-- [ ] Step D.3: End-to-end validation:
+- [x] Step D.3: End-to-end validation:
   - `make check` passes (compile + lint)
   - Compiled `skills/beta-new-task/SKILL.md` is under 15,000 chars
   - Compiled `skills/beta-new-solution/SKILL.md` is under 15,000 chars
@@ -243,20 +243,20 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
   - All `{{ skill:X }}` references resolved in compiled output (grep for `{{ skill:` returns nothing in `skills/`)
   - Verify: `grep -r '{{ skill:' skills/` returns no matches.
 
-- [ ] Step D.4: Install skills: `make install`
+- [x] Step D.4: Install skills: `make install`
   - Verify: install script runs, new skills available in agents.
 
-- [ ] Step D.5: Commit: `feat(002): phase D — planning-doc pd-meta rule + final validation`
+- [x] Step D.5: Commit: `feat(002): phase D — planning-doc pd-meta rule + final validation`
   - Verify: `make check` passes, clean git status.
 
 ## Success Criteria
-- [ ] `make compile` produces `skills/beta-new-task/`, `skills/beta-new-solution/`, `skills/beta-new-plan/` with all references (AC-1)
-- [ ] `{{ skill:X }}` resolves to skill names in compiled templates AND refs; renaming in DSL propagates (AC-2)
-- [ ] Invalid/ambiguous `{{ skill:X }}` fails compilation with clear error naming the module, skill, and unresolved reference (AC-3)
-- [ ] `grep -r '{{ skill:' skills/` returns zero matches (all directives resolved)
-- [ ] All three compiled skills are under 15,000 chars
-- [ ] `autoskill lint` passes for all new skills
-- [ ] `planning-doc` skill includes pd-meta preservation rule
+- [x] `make compile` produces `skills/beta-new-task/`, `skills/beta-new-solution/`, `skills/beta-new-plan/` with all references (AC-1)
+- [x] `{{ skill:X }}` resolves to skill names in compiled templates AND refs; renaming in DSL propagates (AC-2)
+- [x] Invalid/ambiguous `{{ skill:X }}` fails compilation with clear error naming the module, skill, and unresolved reference (AC-3)
+- [x] `grep -r '{{ skill:' skills/` returns zero matches (all directives resolved)
+- [x] All three compiled skills are under 15,000 chars
+- [x] `autoskill lint` passes for all new skills
+- [x] `planning-doc` skill includes pd-meta preservation rule
 
 ## Open Questions
 - (none)

@@ -61,6 +61,9 @@ Authoring rules that matter most (full set in llms.txt):
   mirrors the markdown workflow: the artifact stays current and readable,
   while every decision survives in its thread (and surfaces automatically in
   `<pd-decisions>`).
+- Preserve `<script type="application/json" id="pd-meta">` blocks when editing
+  existing docs. Never modify, move, or delete the pd-meta block — it tracks
+  task lifecycle state managed by the planning workflow.
 
 ## Step 3: Iterate
 
@@ -89,7 +92,7 @@ Reviewers comment in the browser and paste back an export block delimited by
 
 Classic scripts in head (never `type="module"`):
 `https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4` and
-`https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.2.0/pd-components/dist/pd.min.js` (defer).
+`https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.3.0/pd-components/dist/pd.min.js` (defer).
 
 - `<pd-doc title status pr generated>` shell · `<pd-tab name>` page
   pr: `"pending"` → placeholder; a URL → clickable badge. Update when PR opens.
