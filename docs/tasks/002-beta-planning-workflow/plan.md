@@ -48,10 +48,10 @@ All phases are sequential — each depends on the previous.
 
 ### Phase A: Compiler extension — `{{ skill:X }}` directive
 
-- [ ] Step A.1: Add `SKILL_REF_PATTERN = re.compile(r"\{\{\s*skill:(.+?)\s*\}\}")` near existing patterns in `src/compile.py`.
+- [x] Step A.1: Add `SKILL_REF_PATTERN = re.compile(r"\{\{\s*skill:(.+?)\s*\}\}")` near existing patterns in `src/compile.py`.
   - Verify: pattern compiles, matches `{{ skill:beta-new-solution }}` and `{{ skill:rich-docs/planning-doc }}` in a quick test.
 
-- [ ] Step A.2: In Phase 1 validation, after existing cross-checks (~line 128), build a global skill lookup dict mapping `skill_name -> module_name` for all modules. For each module/skill template, extract all `SKILL_REF_PATTERN` matches from template content. For each match:
+- [x] Step A.2: In Phase 1 validation, after existing cross-checks (~line 128), build a global skill lookup dict mapping `skill_name -> module_name` for all modules. For each module/skill template, extract all `SKILL_REF_PATTERN` matches from template content. For each match:
   - If contains `/`: split into `module_name/skill_name`, verify both exist. Error if not.
   - If bare name: check global lookup. If name exists in exactly one module, resolve. If name exists in multiple modules (including the current one), **error and require the qualified form** — no implicit same-module preference. If zero modules, ERROR skill not found.
 
@@ -68,7 +68,7 @@ REVIEW: Verified src/compile.py has no INDEX_PATTERN (that line lives only in th
 AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `REF_PATTERN.sub(replace_ref, content)` at src/compile.py:163 as the only existing substitution on main.
 -->
 
-- [ ] Step A.3: In Phase 2 rendering, after `REF_PATTERN.sub(replace_ref, content)` (src/compile.py:163), add:
+- [x] Step A.3: In Phase 2 rendering, after `REF_PATTERN.sub(replace_ref, content)` (src/compile.py:163), add:
   ```python
   def replace_skill_ref(m: re.Match) -> str:
       raw = m.group(1).strip()
@@ -81,7 +81,7 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
   ```
   - Verify: compile existing modules — no change (no templates use `{{ skill:X }}` yet). No regressions.
 
-- [ ] Step A.4: Change the ref copying step. Replace the `shutil.copy2` loop with:
+- [x] Step A.4: Change the ref copying step. Replace the `shutil.copy2` loop with:
   ```python
   for r in sk.refs:
       src_path = os.path.join(refs_dir, r.filename)
@@ -97,18 +97,18 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
   ```
   - Verify: `make compile` — all existing modules compile identically (no refs currently contain `{{ skill:X }}`). Diff compiled output before/after — no changes.
 
-- [ ] Step A.5: Update `src/CLAUDE.md` — add a section documenting the `{{ skill:X }}` directive:
+- [x] Step A.5: Update `src/CLAUDE.md` — add a section documenting the `{{ skill:X }}` directive:
   - Syntax: `{{ skill:<name> }}` (inline, not line-anchored)
   - Resolution: bare name resolves within module, errors on cross-module ambiguity; qualified `module/name` for explicit cross-module refs
   - Works in both SKILL.md templates and ref files
   - Verify: documentation reads clearly, no contradictions with existing content.
 
-- [ ] Step A.6: Commit: `feat(002): phase A — {{ skill:X }} compiler directive`
+- [x] Step A.6: Commit: `feat(002): phase A — {{ skill:X }} compiler directive`
   - Verify: `make compile` passes, `autoskill lint` passes on existing skills.
 
 ### Phase B: Beta-planning module — reference files
 
-- [ ] Step B.1: Create directory structure:
+- [x] Step B.1: Create directory structure:
   ```
   mkdir -p src/beta-planning/refs
   mkdir -p src/beta-planning/skills/beta-new-task
@@ -117,7 +117,7 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
   ```
   - Verify: directories exist.
 
-- [ ] Step B.2: Write `src/beta-planning/refs/beta-workflow-overview.md` — pipeline diagram using `{{ skill:X }}` directives:
+- [x] Step B.2: Write `src/beta-planning/refs/beta-workflow-overview.md` — pipeline diagram using `{{ skill:X }}` directives:
   ```
   ## Beta Workflow Overview
 
@@ -136,7 +136,7 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
   Include conventions section (task folder structure, branch naming, pd-meta status lifecycle).
   - Verify: all `{{ skill:X }}` refs use names that will exist in the module DSL.
 
-- [ ] Step B.3: Write `src/beta-planning/refs/html-boilerplate.md` — the starting HTML template agents use to create plan.html. Include:
+- [x] Step B.3: Write `src/beta-planning/refs/html-boilerplate.md` — the starting HTML template agents use to create plan.html. Include:
   - Full HTML5 doctype + head with charset, viewport, title placeholder
   - `<script type="application/json" id="pd-meta">` with schema (all fields, nulls for unknowns)
   - Tailwind CDN script tag
@@ -145,47 +145,47 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
   - A placeholder comment showing where tabs go
   - Verify: valid HTML when opened in browser (no rendering errors in console).
 
-- [ ] Step B.4: Write `src/beta-planning/refs/tab-requirements.md` — content guidelines for the Requirements tab:
+- [x] Step B.4: Write `src/beta-planning/refs/tab-requirements.md` — content guidelines for the Requirements tab:
   - Sections: Problem (`<pd-section id="problem">`), Goals (`<pd-section id="goals">`), Out of Scope (`<pd-section id="out-of-scope">`), Open Questions (`<pd-section id="open-questions">`)
   - All content in `<md>` blocks
   - No acceptance criteria (those go in Verification tab)
   - Rules: stable ids, markdown prose, keep it concise
   - Verify: guidelines are clear and consistent with solution.md §C.
 
-- [ ] Step B.5: Write `src/beta-planning/refs/tab-verification.md` — content guidelines for the Verification tab:
+- [x] Step B.5: Write `src/beta-planning/refs/tab-verification.md` — content guidelines for the Verification tab:
   - Sections: Test Strategy (`<pd-section id="test-strategy">`), optional `<pd-mermaid>` for coverage map, Acceptance Criteria (using `<pd-ac>` cards with empty `phases`/`tests` attributes), Known Gaps & Risks (`<pd-section id="verification-gaps">`)
   - Instruction: agent may scan and use any available project skills for testing/verification/assurance strategies
   - Rules: pd-ac `id` format is `AC-N`, Given/When/Then in `<md>` body, leave traceability attributes empty for Plan stage to fill
   - Verify: guidelines are clear and consistent with solution.md §D stage 2.
 
-- [ ] Step B.6: Write `src/beta-planning/refs/tab-solution.md` — content guidelines for the Solution tab:
+- [x] Step B.6: Write `src/beta-planning/refs/tab-solution.md` — content guidelines for the Solution tab:
   - Sections: Approach (`<pd-section id="approach">`), File Changes (`<pd-files>` with `<pd-file>` entries), Rejected Alternatives (`<pd-section id="rejected-alternatives">`), Decision Log (`<pd-decisions>`)
   - Rules: approach in `<md>`, file changes use `change` attribute (add/edit/delete), keep it high-level
   - Verify: guidelines are clear and consistent with solution.md §D stage 3.
 
-- [ ] Step B.7: Write `src/beta-planning/refs/tab-plan.md` — content guidelines for the Plan tab:
+- [x] Step B.7: Write `src/beta-planning/refs/tab-plan.md` — content guidelines for the Plan tab:
   - Sections: Summary (`<pd-section id="summary">`), Execution Sequence (`<pd-mermaid>`), Phase Stepper (`<pd-stepper>` with `<pd-phase>` elements), Success Criteria (`<pd-section id="success-criteria">`)
   - Rules: each pd-phase has `n`, `title`, `files` (comma-sep paths matching pd-files), `status="todo"`, body in `<md>`. Phases are atomic. Backfill `<pd-ac>` cards' `phases` and `tests` attributes in the Verification tab.
   - Verify: guidelines are clear and consistent with solution.md §E.
 
-- [ ] Step B.8: Write `src/beta-planning/refs/template-context.md` — same rules as current `src/planning-workflow/refs/template-context.md`:
+- [x] Step B.8: Write `src/beta-planning/refs/template-context.md` — same rules as current `src/planning-workflow/refs/template-context.md`:
   - Key Files (path:line with descriptions), Patterns, Related Tasks
   - Only verified codebase facts, full paths, excerpts only
   - Verify: content matches current template conventions.
 
-- [ ] Step B.9: Commit: `feat(002): phase B — beta-planning reference files`
+- [x] Step B.9: Commit: `feat(002): phase B — beta-planning reference files`
   - Verify: all 7 ref files exist in `src/beta-planning/refs/`.
 
 ### Phase C: Beta-planning module — skill templates
 
-- [ ] Step C.1: Write `src/beta-planning/skills/beta-new-task/SKILL.md`:
+- [x] Step C.1: Write `src/beta-planning/skills/beta-new-task/SKILL.md`:
   - Frontmatter: `name: beta-new-task`, description with trigger phrases
   - Link to `[references/beta-workflow-overview.md](references/beta-workflow-overview.md)`
   - Process steps: scan skills, read project docs, determine ID, derive name, create folder, create plan.html from boilerplate (per `[references/html-boilerplate.md](references/html-boilerplate.md)`), populate Requirements tab (per `[references/tab-requirements.md](references/tab-requirements.md)`), resolve open questions, hard-stop with `{{ skill:beta-new-solution }}` reference
   - Guiding principles (same as current new-task: ask don't guess, push back on unclear)
   - Verify: frontmatter valid, all `{{ skill:X }}` refs will resolve, all `[references/X]` match DSL declarations.
 
-- [ ] Step C.2: Write `src/beta-planning/skills/beta-new-solution/SKILL.md`:
+- [x] Step C.2: Write `src/beta-planning/skills/beta-new-solution/SKILL.md`:
   - Frontmatter: `name: beta-new-solution`, description with trigger phrases
   - Link to `[references/beta-workflow-overview.md](references/beta-workflow-overview.md)`
   - Process steps split into 3 stages:
@@ -195,13 +195,13 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
   - Guiding principles (same as current new-solution: simplest approach, surface tradeoffs)
   - Verify: frontmatter valid, all refs match DSL, two explicit hard-stops in process.
 
-- [ ] Step C.3: Write `src/beta-planning/skills/beta-new-plan/SKILL.md`:
+- [x] Step C.3: Write `src/beta-planning/skills/beta-new-plan/SKILL.md`:
   - Frontmatter: `name: beta-new-plan`, description with trigger phrases
   - Link to `[references/beta-workflow-overview.md](references/beta-workflow-overview.md)`
   - Process steps: read plan.html + context.md, enrich context with git history (CB3 subagent), write Plan tab (per `[references/tab-plan.md](references/tab-plan.md)`), backfill pd-ac traceability attributes in Verification tab, hard-stop telling user the planning phase is complete and to commit manually (since `/commit-task` and `/review-task` don't support beta HTML format yet)
   - Verify: frontmatter valid, all refs match DSL, backfill step is explicit.
 
-- [ ] Step C.4: Register module in `src/compile.py` `__main__` block:
+- [x] Step C.4: Register module in `src/compile.py` `__main__` block:
   ```python
   beta_planning = module("beta-planning",
       skill("beta-new-task",     refs=[ref("beta-workflow-overview.md"), ref("html-boilerplate.md"),
@@ -214,28 +214,28 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
   Add `beta_planning` to the `compile([...])` call.
   - Verify: `make compile` succeeds, `skills/beta-new-task/SKILL.md`, `skills/beta-new-solution/SKILL.md`, `skills/beta-new-plan/SKILL.md` are produced with references copied.
 
-- [ ] Step C.5: Verify `{{ skill:X }}` substitution in compiled output:
+- [x] Step C.5: Verify `{{ skill:X }}` substitution in compiled output:
   - Check `skills/beta-new-task/SKILL.md` — hard-stop message contains literal `beta-new-solution` (not the `{{ skill:... }}` tag)
   - Check `skills/beta-new-task/references/beta-workflow-overview.md` — pipeline diagram contains literal skill names (refs were substituted)
   - Verify: no `{{ skill:` patterns remain in any compiled output under `skills/beta-*/`.
 
-- [ ] Step C.6: Run `autoskill lint` on the three new skills.
+- [x] Step C.6: Run `autoskill lint` on the three new skills.
   - Verify: all pass without errors.
 
-- [ ] Step C.7: Commit: `feat(002): phase C — beta-planning skill templates`
+- [x] Step C.7: Commit: `feat(002): phase C — beta-planning skill templates`
   - Verify: `make check` passes (compile + lint).
 
 ### Phase D: Planning-doc update + final validation
 
-- [ ] Step D.1: Edit `src/rich-docs/skills/planning-doc/SKILL.md`:
+- [x] Step D.1: Edit `src/rich-docs/skills/planning-doc/SKILL.md`:
   - Add a pd-meta preservation rule in the authoring rules section (or as a new bullet near "Content is edited in place; threads are APPEND-ONLY"): "Preserve `<script type="application/json" id="pd-meta">` blocks when editing existing docs. Never modify, move, or delete the pd-meta block — it tracks task lifecycle state managed by the planning workflow."
   - Bump the emergency cheat-sheet pin from `pd-v0.2.0` to `pd-v0.3.0` (line 92) to match the current release.
   - Verify: rule is clear, cheat-sheet pin matches `pd-components/dist/llms.txt` release tag, doesn't conflict with existing content.
 
-- [ ] Step D.2: Recompile to pick up planning-doc change: `make compile`.
+- [x] Step D.2: Recompile to pick up planning-doc change: `make compile`.
   - Verify: `skills/planning-doc/SKILL.md` contains the new preservation rule. All other skills unchanged.
 
-- [ ] Step D.3: End-to-end validation:
+- [x] Step D.3: End-to-end validation:
   - `make check` passes (compile + lint)
   - Compiled `skills/beta-new-task/SKILL.md` is under 15,000 chars
   - Compiled `skills/beta-new-solution/SKILL.md` is under 15,000 chars
@@ -243,20 +243,20 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
   - All `{{ skill:X }}` references resolved in compiled output (grep for `{{ skill:` returns nothing in `skills/`)
   - Verify: `grep -r '{{ skill:' skills/` returns no matches.
 
-- [ ] Step D.4: Install skills: `make install`
+- [x] Step D.4: Install skills: `make install`
   - Verify: install script runs, new skills available in agents.
 
-- [ ] Step D.5: Commit: `feat(002): phase D — planning-doc pd-meta rule + final validation`
+- [x] Step D.5: Commit: `feat(002): phase D — planning-doc pd-meta rule + final validation`
   - Verify: `make check` passes, clean git status.
 
 ## Success Criteria
-- [ ] `make compile` produces `skills/beta-new-task/`, `skills/beta-new-solution/`, `skills/beta-new-plan/` with all references (AC-1)
-- [ ] `{{ skill:X }}` resolves to skill names in compiled templates AND refs; renaming in DSL propagates (AC-2)
-- [ ] Invalid/ambiguous `{{ skill:X }}` fails compilation with clear error naming the module, skill, and unresolved reference (AC-3)
-- [ ] `grep -r '{{ skill:' skills/` returns zero matches (all directives resolved)
-- [ ] All three compiled skills are under 15,000 chars
-- [ ] `autoskill lint` passes for all new skills
-- [ ] `planning-doc` skill includes pd-meta preservation rule
+- [x] `make compile` produces `skills/beta-new-task/`, `skills/beta-new-solution/`, `skills/beta-new-plan/` with all references (AC-1)
+- [x] `{{ skill:X }}` resolves to skill names in compiled templates AND refs; renaming in DSL propagates (AC-2)
+- [x] Invalid/ambiguous `{{ skill:X }}` fails compilation with clear error naming the module, skill, and unresolved reference (AC-3)
+- [x] `grep -r '{{ skill:' skills/` returns zero matches (all directives resolved)
+- [x] All three compiled skills are under 15,000 chars
+- [x] `autoskill lint` passes for all new skills
+- [x] `planning-doc` skill includes pd-meta preservation rule
 
 ## Open Questions
 - (none)
