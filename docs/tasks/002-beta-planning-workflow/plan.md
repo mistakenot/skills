@@ -48,10 +48,10 @@ All phases are sequential — each depends on the previous.
 
 ### Phase A: Compiler extension — `{{ skill:X }}` directive
 
-- [ ] Step A.1: Add `SKILL_REF_PATTERN = re.compile(r"\{\{\s*skill:(.+?)\s*\}\}")` near existing patterns in `src/compile.py`.
+- [x] Step A.1: Add `SKILL_REF_PATTERN = re.compile(r"\{\{\s*skill:(.+?)\s*\}\}")` near existing patterns in `src/compile.py`.
   - Verify: pattern compiles, matches `{{ skill:beta-new-solution }}` and `{{ skill:rich-docs/planning-doc }}` in a quick test.
 
-- [ ] Step A.2: In Phase 1 validation, after existing cross-checks (~line 128), build a global skill lookup dict mapping `skill_name -> module_name` for all modules. For each module/skill template, extract all `SKILL_REF_PATTERN` matches from template content. For each match:
+- [x] Step A.2: In Phase 1 validation, after existing cross-checks (~line 128), build a global skill lookup dict mapping `skill_name -> module_name` for all modules. For each module/skill template, extract all `SKILL_REF_PATTERN` matches from template content. For each match:
   - If contains `/`: split into `module_name/skill_name`, verify both exist. Error if not.
   - If bare name: check global lookup. If name exists in exactly one module, resolve. If name exists in multiple modules (including the current one), **error and require the qualified form** — no implicit same-module preference. If zero modules, ERROR skill not found.
 
@@ -68,7 +68,7 @@ REVIEW: Verified src/compile.py has no INDEX_PATTERN (that line lives only in th
 AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `REF_PATTERN.sub(replace_ref, content)` at src/compile.py:163 as the only existing substitution on main.
 -->
 
-- [ ] Step A.3: In Phase 2 rendering, after `REF_PATTERN.sub(replace_ref, content)` (src/compile.py:163), add:
+- [x] Step A.3: In Phase 2 rendering, after `REF_PATTERN.sub(replace_ref, content)` (src/compile.py:163), add:
   ```python
   def replace_skill_ref(m: re.Match) -> str:
       raw = m.group(1).strip()
@@ -81,7 +81,7 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
   ```
   - Verify: compile existing modules — no change (no templates use `{{ skill:X }}` yet). No regressions.
 
-- [ ] Step A.4: Change the ref copying step. Replace the `shutil.copy2` loop with:
+- [x] Step A.4: Change the ref copying step. Replace the `shutil.copy2` loop with:
   ```python
   for r in sk.refs:
       src_path = os.path.join(refs_dir, r.filename)
@@ -97,13 +97,13 @@ AUTHOR: Removed the INDEX_PATTERN.sub reference. Step now correctly anchors to `
   ```
   - Verify: `make compile` — all existing modules compile identically (no refs currently contain `{{ skill:X }}`). Diff compiled output before/after — no changes.
 
-- [ ] Step A.5: Update `src/CLAUDE.md` — add a section documenting the `{{ skill:X }}` directive:
+- [x] Step A.5: Update `src/CLAUDE.md` — add a section documenting the `{{ skill:X }}` directive:
   - Syntax: `{{ skill:<name> }}` (inline, not line-anchored)
   - Resolution: bare name resolves within module, errors on cross-module ambiguity; qualified `module/name` for explicit cross-module refs
   - Works in both SKILL.md templates and ref files
   - Verify: documentation reads clearly, no contradictions with existing content.
 
-- [ ] Step A.6: Commit: `feat(002): phase A — {{ skill:X }} compiler directive`
+- [x] Step A.6: Commit: `feat(002): phase A — {{ skill:X }} compiler directive`
   - Verify: `make compile` passes, `autoskill lint` passes on existing skills.
 
 ### Phase B: Beta-planning module — reference files
