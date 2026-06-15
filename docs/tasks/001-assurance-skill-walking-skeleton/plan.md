@@ -46,12 +46,12 @@ Phase A (uv + build wiring)
 
 ## Plan
 
-### Phase A: uv project + build wiring
-- [ ] Step A.1: `uv init` (or hand-write) `pyproject.toml` — project name, `requires-python = ">=3.12"`, a `[dependency-groups] dev = ["pytest"]` (or `[tool.uv]` dev-dependencies). Keep runtime deps empty (compiler is stdlib-only).
-- [ ] Step A.2: `uv lock` to generate `uv.lock`; `uv sync` to materialize the env. Verify: `uv run python -c "import sys; print(sys.version)"` runs; `uv run pytest --version` prints a version (pytest resolved).
-- [ ] Step A.3: `Makefile` — change `compile:` recipe to `uv run --no-dev python src/compile.py` (`--no-dev` keeps the stdlib-only build off the dev/pytest group); add `test:` → `uv run pytest src/assurance/tests/` (the only target that uses the dev group); add `eval-assurance: compile` → `bash src/assurance/evals/run.sh`. Leave **both** the `lint:` line (`autoskill lint`) and the `check: compile lint` target untouched (out of scope; do NOT wire `test` into `check`). Verify: `make compile` compiles all existing modules with no regression (output lists the 6 existing modules' skills; exit 0).
-- [ ] Step A.4: `scripts/pre-commit-checks.sh` — change the compile step `python3 src/compile.py` → `uv run --no-dev python src/compile.py` (so commits don't sync/require the pytest dev group). Verify: `bash scripts/pre-commit-checks.sh` reaches the compile step and it passes (other steps may need `auto` CLIs; confirm compile sub-step prints OK).
-- [ ] Step A.5: `.gitignore` — add the "ignore all but" pattern so run artifacts are ignored but per-run `report.md` (verdict carrier) stays tracked, plus `.venv/`:
+### Phase A: uv project + build wiring ✓
+- [x] Step A.1: `uv init` (or hand-write) `pyproject.toml` — project name, `requires-python = ">=3.12"`, a `[dependency-groups] dev = ["pytest"]` (or `[tool.uv]` dev-dependencies). Keep runtime deps empty (compiler is stdlib-only).
+- [x] Step A.2: `uv lock` to generate `uv.lock`; `uv sync` to materialize the env. Verify: `uv run python -c "import sys; print(sys.version)"` runs; `uv run pytest --version` prints a version (pytest resolved).
+- [x] Step A.3: `Makefile` — change `compile:` recipe to `uv run --no-dev python src/compile.py` (`--no-dev` keeps the stdlib-only build off the dev/pytest group); add `test:` → `uv run pytest src/assurance/tests/` (the only target that uses the dev group); add `eval-assurance: compile` → `bash src/assurance/evals/run.sh`. Leave **both** the `lint:` line (`autoskill lint`) and the `check: compile lint` target untouched (out of scope; do NOT wire `test` into `check`). Verify: `make compile` compiles all existing modules with no regression (output lists the 6 existing modules' skills; exit 0).
+- [x] Step A.4: `scripts/pre-commit-checks.sh` — change the compile step `python3 src/compile.py` → `uv run --no-dev python src/compile.py` (so commits don't sync/require the pytest dev group). Verify: `bash scripts/pre-commit-checks.sh` reaches the compile step and it passes (other steps may need `auto` CLIs; confirm compile sub-step prints OK).
+- [x] Step A.5: `.gitignore` — add the "ignore all but" pattern so run artifacts are ignored but per-run `report.md` (verdict carrier) stays tracked, plus `.venv/`:
   ```
   src/assurance/evals/results/**
   !src/assurance/evals/results/
@@ -61,40 +61,40 @@ Phase A (uv + build wiring)
   .venv/
   ```
   Verify: `git check-ignore src/assurance/evals/results/run-x/out.json` matches (ignored); `git check-ignore -v src/assurance/evals/results/run-x/report.md` returns nothing (tracked); `.venv/` ignored.
-- [ ] Step A.6: Commit: `chore(001): phase A - uv project bootstrap + build wiring`
+- [x] Step A.6: Commit: `chore(001): phase A - uv project bootstrap + build wiring`
 
-### Phase B: compiler extensions (directive + validation)
-- [ ] Step B.1: `src/compile.py` — add near line 48: `INDEX_PATTERN = re.compile(r"^\{\{\s*index:techniques\s*\}\}$", re.MULTILINE)`, `CARD_PREFIX = "technique-"`, `REQUIRED_CARD_KEYS = [...]` (the 13 flat keys), `REQUIRED_CARD_SECTIONS = [...]` (the 12 exact titles, in order).
-- [ ] Step B.2: Add `_validate_card(path) -> list[str]`: parse frontmatter (reuse `_parse_frontmatter`), error per missing required key; scan `## ` headings, error per missing required title and per out-of-order title. Each error string is prefixed by the caller's `tag` + card filename.
-- [ ] Step B.3: Wire `_validate_card` into Phase 1 (`~line 100-103`): for each declared ref whose filename starts with `CARD_PREFIX`, append its errors to `errors`. Verify: existing 5 modules still compile (they declare no `technique-*` refs, so no behavior change).
-- [ ] Step B.4: Add `render_techniques_index(sk, refs_dir) -> str`: select `sk.refs` with `CARD_PREFIX`, parse each card's frontmatter, render a markdown table (cols: Technique=`name`, What it catches=`summary`, Oracle=`oracle`, Archetypes=`archetypes`, Crit=`criticality-min`, Volatility=`volatility-fit`, link to `references/<file>`).
-- [ ] Step B.5: In Phase 2 render (`~line 163`, after `REF_PATTERN.sub`, before the size check): `rendered = INDEX_PATTERN.sub(lambda m: render_techniques_index(sk, refs_dir), rendered)`.
-- [ ] Step B.6: Phase-1 used-refs fix (`~line 120`): if `INDEX_PATTERN.search(template)`, add every declared `technique-*.md` filename to `used_refs` so it isn't flagged declared-but-unused.
-- [ ] Step B.7: `src/CLAUDE.md` — under Templating, document the new `{{ index:techniques }}` directive and the `technique-<slug>.md` card convention (frontmatter keys + 12 exact-title sections, validated at compile time).
-- [ ] Step B.8: Verify: `make compile` still green for all existing modules (no `assurance` module yet). `uv run --no-dev python -c "import sys; sys.path.insert(0,'src'); import compile; print(hasattr(compile,'_validate_card'), hasattr(compile,'render_techniques_index'))"` → `True True`.
-- [ ] Step B.9: Commit: `feat(001): phase B - {{ index:techniques }} directive + card-schema validation`
+### Phase B: compiler extensions (directive + validation) ✓
+- [x] Step B.1: `src/compile.py` — add near line 48: `INDEX_PATTERN = re.compile(r"^\{\{\s*index:techniques\s*\}\}$", re.MULTILINE)`, `CARD_PREFIX = "technique-"`, `REQUIRED_CARD_KEYS = [...]` (the 13 flat keys), `REQUIRED_CARD_SECTIONS = [...]` (the 12 exact titles, in order).
+- [x] Step B.2: Add `_validate_card(path) -> list[str]`: parse frontmatter (reuse `_parse_frontmatter`), error per missing required key; scan `## ` headings, error per missing required title and per out-of-order title. Each error string is prefixed by the caller's `tag` + card filename.
+- [x] Step B.3: Wire `_validate_card` into Phase 1 (`~line 100-103`): for each declared ref whose filename starts with `CARD_PREFIX`, append its errors to `errors`. Verify: existing 5 modules still compile (they declare no `technique-*` refs, so no behavior change).
+- [x] Step B.4: Add `render_techniques_index(sk, refs_dir) -> str`: select `sk.refs` with `CARD_PREFIX`, parse each card's frontmatter, render a markdown table (cols: Technique=`name`, What it catches=`summary`, Oracle=`oracle`, Archetypes=`archetypes`, Crit=`criticality-min`, Volatility=`volatility-fit`, link to `references/<file>`).
+- [x] Step B.5: In Phase 2 render (`~line 163`, after `REF_PATTERN.sub`, before the size check): `rendered = INDEX_PATTERN.sub(lambda m: render_techniques_index(sk, refs_dir), rendered)`.
+- [x] Step B.6: Phase-1 used-refs fix (`~line 120`): if `INDEX_PATTERN.search(template)`, add every declared `technique-*.md` filename to `used_refs` so it isn't flagged declared-but-unused.
+- [x] Step B.7: `src/CLAUDE.md` — under Templating, document the new `{{ index:techniques }}` directive and the `technique-<slug>.md` card convention (frontmatter keys + 12 exact-title sections, validated at compile time).
+- [x] Step B.8: Verify: `make compile` still green for all existing modules (no `assurance` module yet). `uv run --no-dev python -c "import sys; sys.path.insert(0,'src'); import compile; print(hasattr(compile,'_validate_card'), hasattr(compile,'render_techniques_index'))"` → `True True`.
+- [x] Step B.9: Commit: `feat(001): phase B - {{ index:techniques }} directive + card-schema validation`
 
-### Phase C: assurance module content + registration
-- [ ] Step C.1: Write `src/assurance/skills/assurance-strategist/SKILL.md` — frontmatter (`name`, `description` per repo description rules); body: architect identity, self-verification invariant (100% autonomy; evidence is the only trust), the four axes named, the `{{ index:techniques }}` directive line, and "read the card before prescribing." No axes-intake/composition/maturity content.
-- [ ] Step C.2: Write `src/assurance/refs/technique-unit-testing.md` — flat frontmatter with all 13 `REQUIRED_CARD_KEYS` using the pinned value formats (solution §C): `oracle: exact`, `volatility-fit: both`, `harness: ci`, `criticality-min: C1`, `cost-author: low`/`cost-maintain: low`/`cost-run: fast`, and **bare comma-separated strings (no `[...]`)** for `archetypes: algorithmic-core, crud-surface` and `pairs-with: differential-testing, mutation-testing`; `upgrade-looser`/`upgrade-stricter` as slugs (or `none`). Body: all 12 exact-title `## ` sections in order, concise but real unit-testing content. Verify: `make compile` renders the index row with clean values (no literal brackets).
-- [ ] Step C.3: `src/compile.py` `__main__` — add `assurance = module("assurance", skill("assurance-strategist", refs=[ref("technique-unit-testing.md")]))` and append `assurance` to the `compile([...])` list.
-- [ ] Step C.4: `make compile`. Verify (AC-1): `skills/assurance-strategist/SKILL.md` exists; it contains a generated markdown table row for unit-testing with a `references/technique-unit-testing.md` link; the literal `{{ index:techniques }}` is gone; the card body is NOT inlined (grep SKILL.md for a unique card section title → absent); `skills/assurance-strategist/references/technique-unit-testing.md` exists. `install.sh` lists the `assurance` module.
-- [ ] Step C.5: Verify size: compiled SKILL.md is well under 15k chars (printed by compiler).
-- [ ] Step C.6: Commit: `feat(001): phase C - assurance-strategist skill + unit-testing card`
+### Phase C: assurance module content + registration ✓
+- [x] Step C.1: Write `src/assurance/skills/assurance-strategist/SKILL.md` — frontmatter (`name`, `description` per repo description rules); body: architect identity, self-verification invariant (100% autonomy; evidence is the only trust), the four axes named, the `{{ index:techniques }}` directive line, and "read the card before prescribing." No axes-intake/composition/maturity content.
+- [x] Step C.2: Write `src/assurance/refs/technique-unit-testing.md` — flat frontmatter with all 13 `REQUIRED_CARD_KEYS` using the pinned value formats (solution §C): `oracle: exact`, `volatility-fit: both`, `harness: ci`, `criticality-min: C1`, `cost-author: low`/`cost-maintain: low`/`cost-run: fast`, and **bare comma-separated strings (no `[...]`)** for `archetypes: algorithmic-core, crud-surface` and `pairs-with: differential-testing, mutation-testing`; `upgrade-looser`/`upgrade-stricter` as slugs (or `none`). Body: all 12 exact-title `## ` sections in order, concise but real unit-testing content. Verify: `make compile` renders the index row with clean values (no literal brackets).
+- [x] Step C.3: `src/compile.py` `__main__` — add `assurance = module("assurance", skill("assurance-strategist", refs=[ref("technique-unit-testing.md")]))` and append `assurance` to the `compile([...])` list.
+- [x] Step C.4: `make compile`. Verify (AC-1): `skills/assurance-strategist/SKILL.md` exists; it contains a generated markdown table row for unit-testing with a `references/technique-unit-testing.md` link; the literal `{{ index:techniques }}` is gone; the card body is NOT inlined (grep SKILL.md for a unique card section title → absent); `skills/assurance-strategist/references/technique-unit-testing.md` exists. `install.sh` lists the `assurance` module.
+- [x] Step C.5: Verify size: compiled SKILL.md is well under 15k chars (printed by compiler).
+- [x] Step C.6: Commit: `feat(001): phase C - assurance-strategist skill + unit-testing card`
 
-### Phase D: pytest compiler tests (parallel to C, after B)
-- [ ] Step D.1: `src/assurance/tests/test_compiler.py` — helper that writes a throwaway module (skill SKILL.md with `{{ index:techniques }}` + one `technique-foo.md` card) into a **nested** `tmp_path` src tree — use `src_dir = tmp_path/"repo"/"src"`, `out_dir = tmp_path/"repo"/"skills"` — and calls `compile.compile([...], src_dir=src_dir, out_dir=out_dir)` in-process. The nested layout ensures the `install.sh` side effect (next comment) lands in a throwaway dir, never the real repo root.
+### Phase D: pytest compiler tests (parallel to C, after B) ✓
+- [x] Step D.1: `src/assurance/tests/test_compiler.py` — helper that writes a throwaway module (skill SKILL.md with `{{ index:techniques }}` + one `technique-foo.md` card) into a **nested** `tmp_path` src tree — use `src_dir = tmp_path/"repo"/"src"`, `out_dir = tmp_path/"repo"/"skills"` — and calls `compile.compile([...], src_dir=src_dir, out_dir=out_dir)` in-process. The nested layout ensures the `install.sh` side effect (next comment) lands in a throwaway dir, never the real repo root.
 
 <!-- RESOLVED(P3): in-process compile() has a side effect outside out_dir — it writes install.sh
 REVIEW: On a successful compile, compile.compile() calls _generate_install_script(modules, repo_root=os.path.dirname(src_dir)) (src/compile.py:201-202, 294-298), which writes/chmods an install.sh into the PARENT of src_dir. With src_dir=tmp_path that lands install.sh in the pytest tmp base — harmless but a surprise, and for the AC-2 success path it runs every call. Either point src_dir at a nested dir so dirname is also throwaway, or just note the artifact so the test author isn't confused when an install.sh appears. (No write to the real repo since src_dir is the temp tree — just flagging the unexpected file.)
 AUTHOR: Updated D.1 to use a nested temp layout (`tmp_path/repo/src` + `tmp_path/repo/skills`), so `_generate_install_script`'s write to `dirname(src_dir)` lands in `tmp_path/repo/install.sh` — a throwaway dir, never the real repo root. Added a note so the test author expects the install.sh artifact. Good catch confirming src_dir must never be the real `src/` in tests.
 -->
 
-- [ ] Step D.2: `test_index_regenerates` (AC-2): compile once, read the index row; rewrite the card's `summary:`; recompile; assert the index row changed and the SKILL.md source was never edited.
-- [ ] Step D.3: `test_malformed_card_missing_key` + `test_malformed_card_missing_section` (AC-3): build a card missing a required frontmatter key / a required section; assert `compile.compile(...)` raises `SystemExit` with non-zero code and `capsys` stderr names the card filename + the missing element.
-- [ ] Step D.4: `test_real_module_compiles` (AC-1 backstop, only meaningful after C): run `make compile` via subprocess or assert the committed `skills/assurance-strategist/SKILL.md` contains the generated row. (Skip/xfail-guard if C not yet merged.)
-- [ ] Step D.5: Verify: `uv run pytest src/assurance/tests/ -v` → all pass. `make test` green.
-- [ ] Step D.6: Commit: `test(001): phase D - compiler index-regen + card-validation tests`
+- [x] Step D.2: `test_index_regenerates` (AC-2): compile once, read the index row; rewrite the card's `summary:`; recompile; assert the index row changed and the SKILL.md source was never edited.
+- [x] Step D.3: `test_malformed_card_missing_key` + `test_malformed_card_missing_section` (AC-3): build a card missing a required frontmatter key / a required section; assert `compile.compile(...)` raises `SystemExit` with non-zero code and `capsys` stderr names the card filename + the missing element.
+- [x] Step D.4: `test_real_module_compiles` (AC-1 backstop, only meaningful after C): run `make compile` via subprocess or assert the committed `skills/assurance-strategist/SKILL.md` contains the generated row. (Skip/xfail-guard if C not yet merged.)
+- [x] Step D.5: Verify: `uv run pytest src/assurance/tests/ -v` → all pass. `make test` green.
+- [x] Step D.6: Commit: `test(001): phase D - compiler index-regen + card-validation tests`
 
 ### Phase E: eval harness
 - [ ] Step E.1: `cases/calculator-cli/prompt.md` (the build prompt) + an empty starting workspace convention (no fixture dir needed; document it). `graders/strategy-rubric.md` — short rubric naming the JSON dimension keys (e.g. `tests_present`, `verify_command`, `evidence`) and a 0–3 scale.
