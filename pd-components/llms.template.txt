@@ -261,11 +261,20 @@ freeform Tailwind HTML for layout (grids, flex rows).
 
 ## Merging reviewer comments
 
-Reviewers queue comments in the browser and paste an export block to you:
+Reviewers queue comments in the browser and paste an export block to you.
+The block contains inline instructions — follow them exactly. Example:
 
 ```
-=== DOC COMMENTS — paste to your agent to merge into the doc ===
+=== DOC COMMENTS ===
 doc: 021: API rate limiting
+
+INSTRUCTIONS — you MUST follow these steps in order:
+1. Merge every comment below into the HTML doc file FIRST, before responding.
+   - REPLY → append <pd-comment by="review">…</pd-comment> to the named thread.
+   - NEW → create a <pd-thread anchor="…" priority="…" title="…"> after the anchored element, containing the comment.
+2. Then respond to each comment in the same thread (append your own <pd-comment by="author">).
+   Set status="resolved" when addressed, or "rejected" with reasoning. Never edit or delete existing comments.
+
 [1] REPLY to thread "Why not sliding window?" (anchor: approach)
     Fine, but document the burst size limit.
 [2] NEW p1 comment on "Files" (anchor: files)
@@ -273,12 +282,5 @@ doc: 021: API rate limiting
 === END DOC COMMENTS ===
 ```
 
-To merge, edit the HTML source:
-- REPLY → append `<pd-comment by="review">…</pd-comment>` to the named thread.
-  If you then address it, append your own `<pd-comment by="author">` and set
-  status="resolved" (or "rejected" with reasoning). Never edit old comments.
-- NEW → create a `<pd-thread anchor="…" priority="…" title="…">` (title:
-  short summary you write) directly after the anchored element, containing the
-  comment.
-- After merging, tell the user; their browser copy clears pending comments via
-  the Clear button (localStorage — a reload after your edit shows merged state).
+After merging, tell the user; their browser copy clears pending comments via
+the Clear button (localStorage — a reload after your edit shows merged state).

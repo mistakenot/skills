@@ -41,8 +41,15 @@ export const store = {
   // planning-doc skill documents how to merge this into the HTML source.
   serialize(docTitle) {
     const lines = [
-      '=== DOC COMMENTS — paste to your agent to merge into the doc ===',
+      '=== DOC COMMENTS ===',
       `doc: ${docTitle || document.title}`,
+      '',
+      'INSTRUCTIONS — you MUST follow these steps in order:',
+      '1. Merge every comment below into the HTML doc file FIRST, before responding.',
+      '   - REPLY → append <pd-comment by="review">…</pd-comment> to the named thread.',
+      '   - NEW → create a <pd-thread anchor="…" priority="…" title="…"> after the anchored element, containing the comment.',
+      '2. Then respond to each comment in the same thread (append your own <pd-comment by="author">).',
+      '   Set status="resolved" when addressed, or "rejected" with reasoning. Never edit or delete existing comments.',
     ];
     items.forEach((it, i) => {
       if (it.kind === 'reply') {
