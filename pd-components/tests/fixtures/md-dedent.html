@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Test: md dedent</title>
+  <script src="../../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="Test: md dedent" status="draft" generated="2026-06-15">
+    <pd-tab name="Dedent">
+      <pd-section id="indented-list" title="Indented list">
+        <md>
+          - Item one
+          - Item two
+          - Item three
+        </md>
+      </pd-section>
+
+      <pd-section id="nested-deeper" title="Nested deeper">
+        <md>
+            1. First numbered
+            2. Second numbered
+            3. Third numbered
+        </md>
+      </pd-section>
+
+      <pd-section id="mixed-content" title="Mixed content">
+        <md>
+          ## A heading inside md
+
+          Some paragraph text with **bold** and `code`.
+
+          - Bullet A
+          - Bullet B
+        </md>
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

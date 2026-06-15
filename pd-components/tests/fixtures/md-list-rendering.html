@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Test: md list rendering</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="../../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="Test: md list rendering" status="draft" generated="2026-06-15">
+    <pd-tab name="Lists">
+      <pd-section id="basic-ul" title="Basic unordered list">
+        <md><script type="text/plain">
+- First item
+- Second item
+- Third item
+        </script></md>
+      </pd-section>
+
+      <pd-section id="basic-ol" title="Basic ordered list">
+        <md><script type="text/plain">
+1. Step one
+2. Step two
+3. Step three
+        </script></md>
+      </pd-section>
+
+      <pd-section id="nested-lists" title="Nested lists">
+        <md><script type="text/plain">
+- Parent item
+  - Child item A
+  - Child item B
+- Another parent
+  1. Numbered child
+  2. Numbered child
+        </script></md>
+      </pd-section>
+
+      <pd-section id="list-in-context" title="List with surrounding text">
+        <md><script type="text/plain">
+Here is some introductory text.
+
+- Alpha
+- Beta
+- Gamma
+
+And here is a conclusion.
+        </script></md>
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

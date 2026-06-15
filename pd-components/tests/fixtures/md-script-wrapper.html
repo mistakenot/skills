@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Test: md script wrapper</title>
+  <script src="../../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="Test: md script wrapper" status="draft" generated="2026-06-15">
+    <pd-tab name="Script Wrapper">
+      <pd-section id="html-tags" title="Markdown with HTML tag names">
+        <md><script type="text/plain">
+## Form requirements
+
+The form must include:
+
+- A `<textarea>` for multi-line input
+- A `<select>` dropdown for category
+- A `<script>` tag for validation logic
+- An `<iframe>` for preview
+
+Each field validates on blur.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="angle-brackets" title="Angle brackets in code">
+        <md><script type="text/plain">
+Generic types like `Array<string>` and `Map<K, V>` should render as inline code.
+
+```typescript
+function parse<T extends Node>(input: string): Result<T> {
+  return new Parser<T>().run(input);
+}
+```
+        </script></md>
+      </pd-section>
+
+      <pd-section id="plain-md" title="Plain md without wrapper">
+        <md>
+Simple content without HTML tags works fine without the script wrapper.
+
+- No angle brackets here
+- Just normal markdown
+        </md>
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

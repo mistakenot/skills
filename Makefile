@@ -1,4 +1,4 @@
-.PHONY: compile lint check install pd-components test eval-assurance
+.PHONY: compile lint check install pd-components pd-test test eval-assurance
 
 # Compiles skill source files from ./src/ into ./skills/ output.
 # Run after editing any skill source in ./src/.
@@ -14,6 +14,11 @@ install: compile
 # Run after editing pd-components/src/. See pd-components/README.md for the release/tag flow.
 pd-components:
 	cd pd-components && npm install && npm run build
+
+# Runs browser regression tests for pd-components using agent-browser.
+# Run after editing pd-components/src/ to verify nothing broke.
+pd-test:
+	bash pd-components/tests/run.sh
 
 # Lints all skills for structural and content issues.
 # Run before committing to catch problems early.

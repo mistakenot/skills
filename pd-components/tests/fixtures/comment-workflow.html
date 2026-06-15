@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Test: comment workflow</title>
+  <script src="../../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="Test: comment workflow" status="in-review" generated="2026-06-15">
+    <pd-tab name="Overview">
+      <pd-section id="approach" title="Approach">
+        <md>
+This section exists so we can test adding new comments on it.
+        </md>
+      </pd-section>
+
+      <pd-section id="details" title="Details">
+        <md>
+Another section for a second comment test.
+        </md>
+      </pd-section>
+
+      <pd-thread anchor="approach" status="unresolved" priority="p2" title="Open question">
+        <pd-comment by="review">Is this the right approach? I have concerns about scalability.</pd-comment>
+      </pd-thread>
+
+      <pd-thread anchor="approach" status="resolved" priority="p1" title="Resolved blocker">
+        <pd-comment by="review">This blocks the release.</pd-comment>
+        <pd-comment by="author">Fixed by adding the migration step.</pd-comment>
+      </pd-thread>
+    </pd-tab>
+
+    <pd-tab name="Solution">
+      <pd-section id="design" title="Design">
+        <md>
+Solution tab for testing tab badge counts.
+        </md>
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

@@ -401,3 +401,8 @@ pd-doc a { color: var(--pd-accent); }
 /* ---- markdown blocks ---- */
 
 md { display: block; }
+md ul, md ol { padding-left: 1.4rem; margin: 0.5rem 0; }
+md ul { list-style-type: disc; }
+md ol { list-style-type: decimal; }
+md ul ul { list-style-type: circle; }
+md li { margin: 0.2rem 0; }
