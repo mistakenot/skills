@@ -44,6 +44,20 @@ node planning-doc-workspace/render-check.mjs <file.html>
 
 Loads the HTML in headless Playwright, waits 2.5s, counts mounted component elements, screenshots, reports JSON. Requires the dev server to be running (rewrites `pd.min.js` src to `http://localhost:9173/preview/pd.min.js`).
 
+## Tests
+
+Browser-based regression tests live in `tests/`. Each test is a pair:
+- **`tests/fixtures/*.html`** — minimal HTML page exercising one component or behaviour
+- **`tests/playbooks/*.md`** — step-by-step `agent-browser` commands with expected outcomes
+
+Current tests: `md-dedent`, `md-script-wrapper`, `md-list-rendering`, `comment-workflow`, `sidenav`.
+
+Run them via the `/pd-test` skill (invokes `tests/SKILL.md`) or manually with `make pd-test`. Fixtures load `../../dist/pd.min.js` via relative path — no dev server needed, but you must `npm run build` first.
+
+When adding a new component, add a fixture + playbook pair. The fixture should be minimal (one component, one scenario). The playbook verifies rendered output and interactive behaviour using `agent-browser eval` to inspect the DOM.
+
+`tests/sidenav.test.mjs` is a standalone Playwright test for the side navigation — run it directly with `node tests/sidenav.test.mjs`.
+
 ## Adding a new component
 
 1. Create `src/<name>.js` — export a custom element class, register with `customElements.define`
