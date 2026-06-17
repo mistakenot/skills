@@ -188,7 +188,21 @@ class PdSection extends PdElement {
         onclick: (e) => attachComposer(this, { kind: 'new', thread: title, anchor: id }, e.target),
       }, '+ comment'),
     ]);
-    this.prepend(heading);
+
+    // summary attr → progressive disclosure. The one-line summary is the
+    // always-visible scan layer; the full body collapses into a <details>
+    // (collapsed by default, still in the DOM so agents read everything).
+    const summary = this.getAttribute('summary');
+    if (summary) {
+      const body = el('div', { class: 'pd-section-body' });
+      while (this.firstChild) body.append(this.firstChild);
+      const open = this.hasAttribute('open');
+      const details = el('details', { class: 'pd-section-collapse', open });
+      details.append(el('summary', { class: 'pd-section-more' }, 'Details'), body);
+      this.append(heading, el('p', { class: 'pd-section-summary' }, summary), details);
+    } else {
+      this.prepend(heading);
+    }
   }
 }
 

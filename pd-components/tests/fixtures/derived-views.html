@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Test: derived views</title>
+  <script src="../../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="Test: derived views" status="in-review" generated="2026-06-17">
+
+    <pd-tab name="Overview">
+      <pd-scope></pd-scope>
+
+      <pd-section id="problem" title="Problem" summary="One-line scan summary that stays visible while the body collapses.">
+        <md><script type="text/plain">
+Full problem body. This prose lives inside the collapsed Details disclosure but
+remains in the DOM for agents to read.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="criteria" title="Acceptance criteria">
+        <pd-ac id="AC-1" title="Covered criterion" phases="1,2" tests="e2e/a.spec.ts">
+          <md><script type="text/plain">- Given … - When … - Then …</script></md>
+        </pd-ac>
+        <pd-ac id="AC-2" title="Uncovered criterion" phases="4">
+          <md><script type="text/plain">- Given … - When … - Then … (no test → coverage gap)</script></md>
+        </pd-ac>
+        <pd-trace caption="Coverage"></pd-trace>
+      </pd-section>
+    </pd-tab>
+
+    <pd-tab name="Solution">
+      <pd-section id="files" title="Files">
+        <pd-files>
+          <pd-file path="src/core.ts" change="add">Core</pd-file>
+          <pd-file path="src/shared.ts" change="edit">Shared — touched by two parallel phases</pd-file>
+          <pd-file path="src/api.ts" change="edit">API</pd-file>
+          <pd-file path="e2e/a.spec.ts" change="add">E2E</pd-file>
+          <pd-file path="src/legacy.ts" change="delete">Removed</pd-file>
+        </pd-files>
+      </pd-section>
+      <pd-collapse summary="Collapsed rationale">
+        <md><script type="text/plain">Secondary detail behind a disclosure.</script></md>
+      </pd-collapse>
+    </pd-tab>
+
+    <pd-tab name="Plan">
+      <pd-section id="sequencing" title="Sequencing">
+        <pd-dag caption="Order"></pd-dag>
+      </pd-section>
+      <pd-section id="phases" title="Phases">
+        <pd-stepper>
+          <pd-phase n="1" title="Core" files="src/core.ts" status="done">
+            <md><script type="text/plain">Root phase.</script></md>
+          </pd-phase>
+          <pd-phase n="2" title="Branch A" files="src/shared.ts,src/api.ts" status="active" depends-on="1">
+            <md><script type="text/plain">Parallel with phase 3, shares src/shared.ts → conflict.</script></md>
+          </pd-phase>
+          <pd-phase n="3" title="Branch B" files="src/shared.ts" status="todo" depends-on="1">
+            <md><script type="text/plain">Parallel with phase 2, shares src/shared.ts → conflict.</script></md>
+          </pd-phase>
+          <pd-phase n="4" title="Join" files="e2e/a.spec.ts,src/legacy.ts" status="todo" depends-on="2,3">
+            <md><script type="text/plain">Depends on both branches.</script></md>
+          </pd-phase>
+        </pd-stepper>
+      </pd-section>
+    </pd-tab>
+
+  </pd-doc>
+</body>
+</html>

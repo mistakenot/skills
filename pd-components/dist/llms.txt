@@ -47,6 +47,14 @@ content. pd-* components style themselves.
 - Give every pd-section a stable, kebab-case id. Threads and deep links anchor
   to these ids; content can then be freely rewritten without orphaning its
   discussion.
+- **Prefer structured attributes over prose.** Anything a reader would scan,
+  count, or cross-reference — phase order, file changes, coverage, dependencies
+  — belongs in attributes, not sentences. The components derive visual summaries
+  (pd-scope, pd-dag, pd-trace), cross-highlighting, and consistency checks from
+  those attributes for free. Keep prose for the *why*; put the *what* in markup.
+- **Visual-first sections.** Open a section with its diagram/graph/matrix, then
+  put the explanation in a `summary=` (auto-collapsed) or `<pd-collapse>`. Don't
+  describe in prose what an attribute-driven component already shows.
 - Content is edited in place; threads are APPEND-ONLY. Never delete or rewrite
   an existing pd-comment — append a new one and update the thread's status
   attribute. Resolved threads collapse automatically in the UI; the history
@@ -82,9 +90,14 @@ Tab roles (a deliberate audience split — follow it):
 - **Plan = the recipe** to get there. Agent-consumed: planning/executing. Keep
   it self-sufficient (pd-phase already lists its files inline).
 
-### <pd-section id title>
+### <pd-section id title summary>
 Titled section with anchor link and a "+ comment" button (reviewers queue
 comments in the browser). Body is `<md>` blocks and pd-* elements.
+
+summary: optional one-line scan summary. When present, the summary shows
+always-visible and the section body collapses into a "Details" disclosure
+(add `open` to expand by default). The full body stays in the DOM for agents —
+this is the human skim layer, not a content cut. Use it on prose-heavy sections.
 
 ```html
 <pd-section id="approach" title="Approach">
@@ -154,17 +167,25 @@ for threads whose anchor equals the file path. change: add | edit | delete.
 </pd-files>
 ```
 
-### <pd-stepper> / <pd-phase n title files status>
+### <pd-stepper> / <pd-phase n title files status depends-on>
 Clickable, non-linear plan walkthrough. Selecting a phase shows its body and
 highlights its files (comma-separated paths matching pd-file paths) in every
 pd-files on the page. status: done | active | todo. Arrow keys navigate.
+
+depends-on: comma-separated phase numbers this phase must follow. Drives the
+pd-dag graph and conflict detection. Set it whenever an ordering actually
+exists — it's the structured data the graph and the linter read.
+
+Selection is shared: clicking a phase here, clicking its node in pd-dag, or
+keyboard-focusing that node all select the same phase everywhere (stepper, dag,
+and the file tree highlight stay in sync). No wiring needed — it's automatic.
 
 ```html
 <pd-stepper>
   <pd-phase n="1" title="Limiter core" files="src/gateway/limiter.ts" status="done">
     <md><script type="text/plain">Implement and unit-test the bucket…</script></md>
   </pd-phase>
-  <pd-phase n="2" title="Gateway wiring" files="src/gateway/index.ts" status="active">
+  <pd-phase n="2" title="Gateway wiring" files="src/gateway/index.ts" status="active" depends-on="1">
     <md><script type="text/plain">Apply per-route config…</script></md>
   </pd-phase>
 </pd-stepper>
@@ -234,6 +255,55 @@ phase numbers covering it; tests: comma-separated test files.
   </script></md>
 </pd-ac>
 ```
+
+### <pd-scope>
+At-a-glance summary strip, fully derived — no attributes, no authoring. Counts
+the pd-phase / pd-file / pd-ac / pd-thread elements already in the doc and
+renders tiles: phase count + done/active/todo progress bar, file count + add/
+edit/delete tally, criteria count + coverage gaps, open-thread count. Drop one
+at the top of the first tab for an instant scan-level summary.
+
+```html
+<pd-scope></pd-scope>
+```
+
+### <pd-dag caption>
+Phase dependency graph, fully derived from the pd-phase elements — no
+attributes besides an optional caption. Reads depends-on for explicit edges and
+auto-detects conflict edges (two phases share a file but neither depends on the
+other, so they aren't parallel-safe — drawn dashed + listed). Clicking or
+focusing a node selects that phase everywhere (see pd-stepper). Place it in the
+Plan tab; it replaces hand-drawn sequence diagrams.
+
+```html
+<pd-dag caption="Execution order"></pd-dag>
+```
+
+### <pd-trace caption>
+Traceability matrix, fully derived from pd-ac. Renders an AC × phase × test
+grid from each card's phases and tests attributes; rows missing a phase or a
+test are flagged as coverage gaps. No authoring — it reads data already on the
+pd-ac cards. Place it in the criteria section.
+
+```html
+<pd-trace caption="Acceptance coverage"></pd-trace>
+```
+
+### <pd-collapse summary>
+Ad-hoc disclosure wrapper. Collapsed by default (add `open` to expand); the
+summary is the scan line, the body stays in the DOM for agents. Use for long
+code, tables, or secondary rationale that isn't a whole section.
+
+```html
+<pd-collapse summary="Why token bucket (rationale)">
+  <md><script type="text/plain">…three paragraphs…</script></md>
+</pd-collapse>
+```
+
+Note — automatic Plan-tab file mirror: when a pd-files tree lives on a
+different tab from the phase controls (the usual Solution → Plan split), a
+synced read-only copy is auto-injected next to the pd-dag/pd-stepper so the
+click-through is visible in one place. Nothing to author.
 
 ### <pd-decisions title>
 Auto-generated decision log: lists every resolved/rejected thread in the doc

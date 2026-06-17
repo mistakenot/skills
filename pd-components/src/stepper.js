@@ -12,11 +12,23 @@
 
 import { PdElement, define, el } from './util.js';
 
+// Canonical phase number — the join key across pd-stepper, pd-dag and the
+// pd:phase-selected event. Falls back to 1-based position when n is absent.
+export const phaseN = (phaseEl, i) => phaseEl.getAttribute('n') || String(i + 1);
+
 class PdPhase extends PdElement {
   init() {
     // Render the phase's files inline so the Plan tab is self-sufficient for an
     // executing agent — the file-change *tree* lives on the Solution tab (the
     // end-state, human-reviewed); the Plan is the recipe.
+    const deps = (this.getAttribute('depends-on') || '').split(',').map((s) => s.trim()).filter(Boolean);
+    if (deps.length) {
+      this.append(el('div', { class: 'pd-phase-deps' }, [
+        el('span', { class: 'pd-phase-files-label' }, 'after'),
+        ...deps.map((d) => el('span', { class: 'pd-phase-dep' }, `phase ${d}`)),
+      ]));
+    }
+
     const files = (this.getAttribute('files') || '').split(',').map((s) => s.trim()).filter(Boolean);
     if (!files.length) return;
     const list = el('div', { class: 'pd-phase-files' }, [
@@ -59,10 +71,19 @@ class PdStepper extends PdElement {
       this._select(next);
     });
 
-    this._select(null);
+    // Sync the picker when another component (e.g. pd-dag) selects a phase.
+    window.addEventListener('pd:phase-selected', (e) => {
+      if (e.detail?.source === this) return;
+      const n = e.detail?.n ?? null;
+      const idx = n == null ? -1 : this._phases.findIndex((p, i) => phaseN(p, i) === String(n));
+      this._select(idx < 0 ? null : idx, false);
+    });
+
+    this._select(null, false);
   }
 
-  _select(idx) {
+  // emit=false syncs UI without re-broadcasting (avoids feedback loops).
+  _select(idx, emit = true) {
     this._selected = idx;
     this._phases.forEach((p, i) => {
       p.style.display = idx == null || i === idx ? '' : 'none';
@@ -71,9 +92,11 @@ class PdStepper extends PdElement {
     [...this._nav.children].forEach((b, i) => {
       b.setAttribute('aria-selected', (idx == null ? i === 0 : i === idx + 1) ? 'true' : 'false');
     });
-    const files = idx == null ? null
-      : (this._phases[idx].getAttribute('files') || '').split(',').map((s) => s.trim()).filter(Boolean);
-    window.dispatchEvent(new CustomEvent('pd:phase-selected', { detail: { files } }));
+    if (!emit) return;
+    const phase = idx == null ? null : this._phases[idx];
+    const n = phase ? phaseN(phase, idx) : null;
+    const files = phase ? (phase.getAttribute('files') || '').split(',').map((s) => s.trim()).filter(Boolean) : null;
+    window.dispatchEvent(new CustomEvent('pd:phase-selected', { detail: { n, files, source: this } }));
   }
 }
 

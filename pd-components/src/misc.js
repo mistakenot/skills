@@ -3,6 +3,12 @@
 //     <ul><li>Given… </li><li>When… </li><li>Then… </li></ul>
 //   </pd-ac>
 //
+// pd-collapse: ad-hoc progressive-disclosure wrapper. Collapsed by default
+// (add `open` to expand); the summary line is the scan layer, the body stays in
+// the DOM for agents. Use for long code, tables, or secondary rationale that
+// isn't a whole section.
+//   <pd-collapse summary="Rationale"> <md>…</md> </pd-collapse>
+//
 // pd-wire: wireframe placeholder box. pd-note: annotation callout.
 // Wireframe sections are otherwise freeform HTML (Tailwind welcome).
 
@@ -36,6 +42,19 @@ class PdWire extends PdElement {
 
 class PdNote extends PdElement {}
 
+class PdCollapse extends PdElement {
+  init() {
+    const summary = this.getAttribute('summary') || 'Details';
+    const open = this.hasAttribute('open');
+    const body = el('div', { class: 'pd-collapse-body' });
+    while (this.firstChild) body.append(this.firstChild);
+    const details = el('details', { class: 'pd-collapse', open });
+    details.append(el('summary', { class: 'pd-collapse-summary' }, summary), body);
+    this.append(details);
+  }
+}
+
 define('pd-ac', PdAc);
 define('pd-wire', PdWire);
 define('pd-note', PdNote);
+define('pd-collapse', PdCollapse);

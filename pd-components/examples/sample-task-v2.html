@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>021: API rate limiting (v2)</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="021: API rate limiting" status="in-review" generated="2026-06-17">
+
+    <pd-tab name="Overview">
+      <!-- Derived scan layer: counts, progress and coverage from the doc itself. -->
+      <pd-scope></pd-scope>
+
+      <pd-section id="problem" title="Problem"
+        summary="A single integration retry-storming /v1/search caused 3 incidents last quarter — we need per-client rate limiting at the gateway before opening the partner program.">
+        <md>
+Public API consumers can exhaust backend capacity. Three incidents last quarter were caused by
+a single integration retry-storming the `/v1/search` endpoint. We need per-client rate
+limiting at the gateway before opening the partner program.
+        </md>
+      </pd-section>
+
+      <pd-section id="acceptance-criteria" title="Acceptance criteria">
+        <pd-ac id="AC-1" title="Requests over the limit get 429" phases="1,2" tests="e2e/rate-limit.spec.ts">
+          <md>
+- Given a client that has used its request budget for the window
+- When it sends one more request
+- Then the gateway responds `429` with a `Retry-After` header
+          </md>
+        </pd-ac>
+        <pd-ac id="AC-2" title="Limits are configurable per plan" phases="2" tests="unit/limiter-config.spec.ts">
+          <md>
+- Given clients on the free and partner plans
+- When both exceed the free-plan limit
+- Then only the free-plan client is throttled
+          </md>
+        </pd-ac>
+
+        <pd-trace caption="Every criterion maps to a phase and a test — gaps are flagged"></pd-trace>
+      </pd-section>
+
+      <pd-decisions></pd-decisions>
+    </pd-tab>
+
+    <pd-tab name="Solution">
+      <pd-section id="approach" title="Approach">
+        <pd-mermaid caption="Request path with the limiter in place">
+flowchart LR
+  C[Client] --> G[Gateway]
+  G --> L{Bucket has tokens?}
+  L -->|yes| S[Service]
+  L -->|no| R[429 Retry-After]
+  L -.-> Redis[(Redis)]
+        </pd-mermaid>
+        <pd-collapse summary="Why token bucket (rationale)">
+          <md>
+Token-bucket limiter as gateway middleware, backed by Redis (one bucket per client key).
+Bursts up to bucket size are allowed; sustained rate is capped at the refill rate. Sliding
+window would penalize legitimate batch users; token bucket caps bursts at 50 requests, well
+under the capacity that caused the incidents.
+          </md>
+        </pd-collapse>
+      </pd-section>
+
+      <pd-thread anchor="approach" status="resolved" priority="p2" title="Why not sliding window?">
+        <pd-comment by="review">Token bucket allows bursts — is that acceptable for the search tier, given the incidents were burst-shaped?</pd-comment>
+        <pd-comment by="author">Bursts are capped at bucket size (50 requests), well under the capacity that caused the incidents. Sliding window would penalize legitimate batch users. Documented in the Approach section.</pd-comment>
+      </pd-thread>
+
+      <pd-section id="files" title="Files">
+        <pd-files>
+          <pd-file path="src/gateway/limiter.ts" change="add">Token bucket implementation</pd-file>
+          <pd-file path="src/gateway/limiter.spec.ts" change="add">Unit tests</pd-file>
+          <pd-file path="src/gateway/index.ts" change="edit">Wire limiter into the request pipeline</pd-file>
+          <pd-file path="src/config/plans.ts" change="edit">Per-plan limit configuration</pd-file>
+          <pd-file path="src/legacy/throttle.ts" change="delete">Superseded ad-hoc throttle</pd-file>
+          <pd-file path="e2e/rate-limit.spec.ts" change="add">End-to-end limit behaviour</pd-file>
+        </pd-files>
+      </pd-section>
+
+      <pd-thread anchor="src/gateway/limiter.ts" priority="p1" title="Redis failure mode unspecified">
+        <pd-comment by="review">What happens when Redis is unreachable — fail open or fail closed? This must be decided before implementation; it changes the middleware contract.</pd-comment>
+      </pd-thread>
+
+      <pd-thread anchor="files" status="rejected" priority="p3" title="Move limiter to a shared package?">
+        <pd-comment by="review">Other services may want this — extract to packages/rate-limit?</pd-comment>
+        <pd-comment by="author">Premature — only the gateway needs it today. Revisit when a second consumer appears.</pd-comment>
+      </pd-thread>
+    </pd-tab>
+
+    <pd-tab name="Plan">
+      <pd-section id="sequencing" title="Sequencing">
+        <!-- Derived from depends-on + shared files on the phases below — no hand-drawn diagram. -->
+        <pd-dag caption="Execution order — click a phase to highlight its files"></pd-dag>
+      </pd-section>
+
+      <pd-section id="phases" title="Phases">
+        <pd-stepper>
+          <pd-phase n="1" title="Limiter core" files="src/gateway/limiter.ts,src/gateway/limiter.spec.ts" status="done">
+            <md>
+Implement the token bucket against Redis with a clean interface
+(`take(key): Promise&lt;Allowed | RetryAfter&gt;`). Unit tests cover refill timing,
+burst behaviour, and concurrent takes.
+            </md>
+          </pd-phase>
+          <pd-phase n="2" title="Gateway wiring" files="src/gateway/index.ts,src/config/plans.ts" status="active" depends-on="1">
+            <md>
+Mount as middleware, resolve the client's plan to a limit config, emit `429` +
+`Retry-After`. Remove the legacy throttle.
+            </md>
+          </pd-phase>
+          <pd-phase n="3" title="E2E and rollout" files="e2e/rate-limit.spec.ts,src/legacy/throttle.ts" status="todo" depends-on="2">
+            <md>
+End-to-end tests for both ACs, then enable in staging at 10× production limits for a
+week before tightening.
+            </md>
+          </pd-phase>
+        </pd-stepper>
+      </pd-section>
+    </pd-tab>
+
+    <pd-tab name="Wireframe">
+      <pd-section id="dashboard-sketch" title="Limit dashboard sketch">
+        <p class="text-sm text-gray-500">Internal dashboard for support to inspect a client's current bucket.</p>
+        <div class="grid grid-cols-3 gap-2 max-w-2xl">
+          <pd-wire label="Client picker" h="14rem"></pd-wire>
+          <div class="col-span-2 space-y-2">
+            <pd-wire label="Bucket gauge (tokens / capacity)" h="6rem"></pd-wire>
+            <pd-wire label="Request rate chart (24h)" h="6rem"></pd-wire>
+            <pd-wire label="Recent 429s table" h="4rem"></pd-wire>
+          </div>
+        </div>
+        <pd-note>Out of scope for this task — sketch exists to validate that the limiter exposes
+        enough state (tokens, capacity, refill rate) for support tooling later.</pd-note>
+      </pd-section>
+    </pd-tab>
+
+  </pd-doc>
+</body>
+</html>

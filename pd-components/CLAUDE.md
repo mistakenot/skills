@@ -24,17 +24,13 @@ esbuild's built-in `serve()` validates the `Host` header and rejects anything th
 
 Not implemented. esbuild watch rebuilds `preview/pd.min.js` on disk; refresh the browser manually after a rebuild. The console shows rebuild output. Adding SSE-based live reload is a future improvement.
 
-## Fixture workspace
+## Fixtures
 
-Fixtures live in `../planning-doc-workspace/` (one level up from `pd-components/`). The dev server serves that directory as its root.
+**Committed examples** live in `examples/` and reference `../dist/pd.min.js` directly — no dev server needed, but you must `npm run build` first. `examples/sample-task.html` is the primary reference doc (rate-limiting scenario, full component set).
 
-Key fixtures at http://localhost:9173:
-- `/` — index page linking to all fixtures
-- `/preview/sample-task.html` — hand-built reference doc (rate-limiting scenario); the primary fixture for component dev
-- `/preview/019-playbook-retrieval-loop.html` — realistic complex example (4 phases, ~30 files, 14 threads, decision log)
-- `/preview/pd.min.js` — local bundle copy served from here; rebuilt by esbuild watch into this path
+**Dev workspace** (`../planning-doc-workspace/`, one level up) is gitignored and won't exist in a fresh clone or worktree. The dev server serves this directory and esbuild watch writes the bundle to `../planning-doc-workspace/preview/pd.min.js`. Bootstrap it by copying from `examples/` if you need a live-reload dev environment.
 
-When you build with `npm run build`, output goes to `dist/pd.min.js` (for release). The dev watch writes directly to `../planning-doc-workspace/preview/pd.min.js`.
+When you build with `npm run build`, output goes to `dist/pd.min.js` (for release).
 
 ## Headless render check
 
@@ -42,7 +38,7 @@ When you build with `npm run build`, output goes to `dist/pd.min.js` (for releas
 node planning-doc-workspace/render-check.mjs <file.html>
 ```
 
-Loads the HTML in headless Playwright, waits 2.5s, counts mounted component elements, screenshots, reports JSON. Requires the dev server to be running (rewrites `pd.min.js` src to `http://localhost:9173/preview/pd.min.js`).
+Loads the HTML in headless Playwright, waits 2.5s, counts mounted component elements, screenshots, reports JSON. Requires the dev workspace to exist and the dev server to be running (rewrites `pd.min.js` src to `http://localhost:9173/preview/pd.min.js`). For checking committed examples, use the browser tests in `tests/` instead.
 
 ## Tests
 
@@ -64,7 +60,7 @@ When adding a new component, add a fixture + playbook pair. The fixture should b
 2. Import it in `src/index.js`
 3. Add styles to `src/styles.css` scoped to the element selector
 4. Add a section to `llms.template.txt` documenting the element for agents
-5. Add usage examples to a fixture in `../planning-doc-workspace/preview/`
+5. Add a committed example to `examples/` (reference `../dist/pd.min.js`; run `npm run build` to get the bundle)
 6. Update `render-check.mjs` counts if you want headless validation for the new element
 
 ## Component architecture
