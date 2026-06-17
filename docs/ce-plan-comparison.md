@@ -1,5 +1,6 @@
 ---
 hash: "79e88fc4"
+id: "2b3e572a"
 read_when: "comparing our planning workflow to Compound Engineering, evaluating which CE features to adopt, or understanding architectural tradeoffs between single-artifact and multi-document planning approaches"
 summary: "Feature-by-feature comparison of the ce-plan (Compound Engineering) skill ecosystem with our task planning workflow: document structure, execution model, knowledge loop, and feature presence table."
 title: "Compound Engineering vs Our Planning Workflow"
