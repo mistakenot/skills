@@ -129,6 +129,30 @@ agent-browser eval "[...document.querySelectorAll('.pd-files-mirror .pd-tree-fil
 
 - **expect:** `src/api.ts,src/shared.ts`
 
+### 7. AC traceability is bidirectional
+
+Selecting phase 2 highlights the AC rows that cover it (forward):
+
+```bash
+agent-browser eval "document.querySelectorAll('pd-dag .pd-dag-node')[1].dispatchEvent(new MouseEvent('click',{bubbles:true})); [...document.querySelectorAll('pd-trace tr.pd-trace-hl')].map(r=>r.dataset.ac).sort().join(',')"
+```
+
+- **expect:** `AC-1` (AC-1 covers phases 1,2; AC-2 covers only phase 4)
+
+Clicking an AC highlights the phases and files that satisfy it (reverse):
+
+```bash
+agent-browser eval "document.getElementById('AC-1').click(); [...document.querySelectorAll('pd-dag .pd-dag-node.pd-dag-on .pd-dag-n')].map(n=>n.textContent).sort().join(',')"
+```
+
+- **expect:** `1,2` (AC-1's phases light up in the graph)
+
+```bash
+agent-browser eval "[...document.querySelectorAll('pd-files .pd-tree-file.pd-hl')].map(f=>f.dataset.path).sort().join(',')"
+```
+
+- **expect:** `src/api.ts,src/core.ts,src/shared.ts` (union of phase 1 + phase 2 files)
+
 ## Cleanup
 
 ```bash

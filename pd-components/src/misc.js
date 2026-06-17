@@ -12,21 +12,40 @@
 // pd-wire: wireframe placeholder box. pd-note: annotation callout.
 // Wireframe sections are otherwise freeform HTML (Tailwind welcome).
 
-import { PdElement, define, el } from './util.js';
+import { PdElement, define, el, filesForPhases } from './util.js';
 
 class PdAc extends PdElement {
   init() {
+    const id = this.getAttribute('id') || 'AC';
+    const phases = (this.getAttribute('phases') || '').split(',').map((s) => s.trim()).filter(Boolean);
+
     const chips = el('div', { class: 'pd-ac-chips' });
-    (this.getAttribute('phases') || '').split(',').map((s) => s.trim()).filter(Boolean)
-      .forEach((p) => chips.append(el('span', { class: 'pd-chip' }, `phase ${p}`)));
+    phases.forEach((p) => chips.append(el('span', { class: 'pd-chip' }, `phase ${p}`)));
     (this.getAttribute('tests') || '').split(',').map((s) => s.trim()).filter(Boolean)
       .forEach((t) => chips.append(el('span', { class: 'pd-chip pd-chip-test' }, t)));
 
     this.prepend(el('div', { class: 'pd-ac-head' }, [
-      el('span', { class: 'pd-chip pd-chip-id' }, this.getAttribute('id') || 'AC'),
+      el('span', { class: 'pd-chip pd-chip-id' }, id),
       el('strong', {}, this.getAttribute('title') || ''),
       chips,
     ]));
+
+    // Click an AC to highlight the phases and files that satisfy it (reverse
+    // traceability), and light up this card when its phases are selected.
+    if (phases.length) {
+      this.classList.add('pd-ac-link');
+      this.addEventListener('click', (e) => {
+        if (e.target.closest('a, button')) return;
+        window.dispatchEvent(new CustomEvent('pd:phase-selected', {
+          detail: { phases, files: filesForPhases(phases), source: this, ac: id },
+        }));
+      });
+    }
+    window.addEventListener('pd:phase-selected', (e) => {
+      const sel = new Set((e.detail?.phases || []).map(String));
+      const on = e.detail?.ac === id || (sel.size > 0 && phases.some((p) => sel.has(p)));
+      this.classList.toggle('pd-ac-hl', on);
+    });
   }
 }
 

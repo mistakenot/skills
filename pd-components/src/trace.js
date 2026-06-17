@@ -7,7 +7,7 @@
 //
 //   <pd-trace caption="Acceptance coverage"></pd-trace>
 
-import { PdElement, define, el } from './util.js';
+import { PdElement, define, el, filesForPhases } from './util.js';
 
 const list = (s) => (s || '').split(',').map((x) => x.trim()).filter(Boolean);
 
@@ -43,7 +43,13 @@ class PdTrace extends PdElement {
         ? el('td', { class: 'pd-trace-tests' }, tests.map((t) => el('code', { class: 'pd-chip pd-chip-test', title: t }, t.split('/').pop())))
         : el('td', { class: 'pd-trace-tests pd-trace-missing' }, 'none');
 
-      return el('tr', { 'data-gap': gap ? '' : null }, [
+      return el('tr', {
+        'data-gap': gap ? '' : null, 'data-ac': id, 'data-phases': ph.join(','),
+        title: 'Highlight the phases and files that satisfy this criterion',
+        onclick: () => window.dispatchEvent(new CustomEvent('pd:phase-selected', {
+          detail: { phases: ph, files: filesForPhases(ph), source: 'trace', ac: id },
+        })),
+      }, [
         el('th', { class: 'pd-trace-ac', scope: 'row' }, [
           el('span', { class: 'pd-chip pd-chip-id' }, id),
           el('span', { class: 'pd-trace-ac-title' }, title),
@@ -65,6 +71,18 @@ class PdTrace extends PdElement {
     if (gaps) fig.append(el('div', { class: 'pd-trace-summary pd-trace-missing' }, `${gaps} criterion${gaps === 1 ? '' : 'a'} with a coverage gap`));
     if (caption) fig.append(el('figcaption', {}, caption));
     this.append(fig);
+
+    // Highlight rows whose phases intersect the current selection (phase → AC),
+    // or the row whose AC was just selected.
+    window.addEventListener('pd:phase-selected', (e) => {
+      const sel = new Set((e.detail?.phases || []).map(String));
+      const ac = e.detail?.ac;
+      table.querySelectorAll('tbody tr').forEach((row) => {
+        const rowPhases = (row.dataset.phases || '').split(',').filter(Boolean);
+        const hit = (sel.size > 0 && rowPhases.some((n) => sel.has(n))) || (ac && row.dataset.ac === ac);
+        row.classList.toggle('pd-trace-hl', !!hit);
+      });
+    });
   }
 }
 

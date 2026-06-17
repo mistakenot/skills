@@ -120,7 +120,7 @@ class PdDag extends PdElement {
       g.setAttribute('data-status', p.status);
       g.setAttribute('tabindex', '0');
       g.setAttribute('role', 'button');
-      const select = () => window.dispatchEvent(new CustomEvent('pd:phase-selected', { detail: { n: p.n, files: p.files, source: this } }));
+      const select = () => window.dispatchEvent(new CustomEvent('pd:phase-selected', { detail: { phases: [p.n], files: p.files, source: this } }));
       g.addEventListener('click', select);
       g.addEventListener('focus', select);
       g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); } });
@@ -163,14 +163,14 @@ class PdDag extends PdElement {
     if (caption) fig.append(el('figcaption', {}, caption));
     this.append(fig);
 
-    // Highlight our node for the selected phase, wherever the selection came
-    // from (this graph, the stepper, keyboard focus). Keyed on phase number.
+    // Highlight our node(s) for the selected phase set, wherever the selection
+    // came from (this graph, the stepper, an AC, keyboard focus).
     window.addEventListener('pd:phase-selected', (e) => {
-      const n = e.detail?.n ?? null;
+      const sel = new Set((e.detail?.phases || []).map(String));
       svg.querySelectorAll('.pd-dag-node').forEach((node, idx) => {
-        const on = n != null && String(phases[idx].n) === String(n);
+        const on = sel.has(String(phases[idx].n));
         node.classList.toggle('pd-dag-on', on);
-        node.classList.toggle('pd-dag-off', n != null && !on);
+        node.classList.toggle('pd-dag-off', sel.size > 0 && !on);
       });
     });
   }

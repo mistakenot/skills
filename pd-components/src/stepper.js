@@ -71,12 +71,21 @@ class PdStepper extends PdElement {
       this._select(next);
     });
 
-    // Sync the picker when another component (e.g. pd-dag) selects a phase.
+    // Sync the picker when another component (pd-dag, pd-ac, pd-trace) selects
+    // phases. Highlight every involved pill; switch the shown body only for a
+    // single-phase selection (an AC can name several).
     window.addEventListener('pd:phase-selected', (e) => {
+      const sel = new Set((e.detail?.phases || []).map(String));
+      this._phases.forEach((p, i) => {
+        this._nav.children[i + 1]?.classList.toggle('pd-step-hl', sel.has(phaseN(p, i)));
+      });
       if (e.detail?.source === this) return;
-      const n = e.detail?.n ?? null;
-      const idx = n == null ? -1 : this._phases.findIndex((p, i) => phaseN(p, i) === String(n));
-      this._select(idx < 0 ? null : idx, false);
+      const phases = e.detail?.phases ?? null;
+      if (phases == null) this._select(null, false);
+      else if (phases.length === 1) {
+        const idx = this._phases.findIndex((p, i) => phaseN(p, i) === String(phases[0]));
+        this._select(idx < 0 ? null : idx, false);
+      }
     });
 
     this._select(null, false);
@@ -96,7 +105,7 @@ class PdStepper extends PdElement {
     const phase = idx == null ? null : this._phases[idx];
     const n = phase ? phaseN(phase, idx) : null;
     const files = phase ? (phase.getAttribute('files') || '').split(',').map((s) => s.trim()).filter(Boolean) : null;
-    window.dispatchEvent(new CustomEvent('pd:phase-selected', { detail: { n, files, source: this } }));
+    window.dispatchEvent(new CustomEvent('pd:phase-selected', { detail: { phases: n == null ? null : [n], files, source: this } }));
   }
 }
 

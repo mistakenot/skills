@@ -32,6 +32,14 @@ export const store = {
     persist();
   },
 
+  // Replace the auto-generated lint comments (tagged lint:true) with a fresh
+  // set, leaving reviewer-typed comments untouched. Idempotent across reloads.
+  setLint(lintItems) {
+    items = items.filter((it) => !it.lint);
+    lintItems.forEach((it) => items.push({ ...it, lint: true, ts: new Date().toISOString() }));
+    persist();
+  },
+
   clear() {
     items = [];
     persist();

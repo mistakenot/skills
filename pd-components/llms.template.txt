@@ -299,6 +299,10 @@ grid from each card's phases and tests attributes; rows missing a phase or a
 test are flagged as coverage gaps. No authoring — it reads data already on the
 pd-ac cards. Place it in the criteria section.
 
+Interactive both ways: clicking a row (or a pd-ac card) highlights the phases
+and files that satisfy that criterion; selecting a phase anywhere highlights the
+criteria it covers.
+
 ```html
 <pd-trace caption="Acceptance coverage"></pd-trace>
 ```
@@ -318,6 +322,13 @@ Note — automatic Plan-tab file mirror: when a pd-files tree lives on a
 different tab from the phase controls (the usual Solution → Plan split), a
 synced read-only copy is auto-injected next to the pd-dag/pd-stepper so the
 click-through is visible in one place. Nothing to author.
+
+Note — automatic plan lint: the doc checks its own consistency from the
+structured attributes (files in the tree no phase touches, files a phase touches
+that are missing from the tree, depends-on pointing at a missing phase, and
+dependency cycles). Findings show in a panel at the top and are queued as a
+single pending "lint" comment, so they ride the "Copy for agent" export to the
+agent. Resolve them by fixing the attributes — clean plans show no panel.
 
 ### <pd-decisions title>
 Auto-generated decision log: lists every resolved/rejected thread in the doc

@@ -425,6 +425,11 @@ pd-ac {
 .pd-ac-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .pd-ac-chips { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-left: auto; }
 pd-ac ul { margin: 0.5rem 0 0; padding-left: 1.2rem; font-size: 0.92rem; }
+pd-ac.pd-ac-link { cursor: pointer; }
+pd-ac.pd-ac-hl { border-color: var(--pd-accent); box-shadow: inset 0 0 0 1px var(--pd-accent); }
+
+/* stepper pill highlight (phases involved in an AC/selection) */
+.pd-step.pd-step-hl { border-color: var(--pd-accent); color: var(--pd-accent); }
 
 /* ---- decisions ---- */
 
@@ -526,7 +531,9 @@ pd-trace { display: block; margin: 1.25rem 0; }
 .pd-trace-ac { white-space: nowrap; }
 .pd-trace-ac-title { margin-left: 0.5rem; font-weight: 400; }
 .pd-trace-tests code { margin-right: 0.3rem; }
+.pd-trace-table tbody tr { cursor: pointer; }
 .pd-trace-table tr[data-gap] th, .pd-trace-table tr[data-gap] td { background: var(--pd-warn-bg); }
+.pd-trace-table tr.pd-trace-hl th, .pd-trace-table tr.pd-trace-hl td { background: color-mix(in srgb, var(--pd-accent) 14%, transparent); }
 .pd-trace-flag { margin-left: 0.5rem; color: var(--pd-warn); }
 .pd-trace-missing { color: var(--pd-bad); font-style: italic; }
 .pd-trace-summary { font-size: 0.82rem; margin-top: 0.5rem; }
@@ -573,6 +580,18 @@ pd-collapse { display: block; margin: 0.75rem 0; }
   font-size: 0.72rem; color: var(--pd-warn);
   background: var(--pd-warn-bg); padding: 0.05rem 0.4rem; border-radius: 0.3rem;
 }
+
+/* ---- plan lint panel ---- */
+
+.pd-lint {
+  margin: 0 0 1.5rem; padding: 0.7rem 0.95rem;
+  border: 1px solid var(--pd-warn); border-left-width: 3px;
+  border-radius: 0.5rem; background: var(--pd-warn-bg);
+}
+.pd-lint-head { font-weight: 700; font-size: 0.9rem; color: var(--pd-warn); }
+.pd-lint-list { margin: 0.4rem 0 0; padding-left: 1.2rem; font-size: 0.88rem; }
+.pd-lint-list li { margin: 0.2rem 0; }
+.pd-lint-foot { margin-top: 0.5rem; font-size: 0.78rem; color: var(--pd-muted); }
 
 /* ---- markdown blocks ---- */
 
