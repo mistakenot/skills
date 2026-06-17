@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>pd-unit preview</title>
+  <script src="../dist/pd.min.js" defer></script>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1.2rem; color: #1c1c22; }
+    h1 { font-size: 1.4rem; } h2 { font-size: 1rem; color: #6b7280; margin-top: 2rem; }
+    p.lede { color: #6b7280; }
+  </style>
+</head>
+<body>
+  <h1>&lt;pd-unit&gt; — TypeScript code-unit outline</h1>
+  <p class="lede">Built around the three things a reviewer checks first when a new class lands:
+    <strong>what is it called</strong>, <strong>what does it depend on</strong>, and
+    <strong>what is its public surface</strong>. Bodies are omitted by design.</p>
+
+  <h2>A service class</h2>
+  <pd-unit kind="service" name="RateLimiter" implements="Limiter"
+           path="src/limit/rate-limiter.ts"
+           caption="Sliding-window limiter backing the gateway 429s.">
+    <pd-dep name="redis" type="RedisClient" access="private readonly">Shared connection pool; one round-trip per check.</pd-dep>
+    <pd-dep name="clock" type="Clock" access="private readonly">Wall-clock, swapped for a fake in tests.</pd-dep>
+    <pd-dep name="config" type="RateConfig">Window size + per-key ceilings, hot-reloaded.</pd-dep>
+
+    <pd-fn sig="allow(key: string): Promise<boolean>">Core check — true if the key is under budget for the current window.</pd-fn>
+    <pd-fn sig="remaining(key: string): Promise<number>">Tokens left without consuming one.</pd-fn>
+    <pd-fn sig="reset(key: string): Promise<void>">Clears a key's window — admin/test escape hatch.</pd-fn>
+    <pd-prop sig="readonly windowMs: number">Configured window length, exposed for the Retry-After header.</pd-prop>
+  </pd-unit>
+
+  <h2>An interface (no constructor deps)</h2>
+  <pd-unit kind="interface" name="Limiter" path="src/limit/types.ts">
+    <pd-fn sig="allow(key: string): Promise<boolean>"></pd-fn>
+    <pd-fn sig="remaining(key: string): Promise<number>"></pd-fn>
+  </pd-unit>
+
+  <h2>An abstract base with lineage</h2>
+  <pd-unit kind="abstract class" name="BaseStore" extends="EventEmitter" implements="Disposable"
+           path="src/store/base.ts" lang="ts">
+    <pd-dep name="db" type="Pool<Postgres>" access="protected">Owns the transaction lifecycle for subclasses.</pd-dep>
+    <pd-dep name="logger" type="Logger">Structured, request-scoped.</pd-dep>
+
+    <pd-fn sig="abstract tableName(): string">Subclass declares its table.</pd-fn>
+    <pd-fn sig="protected tx<T>(fn: (c: Client) => Promise<T>): Promise<T>">Run fn inside a transaction; rolls back on throw.</pd-fn>
+    <pd-fn sig="dispose(): Promise<void>">Drains the pool.</pd-fn>
+  </pd-unit>
+</body>
+</html>

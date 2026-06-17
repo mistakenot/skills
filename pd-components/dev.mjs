@@ -7,8 +7,8 @@
 
 import { context } from 'esbuild';
 import { createServer } from 'http';
-import { createReadStream, statSync } from 'fs';
-import { join, extname } from 'path';
+import { createReadStream, statSync, readdirSync } from 'fs';
+import { join, extname, relative } from 'path';
 import { fileURLToPath } from 'url';
 
 const LOCAL_PORT = 9173;
@@ -35,8 +35,36 @@ const ctx = await context({
 
 await ctx.watch();
 
+// Walk the workspace for preview .html files so the index can list them without
+// hardcoding. Skips machinery (node_modules, the bundle's preview-src, the
+// index itself) and non-preview assets.
+// Depth 2 keeps it to real previews (root files, preview/*, fixtures/*,
+// iteration-1/review.html) and skips deeply-nested eval-run artifacts.
+const SKIP_DIRS = new Set(['node_modules', 'preview-src', 'evals']);
+function listPreviews(dir = WORKSPACE, depth = 0, out = []) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      if (depth < 1 && !SKIP_DIRS.has(entry.name)) listPreviews(join(dir, entry.name), depth + 1, out);
+    } else if (entry.name.endsWith('.html') && entry.name !== 'index.html') {
+      const full = join(dir, entry.name);
+      out.push({ path: '/' + relative(WORKSPACE, full), mtime: statSync(full).mtimeMs });
+    }
+  }
+  return out;
+}
+
 createServer((req, res) => {
-  let fsPath = join(WORKSPACE, req.url.split('?')[0]);
+  const urlPath = req.url.split('?')[0];
+
+  // Directory listing endpoint powering the auto-generated index.
+  if (urlPath === '/_previews.json') {
+    const items = listPreviews().sort((a, b) => b.mtime - a.mtime);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(items));
+    return;
+  }
+
+  let fsPath = join(WORKSPACE, urlPath);
   try {
     if (statSync(fsPath).isDirectory()) fsPath = join(fsPath, 'index.html');
     const mime = MIME[extname(fsPath)] ?? 'application/octet-stream';

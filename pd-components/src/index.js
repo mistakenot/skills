@@ -9,6 +9,7 @@ import './files.js';
 import './stepper.js';
 import './mermaid.js';
 import './code.js';
+import './unit.js';
 import './misc.js';
 import './scope.js';
 import './dag.js';

@@ -256,6 +256,28 @@ Prefer this over a full pd-code dump when the reader only needs the API shape.
 </pd-api>
 ```
 
+### <pd-unit kind name extends implements lang path caption> / <pd-dep name type access> / <pd-fn sig> / <pd-prop sig>
+Opinionated TypeScript code-unit outline, organised around the three things a
+reviewer checks first: (1) identity — `kind` (class|service|interface|abstract
+class|…), `name`, and `extends`/`implements` lineage; (2) constructor
+dependencies — one `<pd-dep>` per injected dependency (`name`, `type`, optional
+`access` like `private readonly`); (3) public surface — `<pd-fn>` methods and
+`<pd-prop>` properties, signature in `sig`, doc comment as text content. Bodies
+are omitted by design — the rest is inferable. Types/signatures are
+syntax-highlighted as TypeScript (override with `lang`). Prefer pd-unit over
+pd-api when outlining a TS class and the constructor dependencies matter to the
+reader; use pd-api for a language-agnostic flat symbol dump.
+
+```html
+<pd-unit kind="service" name="RateLimiter" implements="Limiter" path="src/limit/rate-limiter.ts" caption="Sliding-window limiter behind the gateway 429s.">
+  <pd-dep name="redis" type="RedisClient" access="private readonly">Shared pool; one round-trip per check.</pd-dep>
+  <pd-dep name="clock" type="Clock" access="private readonly">Wall-clock, faked in tests.</pd-dep>
+  <pd-fn sig="allow(key: string): Promise<boolean>">True if the key is under budget for the window.</pd-fn>
+  <pd-fn sig="reset(key: string): Promise<void>">Clears a key's window — admin/test escape hatch.</pd-fn>
+  <pd-prop sig="readonly windowMs: number">Window length, exposed for the Retry-After header.</pd-prop>
+</pd-unit>
+```
+
 ### <pd-ac id title phases tests>
 Acceptance-criteria card with traceability chips. phases: comma-separated
 phase numbers covering it; tests: comma-separated test files.

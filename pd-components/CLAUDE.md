@@ -81,5 +81,6 @@ When adding a new component, add a fixture + playbook pair. The fixture should b
 | `<pd-stepper>` `<pd-phase>` | `stepper.js` | Clickable phase walkthrough, broadcasts `pd:phase-selected` |
 | `<pd-mermaid>` | `mermaid.js` | Mermaid diagram renderer (bundled, no CDN fetch) |
 | `<pd-code>` `<pd-api>` `<pd-member>` | `code.js` | Syntax-highlighted code, API outlines |
+| `<pd-unit>` `<pd-dep>` `<pd-fn>` `<pd-prop>` | `unit.js` | TS code-unit outline: identity, constructor deps, public surface |
 | `<pd-ac>` `<pd-wire>` `<pd-note>` | `misc.js` | Acceptance criteria cards, wireframe placeholders |
 | `<md>` | `md.js` | Client-side markdown (marked, loaded from CDN on demand) |
