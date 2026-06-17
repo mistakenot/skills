@@ -1,6 +1,6 @@
 {
   "name": "pd-components",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "description": "Light-DOM web components for rich single-file HTML planning documents.",
