@@ -106,6 +106,14 @@ run_agent_arm_stub() {
 
   echo "  [stub] Writing canned out.json for $arm"
 
+  # Pre-populate workspace from fixture if the case provides one
+  local ws_dir="$out_dir/workspace"
+  if [ -d "$CASE_DIR/fixture" ]; then
+    cp -r "$CASE_DIR/fixture" "$ws_dir"
+  else
+    mkdir -p "$ws_dir"
+  fi
+
   if [ "$arm" = "withskill" ]; then
     cat > "$out_dir/out.json" <<'STUBEOF'
 {
@@ -115,16 +123,22 @@ run_agent_arm_stub() {
   "total_cost_usd": 0.0
 }
 STUBEOF
-    # Create a mock workspace with test artifacts for checks.sh
-    local ws_dir="$out_dir/workspace"
-    mkdir -p "$ws_dir/tests"
-    echo '#!/usr/bin/env python3\nimport sys\nprint(int(sys.argv[1]) + int(sys.argv[2]))' > "$ws_dir/calculator.py"
-    echo 'def test_add(): assert 1 + 2 == 3' > "$ws_dir/tests/test_calculator.py"
-    cat > "$ws_dir/Makefile" <<'MKEOF'
+    # Overlay mock test artifacts for non-fixture cases
+    if [ ! -d "$CASE_DIR/fixture" ]; then
+      mkdir -p "$ws_dir/tests"
+      echo '#!/usr/bin/env python3\nimport sys\nprint(int(sys.argv[1]) + int(sys.argv[2]))' > "$ws_dir/calculator.py"
+      echo 'def test_add(): assert 1 + 2 == 3' > "$ws_dir/tests/test_calculator.py"
+      cat > "$ws_dir/Makefile" <<'MKEOF'
 test:
 	echo "tests pass"
 MKEOF
-    echo '# Testing' > "$ws_dir/TESTING.md"
+      echo '# Testing' > "$ws_dir/TESTING.md"
+    else
+      # For fixture cases in stub mode, add mock test artifacts on top
+      mkdir -p "$ws_dir/tests"
+      echo 'import { describe, it, expect } from "vitest"; import { addExpense } from "../app/lib/store"; describe("addExpense", () => { it("creates an expense", () => { const e = addExpense({ description: "Test", amount: 100, category: "food", date: "2026-01-01" }); expect(e.id).toBeDefined(); }); });' > "$ws_dir/tests/store.test.ts"
+      echo '# Testing\n\nUnit tests for the store layer using vitest.' > "$ws_dir/TESTING.md"
+    fi
   else
     cat > "$out_dir/out.json" <<'STUBEOF'
 {
@@ -134,10 +148,9 @@ MKEOF
   "total_cost_usd": 0.0
 }
 STUBEOF
-    # Create a mock workspace without test artifacts
-    local ws_dir="$out_dir/workspace"
-    mkdir -p "$ws_dir"
-    echo '#!/usr/bin/env python3\nimport sys\nprint(int(sys.argv[1]) + int(sys.argv[2]))' > "$ws_dir/calculator.py"
+    if [ ! -d "$CASE_DIR/fixture" ]; then
+      echo '#!/usr/bin/env python3\nimport sys\nprint(int(sys.argv[1]) + int(sys.argv[2]))' > "$ws_dir/calculator.py"
+    fi
   fi
 }
 
@@ -162,11 +175,28 @@ run_agent_arm_live() {
     echo "  [live] Skill installed at $CFG/skills/assurance-strategist/"
   fi
 
+  # Pre-populate workspace from fixture if the case provides one
+  if [ -d "$CASE_DIR/fixture" ]; then
+    cp -r "$CASE_DIR/fixture/." "$WS/"
+    echo "  [live] Fixture copied to $WS"
+  fi
+  if [ -f "$CASE_DIR/setup.sh" ]; then
+    echo "  [live] Running setup.sh..."
+    ( cd "$WS" && bash "$CASE_DIR/setup.sh" ) 2>&1 | tail -5
+  fi
+
   echo "  [live] Running $arm arm (workspace: $WS)"
 
   # Run the agent
   local prompt
   prompt=$(cat "$CASE_DIR/prompt.md")
+
+  # The with-skill arm is instructed to invoke the skill. This eval judges the
+  # quality of the skill's guidance, not the model's organic routing to it — the
+  # baseline arm has no such skill and proceeds with its default approach.
+  if [ "$arm" = "withskill" ]; then
+    prompt="$prompt"$'\n\n'"Before you begin, invoke the assurance-strategist skill (run /assurance-strategist) and follow its guidance throughout this task."
+  fi
 
   ( cd "$WS" && CLAUDE_CONFIG_DIR="$CFG" claude -p "$prompt" \
       --output-format stream-json \

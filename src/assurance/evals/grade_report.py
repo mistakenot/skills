@@ -207,12 +207,25 @@ def render_report(run_dir: Path, case: str = "") -> str:
     lines.append("")
 
     # Gotcha probes (see graders/gotchas.md). A True value is a defect.
-    gotcha_checks = ["g_fake_pbt", "g_separate_pbt_layer", "g_nondeterminism_unmanaged", "g_band_boundaries_absent"]
+    gotcha_checks = [
+        "g_fake_pbt",
+        "g_separate_pbt_layer",
+        "g_nondeterminism_unmanaged",
+        "g_band_boundaries_absent",
+        "g_no_server_tests",
+        "g_no_component_tests",
+        "g_e2e_without_unit",
+        "g_no_test_framework",
+    ]
     gotcha_labels = {
         "g_fake_pbt": "G1 Fake PBT (claims properties, no PBT library)",
         "g_separate_pbt_layer": "G2 Over-prescribed property layer",
         "g_nondeterminism_unmanaged": "G3 Randomness without determinism",
-        "g_band_boundaries_absent": "G4 Band boundaries absent from tests (uk-tax-calculator only)",
+        "g_band_boundaries_absent": "G4 Band boundaries absent from tests",
+        "g_no_server_tests": "G5 No server/store function tests",
+        "g_no_component_tests": "G6 No component-level tests",
+        "g_e2e_without_unit": "G7 E2E without unit/component layer",
+        "g_no_test_framework": "G8 No test framework configured",
     }
 
     def fmt_gotcha(sc, key):
