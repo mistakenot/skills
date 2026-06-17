@@ -3,6 +3,7 @@
 ```markdown
 ---
 workflow: mini
+status: draft   # lifecycle: draft → pending → executing → complete
 ---
 
 > **Mini-task** — compressed workflow. Single plan file, no separate requirements/solution/context docs.

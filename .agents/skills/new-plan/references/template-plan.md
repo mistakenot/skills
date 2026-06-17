@@ -2,6 +2,7 @@
 
 ```markdown
 ---
+status: draft   # lifecycle: draft → pending → executing → complete
 epic: path/to/epic.md  # optional — only if this task belongs to an epic
 ---
 

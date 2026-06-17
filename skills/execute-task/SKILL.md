@@ -35,3 +35,9 @@ See [references/commit-conventions.md](references/commit-conventions.md) for com
 ## PR Body Template
 
 See [references/template-pr-body.md](references/template-pr-body.md) for the PR body template.
+
+## Task Status
+
+This is the worker stage of the lifecycle: advance the task to `complete` when
+opening the PR. See [references/task-status.md](references/task-status.md) — the
+per-workflow executor refs above carry out this step in their "Open PR" section.
