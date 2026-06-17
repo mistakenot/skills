@@ -18,24 +18,6 @@
   --pd-neutral-bg: #f3f4f6;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --pd-bg: #111318;
-    --pd-fg: #e7e7ea;
-    --pd-muted: #9ca3af;
-    --pd-border: #2c2f36;
-    --pd-surface: #191c22;
-    --pd-accent: #818cf8;
-    --pd-ok: #4ade80;
-    --pd-ok-bg: #14532d40;
-    --pd-warn: #fbbf24;
-    --pd-warn-bg: #78350f40;
-    --pd-bad: #f87171;
-    --pd-bad-bg: #7f1d1d40;
-    --pd-neutral-bg: #1f2937;
-  }
-}
-
 /* ---- document shell ---- */
 
 body:has(> pd-doc), body:has(pd-doc) {
@@ -77,6 +59,45 @@ pd-doc {
 
 pd-tab { display: block; }
 
+/* ---- side navigation ---- */
+
+.pd-doc-body { min-width: 0; }
+.pd-sidenav { display: none; }
+
+@media (min-width: 80rem) {
+  pd-doc.pd-has-sidenav {
+    display: flex;
+    gap: 0 2rem;
+    max-width: 74rem;
+  }
+  .pd-doc-body { flex: 1; }
+  .pd-sidenav {
+    display: block;
+    flex: 0 0 12rem;
+    position: sticky;
+    top: 4rem;
+    align-self: flex-start;
+    max-height: calc(100vh - 6rem);
+    overflow-y: auto;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    padding-top: 1rem;
+  }
+  .pd-sidenav-link {
+    display: block;
+    padding: 0.3rem 0 0.3rem 0.75rem;
+    color: var(--pd-muted);
+    text-decoration: none;
+    border-left: 2px solid var(--pd-border);
+  }
+  .pd-sidenav-link:hover { color: var(--pd-fg); }
+  .pd-sidenav-link.pd-active {
+    color: var(--pd-accent);
+    border-left-color: var(--pd-accent);
+    font-weight: 500;
+  }
+}
+
 .pd-tabnav {
   display: flex; gap: 0.25rem; flex-wrap: wrap;
   border-bottom: 1px solid var(--pd-border);
@@ -108,7 +129,7 @@ pd-tab { display: block; }
 
 /* ---- sections ---- */
 
-pd-section { display: block; margin: 1.75rem 0; }
+pd-section { display: block; margin: 1.75rem 0; scroll-margin-top: 3.5rem; }
 .pd-section-head { display: flex; align-items: center; gap: 0.6rem; }
 .pd-section-head h2 { font-size: 1.15rem; margin: 0 0 0.5rem; letter-spacing: -0.01em; }
 .pd-anchor { color: var(--pd-border); text-decoration: none; }
@@ -328,7 +349,7 @@ pd-api { display: block; margin: 1rem 0; border: 1px solid var(--pd-border); bor
 .pd-member-sig { font-family: ui-monospace, monospace; font-size: 0.82rem; background: none; padding: 0; display: block; overflow-x: auto; }
 .pd-member-note { color: var(--pd-muted); font-size: 0.84rem; margin-top: 0.15rem; }
 
-/* ---- highlight.js theme, keyed to pd variables (light/dark aware) ---- */
+/* ---- highlight.js theme, keyed to pd variables ---- */
 
 .hljs-comment, .hljs-quote { color: var(--pd-muted); font-style: italic; }
 .hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-section, .hljs-built_in { color: var(--pd-accent); }

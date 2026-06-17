@@ -1,6 +1,5 @@
 // pd-mermaid: renders mermaid source via beautiful-mermaid (bundled — no
-// extra network fetch). Theme colors come from the pd CSS variables so
-// diagrams follow light/dark mode, and re-render live on scheme change.
+// extra network fetch). Theme colors come from the pd CSS variables.
 //
 // beautiful-mermaid supports: flowchart/graph, sequenceDiagram,
 // stateDiagram(-v2), classDiagram, erDiagram, xychart-beta. Anything else
@@ -25,9 +24,6 @@ class PdMermaid extends PdElement {
     this._source = this.textContent.trim();
     this.textContent = '';
     this._render();
-
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    mq.addEventListener?.('change', () => this._render());
   }
 
   _render() {

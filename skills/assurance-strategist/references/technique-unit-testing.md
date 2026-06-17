@@ -57,7 +57,7 @@ Heuristics the architect embeds in the prescription so implementing agents can f
 
 1. **Public API surface:** every exported function/method gets at least one happy-path test and one error-path test.
 2. **Branch coverage scan:** each conditional branch is a candidate test case. Look for `if/else`, `switch/case`, ternary expressions, early returns, and guard clauses.
-3. **Boundary values:** for numeric inputs, test at 0, 1, -1, max, min, and just outside valid ranges. For strings, test empty, single-char, and maximum-length. For collections, test empty, single-element, and large.
+3. **Boundary values:** for numeric inputs, test at 0, 1, -1, max, min, and just outside valid ranges. For strings, test empty, single-char, and maximum-length. For collections, test empty, single-element, and large. For **partitioned domains** — functions with multiple thresholds that switch behavior (tax bands, pricing tiers, rate brackets, permission levels) — the rule extends: test at threshold−1, threshold, threshold+1 for *each* threshold, not just the outer bounds. A domain with N thresholds needs at least 2N+1 boundary probes. Collect these as a named constant list (e.g. `BOUNDARY_INCOMES`, `BAND_EDGES`) and reuse that list across every invariant test — this ensures all invariants are verified at every boundary with no duplication of the enumeration.
 4. **Error paths:** every `throw`, `raise`, or error return is a test case. Verify the error type/message, not just that "an error occurs."
 5. **Regression anchoring:** every bug fix gets a test that reproduces the bug before the fix and passes after. This test is the unit's memory — it prevents the exact recurrence.
 6. **Data transformation chains:** if a function transforms data through multiple steps, test the end-to-end transformation and at least one intermediate step where logic is non-trivial.
@@ -94,7 +94,7 @@ The architect writes these into the generated artifacts so implementing agents c
 
 - [ ] Every public function/method has at least one test exercising the happy path.
 - [ ] Every error/exception path has a test verifying the error type and message.
-- [ ] Boundary values are tested for numeric and collection inputs.
+- [ ] Boundary values are tested for numeric and collection inputs; for partitioned domains, ±1 around each threshold is verified for every invariant test, collected into a shared named list.
 - [ ] No test mocks the unit under test — only its dependencies.
 - [ ] Every test has a descriptive name stating the scenario and expected outcome.
 - [ ] Every assertion includes a failure message or uses a framework that provides one automatically.

@@ -21,6 +21,7 @@ class PdDoc extends PdElement {
     this._initTabs(header);
     this._initFooter();
     this._initExportBar(title);
+    this._initSideNav();
   }
 
   _initPrLink(header) {
@@ -82,6 +83,7 @@ class PdDoc extends PdElement {
     if (!location.hash.startsWith('#tab:') || decodeURIComponent(location.hash.slice(5)) !== name) {
       history.replaceState(null, '', `#tab:${encodeURIComponent(name)}`);
     }
+    this._updateSideNav();
   }
 
   _initFooter() {
@@ -116,6 +118,57 @@ class PdDoc extends PdElement {
     };
     window.addEventListener('pd:pending-changed', refresh);
     refresh();
+  }
+
+  _initSideNav() {
+    const body = el('div', { class: 'pd-doc-body' });
+    while (this.firstChild) body.append(this.firstChild);
+    const nav = el('nav', { class: 'pd-sidenav' });
+    this.append(nav, body);
+    this.classList.add('pd-has-sidenav');
+    this._sideNav = nav;
+
+    this._sideNavObs = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) this._highlightNavLink(e.target.id);
+      }
+    }, { rootMargin: '-80px 0px -60% 0px' });
+
+    this._updateSideNav();
+  }
+
+  _updateSideNav() {
+    const nav = this._sideNav;
+    if (!nav) return;
+    nav.innerHTML = '';
+    this._sideNavObs.disconnect();
+
+    const root = this._tabs
+      ? this._tabs.find((t) => t.style.display !== 'none')
+      : this;
+    if (!root) return;
+
+    for (const sec of root.querySelectorAll('pd-section[title]')) {
+      if (!sec.id) continue;
+      const link = el('a', {
+        class: 'pd-sidenav-link',
+        href: `#${sec.id}`,
+        onclick(e) {
+          e.preventDefault();
+          sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        },
+      }, sec.getAttribute('title'));
+      link.dataset.target = sec.id;
+      nav.append(link);
+      this._sideNavObs.observe(sec);
+    }
+  }
+
+  _highlightNavLink(id) {
+    if (!this._sideNav) return;
+    for (const l of this._sideNav.querySelectorAll('.pd-sidenav-link')) {
+      l.classList.toggle('pd-active', l.dataset.target === id);
+    }
   }
 }
 
