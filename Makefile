@@ -1,4 +1,4 @@
-.PHONY: compile lint check install pd-components pd-dev pd-test test eval-assurance
+.PHONY: compile lint check install pd-components pd-dev pd-test test eval-assurance release
 
 # Compiles skill source files from ./src/ into ./skills/ output.
 # Run after editing any skill source in ./src/.
@@ -14,6 +14,13 @@ install: compile
 # Run after editing pd-components/src/. See pd-components/README.md for the release/tag flow.
 pd-components:
 	cd pd-components && npm install && npm run build
+
+# Releases pd-components: bump version, build, commit, tag, push, purge the CDN
+# cache, and verify the tag serves the new bundle. Run `make pd-test` first.
+# Usage: make release VERSION=0.5.0
+release:
+	@test -n "$(VERSION)" || { echo "usage: make release VERSION=x.y.z"; exit 1; }
+	bash pd-components/release.sh $(VERSION)
 
 # Starts the pd-components dev server with live reload + tailscale serve on port 8743.
 # Open http://localhost:8766 locally or the tailscale URL printed on startup.

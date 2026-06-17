@@ -22,12 +22,28 @@ npm run build   # → dist/pd.min.js + dist/llms.txt
 
 Docs pin an exact git tag; `llms.txt` on `@main` tells agents the current one.
 
-1. Bump `version` in `package.json`.
-2. `npm run build` (stamps version + tag into the bundle and llms.txt).
-3. Commit, then tag and push:
-   `git tag pd-v<version> && git push origin main pd-v<version>`
+```bash
+make pd-test                 # regression-test first
+make release VERSION=0.5.0   # bump, build, commit, tag, push, purge, verify
+```
 
-CDN URLs (jsDelivr caches tags immutably; `@main` refreshes ~12h):
+`make release` (→ `release.sh`) runs the whole flow: bumps `package.json`,
+builds (stamping the version + tag into the bundle and `llms.txt`), commits,
+tags `pd-v<version>`, pushes `main` + tag, purges the `@main` CDN cache, and
+verifies the tag serves the new bundle. It refuses to reuse an existing tag or
+run on a dirty / non-`main` tree.
+
+**Two gotchas it exists to prevent:**
+- **Tags are immutable on jsDelivr.** Rebuilding under the same version does
+  nothing for clients — you must *bump the version*. (The script enforces this.)
+- **New docs inherit their tag from `llms.txt` on the `@main` path, which caches
+  ~12h.** Without a purge, freshly generated docs keep pinning the *old* tag for
+  up to ~12h. (The script purges it, so new docs pin the new tag immediately.)
+
+Existing docs stay frozen on their pinned tag by design — bump a doc's
+`@pd-v<old>` to `@pd-v<new>` in its `<script>` src only when you want it to move.
+
+CDN URLs (tags immutable; `@main` refreshes ~12h or on purge):
 
 ```
 https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v<version>/pd-components/dist/pd.min.js
