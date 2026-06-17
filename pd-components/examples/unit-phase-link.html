@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>pd-unit ↔ phase highlighting</title>
+  <script src="../dist/pd.min.js" defer></script>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; max-width: 820px; margin: 2rem auto; padding: 0 1.2rem; color: #1c1c22; }
+    h1 { font-size: 1.3rem; } p.lede { color: #6b7280; }
+  </style>
+</head>
+<body>
+  <h1>Click a phase — the code units it touches light up</h1>
+  <p class="lede">The phase's <code>files</code> list joins to each <code>&lt;pd-unit path&gt;</code>.
+    Selecting a phase highlights its units and dims the rest; "All" clears it.</p>
+
+  <pd-stepper>
+    <pd-phase n="1" title="Limiter core" files="src/limit/rate-limiter.ts" status="done">
+      Implement the sliding-window limiter and its config type.
+    </pd-phase>
+    <pd-phase n="2" title="Storage" files="src/store/base.ts,src/store/redis-store.ts" status="todo">
+      Pull persistence behind a base store.
+    </pd-phase>
+    <pd-phase n="3" title="Wire-up" files="src/limit/types.ts" status="todo">
+      Expose the public Limiter interface to the gateway.
+    </pd-phase>
+  </pd-stepper>
+
+  <pd-unit kind="service" name="RateLimiter" implements="Limiter" path="src/limit/rate-limiter.ts">
+    <pd-dep name="redis" type="RedisClient" access="private readonly">Shared pool; one round-trip per check.</pd-dep>
+    <pd-dep name="clock" type="Clock" access="private readonly">Wall-clock, faked in tests.</pd-dep>
+    <pd-fn sig="allow(key: string): Promise<boolean>">True if the key is under budget.</pd-fn>
+    <pd-prop sig="readonly windowMs: number">Exposed for the Retry-After header.</pd-prop>
+  </pd-unit>
+
+  <pd-unit kind="abstract class" name="BaseStore" extends="EventEmitter" path="src/store/base.ts">
+    <pd-dep name="db" type="Pool<Postgres>" access="protected">Owns the transaction lifecycle.</pd-dep>
+    <pd-fn sig="abstract tableName(): string">Subclass declares its table.</pd-fn>
+  </pd-unit>
+
+  <pd-unit kind="interface" name="Limiter" path="src/limit/types.ts">
+    <pd-fn sig="allow(key: string): Promise<boolean>"></pd-fn>
+  </pd-unit>
+</body>
+</html>

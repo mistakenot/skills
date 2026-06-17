@@ -397,7 +397,10 @@ pd-api { display: block; margin: 1rem 0; border: 1px solid var(--pd-border); bor
 
 /* ---- TS code-unit outline (pd-unit) ---- */
 
-pd-unit { display: block; margin: 1rem 0; border: 1px solid var(--pd-border); border-radius: 0.5rem; overflow: hidden; }
+pd-unit { display: block; margin: 1rem 0; border: 1px solid var(--pd-border); border-radius: 0.5rem; overflow: hidden; transition: opacity 0.15s, box-shadow 0.15s; }
+pd-unit.pd-hl { box-shadow: 0 0 0 2px var(--pd-warn); border-color: var(--pd-warn); }
+pd-unit.pd-hl .pd-unit-head { background: var(--pd-warn-bg); }
+pd-unit.pd-dim { opacity: 0.4; }
 .pd-unit-head {
   display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
   padding: 0.5rem 0.8rem; background: var(--pd-surface); border-bottom: 1px solid var(--pd-border);

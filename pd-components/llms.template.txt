@@ -268,6 +268,11 @@ syntax-highlighted as TypeScript (override with `lang`). Prefer pd-unit over
 pd-api when outlining a TS class and the constructor dependencies matter to the
 reader; use pd-api for a language-agnostic flat symbol dump.
 
+`path` doubles as a join key: selecting a phase in pd-stepper (or pd-dag /
+pd-ac) highlights every pd-unit whose `path` is in that phase's `files` list,
+the same way pd-files rows light up. Give a unit the same path string the phase
+uses to wire the two together — no extra attribute needed.
+
 ```html
 <pd-unit kind="service" name="RateLimiter" implements="Limiter" path="src/limit/rate-limiter.ts" caption="Sliding-window limiter behind the gateway 429s.">
   <pd-dep name="redis" type="RedisClient" access="private readonly">Shared pool; one round-trip per check.</pd-dep>

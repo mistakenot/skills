@@ -100,6 +100,19 @@ class PdUnit extends PdElement {
     if (caption) this.append(el('div', { class: 'pd-unit-caption' }, caption));
     if (depsSection) this.append(depsSection);
     if (apiSection) this.append(apiSection);
+
+    // Join on path with the file-change highlighting: selecting a phase lights
+    // up the units living in the files that phase touches (same mechanism as
+    // pd-files — the phase's `files` list is the shared key).
+    if (path) {
+      window.addEventListener('pd:phase-selected', (e) => {
+        const phaseFiles = e.detail?.files;
+        this.classList.remove('pd-hl', 'pd-dim');
+        if (phaseFiles && phaseFiles.length) {
+          this.classList.add(phaseFiles.includes(path) ? 'pd-hl' : 'pd-dim');
+        }
+      });
+    }
   }
 }
 
