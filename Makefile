@@ -1,4 +1,4 @@
-.PHONY: compile lint check install pd-components pd-test test eval-assurance
+.PHONY: compile lint check install pd-components pd-dev pd-test test eval-assurance
 
 # Compiles skill source files from ./src/ into ./skills/ output.
 # Run after editing any skill source in ./src/.
@@ -14,6 +14,11 @@ install: compile
 # Run after editing pd-components/src/. See pd-components/README.md for the release/tag flow.
 pd-components:
 	cd pd-components && npm install && npm run build
+
+# Starts the pd-components dev server with live reload + tailscale serve on port 8743.
+# Open http://localhost:8766 locally or the tailscale URL printed on startup.
+pd-dev:
+	bash pd-components/dev.sh
 
 # Runs browser regression tests for pd-components using agent-browser.
 # Run after editing pd-components/src/ to verify nothing broke.
