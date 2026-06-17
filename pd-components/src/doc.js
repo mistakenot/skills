@@ -19,9 +19,65 @@ class PdDoc extends PdElement {
 
     this._initPrLink(header);
     this._initTabs(header);
+    this._initStatusBar();
     this._initFooter();
     this._initExportBar(title);
     this._initSideNav();
+  }
+
+  // Full-width banner that reflects the plan's lifecycle. The status attribute
+  // declares the stage; the banner overlays derived signals — phase progress
+  // when executing, and an automatic "blocked" state when unresolved p1 threads
+  // exist. Recomputes on status changes and on a pd:status-refresh event.
+  _initStatusBar() {
+    const label = el('span', { class: 'pd-sb-label' });
+    const bar = el('div', { class: 'pd-statusbar' }, [label]);
+    bar.addEventListener('click', () => {
+      const t = this._statusJumpTarget;
+      if (!t) return;
+      const tab = t.closest('pd-tab');
+      if (tab && this._tabs) this._select(tab.getAttribute('name'));
+      t.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    document.body.append(bar);
+    document.body.classList.add('pd-has-statusbar');
+    this._statusBar = bar;
+    this._statusLabel = label;
+
+    const refresh = () => this._renderStatusBar(this._computeStatus());
+    new MutationObserver(refresh).observe(this, { attributes: true, attributeFilter: ['status'] });
+    window.addEventListener('pd:status-refresh', refresh);
+    refresh();
+  }
+
+  _computeStatus() {
+    const status = (this.getAttribute('status') || 'draft').toLowerCase();
+    const open = [...this.querySelectorAll('pd-thread')]
+      .filter((t) => { const s = t.getAttribute('status'); return !s || s === 'unresolved'; });
+
+    // Blocked overrides every stage while any comment thread is unresolved.
+    if (open.length || status === 'blocked') {
+      const n = open.length;
+      return { kind: 'blocked', blockers: open, label: n ? `Blocked — ${n} open comment thread${n === 1 ? '' : 's'}` : 'Blocked' };
+    }
+    // Lifecycle stage: draft → pending → executing → complete.
+    if (['complete', 'merged', 'shipped', 'done'].includes(status)) {
+      return { kind: 'complete', label: 'Complete' };
+    }
+    if (status === 'executing') {
+      return { kind: 'executing', label: 'Executing' };
+    }
+    const labels = { draft: 'Draft', pending: 'Pending', planning: 'Planning', 'in-review': 'In review', approved: 'Approved' };
+    return { kind: 'stage', status, label: labels[status] || status };
+  }
+
+  _renderStatusBar(s) {
+    const bar = this._statusBar;
+    bar.dataset.kind = s.kind;
+    if (s.status) bar.dataset.status = s.status; else delete bar.dataset.status;
+    this._statusLabel.textContent = s.label;
+    this._statusJumpTarget = s.kind === 'blocked' ? (s.blockers && s.blockers[0]) : null;
+    bar.classList.toggle('pd-sb-clickable', !!this._statusJumpTarget);
   }
 
   _initPrLink(header) {

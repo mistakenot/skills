@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>039: Webhook retries</title>
+  <script src="../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <!-- status is "executing", but the open p1 thread below auto-derives a red "blocked" banner. -->
+  <pd-doc title="039: Webhook retries" status="executing" pr="https://github.com/org/repo/pull/39" generated="2026-06-17">
+    <pd-tab name="Overview">
+      <pd-scope></pd-scope>
+      <pd-section id="problem" title="Problem"
+        summary="Failed webhook deliveries are dropped; adding retries with backoff. Work is underway but blocked on a delivery-semantics decision.">
+        <md><script type="text/plain">
+Declared executing — the banner is red because an unresolved p1 thread blocks progress.
+        </script></md>
+      </pd-section>
+    </pd-tab>
+    <pd-tab name="Plan">
+      <pd-section id="phases" title="Phases">
+        <pd-dag caption="Order"></pd-dag>
+        <pd-stepper>
+          <pd-phase n="1" title="Retry queue" files="src/webhooks/queue.ts" status="done">
+            <md><script type="text/plain">Done.</script></md>
+          </pd-phase>
+          <pd-phase n="2" title="Backoff policy" files="src/webhooks/backoff.ts" status="active" depends-on="1">
+            <md><script type="text/plain">Blocked on the question below.</script></md>
+          </pd-phase>
+          <pd-phase n="3" title="Dead-letter sink" files="src/webhooks/dlq.ts" status="todo" depends-on="2">
+            <md><script type="text/plain">Pending.</script></md>
+          </pd-phase>
+        </pd-stepper>
+      </pd-section>
+
+      <pd-thread anchor="phases" priority="p1" title="At-least-once or exactly-once delivery?">
+        <pd-comment by="review">Retries imply at-least-once — do consumers dedupe, or do we need an idempotency key? This changes the backoff + DLQ design and must be settled before phase 2 continues.</pd-comment>
+      </pd-thread>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

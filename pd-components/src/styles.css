@@ -16,7 +16,53 @@
   --pd-bad: #b91c1c;
   --pd-bad-bg: #fee2e2;
   --pd-neutral-bg: #f3f4f6;
+  --pd-sb-h: 30px;
 }
+
+/* ---- status banner ---- */
+
+body.pd-has-statusbar { padding-top: var(--pd-sb-h); }
+.pd-statusbar {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--pd-sb-h);
+  z-index: 60; display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  font-size: 0.76rem; font-weight: 700; letter-spacing: 0.03em;
+  color: #fff;
+}
+.pd-sb-label { position: relative; z-index: 1; }
+.pd-statusbar.pd-sb-clickable { cursor: pointer; }
+.pd-statusbar.pd-sb-clickable::after {
+  content: '↘ jump'; position: absolute; right: 0.8rem; z-index: 1;
+  font-size: 0.66rem; font-weight: 600; opacity: 0.85;
+}
+
+/* stage (neutral / blue) */
+.pd-statusbar[data-kind="stage"] { background: var(--pd-muted); }
+.pd-statusbar[data-kind="stage"][data-status="pending"],
+.pd-statusbar[data-kind="stage"][data-status="in-review"],
+.pd-statusbar[data-kind="stage"][data-status="planning"] { background: #2563eb; }
+.pd-statusbar[data-kind="stage"][data-status="approved"] { background: var(--pd-accent); }
+
+/* executing: animated amber stripes (single state, no progress score) */
+.pd-statusbar[data-kind="executing"] {
+  color: #3a2a00;
+  background-image: repeating-linear-gradient(45deg, #fbbf24 0 10px, #f59e0b 10px 20px);
+  background-size: 28px 28px;
+  animation: pd-sb-stripe 0.6s linear infinite;
+}
+
+/* blocked: animated red stripes */
+.pd-statusbar[data-kind="blocked"] {
+  background-image: repeating-linear-gradient(45deg, #ef4444 0 10px, #dc2626 10px 20px);
+  background-size: 28px 28px;
+  animation: pd-sb-stripe 0.6s linear infinite;
+}
+
+/* complete: solid green */
+.pd-statusbar[data-kind="complete"] { background: var(--pd-ok); }
+
+@keyframes pd-sb-stripe { from { background-position: 0 0; } to { background-position: 28px 0; } }
+@media (prefers-reduced-motion: reduce) { .pd-statusbar { animation: none !important; } }
 
 /* ---- document shell ---- */
 
@@ -102,7 +148,7 @@ pd-tab { display: block; }
   display: flex; gap: 0.25rem; flex-wrap: wrap;
   border-bottom: 1px solid var(--pd-border);
   margin: 0.5rem 0 1.25rem;
-  position: sticky; top: 0;
+  position: sticky; top: var(--pd-sb-h);
   background: var(--pd-bg);
   z-index: 20;
   padding-top: 0.25rem;
