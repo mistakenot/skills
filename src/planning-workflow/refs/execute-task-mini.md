@@ -68,6 +68,10 @@ Fix any real issues found. Push fixes.
 
 ### Step 6: Open PR
 
+Before opening the PR, advance the task to `complete` — this is the worker
+marking the work done. See [task-status.md](task-status.md): set `status: complete`
+in `plan.md` frontmatter, and include it in the final docs commit.
+
 Push and open a PR.
 
 See [template-pr-body.md](template-pr-body.md) for the PR body template.

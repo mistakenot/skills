@@ -38,6 +38,7 @@ If the task is complex enough to benefit from separate requirements, solution, a
 ```markdown
 ---
 workflow: mini
+status: draft   # lifecycle: draft → pending → executing → complete
 ---
 
 > **Mini-task** — compressed workflow. Single plan file, no separate requirements/solution/context docs.

@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Light-DOM web components for rich single-file HTML planning documents.",
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs",
+    "dev": "node dev.mjs"
   },
   "dependencies": {
     "beautiful-mermaid": "^1.1.3",

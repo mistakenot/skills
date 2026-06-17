@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>052: Dark mode toggle</title>
+  <script src="../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="052: Dark mode toggle" status="draft" pr="pending" generated="2026-06-17">
+    <pd-tab name="Overview">
+      <pd-scope></pd-scope>
+      <pd-section id="problem" title="Problem"
+        summary="Users want a dark theme; today the app is light-only. Still scoping — nothing committed.">
+        <md><script type="text/plain">
+Early draft. Capturing the shape of the work before review.
+        </script></md>
+      </pd-section>
+    </pd-tab>
+    <pd-tab name="Plan">
+      <pd-section id="phases" title="Phases (provisional)">
+        <pd-dag caption="Rough order"></pd-dag>
+        <pd-stepper>
+          <pd-phase n="1" title="Token palette" files="src/theme/tokens.css" status="todo">
+            <md><script type="text/plain">Define CSS variables for both themes.</script></md>
+          </pd-phase>
+          <pd-phase n="2" title="Toggle + persistence" files="src/theme/toggle.ts" status="todo" depends-on="1">
+            <md><script type="text/plain">Switch + localStorage.</script></md>
+          </pd-phase>
+          <pd-phase n="3" title="Audit components" files="src/components/" status="todo" depends-on="1">
+            <md><script type="text/plain">Sweep hard-coded colors.</script></md>
+          </pd-phase>
+        </pd-stepper>
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

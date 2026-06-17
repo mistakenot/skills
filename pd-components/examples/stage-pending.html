@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>048: Search ranking v2</title>
+  <script src="../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <!-- "pending" is set by /commit-task: planning is done and committed, awaiting a worker. -->
+  <pd-doc title="048: Search ranking v2" status="pending" pr="pending" generated="2026-06-17">
+    <pd-tab name="Overview">
+      <pd-scope></pd-scope>
+      <pd-section id="problem" title="Problem"
+        summary="Relevance is poor for multi-term queries; adding a learning-to-rank pass over the BM25 baseline. Planned and committed, awaiting execution.">
+        <md><script type="text/plain">
+Plan is committed and ready to dispatch — no open threads, so the banner is a calm "Pending".
+        </script></md>
+      </pd-section>
+      <pd-section id="criteria" title="Acceptance criteria">
+        <pd-ac id="AC-1" title="Top-3 relevance beats baseline" phases="2,3" tests="eval/ranking.spec.ts">
+          <md><script type="text/plain">- Given the eval set - When ranked by v2 - Then nDCG@3 improves ≥10%</script></md>
+        </pd-ac>
+        <pd-trace caption="Coverage"></pd-trace>
+      </pd-section>
+    </pd-tab>
+    <pd-tab name="Plan">
+      <pd-section id="phases" title="Phases">
+        <pd-dag caption="Order"></pd-dag>
+        <pd-stepper>
+          <pd-phase n="1" title="Feature extraction" files="src/rank/features.ts" status="todo">
+            <md><script type="text/plain">Query/doc features.</script></md>
+          </pd-phase>
+          <pd-phase n="2" title="Model + scoring" files="src/rank/model.ts" status="todo" depends-on="1">
+            <md><script type="text/plain">LTR scorer.</script></md>
+          </pd-phase>
+          <pd-phase n="3" title="Offline eval" files="eval/ranking.spec.ts" status="todo" depends-on="2">
+            <md><script type="text/plain">nDCG harness.</script></md>
+          </pd-phase>
+        </pd-stepper>
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

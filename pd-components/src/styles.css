@@ -16,7 +16,53 @@
   --pd-bad: #b91c1c;
   --pd-bad-bg: #fee2e2;
   --pd-neutral-bg: #f3f4f6;
+  --pd-sb-h: 30px;
 }
+
+/* ---- status banner ---- */
+
+body.pd-has-statusbar { padding-top: var(--pd-sb-h); }
+.pd-statusbar {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--pd-sb-h);
+  z-index: 60; display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  font-size: 0.76rem; font-weight: 700; letter-spacing: 0.03em;
+  color: #fff;
+}
+.pd-sb-label { position: relative; z-index: 1; }
+.pd-statusbar.pd-sb-clickable { cursor: pointer; }
+.pd-statusbar.pd-sb-clickable::after {
+  content: '↘ jump'; position: absolute; right: 0.8rem; z-index: 1;
+  font-size: 0.66rem; font-weight: 600; opacity: 0.85;
+}
+
+/* stage (neutral / blue) */
+.pd-statusbar[data-kind="stage"] { background: var(--pd-muted); }
+.pd-statusbar[data-kind="stage"][data-status="pending"],
+.pd-statusbar[data-kind="stage"][data-status="in-review"],
+.pd-statusbar[data-kind="stage"][data-status="planning"] { background: #2563eb; }
+.pd-statusbar[data-kind="stage"][data-status="approved"] { background: var(--pd-accent); }
+
+/* executing: animated amber stripes (single state, no progress score) */
+.pd-statusbar[data-kind="executing"] {
+  color: #3a2a00;
+  background-image: repeating-linear-gradient(45deg, #fbbf24 0 10px, #f59e0b 10px 20px);
+  background-size: 28px 28px;
+  animation: pd-sb-stripe 0.6s linear infinite;
+}
+
+/* blocked: animated red stripes */
+.pd-statusbar[data-kind="blocked"] {
+  background-image: repeating-linear-gradient(45deg, #ef4444 0 10px, #dc2626 10px 20px);
+  background-size: 28px 28px;
+  animation: pd-sb-stripe 0.6s linear infinite;
+}
+
+/* complete: solid green */
+.pd-statusbar[data-kind="complete"] { background: var(--pd-ok); }
+
+@keyframes pd-sb-stripe { from { background-position: 0 0; } to { background-position: 28px 0; } }
+@media (prefers-reduced-motion: reduce) { .pd-statusbar { animation: none !important; } }
 
 /* ---- document shell ---- */
 
@@ -102,7 +148,7 @@ pd-tab { display: block; }
   display: flex; gap: 0.25rem; flex-wrap: wrap;
   border-bottom: 1px solid var(--pd-border);
   margin: 0.5rem 0 1.25rem;
-  position: sticky; top: 0;
+  position: sticky; top: var(--pd-sb-h);
   background: var(--pd-bg);
   z-index: 20;
   padding-top: 0.25rem;
@@ -379,6 +425,11 @@ pd-ac {
 .pd-ac-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .pd-ac-chips { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-left: auto; }
 pd-ac ul { margin: 0.5rem 0 0; padding-left: 1.2rem; font-size: 0.92rem; }
+pd-ac.pd-ac-link { cursor: pointer; }
+pd-ac.pd-ac-hl { border-color: var(--pd-accent); box-shadow: inset 0 0 0 1px var(--pd-accent); }
+
+/* stepper pill highlight (phases involved in an AC/selection) */
+.pd-step.pd-step-hl { border-color: var(--pd-accent); color: var(--pd-accent); }
 
 /* ---- decisions ---- */
 
@@ -418,6 +469,129 @@ pd-doc code { font-family: ui-monospace, monospace; font-size: 0.88em; backgroun
 pd-doc pre code { background: none; padding: 0; }
 pd-doc pre { background: var(--pd-surface); border: 1px solid var(--pd-border); border-radius: 0.5rem; padding: 0.75rem; overflow-x: auto; }
 pd-doc a { color: var(--pd-accent); }
+
+/* ---- scope strip (pd-scope) ---- */
+
+pd-scope { display: block; margin: 1.25rem 0 1.75rem; }
+.pd-scope-strip { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.pd-scope-tile {
+  flex: 1 1 8rem; min-width: 8rem;
+  padding: 0.65rem 0.85rem; border-radius: 0.6rem;
+  border: 1px solid var(--pd-border); background: var(--pd-surface);
+}
+.pd-scope-tile[data-tone="warn"] { border-color: var(--pd-warn); background: var(--pd-warn-bg); }
+.pd-scope-tile[data-tone="ok"] { border-color: var(--pd-ok); background: var(--pd-ok-bg); }
+.pd-scope-value { font-size: 1.5rem; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; }
+.pd-scope-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--pd-muted); }
+.pd-scope-sub { font-size: 0.76rem; color: var(--pd-muted); margin-top: 0.2rem; font-variant-numeric: tabular-nums; }
+.pd-scope-tile[data-tone="warn"] .pd-scope-sub { color: var(--pd-warn); font-weight: 600; }
+.pd-scope-bar { display: flex; height: 0.35rem; border-radius: 999px; overflow: hidden; margin-top: 0.45rem; background: var(--pd-neutral-bg); }
+.pd-scope-seg { display: block; }
+.pd-scope-seg[data-k="done"] { background: var(--pd-ok); }
+.pd-scope-seg[data-k="active"] { background: var(--pd-warn); }
+.pd-scope-seg[data-k="todo"] { background: var(--pd-border); }
+
+/* ---- dependency graph (pd-dag) ---- */
+
+pd-dag { display: block; margin: 1.25rem 0; }
+.pd-dag-figure { margin: 0; overflow-x: auto; }
+.pd-dag-svg { display: block; height: auto; }
+.pd-dag-edge { fill: none; stroke: var(--pd-muted); stroke-width: 1.5; opacity: 0.55; }
+.pd-dag-conflict { stroke: var(--pd-warn); stroke-dasharray: 4 3; opacity: 0.9; }
+.pd-dag-node rect {
+  fill: var(--pd-surface); stroke: var(--pd-border); stroke-width: 1.5;
+  transition: fill 0.12s, stroke 0.12s;
+}
+.pd-dag-node { cursor: pointer; }
+.pd-dag-node:focus { outline: none; }
+.pd-dag-node:focus rect { stroke: var(--pd-accent); stroke-width: 2.5; }
+.pd-dag-node[data-status="done"] rect { stroke: var(--pd-ok); }
+.pd-dag-node[data-status="active"] rect { stroke: var(--pd-warn); stroke-width: 2.5; }
+.pd-dag-node:hover rect { fill: var(--pd-neutral-bg); }
+.pd-dag-node.pd-dag-on rect { fill: var(--pd-warn-bg); stroke: var(--pd-warn); }
+.pd-dag-node.pd-dag-off { opacity: 0.4; }
+.pd-dag-n { fill: var(--pd-muted); font-size: 0.8rem; font-weight: 700; font-family: ui-monospace, monospace; }
+.pd-dag-node[data-status="done"] .pd-dag-n { fill: var(--pd-ok); }
+.pd-dag-node[data-status="active"] .pd-dag-n { fill: var(--pd-warn); }
+.pd-dag-label { fill: var(--pd-fg); font-size: 0.82rem; font-family: Inter, system-ui, sans-serif; }
+.pd-dag-conflicts { font-size: 0.8rem; color: var(--pd-warn); margin-top: 0.5rem; }
+.pd-dag-conflict-mark { font-weight: 700; }
+.pd-dag-figure figcaption { color: var(--pd-muted); font-size: 0.82rem; margin-top: 0.4rem; text-align: center; }
+
+/* ---- traceability matrix (pd-trace) ---- */
+
+pd-trace { display: block; margin: 1.25rem 0; }
+.pd-trace-figure { margin: 0; overflow-x: auto; }
+.pd-trace-table { border-collapse: collapse; font-size: 0.88rem; width: 100%; }
+.pd-trace-table th, .pd-trace-table td { border: 1px solid var(--pd-border); padding: 0.4rem 0.6rem; text-align: left; }
+.pd-trace-table thead th { background: var(--pd-surface); font-size: 0.78rem; }
+.pd-trace-ph { text-align: center; font-family: ui-monospace, monospace; width: 2.2rem; }
+.pd-trace-cell { text-align: center; }
+.pd-trace-dot { color: var(--pd-ok); font-size: 0.7rem; }
+.pd-trace-ac { white-space: nowrap; }
+.pd-trace-ac-title { margin-left: 0.5rem; font-weight: 400; }
+.pd-trace-tests code { margin-right: 0.3rem; }
+.pd-trace-table tbody tr { cursor: pointer; }
+.pd-trace-table tr[data-gap] th, .pd-trace-table tr[data-gap] td { background: var(--pd-warn-bg); }
+.pd-trace-table tr.pd-trace-hl th, .pd-trace-table tr.pd-trace-hl td { background: color-mix(in srgb, var(--pd-accent) 14%, transparent); }
+.pd-trace-flag { margin-left: 0.5rem; color: var(--pd-warn); }
+.pd-trace-missing { color: var(--pd-bad); font-style: italic; }
+.pd-trace-summary { font-size: 0.82rem; margin-top: 0.5rem; }
+.pd-trace-figure figcaption { color: var(--pd-muted); font-size: 0.82rem; margin-top: 0.4rem; }
+
+/* ---- progressive disclosure (pd-section[summary], pd-collapse) ---- */
+
+.pd-section-summary { margin: 0 0 0.4rem; color: var(--pd-fg); }
+.pd-section-collapse { margin: 0; }
+.pd-section-collapse > summary,
+.pd-collapse > summary {
+  cursor: pointer; list-style: none;
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.78rem; font-weight: 600; color: var(--pd-accent);
+  padding: 0.15rem 0;
+}
+.pd-section-collapse > summary::-webkit-details-marker,
+.pd-collapse > summary::-webkit-details-marker { display: none; }
+.pd-section-collapse > summary::before,
+.pd-collapse > summary::before { content: '▸'; font-size: 0.7rem; transition: transform 0.12s; }
+.pd-section-collapse[open] > summary::before,
+.pd-collapse[open] > summary::before { transform: rotate(90deg); }
+.pd-section-body { margin-top: 0.4rem; }
+pd-collapse { display: block; margin: 0.75rem 0; }
+.pd-collapse-body { margin-top: 0.4rem; }
+
+/* ---- plan-tab synced file mirror (auto-injected) ---- */
+
+.pd-files-mirror {
+  margin: 1rem 0 0; padding: 0.6rem 0.85rem;
+  border: 1px solid var(--pd-border); border-radius: 0.5rem;
+  background: var(--pd-surface); font-size: 0.9rem;
+}
+.pd-files-mirror-label {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--pd-muted); margin-bottom: 0.4rem;
+}
+.pd-files-mirror .pd-tree { padding-left: 0; border-left: none; }
+
+/* ---- phase dependency chips (pd-phase[depends-on]) ---- */
+
+.pd-phase-deps { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem; margin-top: 0.5rem; }
+.pd-phase-dep {
+  font-size: 0.72rem; color: var(--pd-warn);
+  background: var(--pd-warn-bg); padding: 0.05rem 0.4rem; border-radius: 0.3rem;
+}
+
+/* ---- plan lint panel ---- */
+
+.pd-lint {
+  margin: 0 0 1.5rem; padding: 0.7rem 0.95rem;
+  border: 1px solid var(--pd-warn); border-left-width: 3px;
+  border-radius: 0.5rem; background: var(--pd-warn-bg);
+}
+.pd-lint-head { font-weight: 700; font-size: 0.9rem; color: var(--pd-warn); }
+.pd-lint-list { margin: 0.4rem 0 0; padding-left: 1.2rem; font-size: 0.88rem; }
+.pd-lint-list li { margin: 0.2rem 0; }
+.pd-lint-foot { margin-top: 0.5rem; font-size: 0.78rem; color: var(--pd-muted); }
 
 /* ---- markdown blocks ---- */
 

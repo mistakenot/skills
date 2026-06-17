@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>099: Lint demo (intentionally inconsistent)</title>
+  <script src="../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <!-- This plan has deliberate inconsistencies so the self-lint fires:
+       - src/orphan.ts is in the file tree but no phase touches it
+       - phase 2 touches src/ghost.ts, which is missing from the tree
+       - phase 3 depends-on="9" (no such phase)
+       - phases 4 and 5 depend on each other (cycle) -->
+  <pd-doc title="099: Lint demo" status="pending" generated="2026-06-17">
+    <pd-tab name="Solution">
+      <pd-section id="files" title="Files">
+        <pd-files>
+          <pd-file path="src/core.ts" change="add">Core</pd-file>
+          <pd-file path="src/api.ts" change="edit">API</pd-file>
+          <pd-file path="src/orphan.ts" change="edit">Nothing in the plan touches this</pd-file>
+        </pd-files>
+      </pd-section>
+    </pd-tab>
+    <pd-tab name="Plan">
+      <pd-section id="phases" title="Phases">
+        <pd-dag caption="Order"></pd-dag>
+        <pd-stepper>
+          <pd-phase n="1" title="Core" files="src/core.ts" status="done">
+            <md><script type="text/plain">ok</script></md>
+          </pd-phase>
+          <pd-phase n="2" title="API" files="src/api.ts,src/ghost.ts" status="active" depends-on="1">
+            <md><script type="text/plain">touches a file not in the tree</script></md>
+          </pd-phase>
+          <pd-phase n="3" title="Bad dep" files="src/core.ts" status="todo" depends-on="9">
+            <md><script type="text/plain">depends on a phase that doesn't exist</script></md>
+          </pd-phase>
+          <pd-phase n="4" title="Cycle A" files="src/api.ts" status="todo" depends-on="5">
+            <md><script type="text/plain">cycle with 5</script></md>
+          </pd-phase>
+          <pd-phase n="5" title="Cycle B" files="src/api.ts" status="todo" depends-on="4">
+            <md><script type="text/plain">cycle with 4</script></md>
+          </pd-phase>
+        </pd-stepper>
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

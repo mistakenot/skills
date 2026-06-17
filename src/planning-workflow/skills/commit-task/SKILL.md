@@ -29,7 +29,15 @@ All checks must pass before committing:
 
 If any check fails, report the failures and stop. Do not commit incomplete docs.
 
-### Step 3: Commit and Push
+### Step 3: Advance status to pending
+
+The planning docs are complete and about to be committed — advance the task to
+the `pending` stage (awaiting execution). See
+[references/task-status.md](references/task-status.md): set `status: pending` in
+`plan.md` frontmatter (markdown task) or `status="pending"` on `<pd-doc>` in
+`plan.html` (HTML/beta task). Stage this change with the docs.
+
+### Step 4: Commit and Push
 
 ```bash
 git add docs/tasks/$ID-$NAME/*
@@ -48,7 +56,7 @@ If the push fails because the local branch is behind origin:
 2. If the rebase fails (conflicts), abort with `git rebase --abort` and try `git pull --no-rebase origin main` then `git push origin main`
 3. If that also fails, stop and ask the user for help — do not force-push or discard changes
 
-### Step 4: Next Steps
+### Step 5: Next Steps
 
 After successful push, tell the user:
 

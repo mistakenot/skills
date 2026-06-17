@@ -60,3 +60,16 @@ export function define(name, cls) {
 export function openThreadCount(root) {
   return root.querySelectorAll('pd-thread[status="unresolved"], pd-thread:not([status])').length;
 }
+
+// Union of files touched by the given phase numbers — the join behind
+// AC → files highlighting (an AC names phases; phases name files).
+export function filesForPhases(nums) {
+  const want = new Set((nums || []).map(String));
+  const set = new Set();
+  [...document.querySelectorAll('pd-phase')].forEach((p, i) => {
+    const n = p.getAttribute('n') || String(i + 1);
+    if (!want.has(n)) return;
+    (p.getAttribute('files') || '').split(',').map((s) => s.trim()).filter(Boolean).forEach((f) => set.add(f));
+  });
+  return [...set];
+}

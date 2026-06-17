@@ -15,7 +15,21 @@ Task ID (numeric) and optionally a tmux session name (defaults to `$PROJECT--exe
 
 ## Dispatch Workflow
 
-### Step 1: Find an eligible pane
+### Step 1: Advance status to executing
+
+Before finding a worker, mark the task as executing so the worker's fresh
+worktree (created from `origin/main`) sees the right stage. See
+[references/task-status.md](references/task-status.md): set `status: executing`
+in `plan.md` frontmatter (markdown task) or `status="executing"` on `<pd-doc>`
+in `plan.html` (HTML/beta task), then commit and push:
+
+```bash
+git commit -am "docs($ID): status executing" && git push origin main
+```
+
+This also satisfies the "task docs pushed" requirement below.
+
+### Step 2: Find an eligible pane
 
 ```bash
 ntm status $SESSION --json
@@ -39,7 +53,7 @@ If no panes are eligible, report what each pane is doing and stop. Do not interr
 
 > **Warning:** A pane sitting in another task's worktree has a stale checkout. If dispatched there, the executor may read outdated task docs before creating its own worktree. Always ensure the target pane is on `main`.
 
-### Step 2: Ensure task docs are pushed
+### Step 3: Ensure task docs are pushed
 
 Before dispatching, verify that the task's planning docs have been pushed to `origin/main`. The executor will create a fresh worktree from `origin/main` and needs access to the docs.
 
@@ -49,7 +63,7 @@ git log origin/main --oneline -5 -- tasks/$ID/
 
 If the task docs are not on `origin/main`, push them first or warn the user.
 
-### Step 3: Send command
+### Step 4: Send command
 
 Use `ntm send` with `--smart` to auto-route to the best idle agent (least-loaded strategy):
 
@@ -71,7 +85,7 @@ ntm send $SESSION --pane=$PANE --json '/rename'
 
 If the first `/clear` used `--smart`, note which pane index was selected from the JSON response and use `--pane=$PANE` for subsequent sends.
 
-### Step 4: Verify kickoff
+### Step 5: Verify kickoff
 
 Capture the pane output to confirm execution started:
 
@@ -81,7 +95,7 @@ ntm copy $SESSION:$PANE --last 30 --quiet --output /dev/stdout
 
 Check that the output shows the execute-task command was received and work has begun.
 
-### Step 5: Report
+### Step 6: Report
 
 Output which pane was selected, confirmation that the command was sent, and what the pane is currently doing.
 

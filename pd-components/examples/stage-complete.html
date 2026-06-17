@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>031: Rate-limit headers</title>
+  <script src="../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="031: Rate-limit headers" status="complete" pr="https://github.com/org/repo/pull/31" generated="2026-06-17">
+    <pd-tab name="Overview">
+      <pd-scope></pd-scope>
+      <pd-section id="problem" title="Problem"
+        summary="Clients couldn't see their remaining quota; added X-RateLimit-* headers. Shipped and merged.">
+        <md><script type="text/plain">
+Complete. The banner is green; every phase is done and the PR is merged.
+        </script></md>
+      </pd-section>
+    </pd-tab>
+    <pd-tab name="Plan">
+      <pd-section id="phases" title="Phases">
+        <pd-dag caption="Order"></pd-dag>
+        <pd-stepper>
+          <pd-phase n="1" title="Header writer" files="src/gateway/headers.ts" status="done">
+            <md><script type="text/plain">Done.</script></md>
+          </pd-phase>
+          <pd-phase n="2" title="Wire into limiter" files="src/gateway/limiter.ts" status="done" depends-on="1">
+            <md><script type="text/plain">Done.</script></md>
+          </pd-phase>
+          <pd-phase n="3" title="E2E" files="e2e/headers.spec.ts" status="done" depends-on="2">
+            <md><script type="text/plain">Done.</script></md>
+          </pd-phase>
+        </pd-stepper>
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>041: Checkout redesign</title>
+  <script src="../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="041: Checkout redesign" status="executing" pr="https://github.com/org/repo/pull/41" generated="2026-06-17">
+    <pd-tab name="Overview">
+      <pd-scope></pd-scope>
+      <pd-section id="problem" title="Problem"
+        summary="Three-step checkout drops 18% of carts; collapsing to one page. Implementation underway.">
+        <md><script type="text/plain">
+A worker is executing this plan. The banner shows a single animated "Executing" state.
+        </script></md>
+      </pd-section>
+    </pd-tab>
+    <pd-tab name="Solution">
+      <pd-section id="files" title="Files">
+        <pd-files>
+          <pd-file path="src/cart.ts" change="edit">Cart model</pd-file>
+          <pd-file path="src/checkout.ts" change="add">One-page checkout</pd-file>
+          <pd-file path="src/pay.tsx" change="add">Payment UI</pd-file>
+          <pd-file path="e2e/checkout.spec.ts" change="add">E2E</pd-file>
+        </pd-files>
+      </pd-section>
+    </pd-tab>
+    <pd-tab name="Plan">
+      <pd-section id="phases" title="Phases">
+        <pd-dag caption="Order"></pd-dag>
+        <pd-stepper>
+          <pd-phase n="1" title="Cart model" files="src/cart.ts" status="done">
+            <md><script type="text/plain">Shipped.</script></md>
+          </pd-phase>
+          <pd-phase n="2" title="Checkout API" files="src/checkout.ts" status="done" depends-on="1">
+            <md><script type="text/plain">Shipped.</script></md>
+          </pd-phase>
+          <pd-phase n="3" title="Payment UI" files="src/pay.tsx" status="active" depends-on="2">
+            <md><script type="text/plain">In progress.</script></md>
+          </pd-phase>
+          <pd-phase n="4" title="E2E + rollout" files="e2e/checkout.spec.ts" status="todo" depends-on="3">
+            <md><script type="text/plain">Pending.</script></md>
+          </pd-phase>
+        </pd-stepper>
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

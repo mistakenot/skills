@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Test: status banner</title>
+  <script src="../../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="Test: status banner" status="executing" generated="2026-06-17">
+    <pd-tab name="Plan">
+      <pd-section id="phases" title="Phases">
+        <pd-stepper>
+          <pd-phase n="1" title="A" files="a.ts" status="done"><md><script type="text/plain">x</script></md></pd-phase>
+          <pd-phase n="2" title="B" files="b.ts" status="done"><md><script type="text/plain">x</script></md></pd-phase>
+          <pd-phase n="3" title="C" files="c.ts" status="active"><md><script type="text/plain">x</script></md></pd-phase>
+          <pd-phase n="4" title="D" files="d.ts" status="todo"><md><script type="text/plain">x</script></md></pd-phase>
+        </pd-stepper>
+      </pd-section>
+      <pd-thread id="blk" anchor="phases" priority="p1" status="resolved" title="A blocker">
+        <pd-comment by="review">Resolved for now; tests flip it to unresolved.</pd-comment>
+      </pd-thread>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

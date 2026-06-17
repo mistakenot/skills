@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Test: plan lint</title>
+  <script src="../../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <!-- Deliberate inconsistencies: orphan file, ghost file, bad dep, cycle. -->
+  <pd-doc title="Test: plan lint" status="pending" generated="2026-06-17">
+    <pd-tab name="Solution">
+      <pd-section id="files" title="Files">
+        <pd-files>
+          <pd-file path="src/core.ts" change="add">Core</pd-file>
+          <pd-file path="src/orphan.ts" change="edit">No phase touches this</pd-file>
+        </pd-files>
+      </pd-section>
+    </pd-tab>
+    <pd-tab name="Plan">
+      <pd-section id="phases" title="Phases">
+        <pd-stepper>
+          <pd-phase n="1" title="Core" files="src/core.ts" status="done"><md><script type="text/plain">x</script></md></pd-phase>
+          <pd-phase n="2" title="Ghost" files="src/ghost.ts" status="todo" depends-on="1"><md><script type="text/plain">x</script></md></pd-phase>
+          <pd-phase n="3" title="Bad dep" files="src/core.ts" status="todo" depends-on="9"><md><script type="text/plain">x</script></md></pd-phase>
+          <pd-phase n="4" title="Cycle A" files="src/core.ts" status="todo" depends-on="5"><md><script type="text/plain">x</script></md></pd-phase>
+          <pd-phase n="5" title="Cycle B" files="src/core.ts" status="todo" depends-on="4"><md><script type="text/plain">x</script></md></pd-phase>
+        </pd-stepper>
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>
