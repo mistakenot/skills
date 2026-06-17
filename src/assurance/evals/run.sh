@@ -16,7 +16,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-MODEL="${MODEL:-claude-sonnet-4-20250514}"
+MODEL="${MODEL:-claude-sonnet-4-6}"
 AGENT_RUNNER="${AGENT_RUNNER:-live}"
 CASE="${CASE:-calculator-cli}"
 RUN_ID="run-$(date +%Y%m%d-%H%M%S)"
@@ -218,7 +218,12 @@ STUBEOF
 run_grader_live() {
   local results_dir="$1"
   local rubric
-  rubric=$(cat "$SCRIPT_DIR/graders/strategy-rubric.md")
+  # Prefer a case-specific rubric if one exists, fall back to the generic one
+  if [ -f "$CASE_DIR/rubric.md" ]; then
+    rubric=$(cat "$CASE_DIR/rubric.md")
+  else
+    rubric=$(cat "$SCRIPT_DIR/graders/strategy-rubric.md")
+  fi
 
   # Build the grader prompt with both arms' data
   local grader_prompt="$rubric

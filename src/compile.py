@@ -518,7 +518,7 @@ if __name__ == "__main__":
     )
 
     assurance = module("assurance",
-        skill("assurance-strategist", refs=[ref("technique-unit-testing.md")]),
+        skill("assurance-strategist", refs=[ref("technique-unit-testing.md"), ref("technique-property-based-testing.md")]),
     )
 
     compile([planning, ideation, maintenance, exploration, rich_docs, reflection, beta_planning, assurance])

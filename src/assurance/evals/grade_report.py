@@ -206,6 +206,35 @@ def render_report(run_dir: Path, case: str = "") -> str:
     lines.append(f"| Test command (T2) | {b_t2} | {w_t2} |")
     lines.append("")
 
+    # Gotcha probes (see graders/gotchas.md). A True value is a defect.
+    gotcha_checks = ["g_fake_pbt", "g_separate_pbt_layer", "g_nondeterminism_unmanaged", "g_band_boundaries_absent"]
+    gotcha_labels = {
+        "g_fake_pbt": "G1 Fake PBT (claims properties, no PBT library)",
+        "g_separate_pbt_layer": "G2 Over-prescribed property layer",
+        "g_nondeterminism_unmanaged": "G3 Randomness without determinism",
+        "g_band_boundaries_absent": "G4 Band boundaries absent from tests (uk-tax-calculator only)",
+    }
+
+    def fmt_gotcha(sc, key):
+        if not sc or key not in sc:
+            return "?"
+        val = sc.get(key)
+        if val is None:
+            return "n/a"
+        return "⚠️ yes" if val else "no"
+
+    if baseline_sc or withskill_sc:
+        lines.append("## Gotcha Probes")
+        lines.append("")
+        lines.append("Mechanical anti-pattern checks (a defect when triggered). See `graders/gotchas.md`.")
+        lines.append("")
+        lines.append("| Gotcha | Baseline | With-skill |")
+        lines.append("|--------|----------|------------|")
+        for check in gotcha_checks:
+            label = gotcha_labels.get(check, check)
+            lines.append(f"| {label} | {fmt_gotcha(baseline_sc, check)} | {fmt_gotcha(withskill_sc, check)} |")
+        lines.append("")
+
     # Grader score table
     lines.append("## Grader Scores")
     lines.append("")

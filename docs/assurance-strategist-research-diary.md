@@ -1,5 +1,5 @@
 ---
-hash: "d241a6a0"
+hash: "19803038"
 id: "d56138fd"
 read_when: "designing or extending the assurance-strategist skill, or looking up the technique catalog and composition frames behind it"
 summary: "Research diary for the assurance-strategist skill: breadth-first catalog of testing/assurance techniques, composition frames for combining them, and open design questions."
@@ -607,3 +607,48 @@ Initial case list = coverage matrix over the design: hackathon-webapp, enterpris
 - **N=3 runs per case minimum** — score distributions, not single points; nondeterminism lies.
 - expectations.yaml is per-case ground truth, authored at case-design time — forces explicitness about what correct architecture means per cell of the axis grid (likely improves the skill design itself).
 - Format compatible with anthropics/skills evals.json + grader-agent convention where possible; T2/T4 deliberately exceed it.
+
+## 2026-06-16 — PBT card added; card critique findings
+
+Added `technique-property-based-testing.md` as the second technique card. The unit-testing card already contained forward-references to it (`upgrade-stricter: property-based-testing`), so the upgrade path is now a live two-way link.
+
+### Card critiques found and resolved
+
+Five issues identified by re-reading the card against the unit-testing card and the eval output:
+
+1. **Broken `{{ skill: }}` reference** — a `{{ skill:assurance/assurance-strategist }}` directive in the When to prescribe section rendered nonsensically (the unit-testing card is a ref file, not a skill). Removed.
+
+2. **`verify-properties` was over-prescribed** — the harness-changes table and walking skeleton prescribed a dedicated subtarget and `tests/properties/` directory as default. PBT is a *style* of test, not a separate layer; most frameworks (Hypothesis, fast-check, etc.) are just decorators the existing unit runner already discovers. Fixed: properties default to living within `verify-unit`, with a dedicated subtarget only when the inventory is large enough to warrant it. Acceptance criteria updated to reference `make verify` rather than a specific subtarget.
+
+3. **Flakiness / determinism not covered** — added a "Determinism policy" design decision: random seeds locally (broader exploration), pinned seed in CI (reproducible failures), plus a regression seed set that accumulates seeds from past failures so a fixed bug cannot silently regress.
+
+4. **Filtering vs constructive generation was language-specific** — the failure-modes table used `assume()`/`filter()` (Hypothesis-specific). Replaced with a language-agnostic "Constrained inputs — construct vs reject" design decision: prefer generators that *build* valid values by construction; reserve rejection-based filtering for cheap, rarely-failing constraints, because tight constraints cause most frameworks to give up. A new failure-modes row covers "framework reports it cannot find / gave up generating inputs."
+
+5. **PBT vs property-style unit tests not distinguished** — the card didn't explain that asserting `add(2,3) == add(3,2)` (one hand-picked pair) is a unit test, not PBT. Added a "Key distinction from unit testing" paragraph to §1: the *generator* is what turns a known property into a bug-finder across the input space.
+
+## 2026-06-17 — Eval gotcha probes; calculator case variance analysis
+
+### Gotcha probes added to the eval harness
+
+Added mechanical (deterministic, no LLM judgment) gotcha probes to `cases/calculator-cli/checks.sh` and a new `graders/gotchas.md` reference doc. The decision to make these mechanical rather than LLM-graded is deliberate: if gotchas were graded by an LLM, rerunning N times would measure grader noise as much as agent behaviour. Mechanical probes mean variance across runs reflects only the agent.
+
+Three probes, all token-based and language-agnostic:
+
+- **G1 fake_pbt:** property-vocabulary tokens in test files but no PBT library anywhere in project source. This is the "property-style unit test" trap the card's §1 paragraph exists to prevent.
+- **G2 separate_pbt_layer:** a dedicated `properties/` test directory or `verify-properties` make subtarget was created. For a small project this is over-engineering; the card fix in critique #2 addresses the root cause.
+- **G3 nondeterminism_unmanaged:** a real PBT library is present but no seed/determinism management tokens are found. Reported n/a when no PBT library is present.
+
+**False positive from vendor directories:** the grep initially searched the entire workspace recursively and matched `hypothesis` inside pytest's own source code in `.venv`. Fixed by adding `--exclude-dir` flags for `.venv`, `node_modules`, `__pycache__`, `.pytest_cache`, `.git`, `vendor`, `.cargo`. Lesson: always scope token searches to project source, not the full tree.
+
+**Model ID staleness:** `run.sh` defaulted to `claude-sonnet-4-20250514` which was no longer valid. Updated default to `claude-sonnet-4-6`. Lesson: pin the model by variable, don't bake a dated snapshot ID as the fallback.
+
+### Calculator case variance — C1 vs C3 ambiguity
+
+Across two live runs with the fixed probes, the agent produced different strategies:
+
+- **Run A:** correctly diagnosed C1 criticality, wrote "Property-Based Testing: Not prescribed. Criticality is C1 (PBT requires C3+)" in the testing strategy doc. Unit tests only. All gotchas clean.
+- **Run B:** diagnosed the calculator as having expressible algebraic invariants, installed Hypothesis, wrote `@given` tests with `st.floats()` generators for commutativity, identity, and negation. All gotchas clean.
+
+Both outputs are defensible from the card's criteria — the prompt gives no criticality signal and the domain is genuinely ambiguous (trivial utility vs function-with-expressible-invariants). The variance is not a skill failure; it reflects that the calculator prompt under-constrains the axis diagnosis.
+
+**Conclusion:** the calculator-cli case is good for sanity-checking harness mechanics but is a poor stability target for PBT prescription. To measure whether the skill reliably routes agents to PBT, the prompt must either (a) supply explicit criticality context, or (b) use a domain that unambiguously implies C3+ without being told — a codec, parser, CRDT merge function, or similar. A purpose-built `algorithmic-core` case is the right next addition to the eval case library (matches the initial case list in the eval harness design entry above).

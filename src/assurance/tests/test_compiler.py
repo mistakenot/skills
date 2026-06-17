@@ -282,7 +282,7 @@ class TestRealModuleCompiles:
                 "assurance",
                 compile.skill(
                     "assurance-strategist",
-                    refs=[compile.ref("technique-unit-testing.md")],
+                    refs=[compile.ref("technique-unit-testing.md"), compile.ref("technique-property-based-testing.md")],
                 ),
             )
         ]
