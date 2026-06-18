@@ -5,7 +5,7 @@ description: "Tracks open-source repos and mines their updates into a ranked YAM
 
 # Borrow From OSS
 
-Track open-source repositories you admire and turn their progress into a ranked backlog of ideas worth borrowing. The skill maintains a single living file — `docs/research/opensource-ideas.yaml` — that records *what your project is*, *which upstream repos you watch*, and *every candidate idea* with enough structure to rank it, dedup it across runs, and act on it later.
+Track open-source repositories you admire and turn their progress into a ranked backlog of ideas worth borrowing. The skill maintains a living file — `docs/research/opensource-ideas.yaml`, **one per project** (in a monorepo, one per sub-project — see *Determine state*) — that records *what your project is*, *which upstream repos you watch*, and *every candidate idea* with enough structure to rank it, dedup it across runs, and act on it later.
 
 The core loop: clone an upstream repo, look at what changed since you last investigated it, and ask one question of every change — **"does this solve a problem *we* actually have?"** Most upstream activity is noise for you (their CI tweaks, their domain quirks). The value is in the few changes that map onto your project's real needs. The profile is what lets you tell the difference.
 
@@ -19,16 +19,32 @@ This is the external-facing mirror of learning-diary: that skill mines *your own
 
 ## Determine state
 
-Read `docs/research/opensource-ideas.yaml`.
+First, **resolve which research doc you're working with** — there may be more than one.
 
-- **No file, or no `profile` section** → **first run**. Do the profile interview, then add the first source(s).
+A research doc is scoped to a *single project*: its `profile` describes one project, and its `sources`/`ideas` belong to that project. A plain repo has one doc at the root; a **monorepo has one doc per sub-project**, each co-located with the sub-project it describes:
+
+- Single project → `docs/research/opensource-ideas.yaml` at the repo root.
+- Monorepo → `<sub-project>/docs/research/opensource-ideas.yaml` (e.g. `packages/api/docs/research/opensource-ideas.yaml`), one per sub-project.
+
+Resolve the target doc:
+
+1. **Find existing docs.** Glob `**/docs/research/opensource-ideas.yaml` (skip `node_modules`, `.tmp`, and vendored trees).
+2. **Pick the one the request is about.** Match on the sub-project the user named or implied (a path, a package name), or on the source repo they mention (find the doc whose `sources` already lists it). If exactly one doc exists and nothing points elsewhere, use it.
+3. **If it's genuinely ambiguous** (several docs, no signal), ask which sub-project this is for — don't guess.
+4. **If none match and this is a new project/sub-project**, it's a **first run** for that scope: pick its root (the sub-project dir the work concerns, else the repo root) and create the doc at `<scope-root>/docs/research/opensource-ideas.yaml`. Co-locate it with the sub-project — don't centralize.
+
+Then read the resolved doc:
+
+- **No file, or no `profile` section** → **first run**. Do the profile interview for *this* scope, then add the first source(s).
 - **File exists with a profile** → skip to **investigation**. The user is either adding a new source or asking to scan existing ones for updates.
+
+For the rest of this skill, "the doc" means the resolved file and "your project" means the scope it describes — in a monorepo, the sub-project, not the whole repo.
 
 ## First run — establish the profile
 
 The profile is the single most important thing in this file. Without it, every upstream diff looks equally (un)interesting and the backlog fills with noise. With it, you can reject 90% of changes in one pass and spend your attention on the few that matter.
 
-You can usually draft most of the profile yourself by reading the host repo — `README.md`, `CLAUDE.md`/`AGENTS.md`, the top-level structure, and any architecture docs. Do that first, then confirm and fill gaps with the user. Cover:
+You can usually draft most of the profile yourself by reading the project — `README.md`, `CLAUDE.md`/`AGENTS.md`, the structure, and any architecture docs. In a monorepo, read the **sub-project's own** root (its `package.json`/manifest, its README, its source), scoped to its directory — the profile must describe *this* sub-project specifically, not the whole repo. Do that first, then confirm and fill gaps with the user. Cover:
 
 1. **What the project is** — its purpose and what it produces.
 2. **Architecture & stack** — how it's structured, the languages/frameworks, key conventions. Be concrete; this is what "additive vs. rebuild" judgements are measured against.
@@ -84,7 +100,7 @@ For every candidate, run it through the profile before it earns a spot in the ba
 
 - **Do we have this problem?** If it solves something the profile says we don't care about (a non-goal, or a subsystem we don't have), drop it.
 - **Could we actually apply it?** An idea you can't map onto a real file or subsystem in *our* project is a daydream, not a backlog item. If you can't name where it would go, it's probably not ready.
-- **Is it already covered?** Check existing `ideas` (and the host repo itself) — don't resurface something already implemented, rejected, or sitting in the backlog. If a new commit *extends* an existing idea, update that idea instead of adding a duplicate.
+- **Is it already covered?** Check existing `ideas` (and your own project — the scope the doc describes) — don't resurface something already implemented, rejected, or sitting in the backlog. If a new commit *extends* an existing idea, update that idea instead of adding a duplicate.
 
 When in doubt, keep it but mark `confidence: low` — a slightly generous backlog the user can prune beats silently dropping something they'd have wanted.
 
@@ -135,69 +151,17 @@ Status flows: `candidate` → `shortlisted` → `accepted` → `implemented`. Or
 
 ## File format
 
-```yaml
-profile:
-  recorded: 2026-06-18
-  project: |
-    What we're building and why it exists.
-  architecture: |
-    How it's structured, the stack, key conventions. Concrete enough
-    to judge whether an upstream idea is additive or a rebuild for us.
-  stack: [Python, TypeScript]
-  goals: |
-    What we're actively trying to improve or build right now.
-  non_goals: |
-    Explicitly out of scope. Ideas that only serve these are filtered out.
-
-sources:
-  - repo: mattpocock/skills
-    url: https://github.com/mattpocock/skills
-    added: 2026-06-18
-    why: |
-      A peer skills repo — watch how they structure and distribute skills.
-    last_investigated_commit: abc123def          # empty = baseline snapshot next
-    last_investigated_at: 2026-06-18T10:30:00Z
-    investigations:
-      - from_commit: null                          # null = baseline snapshot
-        to_commit: abc123def
-        investigated_at: 2026-06-18T10:30:00Z
-        ideas_added: 5
-
-ideas:
-  # newest first
-  - id: I001                                       # sequential, zero-padded
-    title: "Short, descriptive name of the idea"
-    source: mattpocock/skills
-    commits: [abc123def]                           # inspiring commits (empty for baseline)
-    files: [skills/productivity/writing-great-skills/SKILL.md]
-    permalink: https://github.com/mattpocock/skills/blob/abc123def/skills/productivity/writing-great-skills/SKILL.md
-    discovered: 2026-06-18
-    status: candidate            # candidate | shortlisted | accepted | implemented | rejected | deferred
-    change_type: additive        # additive | structural-rebuild | replacement
-    area: "our subsystem this touches"
-    effort: M                    # S | M | L
-    impact: high                 # low | medium | high
-    risk: low
-    confidence: medium
-    dependencies: none
-    score: 8
-    summary: |
-      What the idea is, as it exists in their repo.
-    application: |
-      How WE would apply it here — name the file/subsystem it lands in.
-      This is the field that makes the idea actionable.
-    evidence: |
-      The key mechanism or a short code excerpt, anchored to the source,
-      so a reader can reconstruct it without re-cloning.
-    notes: |
-      Optional — rejection reason, follow-ups, links to our tasks/PRs.
-```
+The full YAML schema — `profile`, `sources` (with `investigations`), and `ideas`
+(with every label field) — is in [references/file-format.md](references/file-format.md).
+Read it before writing the doc the first time. Each doc holds one project's profile,
+its sources, and its own I-series of ideas.
 
 ## Writing the file
 
+- Write to the **resolved doc path** (the repo-root doc, or the sub-project's co-located one), creating `docs/research/` under that scope if needed. Ideas live in the same doc as the profile they were filtered against — never write a sub-project's ideas into another scope's doc.
 - Use the `Write` tool so the user can review the diff — don't shell out to edit YAML.
 - **Preserve everything.** Append new ideas (newest first); update the watermark and `investigations`; never rewrite or drop existing ideas or their statuses unless the user asks.
-- Assign idea IDs sequentially from the highest existing one.
+- Assign idea IDs sequentially from the highest existing one *in this doc* (each doc has its own I-series).
 
 ## After investigating
 

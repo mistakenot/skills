@@ -664,7 +664,7 @@ if __name__ == "__main__":
     )
 
     research = module("research",
-        skill("borrow-from-oss"),
+        skill("borrow-from-oss", refs=[ref("file-format.md")]),
         description="External-research skills: track open-source repos and mine their updates into a ranked backlog of ideas to borrow.",
         category="productivity",
         keywords=["research", "inspiration", "open-source", "competitive-analysis"],
