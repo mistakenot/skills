@@ -8,8 +8,9 @@
 // Resolved/rejected threads collapse to a single line — history is retained
 // in the file, the rendered doc stays clean.
 //
-// pd-decisions: derives a decision log from every resolved/rejected thread in
-// the document. Zero extra authoring cost.
+// pd-decisions: derives a decision log from every resolved/rejected thread AND
+// every authored pd-decision (see decision.js) in the document, in source
+// order. Zero extra authoring cost.
 
 import { PdElement, define, el, esc } from './util.js';
 import { store } from './store.js';
@@ -96,28 +97,39 @@ class PdComment extends PdElement {}
 
 class PdDecisions extends PdElement {
   init() {
-    const threads = [...document.querySelectorAll('pd-thread')]
-      .filter((t) => ['resolved', 'rejected'].includes(t.getAttribute('status')));
+    // Authored decisions plus closed review threads, in document order — both
+    // are entries in the same log.
+    const items = [...document.querySelectorAll('pd-decision, pd-thread')]
+      .filter((n) => n.tagName.toLowerCase() === 'pd-decision'
+        || ['resolved', 'rejected'].includes(n.getAttribute('status')));
 
     this.prepend(el('div', { class: 'pd-section-head' }, [el('h2', {}, this.getAttribute('title') || 'Decisions')]));
 
-    if (!threads.length) {
-      this.append(el('p', { class: 'pd-muted' }, 'No resolved or rejected threads yet.'));
+    if (!items.length) {
+      this.append(el('p', { class: 'pd-muted' }, 'No decisions recorded yet.'));
       return;
     }
 
     const list = el('ol', { class: 'pd-decision-list' });
-    threads.forEach((t, i) => {
-      const status = t.getAttribute('status');
-      const title = t.getAttribute('title') || 'Thread';
-      const comments = t.querySelectorAll('pd-comment');
-      const outcome = comments[comments.length - 1];
-      if (!t.id) t.id = `pd-thread-${i + 1}`;
+    items.forEach((n, i) => {
+      const isDecision = n.tagName.toLowerCase() === 'pd-decision';
+      const status = n.getAttribute('status') || (isDecision ? 'accepted' : 'unresolved');
+      const title = n.getAttribute('title') || (isDecision ? 'Decision' : 'Thread');
+      if (!n.id) n.id = `pd-${isDecision ? 'decision' : 'thread'}-${i + 1}`;
+
+      // Outcome line: a pd-decision's `summary` attribute, else a thread's last comment.
+      let outcome = n.getAttribute('summary') || '';
+      if (!outcome && !isDecision) {
+        const comments = n.querySelectorAll('pd-comment');
+        const last = comments[comments.length - 1];
+        outcome = last ? last.textContent.trim() : '';
+      }
+
       list.append(el('li', {}, [
         el('span', { class: 'pd-badge', 'data-status': status }, status),
         ' ',
-        el('a', { href: `#${t.id}` }, title),
-        outcome ? el('div', { class: 'pd-decision-outcome' }, outcome.textContent.trim()) : null,
+        el('a', { href: `#${n.id}` }, title),
+        outcome ? el('div', { class: 'pd-decision-outcome' }, outcome) : null,
       ]));
     });
     this.append(list);

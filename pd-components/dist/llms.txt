@@ -357,9 +357,37 @@ dependency cycles). Findings show in a panel at the top and are queued as a
 single pending "lint" comment, so they ride the "Copy for agent" export to the
 agent. Resolve them by fixing the attributes — clean plans show no panel.
 
+### <pd-decision id title status by date summary>
+An authored architectural decision record (ADR). Use it for a call you (the
+agent) or the author made directly — stating the decision, its rationale, the
+alternatives weighed, and the consequences — when there was no review thread to
+resolve. This is the home for decisions that aren't dictated by the requirements
+or an existing repo pattern. status: accepted (default) | proposed | superseded.
+by: who made the call (e.g. "agent"). summary: optional one-liner surfaced in
+the pd-decisions log. Place each one directly after the section it concerns and
+give it a stable id (e.g. "D-1") so threads and links can anchor to it.
+
+A pd-decision differs from a pd-thread: a thread is an append-only review
+conversation that becomes a decision once resolved; a pd-decision records a
+settled call with no round-trip. Both feed the pd-decisions log.
+
+```html
+<pd-decision id="D-1" title="Token bucket over sliding window" status="accepted" by="agent"
+  summary="Token bucket: simpler, bursts within SLA.">
+  <md><script type="text/plain">
+**Context:** Cap per-client request rate without penalising short bursts.
+**Decision:** Token bucket, one Redis key per client.
+**Alternatives:** Sliding-window log (more memory, exact); fixed-window (boundary bursts).
+**Consequences:** Redis on the hot path; key eviction policy still open.
+  </script></md>
+</pd-decision>
+```
+
 ### <pd-decisions title>
-Auto-generated decision log: lists every resolved/rejected thread in the doc
-with its outcome. Place once, usually in the first tab. No children needed.
+Auto-generated decision log: lists every pd-decision and every
+resolved/rejected thread in the doc, in source order, with each one's outcome
+(a pd-decision's summary, or a thread's last comment). Place once, usually in
+the first tab. No children needed.
 
 ```html
 <pd-decisions></pd-decisions>

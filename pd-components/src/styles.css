@@ -189,8 +189,9 @@ pd-section { display: block; margin: 1.75rem 0; scroll-margin-top: 3.5rem; }
   background: var(--pd-neutral-bg); color: var(--pd-muted);
 }
 .pd-badge[data-status="unresolved"], .pd-badge[data-status="in-review"] { background: var(--pd-warn-bg); color: var(--pd-warn); }
-.pd-badge[data-status="resolved"], .pd-badge[data-status="approved"] { background: var(--pd-ok-bg); color: var(--pd-ok); }
+.pd-badge[data-status="resolved"], .pd-badge[data-status="approved"], .pd-badge[data-status="accepted"] { background: var(--pd-ok-bg); color: var(--pd-ok); }
 .pd-badge[data-status="rejected"] { background: var(--pd-bad-bg); color: var(--pd-bad); }
+.pd-badge[data-status="proposed"] { background: var(--pd-warn-bg); color: var(--pd-warn); }
 .pd-badge[data-priority="p1"] { background: var(--pd-bad-bg); color: var(--pd-bad); }
 .pd-badge[data-priority="p2"] { background: var(--pd-warn-bg); color: var(--pd-warn); }
 
@@ -487,6 +488,24 @@ pd-decisions { display: block; margin: 1.75rem 0; }
 .pd-decision-list li { margin: 0.5rem 0; }
 .pd-decision-list a { color: var(--pd-fg); }
 .pd-decision-outcome { color: var(--pd-muted); font-size: 0.86rem; margin-top: 0.15rem; }
+
+/* ---- decision record (pd-decision) ---- */
+
+pd-decision {
+  display: block; margin: 1rem 0; padding: 0.7rem 0.95rem;
+  border: 1px solid var(--pd-border);
+  border-left: 3px solid var(--pd-accent);
+  border-radius: 0.5rem; background: var(--pd-surface);
+}
+pd-decision[status="accepted"] { border-left-color: var(--pd-ok); }
+pd-decision[status="proposed"] { border-left-color: var(--pd-warn); }
+pd-decision[status="superseded"] { border-left-color: var(--pd-muted); opacity: 0.8; }
+.pd-decision-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.pd-decision-title { font-size: 0.98rem; }
+.pd-decision-meta { color: var(--pd-muted); font-size: 0.78rem; margin-left: auto; }
+.pd-decision-body { margin-top: 0.5rem; font-size: 0.92rem; }
+.pd-decision-body > :first-child { margin-top: 0; }
+.pd-decision-body > :last-child { margin-bottom: 0; }
 
 /* ---- wireframe primitives ---- */
 

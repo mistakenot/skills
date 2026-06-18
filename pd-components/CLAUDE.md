@@ -83,4 +83,5 @@ When adding a new component, add a fixture + playbook pair. The fixture should b
 | `<pd-code>` `<pd-api>` `<pd-member>` | `code.js` | Syntax-highlighted code, API outlines |
 | `<pd-unit>` `<pd-dep>` `<pd-fn>` `<pd-prop>` | `unit.js` | TS code-unit outline: identity, constructor deps, public surface |
 | `<pd-ac>` `<pd-wire>` `<pd-note>` | `misc.js` | Acceptance criteria cards, wireframe placeholders |
+| `<pd-decision>` | `decision.js` | Authored architectural decision record (feeds `<pd-decisions>`) |
 | `<md>` | `md.js` | Client-side markdown (marked, loaded from CDN on demand) |

@@ -55,6 +55,16 @@ flowchart LR
         </pd-mermaid>
       </pd-section>
 
+      <pd-decision id="D-1" title="Token bucket over sliding window" status="accepted" by="agent"
+        summary="Token bucket: simpler, bursts within SLA.">
+        <md>
+**Context:** Cap per-client request rate without penalising legitimate short bursts.
+**Decision:** Token bucket, one Redis key per client; bucket size 50.
+**Alternatives:** Sliding-window log (exact, but more memory and penalises batch users); fixed-window (boundary bursts).
+**Consequences:** Redis sits on the request hot path; key eviction policy still open (see thread below).
+        </md>
+      </pd-decision>
+
       <pd-thread anchor="approach" status="resolved" priority="p2" title="Why not sliding window?">
         <pd-comment by="review">Token bucket allows bursts — is that acceptable for the search tier, given the incidents were burst-shaped?</pd-comment>
         <pd-comment by="author">Bursts are capped at bucket size (50 requests), well under the capacity that caused the incidents. Sliding window would penalize legitimate batch users. Documented in the Approach section.</pd-comment>

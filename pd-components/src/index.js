@@ -11,6 +11,7 @@ import './mermaid.js';
 import './code.js';
 import './unit.js';
 import './misc.js';
+import './decision.js';
 import './scope.js';
 import './dag.js';
 import './trace.js';

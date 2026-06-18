@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Test: decision records</title>
+  <script src="../../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="Test: decision records" status="in-review" generated="2026-06-18">
+
+    <pd-tab name="Overview">
+      <pd-decisions></pd-decisions>
+    </pd-tab>
+
+    <pd-tab name="Solution">
+      <pd-section id="approach" title="Approach">
+        <md><script type="text/plain">Approach prose.</script></md>
+      </pd-section>
+
+      <pd-decision id="D-1" title="Token bucket over sliding window" status="accepted" by="agent"
+        summary="Token bucket: simpler, bursts within SLA.">
+        <md><script type="text/plain">
+**Decision:** Token bucket, one Redis key per client.
+**Alternatives:** Sliding-window log; fixed-window.
+        </script></md>
+      </pd-decision>
+
+      <pd-decision id="D-2" title="Defer multi-region replication" status="proposed">
+        <md><script type="text/plain">Single region for v1; revisit when traffic warrants.</script></md>
+      </pd-decision>
+
+      <pd-thread anchor="approach" status="resolved" priority="p2" title="Why not a queue?">
+        <pd-comment by="review">Could a queue smooth bursts instead?</pd-comment>
+        <pd-comment by="author">Adds latency; the bucket is sufficient.</pd-comment>
+      </pd-thread>
+
+      <pd-thread anchor="approach" priority="p1" title="Open question — eviction policy">
+        <pd-comment by="review">How are stale Redis keys evicted?</pd-comment>
+      </pd-thread>
+    </pd-tab>
+
+  </pd-doc>
+</body>
+</html>

@@ -155,6 +155,34 @@ assert "Overview badge shows 1 open thread" '"1"' \
 
 agent-browser close >/dev/null 2>&1
 
+# ── decision ───────────────────────────────────────────────────
+run_playbook "decision"
+agent-browser open "file://$FIXTURES/decision.html" >/dev/null 2>&1
+agent-browser wait 3000 >/dev/null 2>&1
+
+assert "two decision records render" "2" \
+  "$(agent-browser eval "document.querySelectorAll('pd-decision .pd-decision-head').length" 2>&1)"
+assert "D-1 status badge" '"accepted"' \
+  "$(agent-browser eval "document.querySelector('#D-1 .pd-badge').textContent" 2>&1)"
+assert "D-1 by-line" '"by agent"' \
+  "$(agent-browser eval "document.querySelector('#D-1 .pd-decision-meta').textContent" 2>&1)"
+assert "D-1 body wraps children" "true" \
+  "$(agent-browser eval "!!document.querySelector('#D-1 .pd-decision-body md')" 2>&1)"
+assert "D-2 proposed status" '"proposed"' \
+  "$(agent-browser eval "document.querySelector('#D-2 .pd-badge').textContent" 2>&1)"
+assert "decisions log aggregates decisions + closed threads" "3" \
+  "$(agent-browser eval "document.querySelectorAll('pd-decisions .pd-decision-list li').length" 2>&1)"
+assert "log entries in source order" '"Token bucket over sliding window|Defer multi-region replication|Why not a queue?"' \
+  "$(agent-browser eval "[...document.querySelectorAll('pd-decisions .pd-decision-list li a')].map(a=>a.textContent).join('|')" 2>&1)"
+assert "log links to source element" '"#D-1"' \
+  "$(agent-browser eval "document.querySelector('pd-decisions .pd-decision-list li a').getAttribute('href')" 2>&1)"
+assert "decision outcome uses summary" '"Token bucket: simpler, bursts within SLA."' \
+  "$(agent-browser eval "document.querySelector('pd-decisions .pd-decision-list li .pd-decision-outcome').textContent" 2>&1)"
+assert "thread outcome uses last comment" '"Adds latency; the bucket is sufficient."' \
+  "$(agent-browser eval "[...document.querySelectorAll('pd-decisions .pd-decision-list li')].find(li=>li.textContent.includes('Why not a queue?')).querySelector('.pd-decision-outcome').textContent" 2>&1)"
+
+agent-browser close >/dev/null 2>&1
+
 # ── Summary ────────────────────────────────────────────────────
 echo ""
 echo "════════════════════════════════════════"
