@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Epic vision — pd-cli + pd-journey</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="Epic vision · final-shape components" status="draft" generated="2026-06-18">
+
+    <pd-tab name="Dev tool">
+      <pd-section id="why" title="What an epic should lead with" summary="The user-visible final shape — not a file tree. For a dev tool, that's the commands and their output.">
+        <md><script type="text/plain">
+An epic opens with the **Vision**: what does success look like from the user's seat? For a
+CLI/dev tool, the clearest statement of the final shape is the **commands a user runs and
+the output they get back** — light comments, no implementation. The left border shows
+delivery status: **green = works today**, **amber = in flight**, **dimmed = still coming**.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="author-ship" title="Author and ship a skill">
+        <pd-cli title="zsh — authoring a new skill" caption="The one-command author→install loop.">
+          <pd-cmd note="scaffold from a description, one DSL entry" status="done">npx skills new rate-limit-reviewer</pd-cmd>
+          <pd-out>✓ scaffolded src/review/skills/rate-limit-reviewer/SKILL.md</pd-out>
+          <pd-cmd note="compile src/ → skills/ and install into every agent" status="done">make install</pd-cmd>
+          <pd-out>✓ compiled 31 skills → skills/
+✓ installed: claude-code, codex
+✓ lint: 0 errors, 0 warnings</pd-out>
+        </pd-cli>
+      </pd-section>
+
+      <pd-section id="plan-to-merge" title="Plan a feature, end to end">
+        <pd-cli title="zsh — the plan-to-merge loop" caption="Requirements → merged PR, agent-driven.">
+          <pd-cmd note="describe a feature; rich HTML plan opens in the browser" status="done">claude /beta-new-task "add per-team API quotas"</pd-cmd>
+          <pd-out>✓ docs/tasks/042-team-quotas/plan.html  (Requirements tab)</pd-out>
+          <pd-cmd note="design + phased plan, hard-stops for review" status="active">claude /beta-new-solution  &amp;&amp;  claude /beta-new-plan</pd-cmd>
+          <pd-out>✓ plan.html: Verification · Solution · Plan tabs</pd-out>
+          <pd-cmd note="worktree, subagent per phase, opens a PR" status="todo">claude /execute-task 042</pd-cmd>
+          <pd-cmd note="address review, run tests, merge" status="todo">claude /complete-task 042</pd-cmd>
+          <pd-out># → https://github.com/you/repo/pull/118  (merged)</pd-out>
+        </pd-cli>
+      </pd-section>
+    </pd-tab>
+
+    <pd-tab name="Web app">
+      <pd-section id="journey-intro" title="The same idea for a product" summary="For a web app the final shape is a user journey — light-touch legs from intent to outcome, no screens or files.">
+        <md><script type="text/plain">
+When the epic delivers a *product* rather than a CLI, the final-shape statement is a
+**user journey**: who does what, and what they get — a flow capped by the outcome. Same
+status tint, same rule: no screens, no files, no implementation.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="reviewer-journey" title="A reviewer signs off a plan in the browser">
+        <pd-journey title="Reviewer → approved plan" outcome="approved plan, decision log intact, zero context lost">
+          <pd-leg actor="reviewer" action="opens plan.html" status="done">tabs, phase stepper, file tree, diagrams — one self-contained file</pd-leg>
+          <pd-leg actor="reviewer" action="queues inline comments" status="done">threads anchored to sections; priorities p1–p3</pd-leg>
+          <pd-leg actor="reviewer" action="copies the comment block" status="active">pastes to the agent in one shot</pd-leg>
+          <pd-leg actor="agent" action="merges + replies in-thread" status="todo">each thread resolved or rejected with reasoning</pd-leg>
+        </pd-journey>
+      </pd-section>
+    </pd-tab>
+
+  </pd-doc>
+</body>
+</html>

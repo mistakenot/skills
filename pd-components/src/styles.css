@@ -111,12 +111,12 @@ pd-tab { display: block; }
 .pd-sidenav { display: none; }
 
 @media (min-width: 80rem) {
-  pd-doc.pd-has-sidenav {
+  pd-doc.pd-has-sidenav { max-width: 74rem; }
+  .pd-doc-row {
     display: flex;
     gap: 0 2rem;
-    max-width: 74rem;
   }
-  .pd-doc-body { flex: 1; }
+  .pd-doc-body { flex: 1; min-width: 0; }
   .pd-sidenav {
     display: block;
     flex: 0 0 12rem;
@@ -669,3 +669,70 @@ md ul { list-style-type: disc; }
 md ol { list-style-type: decimal; }
 md ul ul { list-style-type: circle; }
 md li { margin: 0.2rem 0; }
+
+/* ---- pd-cli (terminal transcript) ---- */
+
+pd-cli { display: block; margin: 1.1rem 0; }
+.pd-cli {
+  border: 1px solid var(--pd-border); border-radius: 0.6rem; overflow: hidden;
+  background: #0f172a; color: #e2e8f0;
+}
+.pd-cli-bar {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.45rem 0.7rem; background: #1e293b; border-bottom: 1px solid #334155;
+}
+.pd-cli-dots { display: inline-flex; gap: 0.3rem; }
+.pd-cli-dots i { width: 0.6rem; height: 0.6rem; border-radius: 999px; background: #475569; }
+.pd-cli-dots i:nth-child(1) { background: #ef4444; }
+.pd-cli-dots i:nth-child(2) { background: #eab308; }
+.pd-cli-dots i:nth-child(3) { background: #22c55e; }
+.pd-cli-title { font-size: 0.78rem; color: #94a3b8; letter-spacing: 0.02em; }
+.pd-cli-body { padding: 0.7rem 0.8rem; font-family: ui-monospace, monospace; font-size: 0.82rem; line-height: 1.5; }
+.pd-cli-cmd { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.12rem 0; }
+.pd-cli-prompt { color: #22c55e; font-weight: 700; }
+.pd-cli-cmd-text { color: #f1f5f9; background: none; padding: 0; white-space: pre-wrap; }
+.pd-cli-note { color: #64748b; font-style: italic; }
+.pd-cli-copy {
+  margin-left: auto; appearance: none; background: none; border: none; cursor: pointer;
+  color: #475569; font: inherit; font-size: 0.72rem;
+}
+.pd-cli-copy:hover { color: #e2e8f0; }
+.pd-cli-out { margin: 0.1rem 0 0.5rem; padding: 0 0 0 1rem; background: none; border: none; }
+.pd-cli-out code { color: #94a3b8; background: none; padding: 0; font-family: ui-monospace, monospace; white-space: pre-wrap; }
+.pd-cli-cmd[data-status="done"] { box-shadow: inset 2px 0 0 #22c55e; padding-left: 0.4rem; }
+.pd-cli-cmd[data-status="active"] { box-shadow: inset 2px 0 0 #eab308; padding-left: 0.4rem; }
+.pd-cli-cmd[data-status="todo"] { opacity: 0.5; }
+.pd-cli-caption { color: var(--pd-muted); font-size: 0.8rem; margin-top: 0.4rem; }
+
+/* ---- pd-journey (user journey) ---- */
+
+pd-journey { display: block; margin: 1.3rem 0; }
+.pd-journey-title { font-weight: 600; margin-bottom: 0.7rem; }
+.pd-journey-flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0.5rem; }
+.pd-journey-leg {
+  flex: 1 1 12rem; min-width: 11rem;
+  border: 1px solid var(--pd-border); border-radius: 0.5rem; padding: 0.7rem;
+  background: var(--pd-surface); position: relative;
+}
+.pd-journey-n {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.4rem; height: 1.4rem; border-radius: 999px;
+  background: var(--pd-neutral-bg); color: var(--pd-muted); font-size: 0.72rem; font-weight: 700;
+  position: absolute; top: -0.6rem; left: -0.6rem;
+}
+.pd-journey-actor { margin-bottom: 0.35rem; }
+.pd-journey-action { font-weight: 600; font-size: 0.9rem; }
+.pd-journey-result { color: var(--pd-muted); font-size: 0.84rem; margin-top: 0.2rem; }
+.pd-journey-arrow { align-self: center; color: var(--pd-muted); font-size: 1.1rem; }
+.pd-journey-outcome {
+  flex: 1 1 10rem; min-width: 9rem;
+  border: 1px solid var(--pd-ok); background: var(--pd-ok-bg); color: var(--pd-ok);
+  border-radius: 0.5rem; padding: 0.7rem; font-weight: 600;
+}
+.pd-journey-outcome-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; opacity: 0.8; }
+.pd-journey-leg[data-status="done"] { border-color: var(--pd-ok); box-shadow: inset 0 0 0 1px var(--pd-ok); }
+.pd-journey-leg[data-status="done"] .pd-journey-n { background: var(--pd-ok-bg); color: var(--pd-ok); }
+.pd-journey-leg[data-status="active"] { border-color: var(--pd-warn); }
+.pd-journey-leg[data-status="active"] .pd-journey-n { background: var(--pd-warn-bg); color: var(--pd-warn); }
+.pd-journey-leg[data-status="todo"] { opacity: 0.6; border-style: dashed; }
+.pd-journey-caption { color: var(--pd-muted); font-size: 0.8rem; margin-top: 0.4rem; }

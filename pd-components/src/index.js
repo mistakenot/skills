@@ -10,6 +10,8 @@ import './stepper.js';
 import './mermaid.js';
 import './code.js';
 import './unit.js';
+import './cli.js';
+import './journey.js';
 import './misc.js';
 import './decision.js';
 import './scope.js';

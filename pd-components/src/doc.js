@@ -177,10 +177,23 @@ class PdDoc extends PdElement {
   }
 
   _initSideNav() {
+    // Header, PR link and the tab bar stay full-width at the top; everything
+    // after the tab bar drops into a [sidenav | body] row, so the page index
+    // starts level with the bottom of the tab selector (hierarchy: Tabs > Page
+    // index). Falls back to the PR link / header when a doc has no tabs.
+    const top = this.querySelector('.pd-tabnav')
+      || this.querySelector('.pd-pr-link')
+      || this.querySelector('.pd-doc-header');
     const body = el('div', { class: 'pd-doc-body' });
-    while (this.firstChild) body.append(this.firstChild);
+    let node = top ? top.nextSibling : this.firstChild;
+    while (node) {
+      const next = node.nextSibling;
+      body.append(node);
+      node = next;
+    }
     const nav = el('nav', { class: 'pd-sidenav' });
-    this.append(nav, body);
+    const row = el('div', { class: 'pd-doc-row' }, [nav, body]);
+    this.append(row);
     this.classList.add('pd-has-sidenav');
     this._sideNav = nav;
 

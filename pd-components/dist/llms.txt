@@ -283,6 +283,44 @@ uses to wire the two together — no extra attribute needed.
 </pd-unit>
 ```
 
+### <pd-cli title caption> / <pd-cmd note status> / <pd-out>
+Terminal transcript showing the FINAL SHAPE of a dev tool / CLI / API from the
+user's point of view — the commands they run and the output they get back. This
+is the clearest way to state "what does success look like" for a command-line
+product. Epic-altitude: describe the experience, never the files behind it.
+
+pd-cmd is one command line; `note` renders as a dimmed inline `# comment`.
+pd-out is the output for the preceding command(s), always dimmed. `status` on a
+pd-cmd (done|active|todo) tints the line so a reader sees what works today vs
+what is still coming — progress read in user-visible capability, not files. If a
+command or output contains <, >, or &, wrap its text in a nested
+<script type="text/plain">.
+
+```html
+<pd-cli title="zsh — authoring a skill" caption="The one-command author→install loop">
+  <pd-cmd note="scaffold from a description" status="done">npx skills new my-skill</pd-cmd>
+  <pd-out>✓ scaffolded src/my-skill/SKILL.md</pd-out>
+  <pd-cmd note="compile + install into every agent" status="active">make install</pd-cmd>
+  <pd-out>✓ installed: claude-code, codex</pd-out>
+</pd-cli>
+```
+
+### <pd-journey title outcome caption> / <pd-leg actor action status>
+User journey at epic altitude: the legs a user travels to reach an outcome, told
+from their point of view, rendered as a connected flow. The app analogue of
+pd-cli — use it when the product is a service/UI rather than a CLI. Light-touch:
+no screens, no files, no implementation. Legs auto-number; `outcome` caps the
+flow with the user-visible result. `status` on a leg (done|active|todo) tints it
+so the reader sees how much of the journey is real today vs still coming.
+
+```html
+<pd-journey title="Author → shipped feature" outcome="merged PR, no manual coding">
+  <pd-leg actor="author" action="describes the feature" status="done">requirements appear</pd-leg>
+  <pd-leg actor="agent" action="plans → executes" status="active">a PR opens</pd-leg>
+  <pd-leg actor="author" action="reviews &amp; merges" status="todo">feedback addressed</pd-leg>
+</pd-journey>
+```
+
 ### <pd-ac id title phases tests>
 Acceptance-criteria card with traceability chips. phases: comma-separated
 phase numbers covering it; tests: comma-separated test files.

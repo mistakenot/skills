@@ -70,7 +70,7 @@ else
       SKILLS="learning-diary"
       ;;
     beta-planning)
-      SKILLS="beta-new-task,beta-new-solution,beta-new-plan"
+      SKILLS="beta-new-epic,beta-new-task,beta-new-solution,beta-new-plan"
       ;;
     assurance)
       SKILLS="assurance-strategist"
