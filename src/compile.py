@@ -6,6 +6,7 @@ Usage:
 """
 
 import dataclasses
+import json
 import os
 import re
 import shutil
@@ -50,7 +51,16 @@ REF_PATTERN = re.compile(r"^\{\{\s*ref:(.+?)\s*\}\}$", re.MULTILINE)
 REF_LINK_PATTERN = re.compile(r"\[references/(.+?)\]\(references/", re.MULTILINE)
 # Inline directive: {{ skill:<name> }} or {{ skill:<module>/<name> }}
 SKILL_REF_PATTERN = re.compile(r"\{\{\s*skill:(.+?)\s*\}\}")
+# Inline directive: {{ pd-version }} -> pd-vX.Y.Z tag from pd-components/package.json
+PD_VERSION_PATTERN = re.compile(r"\{\{\s*pd-version\s*\}\}")
 MAX_OUTPUT_CHARS = 15_000
+
+
+def _read_pd_version(src_dir: str) -> str:
+    """Read pd-components version from package.json and return the git tag (e.g. 'pd-v0.4.0')."""
+    pkg_path = os.path.join(os.path.dirname(src_dir), "pd-components", "package.json")
+    with open(pkg_path) as f:
+        return f"pd-v{json.load(f)['version']}"
 
 INDEX_PATTERN = re.compile(r"^\{\{\s*index:techniques\s*\}\}$", re.MULTILINE)
 CARD_PREFIX = "technique-"
@@ -290,6 +300,7 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
     # ------------------------------------------------------------------
     # Phase 2: render templates and write output
     # ------------------------------------------------------------------
+    pd_version = _read_pd_version(src_dir)
     compiled = 0
 
     for mod in modules:
@@ -313,8 +324,9 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
             rendered = REF_PATTERN.sub(replace_ref, content)
             rendered = INDEX_PATTERN.sub(lambda m: render_techniques_index(sk, refs_dir), rendered)
 
-            # Expand {{ skill:X }} tags
+            # Expand {{ skill:X }} and {{ pd-version }} tags
             rendered = SKILL_REF_PATTERN.sub(_replace_skill_ref, rendered)
+            rendered = PD_VERSION_PATTERN.sub(pd_version, rendered)
 
             # Size check
             if len(rendered) > MAX_OUTPUT_CHARS:
@@ -330,7 +342,7 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
             with open(os.path.join(skill_out, "SKILL.md"), "w") as f:
                 f.write(rendered)
 
-            # Copy referenced files to references/ (substituting {{ skill:X }} if present)
+            # Copy referenced files to references/ (substituting inline directives)
             if sk.refs:
                 refs_out = os.path.join(skill_out, "references")
                 os.makedirs(refs_out, exist_ok=True)
@@ -339,8 +351,10 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
                     dst_path = os.path.join(refs_out, r.filename)
                     with open(src_path) as f:
                         ref_content = f.read()
-                    if SKILL_REF_PATTERN.search(ref_content):
+                    needs_render = SKILL_REF_PATTERN.search(ref_content) or PD_VERSION_PATTERN.search(ref_content)
+                    if needs_render:
                         rendered_ref = SKILL_REF_PATTERN.sub(_replace_skill_ref, ref_content)
+                        rendered_ref = PD_VERSION_PATTERN.sub(pd_version, rendered_ref)
                         with open(dst_path, "w") as f:
                             f.write(rendered_ref)
                     else:
@@ -510,7 +524,7 @@ if __name__ == "__main__":
     )
 
     beta_planning = module("beta-planning",
-        skill("beta-new-task",     refs=[ref("beta-workflow-overview.md"), ref("html-boilerplate.md"),
+        skill("beta-new-task",     refs=[ref("beta-workflow-overview.md"),
                                          ref("tab-requirements.md")]),
         skill("beta-new-solution", refs=[ref("beta-workflow-overview.md"), ref("tab-verification.md"),
                                          ref("tab-solution.md"), ref("template-context.md")]),

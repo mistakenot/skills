@@ -54,6 +54,8 @@ SKILL.md files support two directives:
 
   **Validation:** The compiler validates all `{{ skill:X }}` references in Phase 1 (before writing any output). Unknown skills, unknown modules, and ambiguous bare names all produce errors.
 
+- `{{ pd-version }}` — replaced with the current pd-components release tag (e.g. `pd-v0.4.0`), read from `pd-components/package.json` at compile time. Appears inline. Works in both SKILL.md templates and ref files.
+
 - `{{ index:techniques }}` — replaced with a generated markdown table of all technique cards declared for the skill. Columns: Technique, What it catches, Oracle, Archetypes, Crit, Volatility, Link. The table is built from each `technique-*.md` card's frontmatter at compile time.
 
 Technique cards follow the `technique-<slug>.md` naming convention and live in the module's `refs/` directory. Each card has flat frontmatter with 13 required keys (`name`, `summary`, `oracle`, `archetypes`, `criticality-min`, `volatility-fit`, `harness`, `pairs-with`, `upgrade-looser`, `upgrade-stricter`, `cost-author`, `cost-maintain`, `cost-run`) and 12 exact-title `## ` sections validated at compile time. Missing keys, missing sections, or out-of-order sections fail the build.
