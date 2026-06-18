@@ -12,13 +12,14 @@
 // the user-visible result. status= done|active|todo on a leg tints it so the
 // reader sees how much of the journey is real today vs still coming.
 
-import { PdElement, define, el } from './util.js';
+import { PdElement, define, el, selectEpic } from './util.js';
 
 class PdJourney extends PdElement {
   init() {
     const title = this.getAttribute('title');
     const outcome = this.getAttribute('outcome');
     const caption = this.getAttribute('caption');
+    const id = this.getAttribute('id');
     const legs = [...this.querySelectorAll(':scope > pd-leg')];
 
     const flow = el('div', { class: 'pd-journey-flow' });
@@ -49,6 +50,17 @@ class PdJourney extends PdElement {
     wrap.append(flow);
     this.append(wrap);
     if (caption) this.append(el('div', { class: 'pd-journey-caption' }, caption));
+
+    // With an id, the journey joins the epic graph: clicking its title shows
+    // which tasks deliver it; selecting one of those lights it up.
+    if (id && title) {
+      const t = wrap.querySelector('.pd-journey-title');
+      t.classList.add('pd-epic-clickable');
+      t.addEventListener('click', () => selectEpic('journey', id, this));
+      window.addEventListener('pd:epic-selected', (e) => {
+        this.classList.toggle('pd-epic-hl', (e.detail?.journeys || []).includes(id));
+      });
+    }
   }
 }
 

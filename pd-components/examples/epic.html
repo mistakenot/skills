@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EPIC · Build the skills monorepo from scratch</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="EPIC · Build the skills monorepo from scratch" status="executing" generated="2026-06-18">
+    <script type="application/json" id="pd-meta">
+    { "id": "001", "name": "build-skills-monorepo", "kind": "epic", "status": "planning", "created": "2026-06-18" }
+    </script>
+
+    <!-- ============================ VISION ============================ -->
+    <pd-tab name="Vision">
+      <pd-outcome></pd-outcome>
+
+      <pd-section id="north-star" title="North star">
+        <md><script type="text/plain">
+A **single repository of reusable agent skills** — authored once, compiled to a canonical
+form, installable into any agent (Claude Code, Codex, opencode). It dogfoods itself: the
+workflow that plans, executes, reviews and ships its own features is made of the skills it
+ships.
+
+The headline is the *experience*, not the architecture. Two journeys define done — click
+either to see which tasks deliver it.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="author-journey" title="An author drives a feature without writing code">
+        <pd-journey id="J1" title="Author → shipped feature" outcome="merged PR, feedback captured, no manual coding step">
+          <pd-leg actor="author" action="describes the feature" status="done">a task folder + requirements appear</pd-leg>
+          <pd-leg actor="agent" action="plans → executes in a worktree" status="active">a PR opens, phase by phase</pd-leg>
+          <pd-leg actor="author" action="reviews in the browser" status="active">inline threads, resolved or rejected</pd-leg>
+          <pd-leg actor="agent" action="addresses feedback, merges" status="todo">main stays green</pd-leg>
+        </pd-journey>
+      </pd-section>
+
+      <pd-section id="author-skill" title="Authoring a skill is one loop">
+        <pd-cli id="J2" title="zsh — author and ship a skill" caption="The one-command author→install loop.">
+          <pd-cmd note="scaffold from a description, one DSL entry" status="done">npx skills new rate-limit-reviewer</pd-cmd>
+          <pd-out>✓ scaffolded src/review/skills/rate-limit-reviewer/SKILL.md</pd-out>
+          <pd-cmd note="compile src/ → skills/ and install into every agent" status="done">make install</pd-cmd>
+          <pd-out>✓ compiled 31 skills → skills/
+✓ installed: claude-code, codex
+✓ lint: 0 errors</pd-out>
+        </pd-cli>
+      </pd-section>
+    </pd-tab>
+
+    <!-- ============================ GUARD RAILS ============================ -->
+    <pd-tab name="Guard rails">
+      <pd-section id="functional" title="Functional — invariants every task preserves">
+        <pd-guardrail id="G1" kind="functional" title="Runs on every target agent">
+          <md><script type="text/plain">Skills may assume only Agent Skills + Sub-Agents — nothing Claude-Code-only. Lint enforces it.</script></md>
+        </pd-guardrail>
+        <pd-guardrail id="G2" kind="functional" title="Single source of truth">
+          <md><script type="text/plain">Authoring happens in src/; the installable form is generated. Editing compiled output is forbidden.</script></md>
+        </pd-guardrail>
+        <pd-guardrail id="G3" kind="functional" title="Main always green">
+          <md><script type="text/plain">Every task ships independently and must not break shipped functionality — feature-gate if needed.</script></md>
+        </pd-guardrail>
+      </pd-section>
+
+      <pd-section id="non-functional" title="Non-functional — the qualities that bind the system">
+        <pd-guardrail id="G4" kind="operability" metric="one command" title="Trivial to install">
+          <md><script type="text/plain">A single `make install` compiles and installs every skill into every target agent.</script></md>
+        </pd-guardrail>
+        <pd-guardrail id="G5" kind="reliability" metric="opens from file://" title="Docs are self-contained">
+          <md><script type="text/plain">A planning doc is one HTML file that opens with no build and no server, pinned to an immutable CDN tag.</script></md>
+        </pd-guardrail>
+      </pd-section>
+    </pd-tab>
+
+    <!-- ============================ ARCHITECTURE ============================ -->
+    <pd-tab name="Architecture">
+      <pd-section id="containers" title="Containers & seams">
+        <pd-mermaid caption="The load-bearing seams (edges), not the files behind them">
+flowchart LR
+  Author[Authoring · src/ + compiler] -->|compiled skill format| Skills[Installed skills]
+  Skills --> Planning[Planning workflow]
+  Components[pd-components · CDN] -->|pinned bundle contract| Planning
+  Planning -->|task doc schema| Execute[Execution + review]
+  Execute -->|feedback + history| Eval[Eval & self-improvement]
+  Eval -.->|new rules| Author
+        </pd-mermaid>
+        <md><script type="text/plain">
+The three seams a task must not break:
+- **Compiled skill format** — the contract between `src/` authoring and what agents load.
+- **pd-components bundle contract** — the pinned CDN tag + `llms.txt` the planning docs render against.
+- **Task doc schema** — what execution and review consume.
+
+Behind each seam, a task planner has full latitude.
+        </script></md>
+      </pd-section>
+    </pd-tab>
+
+    <!-- ============================ BREAKDOWN ============================ -->
+    <pd-tab name="Breakdown">
+      <pd-section id="sequence" title="Build order">
+        <pd-breakdown caption="Dependency order — roots left, each column builds on the previous. Click a node to see what it delivers and honors."></pd-breakdown>
+      </pd-section>
+
+      <pd-section id="tasks" title="Tasks">
+        <pd-task id="T1" title="Toolchain & compiler" status="done" deployable delivers="J2" honors="G1,G2,G4">
+          <md><script type="text/plain">The src/ → skills/ DSL, compile, and one-command install. The foundation everything stands on.</script></md>
+        </pd-task>
+        <pd-task id="T2" title="Markdown planning loop" status="done" deployable depends-on="T1" delivers="J1" honors="G3">
+          <md><script type="text/plain">The plain-markdown plan→execute→complete loop. Proves the workflow shape before rich rendering.</script></md>
+        </pd-task>
+        <pd-task id="T3" title="pd-components library" status="active" deployable depends-on="T1" honors="G5">
+          <md><script type="text/plain">Light-DOM components bundled to one file, dev server, CDN-pinned release. The render substrate.</script></md>
+        </pd-task>
+        <pd-task id="T4" title="HTML planning workflow" status="active" deployable depends-on="T2,T3" delivers="J1" honors="G5">
+          <md><script type="text/plain">The single-file HTML track (planning-doc + beta-*). Same workflow shape, rendered rich.</script></md>
+        </pd-task>
+        <pd-task id="T5" title="Review & feedback loop" status="active" deployable gated depends-on="T2" delivers="J1" honors="G3">
+          <md><script type="text/plain">Code review, doc review, and the feedback round-trip. Closes the loop from planned to shipped.</script></md>
+        </pd-task>
+        <pd-task id="T6" title="Eval & self-improvement" status="todo" deployable depends-on="T4,T5" honors="G3">
+          <md><script type="text/plain">Two-arm eval harness + learning diary. The repo turns its own feedback into new rules.</script></md>
+        </pd-task>
+      </pd-section>
+    </pd-tab>
+
+    <!-- ============================ DECISIONS ============================ -->
+    <pd-tab name="Decisions">
+      <pd-section id="bets" title="Strategic bets">
+        <pd-decision id="D-1" title="Compile src/ into a separate skills/ output" status="accepted" by="agent"
+          summary="Single source of truth in src/; skills/ is generated.">
+          <md><script type="text/plain">
+**Context:** Skills share boilerplate, refs, and cross-links; hand-maintaining the installable form would drift.
+**Decision:** Author in src/; compile.py expands to skills/. Honors G2.
+**Alternatives:** Hand-author final skills (drift); a heavy templating engine (overkill).
+**Consequences:** Every change runs through `make compile`; reviewers check src/, not skills/.
+          </script></md>
+        </pd-decision>
+        <pd-decision id="D-2" title="Single-file, light-DOM HTML planning docs" status="accepted" by="agent"
+          summary="One self-contained .html per plan, CDN-pinned components.">
+          <md><script type="text/plain">
+**Context:** Plans must be human-absorbable yet cheap for an agent to re-read and edit.
+**Decision:** Light-DOM components bundled into one IIFE, pinned to an immutable jsDelivr tag. Honors G5.
+**Alternatives:** A static-site generator (heavy, not self-contained); markdown only (kept as the parallel track).
+**Consequences:** Docs work from file://; old docs never change; the tag must be version-pinned per doc.
+          </script></md>
+        </pd-decision>
+        <pd-decisions></pd-decisions>
+      </pd-section>
+    </pd-tab>
+
+  </pd-doc>
+</body>
+</html>

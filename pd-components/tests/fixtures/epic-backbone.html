@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Test: epic backbone</title>
+  <script src="../../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="Test: epic backbone" status="executing" generated="2026-06-18">
+
+    <pd-tab name="Vision">
+      <pd-outcome></pd-outcome>
+      <pd-section id="j" title="Journeys">
+        <pd-journey id="J1" title="Ship a feature" outcome="merged PR">
+          <pd-leg actor="author" action="describes it" status="done">requirements appear</pd-leg>
+          <pd-leg actor="agent" action="plans" status="active">a PR opens</pd-leg>
+        </pd-journey>
+        <pd-cli id="J2" title="zsh — author a skill">
+          <pd-cmd note="scaffold" status="done">npx skills new x</pd-cmd>
+          <pd-out>✓ done</pd-out>
+        </pd-cli>
+      </pd-section>
+    </pd-tab>
+
+    <pd-tab name="Guard rails">
+      <pd-guardrail id="G1" kind="functional" title="Runs on every agent">
+        <md><script type="text/plain">Agent Skills + Sub-Agents only.</script></md>
+      </pd-guardrail>
+      <pd-guardrail id="G2" kind="performance" metric="p99 < 200ms" title="Within budget">
+        <md><script type="text/plain">Sustained rate under the ceiling.</script></md>
+      </pd-guardrail>
+      <pd-guardrail id="G3" kind="functional" title="Unguarded on purpose">
+        <md><script type="text/plain">No task honors this — should flag a coverage gap.</script></md>
+      </pd-guardrail>
+    </pd-tab>
+
+    <pd-tab name="Breakdown">
+      <pd-breakdown caption="Build order"></pd-breakdown>
+      <pd-task id="T1" title="Foundation" status="done" deployable delivers="J1" honors="G1">
+        <md><script type="text/plain">The base.</script></md>
+      </pd-task>
+      <pd-task id="T2" title="Next" status="active" depends-on="T1" delivers="J2" honors="G2">
+        <md><script type="text/plain">Builds on T1.</script></md>
+      </pd-task>
+      <pd-task id="T3" title="Last" status="todo" deployable depends-on="T2" honors="G1">
+        <md><script type="text/plain">Builds on T2.</script></md>
+      </pd-task>
+    </pd-tab>
+
+  </pd-doc>
+</body>
+</html>

@@ -283,7 +283,7 @@ uses to wire the two together — no extra attribute needed.
 </pd-unit>
 ```
 
-### <pd-cli title caption> / <pd-cmd note status> / <pd-out>
+### <pd-cli id title caption> / <pd-cmd note status> / <pd-out>
 Terminal transcript showing the FINAL SHAPE of a dev tool / CLI / API from the
 user's point of view — the commands they run and the output they get back. This
 is the clearest way to state "what does success look like" for a command-line
@@ -305,20 +305,76 @@ command or output contains <, >, or &, wrap its text in a nested
 </pd-cli>
 ```
 
-### <pd-journey title outcome caption> / <pd-leg actor action status>
+Give the transcript an `id` to join the epic graph (see pd-task): a task's
+delivers= references it, so selecting the transcript shows which tasks deliver
+it, and selecting one of those tasks lights it up.
+
+### <pd-journey id title outcome caption> / <pd-leg actor action status>
 User journey at epic altitude: the legs a user travels to reach an outcome, told
 from their point of view, rendered as a connected flow. The app analogue of
 pd-cli — use it when the product is a service/UI rather than a CLI. Light-touch:
 no screens, no files, no implementation. Legs auto-number; `outcome` caps the
 flow with the user-visible result. `status` on a leg (done|active|todo) tints it
-so the reader sees how much of the journey is real today vs still coming.
+so the reader sees how much of the journey is real today vs still coming. An
+optional `id` joins the epic graph the same way pd-cli's does (tasks deliver= it).
 
 ```html
-<pd-journey title="Author → shipped feature" outcome="merged PR, no manual coding">
+<pd-journey id="J1" title="Author → shipped feature" outcome="merged PR, no manual coding">
   <pd-leg actor="author" action="describes the feature" status="done">requirements appear</pd-leg>
   <pd-leg actor="agent" action="plans → executes" status="active">a PR opens</pd-leg>
   <pd-leg actor="author" action="reviews &amp; merges" status="todo">feedback addressed</pd-leg>
 </pd-journey>
+```
+
+### <pd-guardrail id kind metric title>
+A constraint every task in an epic inherits — the invariants the initiative must
+preserve. `kind`: functional (default) | performance | security | cost | a11y |
+reliability | compat | privacy | operability | scalability — non-functional kinds
+are grouped apart by pd-outcome. `metric`: optional measurable target (e.g. "p99
+< 200ms"). It's a join-key, not a design: a task references its `id` via honors=,
+so selecting a guard rail shows its blast radius (every task bound by it), and
+pd-outcome flags any rail no task honors. Body is the constraint statement.
+
+```html
+<pd-guardrail id="G1" kind="performance" metric="p99 < 200ms" title="Stays within budget under load">
+  <md><script type="text/plain">Sustained rate under the partner-tier ceiling; bursts shed, not queued.</script></md>
+</pd-guardrail>
+```
+
+### <pd-task id title status depends-on delivers honors deployable gated href>
+One unit of an epic's decomposition — NOT a phase: no files, no steps. It carries
+only what the epic tracks. `status`: todo|active|done. `depends-on`: other task
+ids it builds on (drives pd-breakdown). `delivers`: journey/cli ids it advances.
+`honors`: guard-rail ids it must respect. `deployable`: independently shippable.
+`gated`: ships behind a feature flag. `href`: link to its plan.html once planned.
+Selecting a task lights up what it delivers and honors. Body is a one-line intent.
+
+```html
+<pd-task id="T1" title="Token-bucket limiter" status="done" deployable
+         delivers="J1" honors="G1,G2" href="docs/tasks/021-rate-limit/plan.html">
+  <md><script type="text/plain">The limiter core behind the gateway 429s.</script></md>
+</pd-task>
+```
+
+### <pd-breakdown caption>
+Dependency DAG over every pd-task, fully derived from depends-on — the deployment
+sequence at a glance (roots left, each column builds on the last). Clicking a node
+selects that task everywhere (same as clicking its card). Zero authoring beyond
+the cards. Place it at the top of the breakdown section.
+
+```html
+<pd-breakdown caption="Build order"></pd-breakdown>
+```
+
+### <pd-outcome>
+The epic-altitude scan strip, fully derived — no attributes. The analogue of
+pd-scope: counts journeys (pd-journey + pd-cli), guard rails (functional vs
+non-functional), and tasks (by status, how many deployable), and flags coverage
+gaps — a guard rail no task honors, a journey/cli (with an id) no task delivers.
+Drop one at the top of the Vision tab.
+
+```html
+<pd-outcome></pd-outcome>
 ```
 
 ### <pd-ac id title phases tests>

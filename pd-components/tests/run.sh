@@ -183,6 +183,52 @@ assert "thread outcome uses last comment" '"Adds latency; the bucket is sufficie
 
 agent-browser close >/dev/null 2>&1
 
+# ── epic-backbone ──────────────────────────────────────────────
+run_playbook "epic-backbone"
+agent-browser open "file://$FIXTURES/epic-backbone.html" >/dev/null 2>&1
+agent-browser wait 3000 >/dev/null 2>&1
+
+tile="[...document.querySelectorAll('pd-outcome .pd-scope-tile')]"
+assert "outcome counts 2 journeys" '"2"' \
+  "$(agent-browser eval "$tile.find(t=>t.querySelector('.pd-scope-label').textContent==='journeys').querySelector('.pd-scope-value').textContent" 2>&1)"
+assert "outcome counts 3 guard rails" '"3"' \
+  "$(agent-browser eval "$tile.find(t=>t.querySelector('.pd-scope-label').textContent==='guard rails').querySelector('.pd-scope-value').textContent" 2>&1)"
+assert "guard rails split functional/non-functional" "true" \
+  "$(agent-browser eval "$tile.find(t=>t.querySelector('.pd-scope-label').textContent==='guard rails').querySelector('.pd-scope-sub').textContent.includes('2 functional · 1 non-functional')" 2>&1)"
+assert "outcome counts 3 tasks" '"3"' \
+  "$(agent-browser eval "$tile.find(t=>t.querySelector('.pd-scope-label').textContent==='tasks').querySelector('.pd-scope-value').textContent" 2>&1)"
+assert "tasks sub shows 2 deployable" "true" \
+  "$(agent-browser eval "$tile.find(t=>t.querySelector('.pd-scope-label').textContent==='tasks').querySelector('.pd-scope-sub').textContent.includes('2 deployable')" 2>&1)"
+assert "coverage flags 1 gap" '"1"' \
+  "$(agent-browser eval "$tile.find(t=>t.querySelector('.pd-scope-label').textContent==='coverage gap').querySelector('.pd-scope-value').textContent" 2>&1)"
+assert "gap names the unguarded rail" "true" \
+  "$(agent-browser eval "$tile.find(t=>t.querySelector('.pd-scope-label').textContent==='coverage gap').querySelector('.pd-scope-sub').textContent.includes('rail unguarded')" 2>&1)"
+
+assert "guardrail kind badge" '"performance"' \
+  "$(agent-browser eval "document.querySelector('pd-guardrail[id=\"G2\"] .pd-guardrail-kind').textContent" 2>&1)"
+assert "guardrail metric chip" "true" \
+  "$(agent-browser eval "document.querySelector('pd-guardrail[id=\"G2\"] .pd-guardrail-metric').textContent.includes('p99')" 2>&1)"
+assert "task deployable chip" "1" \
+  "$(agent-browser eval "document.querySelectorAll('pd-task[id=\"T1\"] .pd-task-deploy').length" 2>&1)"
+assert "breakdown derives 3 dag nodes" "3" \
+  "$(agent-browser eval "document.querySelectorAll('pd-breakdown .pd-dag-node').length" 2>&1)"
+
+# Cross-highlight: selecting guard rail G1 lights up its blast radius (T1, T3 honor it; T2 doesn't).
+agent-browser eval "document.querySelector('pd-guardrail[id=\"G1\"]').click()" >/dev/null 2>&1
+assert "blast radius: T1 honors G1 → highlighted" "true" \
+  "$(agent-browser eval "document.querySelector('pd-task[id=\"T1\"]').classList.contains('pd-epic-hl')" 2>&1)"
+assert "blast radius: T3 honors G1 → highlighted" "true" \
+  "$(agent-browser eval "document.querySelector('pd-task[id=\"T3\"]').classList.contains('pd-epic-hl')" 2>&1)"
+assert "blast radius: T2 doesn't honor G1 → not highlighted" "false" \
+  "$(agent-browser eval "document.querySelector('pd-task[id=\"T2\"]').classList.contains('pd-epic-hl')" 2>&1)"
+
+# Cross-highlight the other way: selecting task T1 lights up the journey it delivers (J1).
+agent-browser eval "document.querySelector('pd-task[id=\"T1\"]').click()" >/dev/null 2>&1
+assert "task → journey: T1 delivers J1 → J1 highlighted" "true" \
+  "$(agent-browser eval "document.querySelector('pd-journey[id=\"J1\"]').classList.contains('pd-epic-hl')" 2>&1)"
+
+agent-browser close >/dev/null 2>&1
+
 # ── Summary ────────────────────────────────────────────────────
 echo ""
 echo "════════════════════════════════════════"

@@ -73,3 +73,40 @@ export function filesForPhases(nums) {
   });
   return [...set];
 }
+
+export const csv = (s) => (s || '').split(',').map((x) => x.trim()).filter(Boolean);
+
+// Epic-altitude join graph. Tasks reference journeys (delivers=), guard rails
+// (honors=) and other tasks (depends-on=) by id. This is the id-keyed analogue
+// of the phase→file join above — the data behind blast-radius highlighting.
+export function epicTasks() {
+  return [...document.querySelectorAll('pd-task')].map((t, i) => ({
+    el: t,
+    id: t.getAttribute('id') || `T${i + 1}`,
+    delivers: csv(t.getAttribute('delivers')),
+    honors: csv(t.getAttribute('honors')),
+    deps: csv(t.getAttribute('depends-on')),
+  }));
+}
+
+// Selecting any epic entity broadcasts the related ids so journeys, guard rails
+// and tasks light up together (pd:epic-selected). Selecting a guard rail shows
+// its blast radius — every task that must honor it; selecting a task shows what
+// it advances.
+export function selectEpic(kind, id, source) {
+  const tasks = epicTasks();
+  const T = new Set(); const J = new Set(); const G = new Set();
+  if (kind === 'task') {
+    const t = tasks.find((x) => x.id === id);
+    if (t) { T.add(t.id); t.delivers.forEach((j) => J.add(j)); t.honors.forEach((g) => G.add(g)); }
+  } else if (kind === 'guardrail') {
+    G.add(id);
+    tasks.filter((t) => t.honors.includes(id)).forEach((t) => T.add(t.id));
+  } else if (kind === 'journey') {
+    J.add(id);
+    tasks.filter((t) => t.delivers.includes(id)).forEach((t) => T.add(t.id));
+  }
+  window.dispatchEvent(new CustomEvent('pd:epic-selected', {
+    detail: { kind, id, tasks: [...T], journeys: [...J], guardrails: [...G], source },
+  }));
+}

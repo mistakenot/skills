@@ -14,7 +14,7 @@
 //   <script type="text/plain"> to avoid HTML parsing.
 // pd-out — the output for the preceding command(s); always rendered dimmed.
 
-import { PdElement, define, el } from './util.js';
+import { PdElement, define, el, selectEpic } from './util.js';
 import { copyText } from './store.js';
 
 // Text comes from a nested <script type="text/plain"> (use when it contains
@@ -29,6 +29,7 @@ class PdCli extends PdElement {
   init() {
     const title = this.getAttribute('title');
     const caption = this.getAttribute('caption');
+    const id = this.getAttribute('id');
     const rows = [...this.querySelectorAll(':scope > pd-cmd, :scope > pd-out')];
 
     const body = el('div', { class: 'pd-cli-body' });
@@ -64,6 +65,17 @@ class PdCli extends PdElement {
     ]);
     this.append(wrap);
     if (caption) this.append(el('div', { class: 'pd-cli-caption' }, caption));
+
+    // When given an id, the transcript joins the epic graph: clicking its bar
+    // shows which tasks deliver it, and selecting one of those lights it up.
+    if (id) {
+      const bar = wrap.querySelector('.pd-cli-bar');
+      bar.classList.add('pd-epic-clickable');
+      bar.addEventListener('click', () => selectEpic('journey', id, this));
+      window.addEventListener('pd:epic-selected', (e) => {
+        this.classList.toggle('pd-epic-hl', (e.detail?.journeys || []).includes(id));
+      });
+    }
   }
 }
 
