@@ -29,13 +29,17 @@ export function attachComposer(host, meta, trigger) {
   const cancel = el('button', { class: 'pd-btn' }, 'Cancel');
   const box = el('div', { class: 'pd-composer' }, [ta, el('div', { class: 'pd-composer-actions' }, [queue, cancel])]);
 
-  queue.addEventListener('click', () => {
+  const submit = () => {
     const text = ta.value.trim();
     if (!text) return;
     store.add({ ...meta, text });
     box.remove();
-  });
+  };
+  queue.addEventListener('click', submit);
   cancel.addEventListener('click', () => box.remove());
+  ta.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submit(); }
+  });
 
   if (trigger && trigger.closest('.pd-section-head')) trigger.closest('.pd-section-head').after(box);
   else host.append(box);
