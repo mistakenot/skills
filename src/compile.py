@@ -644,6 +644,8 @@ if __name__ == "__main__":
     )
 
     beta_planning = module("beta-planning",
+        skill("beta-new-epic",     refs=[ref("beta-workflow-overview.md"),
+                                         ref("epic-overview.md"), ref("epic-tabs.md")]),
         skill("beta-new-task",     refs=[ref("beta-workflow-overview.md"),
                                          ref("tab-requirements.md")]),
         skill("beta-new-solution", refs=[ref("beta-workflow-overview.md"), ref("tab-verification.md"),
