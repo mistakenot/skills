@@ -22,13 +22,13 @@ exact release this skill targets — an immutable tag, so it never drifts or
 serves a stale cache:
 
 ```bash
-curl -fsSL https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.6.0/pd-components/dist/llms.txt
+curl -fsSL https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.7.0/pd-components/dist/llms.txt
 ```
 
 It contains the page boilerplate, the release tag to pin, every component with
 attributes and examples, the authoring rules, and the comment-merge protocol.
 Follow it exactly — in particular, import the bundle pinned to the release tag
-it names (`pd-v0.6.0`), never `@main`. To move to a newer component
+it names (`pd-v0.7.0`), never `@main`. To move to a newer component
 release, update this skill (`npx skills install …`) — the new tag rides along.
 
 If the fetch fails (offline/sandboxed): inside the skills repo itself, read
@@ -98,7 +98,7 @@ Reviewers comment in the browser and paste back an export block delimited by
 
 Classic scripts in head (never `type="module"`):
 `https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4` and
-`https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.6.0/pd-components/dist/pd.min.js` (defer).
+`https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.7.0/pd-components/dist/pd.min.js` (defer).
 
 - `<pd-doc title status pr generated>` shell · `<pd-tab name>` page
   pr: `"pending"` → placeholder; a URL → clickable badge. Update when PR opens.
