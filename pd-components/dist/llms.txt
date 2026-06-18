@@ -1,11 +1,11 @@
-# pd-components v0.4.0
+# pd-components v0.5.0
 
 > Light-DOM web components for rich single-file HTML planning documents.
 > One classic script tag, no build step, works from file:// pages. The HTML
 > source is the canonical data — write it like markup, the components render
 > it into an interactive doc.
 
-Current release: `pd-v0.4.0`. Pin every generated doc to this exact tag (jsDelivr
+Current release: `pd-v0.5.0`. Pin every generated doc to this exact tag (jsDelivr
 caches tags immutably, so old docs never change appearance under the reader).
 
 ## Boilerplate
@@ -22,7 +22,7 @@ file://).
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>NNN: Doc title</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.4.0/pd-components/dist/pd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.5.0/pd-components/dist/pd.min.js" defer></script>
 </head>
 <body>
   <!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
