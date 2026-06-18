@@ -36,18 +36,20 @@ run on a dirty / non-`main` tree.
 **Two gotchas it exists to prevent:**
 - **Tags are immutable on jsDelivr.** Rebuilding under the same version does
   nothing for clients — you must *bump the version*. (The script enforces this.)
-- **New docs inherit their tag from `llms.txt` on the `@main` path, which caches
-  ~12h.** Without a purge, freshly generated docs keep pinning the *old* tag for
-  up to ~12h. (The script purges it, so new docs pin the new tag immediately.)
+- **The planning-doc skill fetches `llms.txt` from its pinned tag, not `@main`.**
+  The release script recompiles the skill so its `{{ pd-version }}` pin tracks the
+  new tag, then commits that alongside the release. Consumers pick up the new
+  components by reinstalling the skill (`npx skills install …`) — no `@main`
+  cache to go stale, so no purge step.
 
 Existing docs stay frozen on their pinned tag by design — bump a doc's
 `@pd-v<old>` to `@pd-v<new>` in its `<script>` src only when you want it to move.
 
-CDN URLs (tags immutable; `@main` refreshes ~12h or on purge):
+CDN URLs (all immutable tags — reproducible, never cache-stale):
 
 ```
 https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v<version>/pd-components/dist/pd.min.js
-https://cdn.jsdelivr.net/gh/mistakenot/skills@main/pd-components/dist/llms.txt
+https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v<version>/pd-components/dist/llms.txt
 ```
 
 ## Try it

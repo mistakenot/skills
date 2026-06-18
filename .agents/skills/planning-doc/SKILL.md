@@ -17,17 +17,19 @@ rendering.
 
 ## Step 1: Fetch the component reference
 
-The component library evolves independently of this skill. Always fetch the
-current reference before authoring:
+The component library is versioned with this skill. Fetch the reference for the
+exact release this skill targets — an immutable tag, so it never drifts or
+serves a stale cache:
 
 ```bash
-curl -fsSL https://cdn.jsdelivr.net/gh/mistakenot/skills@main/pd-components/dist/llms.txt
+curl -fsSL https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.4.0/pd-components/dist/llms.txt
 ```
 
 It contains the page boilerplate, the release tag to pin, every component with
 attributes and examples, the authoring rules, and the comment-merge protocol.
 Follow it exactly — in particular, import the bundle pinned to the release tag
-it names, never `@main`.
+it names (`pd-v0.4.0`), never `@main`. To move to a newer component
+release, update this skill (`npx skills install …`) — the new tag rides along.
 
 If the fetch fails (offline/sandboxed): inside the skills repo itself, read
 `pd-components/dist/llms.txt`; elsewhere, fall back to the cheat sheet at the

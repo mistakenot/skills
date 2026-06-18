@@ -9,15 +9,17 @@
 #   1. jsDelivr serves tags IMMUTABLY — you must BUMP the version, not just
 #      rebuild, or no doc ever sees the change. The preflight refuses to reuse
 #      an existing tag.
-#   2. New docs inherit their pinned tag from llms.txt on the @main CDN path,
-#      which caches ~12h. This purges it so the next generated doc pins the new
-#      tag immediately.
+#   2. The planning-doc skill pins its llms.txt fetch (and pd.min.js) to the
+#      release tag via {{ pd-version }}. This recompiles the skill so that pin
+#      tracks the new tag, and commits it in the release. Consumers pick it up
+#      by reinstalling the skill — there is no @main path to cache-bust.
 
 set -euo pipefail
 
 REPO="mistakenot/skills"
 VERSION="${1:-}"
 cd "$(dirname "$0")"  # -> pd-components/
+ROOT="$(git rev-parse --show-toplevel)"
 
 if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "usage: release.sh <version>   (semver, e.g. 0.5.0)"; exit 1
@@ -39,16 +41,17 @@ npm version "$VERSION" --no-git-tag-version >/dev/null
 npm run build
 grep -q "pd-components v$VERSION" dist/pd.min.js || { echo "✗ build did not stamp v$VERSION into the bundle"; exit 1; }
 
-# --- commit + tag + push -----------------------------------------------------
-git add package.json package-lock.json dist/pd.min.js dist/llms.txt
-git commit -q -m "Release pd-components $TAG"
-git tag "$TAG"
-git push origin main "$TAG"
+# --- recompile skills so the {{ pd-version }} pin tracks the new tag ----------
+(cd "$ROOT" && uv run --no-dev python src/compile.py >/dev/null)
+grep -q "skills@$TAG/pd-components/dist/llms.txt" "$ROOT/skills/planning-doc/SKILL.md" \
+  || { echo "✗ compiled skill did not pin llms.txt to $TAG"; exit 1; }
 
-# --- purge @main CDN cache (so new docs pin the new tag now) ------------------
-for f in llms.txt pd.min.js; do
-  curl -sS -m 30 "https://purge.jsdelivr.net/gh/$REPO@main/pd-components/dist/$f" >/dev/null || true
-done
+# --- commit + tag + push -----------------------------------------------------
+git -C "$ROOT" add pd-components/package.json pd-components/package-lock.json \
+  pd-components/dist/pd.min.js pd-components/dist/llms.txt skills/
+git -C "$ROOT" commit -q -m "Release pd-components $TAG"
+git -C "$ROOT" tag "$TAG"
+git -C "$ROOT" push origin main "$TAG"
 
 # --- verify the immutable tag serves the new bundle --------------------------
 if curl -sS -m 30 "https://cdn.jsdelivr.net/gh/$REPO@$TAG/pd-components/dist/pd.min.js" | grep -q "pd-components v$VERSION"; then
