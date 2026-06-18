@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "planning-workflow",
+  "description": "End-to-end AI-agent task delivery: requirements, solution, plan, review, execute, and ship features through a structured plan-to-merge workflow.",
+  "author": {
+    "name": "Charlie",
+    "email": "github.5ef725@todevnull.work"
+  },
+  "homepage": "https://github.com/mistakenot/skills",
+  "repository": "https://github.com/mistakenot/skills",
+  "license": "MIT",
+  "keywords": [
+    "planning",
+    "workflow",
+    "code-review",
+    "task-management"
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "mistakenot-skills",
+  "description": "Reusable agent skills for planning, executing, and shipping software with AI agents \u2014 installable as Claude Code plugins.",
+  "owner": {
+    "name": "Charlie",
+    "email": "github.5ef725@todevnull.work",
+    "url": "https://github.com/mistakenot"
+  },
+  "plugins": [
+    {
+      "name": "planning-workflow",
+      "source": "./plugins/planning-workflow",
+      "description": "End-to-end AI-agent task delivery: requirements, solution, plan, review, execute, and ship features through a structured plan-to-merge workflow.",
+      "category": "productivity"
+    },
+    {
+      "name": "ideation",
+      "source": "./plugins/ideation",
+      "description": "Structured ideation: generate high-impact feature ideas and run synthetic user-research simulations to decide what to build next.",
+      "category": "productivity"
+    },
+    {
+      "name": "maintenance",
+      "source": "./plugins/maintenance",
+      "description": "Documentation maintenance: keep READMEs and docs in sync with the current state of the code.",
+      "category": "productivity"
+    },
+    {
+      "name": "exploration",
+      "source": "./plugins/exploration",
+      "description": "De-risk ideas before building: run exploratory tech spikes that validate assumptions and stress-test approaches.",
+      "category": "development"
+    },
+    {
+      "name": "rich-docs",
+      "source": "./plugins/rich-docs",
+      "description": "Author rich single-file HTML planning docs with tabs, mermaid diagrams, file-change trees, and inline comment threads.",
+      "category": "productivity"
+    },
+    {
+      "name": "reflection",
+      "source": "./plugins/reflection",
+      "description": "Mine git history, PRs, and session transcripts into a structured learning diary of techniques and breakthroughs.",
+      "category": "productivity"
+    },
+    {
+      "name": "beta-planning",
+      "source": "./plugins/beta-planning",
+      "description": "HTML-based task planning (beta): requirements, verification, solution, and plan tabs authored into a single plan.html.",
+      "category": "productivity"
+    },
+    {
+      "name": "assurance",
+      "source": "./plugins/assurance",
+      "description": "Design end-to-end assurance and testing strategies for autonomous agent-built software.",
+      "category": "development"
+    }
+  ]
+}

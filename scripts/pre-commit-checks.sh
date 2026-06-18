@@ -17,7 +17,7 @@ fail() { printf "${RED}   FAIL${NC}\n"; errors=$((errors + 1)); }
 # 1. Compile skills from src/ and stage output
 step "compile skills"
 if uv run --no-dev python src/compile.py 2>&1; then
-  git add skills/ install.sh
+  git add skills/ install.sh plugins/ .claude-plugin/marketplace.json
   pass
 else
   fail

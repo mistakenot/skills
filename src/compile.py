@@ -30,6 +30,10 @@ class Skill:
 class Module:
     name: str
     skills: list[Skill]
+    description: str = ""
+    category: str = ""
+    keywords: list[str] = dataclasses.field(default_factory=list)
+    display_name: str = ""
 
 
 def ref(filename: str) -> Ref:
@@ -38,8 +42,10 @@ def ref(filename: str) -> Ref:
 def skill(name: str, refs: list[Ref] | None = None) -> Skill:
     return Skill(name=name, refs=refs or [])
 
-def module(name: str, *skills: Skill) -> Module:
-    return Module(name=name, skills=list(skills))
+def module(name: str, *skills: Skill, description: str = "", category: str = "",
+           keywords: list[str] | None = None, display_name: str = "") -> Module:
+    return Module(name=name, skills=list(skills), description=description,
+                  category=category, keywords=keywords or [], display_name=display_name)
 
 
 # ---------------------------------------------------------------------------
@@ -375,6 +381,9 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
     repo_root = os.path.dirname(src_dir)
     _generate_install_script(modules, repo_root)
 
+    # Generate Claude Code marketplace + per-module plugins
+    _generate_plugins(modules, out_dir, repo_root)
+
 
 # ---------------------------------------------------------------------------
 # Install script generator
@@ -476,6 +485,99 @@ fi
 
 
 # ---------------------------------------------------------------------------
+# Claude Code marketplace + plugin generator
+# ---------------------------------------------------------------------------
+
+MARKETPLACE_NAME = "mistakenot-skills"
+MARKETPLACE_DESCRIPTION = (
+    "Reusable agent skills for planning, executing, and shipping software with "
+    "AI agents — installable as Claude Code plugins."
+)
+OWNER = {
+    "name": "Charlie",
+    "email": "github.5ef725@todevnull.work",
+    "url": f"https://github.com/{REPO.split('/')[0]}",
+}
+PLUGIN_HOMEPAGE = f"https://github.com/{REPO}"
+PLUGIN_MANIFEST_SCHEMA = "https://json.schemastore.org/claude-code-plugin-manifest.json"
+MARKETPLACE_SCHEMA = "https://json.schemastore.org/claude-code-marketplace.json"
+
+
+def _generate_plugins(modules: list[Module], out_dir: str, repo_root: str) -> None:
+    """Generate a Claude Code marketplace and one plugin per module.
+
+    Alongside the existing flat skills/ output this emits:
+      .claude-plugin/marketplace.json          — lists every module as a plugin
+      plugins/<module>/.claude-plugin/plugin.json
+      plugins/<module>/skills/<skill>/...       — copied from compiled skills/
+
+    The whole plugins/ tree and the marketplace manifest are regenerated from
+    scratch each compile so they never drift from the DSL. The `version` field
+    is intentionally omitted: Claude Code then versions each plugin by git commit
+    SHA, so consumers pick up changes on every commit with no manual bump.
+    """
+    plugins_root = os.path.join(repo_root, "plugins")
+    if os.path.isdir(plugins_root):
+        shutil.rmtree(plugins_root)
+
+    entries: list[dict] = []
+    for mod in modules:
+        plugin_dir = os.path.join(plugins_root, mod.name)
+        meta_dir = os.path.join(plugin_dir, ".claude-plugin")
+        skills_dir = os.path.join(plugin_dir, "skills")
+        os.makedirs(meta_dir)
+        os.makedirs(skills_dir)
+
+        manifest: dict = {
+            "$schema": PLUGIN_MANIFEST_SCHEMA,
+            "name": mod.name,
+            "description": mod.description,
+            "author": {"name": OWNER["name"], "email": OWNER["email"]},
+            "homepage": PLUGIN_HOMEPAGE,
+            "repository": PLUGIN_HOMEPAGE,
+            "license": "MIT",
+        }
+        if mod.display_name:
+            manifest["displayName"] = mod.display_name
+        if mod.keywords:
+            manifest["keywords"] = mod.keywords
+        with open(os.path.join(meta_dir, "plugin.json"), "w") as f:
+            json.dump(manifest, f, indent=2)
+            f.write("\n")
+
+        # Copy each compiled skill (SKILL.md + references/) into the plugin
+        for sk in mod.skills:
+            shutil.copytree(
+                os.path.join(out_dir, sk.name),
+                os.path.join(skills_dir, sk.name),
+            )
+
+        entry: dict = {
+            "name": mod.name,
+            "source": f"./plugins/{mod.name}",
+            "description": mod.description,
+        }
+        if mod.category:
+            entry["category"] = mod.category
+        entries.append(entry)
+
+    marketplace = {
+        "$schema": MARKETPLACE_SCHEMA,
+        "name": MARKETPLACE_NAME,
+        "description": MARKETPLACE_DESCRIPTION,
+        "owner": OWNER,
+        "plugins": entries,
+    }
+    mp_dir = os.path.join(repo_root, ".claude-plugin")
+    os.makedirs(mp_dir, exist_ok=True)
+    with open(os.path.join(mp_dir, "marketplace.json"), "w") as f:
+        json.dump(marketplace, f, indent=2)
+        f.write("\n")
+
+    print(f"Generated marketplace '{MARKETPLACE_NAME}' + {len(modules)} plugin(s) -> plugins/")
+
+
+# ---------------------------------------------------------------------------
 # Module declarations
 # ---------------------------------------------------------------------------
 
@@ -500,27 +602,45 @@ if __name__ == "__main__":
         skill("complete-task",          refs=[overview, ref("template-feedback.md"), ref("commit-conventions.md")]),
         skill("code-review",            refs=[overview]),
         skill("task-feedback-analyser", refs=[overview, ref("template-rule.md")]),
+        description="End-to-end AI-agent task delivery: requirements, solution, plan, review, execute, and ship features through a structured plan-to-merge workflow.",
+        category="productivity",
+        keywords=["planning", "workflow", "code-review", "task-management"],
     )
 
     ideation = module("ideation",
         skill("generate-10-ideas"),
         skill("fan-out-user-simulation"),
+        description="Structured ideation: generate high-impact feature ideas and run synthetic user-research simulations to decide what to build next.",
+        category="productivity",
+        keywords=["ideation", "brainstorming", "user-research"],
     )
 
     maintenance = module("maintenance",
         skill("revise-readme"),
+        description="Documentation maintenance: keep READMEs and docs in sync with the current state of the code.",
+        category="productivity",
+        keywords=["documentation", "readme"],
     )
 
     exploration = module("exploration",
         skill("tech-spike"),
+        description="De-risk ideas before building: run exploratory tech spikes that validate assumptions and stress-test approaches.",
+        category="development",
+        keywords=["tech-spike", "prototyping", "research"],
     )
 
     rich_docs = module("rich-docs",
         skill("planning-doc"),
+        description="Author rich single-file HTML planning docs with tabs, mermaid diagrams, file-change trees, and inline comment threads.",
+        category="productivity",
+        keywords=["planning", "documentation", "html"],
     )
 
     reflection = module("reflection",
         skill("learning-diary"),
+        description="Mine git history, PRs, and session transcripts into a structured learning diary of techniques and breakthroughs.",
+        category="productivity",
+        keywords=["learning", "reflection", "diary"],
     )
 
     beta_planning = module("beta-planning",
@@ -529,10 +649,16 @@ if __name__ == "__main__":
         skill("beta-new-solution", refs=[ref("beta-workflow-overview.md"), ref("tab-verification.md"),
                                          ref("tab-solution.md"), ref("template-context.md")]),
         skill("beta-new-plan",     refs=[ref("beta-workflow-overview.md"), ref("tab-plan.md")]),
+        description="HTML-based task planning (beta): requirements, verification, solution, and plan tabs authored into a single plan.html.",
+        category="productivity",
+        keywords=["planning", "html", "beta"],
     )
 
     assurance = module("assurance",
         skill("assurance-strategist", refs=[ref("technique-unit-testing.md"), ref("technique-property-based-testing.md"), ref("technique-react-unit-testing.md")]),
+        description="Design end-to-end assurance and testing strategies for autonomous agent-built software.",
+        category="development",
+        keywords=["testing", "assurance", "verification"],
     )
 
     compile([planning, ideation, maintenance, exploration, rich_docs, reflection, beta_planning, assurance])

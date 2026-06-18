@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "exploration",
+  "description": "De-risk ideas before building: run exploratory tech spikes that validate assumptions and stress-test approaches.",
+  "author": {
+    "name": "Charlie",
+    "email": "github.5ef725@todevnull.work"
+  },
+  "homepage": "https://github.com/mistakenot/skills",
+  "repository": "https://github.com/mistakenot/skills",
+  "license": "MIT",
+  "keywords": [
+    "tech-spike",
+    "prototyping",
+    "research"
+  ]
+}

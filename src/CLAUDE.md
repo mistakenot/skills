@@ -94,6 +94,29 @@ The compiler also generates `install.sh` at the repo root. This script lets down
 
 The module→skill mappings are baked into the case block at compile time, so the script is always in sync with the DSL declarations. The repo slug is set via the `REPO` constant in `compile.py`.
 
+## Claude Code plugin + marketplace generation
+
+The compiler also packages the repo as a [Claude Code plugin marketplace](https://code.claude.com/docs/en/plugins-reference), so users can install skills via `/plugin` without the `npx skills` flow. Each **module maps to one plugin**; the repo root is the marketplace.
+
+It emits (all regenerated from scratch each compile, so they never drift from the DSL):
+
+- `.claude-plugin/marketplace.json` — lists every module as a plugin entry (`name`, `source`, `description`, `category`).
+- `plugins/<module>/.claude-plugin/plugin.json` — the plugin manifest (`name`, `description`, `author`, `keywords`, …).
+- `plugins/<module>/skills/<skill>/` — a **copy** of each compiled skill (`SKILL.md` + `references/`).
+
+Module metadata for the manifests comes from the DSL: `module()` accepts `description`, `category`, `keywords`, and `display_name` keyword args. Marketplace-level constants (`MARKETPLACE_NAME`, `OWNER`, etc.) live near `_generate_plugins` in `compile.py`.
+
+**Versioning:** the `version` field is intentionally omitted, so Claude Code versions each plugin by git commit SHA — consumers pick up changes on every commit with no manual bump. (`claude plugin validate --strict` will warn about the missing version; this is expected.)
+
+Install flow for consumers:
+
+```bash
+/plugin marketplace add mistakenot/skills
+/plugin install planning-workflow@mistakenot-skills
+```
+
+Skills installed this way are namespaced as `<module>:<skill>` (e.g. `planning-workflow:new-task`).
+
 ## Pre-compile checks
 
 - All ref files referenced in the DSL exist in the module's `refs/` directory
