@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "research",
+  "description": "External-research skills: track open-source repos and mine their updates into a ranked backlog of ideas to borrow.",
+  "author": {
+    "name": "Charlie",
+    "email": "github.5ef725@todevnull.work"
+  },
+  "homepage": "https://github.com/mistakenot/skills",
+  "repository": "https://github.com/mistakenot/skills",
+  "license": "MIT",
+  "keywords": [
+    "research",
+    "inspiration",
+    "open-source",
+    "competitive-analysis"
+  ]
+}

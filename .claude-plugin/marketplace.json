@@ -55,6 +55,12 @@
       "source": "./plugins/assurance",
       "description": "Design end-to-end assurance and testing strategies for autonomous agent-built software.",
       "category": "development"
+    },
+    {
+      "name": "research",
+      "source": "./plugins/research",
+      "description": "External-research skills: track open-source repos and mine their updates into a ranked backlog of ideas to borrow.",
+      "category": "productivity"
     }
   ]
 }
