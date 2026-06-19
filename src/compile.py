@@ -620,10 +620,12 @@ sk — install reusable agent skill packages from $REPO
 Usage:
   sk ls                 List available packages
   sk add <package>...    Install one or more packages ('all' for everything)
-  sk update             Update all installed skills
+  sk update [args...]   Update all installed skills (default: project scope;
+                        pass -g for global, -p for project, or skill names)
   sk help               Show this help
 
 Each "package" is a bundle of related skills. Run 'sk ls' to see them.
+Skills install to project-local .agents/ and .claude/ by default.
 The script self-updates from GitHub on each run.
 
 Environment:
@@ -679,8 +681,10 @@ cmd_add() {
 }
 
 cmd_update() {
+  # Forward extra args to `skills update`, e.g. `sk update -g` (global scope),
+  # `sk update -p` (project scope), or specific skill names.
   echo "==> Updating all installed skills"
-  run npx skills@latest update -y
+  run npx skills@latest update -y "$@"
 }
 
 main() {
