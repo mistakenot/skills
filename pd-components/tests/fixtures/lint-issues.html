@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Lint fixture — issues</title></head>
+<body>
+<pd-doc title="Plan with problems" status="draft">
+  <pd-section id="files" title="File changes">
+    <pd-files>
+      <!-- src/orphan.ts is in the tree but no phase touches it -> unplanned-file -->
+      <pd-file path="src/orphan.ts" change="add">never referenced by a phase</pd-file>
+      <pd-file path="src/db.ts" change="edit">add sessions table</pd-file>
+      <pd-file path="src/auth.ts" change="add">new auth module</pd-file>
+    </pd-files>
+  </pd-section>
+  <pd-section id="plan" title="Plan">
+    <pd-stepper>
+      <!-- touches src/ghost.ts which is missing from the tree -> untracked-file -->
+      <pd-phase n="1" title="DB schema" files="src/db.ts,src/ghost.ts" depends-on="3" status="todo">Add tables.</pd-phase>
+      <!-- depends-on 9 doesn't exist -> missing-dep -->
+      <pd-phase n="2" title="Auth module" files="src/auth.ts" depends-on="1,9" status="todo">Implement auth.</pd-phase>
+      <!-- 1->3->2->1 forms a cycle -> dependency-cycle -->
+      <pd-phase n="3" title="Cyclic" files="" depends-on="2" status="todo">Closes the loop.</pd-phase>
+    </pd-stepper>
+  </pd-section>
+</pd-doc>
+</body>
+</html>

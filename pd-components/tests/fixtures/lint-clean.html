@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Lint fixture — clean</title></head>
+<body>
+<pd-doc title="Clean plan" status="draft">
+  <pd-section id="files" title="File changes">
+    <pd-files>
+      <pd-file path="src/auth.ts" change="add">new auth module</pd-file>
+      <pd-file path="src/login.ts" change="edit">wire in auth</pd-file>
+      <pd-file path="src/db.ts" change="edit">add sessions table</pd-file>
+    </pd-files>
+  </pd-section>
+  <pd-section id="plan" title="Plan">
+    <pd-stepper>
+      <pd-phase n="1" title="DB schema" files="src/db.ts" status="todo">Add sessions table.</pd-phase>
+      <pd-phase n="2" title="Auth module" files="src/auth.ts" depends-on="1" status="todo">Implement auth.</pd-phase>
+      <pd-phase n="3" title="Login wiring" files="src/login.ts" depends-on="2" status="todo">Use auth in login.</pd-phase>
+    </pd-stepper>
+  </pd-section>
+</pd-doc>
+</body>
+</html>

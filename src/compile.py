@@ -22,9 +22,20 @@ class Ref:
     filename: str
 
 @dataclasses.dataclass
+class Asset:
+    """A prebuilt file copied verbatim into the compiled skill.
+
+    `src` is relative to the repo root (e.g. a pd-components build output);
+    `dst` is relative to the skill's output dir (e.g. 'scripts/pd-lint.mjs').
+    """
+    src: str
+    dst: str
+
+@dataclasses.dataclass
 class Skill:
     name: str
     refs: list[Ref]
+    assets: list["Asset"] = dataclasses.field(default_factory=list)
 
 @dataclasses.dataclass
 class Module:
@@ -39,8 +50,12 @@ class Module:
 def ref(filename: str) -> Ref:
     return Ref(filename=filename)
 
-def skill(name: str, refs: list[Ref] | None = None) -> Skill:
-    return Skill(name=name, refs=refs or [])
+def asset(src: str, dst: str) -> Asset:
+    return Asset(src=src, dst=dst)
+
+def skill(name: str, refs: list[Ref] | None = None,
+          assets: list[Asset] | None = None) -> Skill:
+    return Skill(name=name, refs=refs or [], assets=assets or [])
 
 def module(name: str, *skills: Skill, description: str = "", category: str = "",
            keywords: list[str] | None = None, display_name: str = "") -> Module:
@@ -181,6 +196,7 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
         src_dir = os.path.dirname(os.path.abspath(__file__))
     if out_dir is None:
         out_dir = os.path.join(os.path.dirname(src_dir), "skills")
+    repo_root = os.path.dirname(src_dir)
 
     errors: list[str] = []
     warnings: list[str] = []
@@ -214,6 +230,13 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
                 elif r.filename.startswith(CARD_PREFIX):
                     for err in _validate_card(ref_path):
                         errors.append(f"{tag} {err}")
+
+            # Declared assets must exist on disk (built before compile, e.g.
+            # `make pd-components` produces the pd-lint.mjs bundle).
+            for a in sk.assets:
+                asset_path = os.path.join(repo_root, a.src)
+                if not os.path.isfile(asset_path):
+                    errors.append(f"{tag} Asset not found: {a.src} (build it before compiling)")
 
             # Read template
             with open(template_path) as f:
@@ -366,6 +389,14 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
                     else:
                         shutil.copy2(src_path, dst_path)
 
+            # Copy prebuilt assets (e.g. the pd-components CLI linter bundle)
+            # verbatim into the skill output, preserving file mode.
+            for a in sk.assets:
+                asset_src = os.path.join(repo_root, a.src)
+                asset_dst = os.path.join(skill_out, a.dst)
+                os.makedirs(os.path.dirname(asset_dst), exist_ok=True)
+                shutil.copy2(asset_src, asset_dst)
+
             compiled += 1
             print(f"  {sk.name} ({len(rendered):,} chars)")
 
@@ -378,7 +409,6 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
     print(f"\nCompiled {compiled} skill(s) -> {out_dir}")
 
     # Generate install.sh
-    repo_root = os.path.dirname(src_dir)
     _generate_install_script(modules, repo_root)
 
     # Generate Claude Code marketplace + per-module plugins
@@ -596,8 +626,8 @@ if __name__ == "__main__":
         skill("commit-task",            refs=[overview, ref("commit-conventions.md"), ref("task-status.md")]),
         skill("execute-task",           refs=[overview, ref("template-pr-body.md"), ref("worktree-conventions.md"), ref("commit-conventions.md"), ref("execute-task-full.md"), ref("execute-task-mini.md"), ref("task-status.md")]),
         skill("new-mini-task",          refs=[overview, ref("template-mini-plan.md")]),
-        skill("delegate-task",          refs=[overview, ref("task-status.md")]),
-        skill("status-report",          refs=[overview]),
+        skill("delegate-task",          refs=[overview, ref("task-status.md"), ref("delegating-to-agents.md")]),
+        skill("status-report",          refs=[overview, ref("delegating-to-agents.md")]),
         skill("address-feedback",       refs=[overview]),
         skill("complete-task",          refs=[overview, ref("template-feedback.md"), ref("commit-conventions.md")]),
         skill("code-review",            refs=[overview]),
@@ -630,7 +660,9 @@ if __name__ == "__main__":
     )
 
     rich_docs = module("rich-docs",
-        skill("planning-doc"),
+        skill("planning-doc", assets=[
+            asset("pd-components/dist/pd-lint.mjs", "scripts/pd-lint.mjs"),
+        ]),
         description="Author rich single-file HTML planning docs with tabs, mermaid diagrams, file-change trees, and inline comment threads.",
         category="productivity",
         keywords=["planning", "documentation", "html"],

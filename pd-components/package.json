@@ -1,6 +1,6 @@
 {
   "name": "pd-components",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "description": "Light-DOM web components for rich single-file HTML planning documents.",
@@ -14,6 +14,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.28.0",
+    "node-html-parser": "^7.1.0",
     "playwright": "^1.60.0"
   }
 }

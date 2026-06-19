@@ -9,6 +9,11 @@ Dispatch execution to an idle Claude Code pane in a tmux session using `ntm`.
 
 > Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
+> **Targeting non-Claude agents.** This skill dispatches `/execute-task` to a
+> Claude Code pane. To discover agents and send to **Codex** or **OpenCode**
+> panes (whose send/clear conventions differ), see
+> [references/delegating-to-agents.md](references/delegating-to-agents.md).
+
 ## Input
 
 Task ID (numeric) and optionally a tmux session name (defaults to `$PROJECT--execute`).

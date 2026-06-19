@@ -48,7 +48,7 @@ grep -q "skills@$TAG/pd-components/dist/llms.txt" "$ROOT/skills/planning-doc/SKI
 
 # --- commit + tag + push -----------------------------------------------------
 git -C "$ROOT" add pd-components/package.json pd-components/package-lock.json \
-  pd-components/dist/pd.min.js pd-components/dist/llms.txt skills/
+  pd-components/dist/pd.min.js pd-components/dist/pd-lint.mjs pd-components/dist/llms.txt skills/
 git -C "$ROOT" commit -q -m "Release pd-components $TAG"
 git -C "$ROOT" tag "$TAG"
 git -C "$ROOT" push origin main "$TAG"

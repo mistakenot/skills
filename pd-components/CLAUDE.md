@@ -63,6 +63,25 @@ When adding a new component, add a fixture + playbook pair. The fixture should b
 5. Add a committed example to `examples/` (reference `../dist/pd.min.js`; run `npm run build` to get the bundle)
 6. Update `render-check.mjs` counts if you want headless validation for the new element
 
+## Plan linter (browser + CLI, one core)
+
+The consistency checks (unplanned/untracked files, missing deps, dependency
+cycles) live once in `src/lint-core.js` — pure, DOM-agnostic, depends only on
+`querySelector(All)` + `getAttribute`. Two thin adapters consume it so they can
+never drift:
+
+- `src/lint.js` — in-browser: runs against the mounted `pd-doc`, renders the
+  `.pd-lint` panel, and queues a "Copy for agent" comment via the store.
+- `src/cli/lint.js` — CLI: parses HTML with `node-html-parser`, emits JSON,
+  exits non-zero on issues. `build.mjs` bundles it (parser inlined) to
+  `dist/pd-lint.mjs`; `src/compile.py` copies that into the planning-doc skill
+  at `scripts/pd-lint.mjs` (declared as a skill `asset`).
+
+Run the CLI directly: `node dist/pd-lint.mjs tests/fixtures/lint-issues.html`.
+Test it with `node tests/lint-cli.test.mjs` (needs `npm run build` first);
+fixtures: `tests/fixtures/lint-clean.html`, `tests/fixtures/lint-issues.html`.
+When changing a check, edit `lint-core.js` only.
+
 ## Component architecture
 
 - Custom elements, light DOM only (no shadow DOM — Tailwind can't style shadow DOM)
