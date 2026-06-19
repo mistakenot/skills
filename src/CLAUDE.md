@@ -94,6 +94,22 @@ The compiler also generates `install.sh` at the repo root. This script lets down
 
 The module→skill mappings are baked into the case block at compile time, so the script is always in sync with the DSL declarations. The repo slug is set via the `REPO` constant in `compile.py`.
 
+## `sk` CLI generation
+
+The compiler also generates `sk.sh` at the repo root — a standalone, self-updating wrapper around `npx skills@latest` meant to be copied to `~/.local/bin/sk`. It's installed as `sk` rather than `skills` because the bare `skills` name belongs to the npm CLI it delegates to (`$(which skills)` → `node_modules/skills/bin/cli.mjs`); installing as `skills` would clobber that binary.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mistakenot/skills/main/sk.sh -o ~/.local/bin/sk && chmod +x ~/.local/bin/sk
+
+sk ls                       # list packages (one per module)
+sk add planning-workflow    # install a package's skills ('all' for everything)
+sk update                   # update all installed skills
+```
+
+Like `install.sh`, the package→skill mappings (and package descriptions) are baked in at compile time from the DSL, so the CLI never drifts. The difference is the self-update step: on every run the script fetches its own latest version from `CLI_SELF_URL` (raw GitHub, `main` branch, `sk.sh`) and, if it differs, overwrites itself in place and asks the user to re-run. This keeps the baked-in mappings fresh without a package manager. Self-update fails open (offline / no `curl` / non-writable → skip).
+
+Testing/escape-hatch env vars (also shown in `sk help`): `SKILLS_DRY_RUN=1` prints the `npx` commands instead of running them (and skips self-update), `SKILLS_NO_SELFUPDATE=1` disables the update check, `SKILLS_SELF_URL` repoints the update source (e.g. a fork), and `SKILLS_AGENTS` overrides the default `claude-code codex` target agents. The generator lives in `_generate_cli_script` / `_CLI_TEMPLATE` in `compile.py`.
+
 ## Claude Code plugin + marketplace generation
 
 The compiler also packages the repo as a [Claude Code plugin marketplace](https://code.claude.com/docs/en/plugins-reference), so users can install skills via `/plugin` without the `npx skills` flow. Each **module maps to one plugin**; the repo root is the marketplace.

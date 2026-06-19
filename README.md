@@ -45,6 +45,22 @@ npx skills install mistakenot/skills -s new-task -a claude-code codex -y
 
 This installs into `.claude/skills/` and `.agents/skills/`.
 
+### `sk` CLI (recommended)
+
+For a friendlier workflow, install the `sk` wrapper once and use it to install **packages** (bundles of related skills):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/mistakenot/skills/main/sk.sh -o ~/.local/bin/sk && chmod +x ~/.local/bin/sk
+```
+
+```sh
+sk ls                       # list packages
+sk add planning-workflow    # install a package ('all' for everything)
+sk update                   # update all installed skills
+```
+
+It wraps `npx skills@latest` and self-updates from GitHub on every run, so the package list stays current. (It's named `sk`, not `skills`, to avoid clobbering the npm `skills` binary it delegates to.)
+
 ## Development
 
 Files in `./skills/` are compiled output. Edit the source files in `./src/` and run the Makefile targets:
