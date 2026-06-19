@@ -627,6 +627,7 @@ if __name__ == "__main__":
         skill("execute-task",           refs=[overview, ref("template-pr-body.md"), ref("worktree-conventions.md"), ref("commit-conventions.md"), ref("execute-task-full.md"), ref("execute-task-mini.md"), ref("task-status.md")]),
         skill("new-mini-task",          refs=[overview, ref("template-mini-plan.md")]),
         skill("delegate-task",          refs=[overview, ref("task-status.md"), ref("delegating-to-agents.md")]),
+        skill("delegate",               refs=[ref("delegating-to-agents.md")]),
         skill("status-report",          refs=[overview, ref("delegating-to-agents.md")]),
         skill("address-feedback",       refs=[overview]),
         skill("complete-task",          refs=[overview, ref("template-feedback.md"), ref("commit-conventions.md")]),
