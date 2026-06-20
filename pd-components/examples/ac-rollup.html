@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AC completion contracts — rollup, disclosure, evidence, banner</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="021: API rate limiting — completion contracts" status="executing" generated="2026-06-20">
+
+    <pd-tab name="Verification">
+      <pd-section id="acceptance-criteria" title="Acceptance criteria">
+
+        <!-- Document-level contract banner: rolls every with-checks AC up into
+             "n/m ACs proved" + a contract pill. Check-free ACs don't participate. -->
+        <pd-contract></pd-contract>
+
+        <!-- A proved AC: every nested check is proved → green pill, n/n, collapsed. -->
+        <pd-ac id="AC-1" title="Requests over the limit get 429" phases="1,2" tests="e2e/rate-limit.spec.ts">
+          <md>
+- Given a client that has used its request budget for the window
+- When it sends one more request
+- Then the gateway responds `429` with a `Retry-After` header
+          </md>
+          <pd-ac-check-command run="tsc --noEmit" expect-exit="0" status="proved"></pd-ac-check-command>
+          <pd-ac-check-test report="junit.xml" name="returns 429 over limit" suite="rate" status="proved"></pd-ac-check-test>
+        </pd-ac>
+
+        <!-- A contradicted AC: one failing check → red pill, auto-open, with
+             evidence + provenance disclosed at a second level. -->
+        <pd-ac id="AC-2" title="Limits are configurable per plan" phases="2,3" tests="unit/limiter-config.spec.ts">
+          <md>
+- Given clients on the free and partner plans
+- When both exceed the free-plan limit
+- Then only the free-plan client is throttled
+          </md>
+          <pd-ac-check-command run="npm run build" expect-exit="0" status="proved"></pd-ac-check-command>
+          <pd-ac-check-test report="junit.xml" name="partner plan is not throttled" suite="config"
+            status="contradicted" commit="abc1234" dirty="2" at="3h ago">
+            <pd-ac-evidence>FAIL tests/config.spec.ts > partner plan is not throttled
+expected request to pass but received 429
+  at Object.&lt;anonymous&gt; (tests/config.spec.ts:88:14)</pd-ac-evidence>
+          </pd-ac-check-test>
+        </pd-ac>
+
+        <!-- A check-free AC: renders exactly as a classic card — head + body,
+             whole-card phase-link click, no pill, no disclosure. -->
+        <pd-ac id="AC-3" title="Retry-After header documented" phases="3" tests="docs/api.spec.ts">
+          <md>
+- Given the public API reference
+- When a client reads the rate-limit section
+- Then the `Retry-After` header and reset semantics are documented
+          </md>
+        </pd-ac>
+
+      </pd-section>
+    </pd-tab>
+
+  </pd-doc>
+</body>
+</html>

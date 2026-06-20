@@ -248,15 +248,16 @@ assert ".check absent attrs are null" "true" \
 assert ".check parses command attrs" "true" \
   "$(agent-browser eval "(() => { const c = document.querySelector('pd-ac-check-command').check; return c.type === 'command' && c.run === 'npm test' && c['expect-exit'] === '0'; })()" 2>&1)"
 
-# AC-4 — inertness: no added DOM, zero box, no event, no rollup
+# AC-4 — inertness: the check ELEMENTS themselves add no DOM, have a zero box,
+# and render display:none. (The parent pd-ac DOES roll the checks up into a pill
+# as of T4 / task 004 — that rollup is proved by the ac-rollup block below; T1's
+# "no pill yet" assertion was retired when T4 introduced the with-checks render.)
 assert "check elements add no child elements" "true" \
   "$(agent-browser eval "['pd-ac-check-command','pd-ac-check-output','pd-ac-check-test','pd-ac-check-file-exists','pd-ac-check-file-contains'].every(t => document.querySelector(t).childElementCount === 0)" 2>&1)"
 assert "check element computed box is zero" "true" \
   "$(agent-browser eval "(() => { const r = document.querySelector('pd-ac-check-test').getBoundingClientRect(); return r.width === 0 && r.height === 0; })()" 2>&1)"
 assert "check element display is none" '"none"' \
   "$(agent-browser eval "getComputedStyle(document.querySelector('pd-ac-check-test')).display" 2>&1)"
-assert "parent pd-ac shows no rollup pill / status glyph" "0" \
-  "$(agent-browser eval "document.querySelectorAll('pd-ac[id=\"AC-checks\"] .pd-ac-rollup, pd-ac[id=\"AC-checks\"] .pd-ac-status, pd-ac[id=\"AC-checks\"] .pd-ac-pill').length" 2>&1)"
 
 # AC-5 — purely additive: both cards render the same head / chips / body
 assert "check-free card id chip" '"AC-free"' \
@@ -269,6 +270,100 @@ assert "both cards render the same chip count" "true" \
   "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-free\"] .pd-ac-chips').children.length === document.querySelector('pd-ac[id=\"AC-checks\"] .pd-ac-chips').children.length" 2>&1)"
 assert "both cards render a Given/When/Then body" "true" \
   "$(agent-browser eval "!!document.querySelector('pd-ac[id=\"AC-free\"] md ul') && !!document.querySelector('pd-ac[id=\"AC-checks\"] md ul')" 2>&1)"
+
+agent-browser close >/dev/null 2>&1
+
+# ── ac-rollup ──────────────────────────────────────────────────
+run_playbook "ac-rollup"
+agent-browser open "file://$FIXTURES/ac-rollup.html" >/dev/null 2>&1
+agent-browser wait 3000 >/dev/null 2>&1
+
+# AC-1 — the rollup pill text + colour + n/m count are derived from authored status
+assert "proved card pill text" '"proved"' \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-proved\"] .pd-ac-pill').textContent" 2>&1)"
+assert "proved card pill is green (pd-pill-ok)" "true" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-proved\"] .pd-ac-pill').classList.contains('pd-pill-ok')" 2>&1)"
+assert "proved card count n/n" '"2/2 checks passing"' \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-proved\"] .pd-ac-count').textContent" 2>&1)"
+assert "contradicted card pill text" '"contradicted"' \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-bad\"] .pd-ac-pill').textContent" 2>&1)"
+assert "contradicted card pill is red (pd-pill-bad)" "true" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-bad\"] .pd-ac-pill').classList.contains('pd-pill-bad')" 2>&1)"
+assert "contradicted card count n/m" '"1/2 checks passing"' \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-bad\"] .pd-ac-count').textContent" 2>&1)"
+assert "all-pending card pill text" '"pending"' \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-pending\"] .pd-ac-pill').textContent" 2>&1)"
+assert "all-pending card pill is neutral (pd-pill-neutral)" "true" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-pending\"] .pd-ac-pill').classList.contains('pd-pill-neutral')" 2>&1)"
+assert "all-pending card count 0/n" '"0/2 checks passing"' \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-pending\"] .pd-ac-count').textContent" 2>&1)"
+
+# AC-1 (rows) — each check renders one "type · key-attr" labelled row
+assert "proved card renders 2 check rows" "2" \
+  "$(agent-browser eval "document.querySelectorAll('pd-ac[id=\"AC-proved\"] .pd-ac-checks .pd-ac-check-row').length" 2>&1)"
+assert "proved card row labels (type · key-attr)" '"command · tsc --noEmit|test · returns 429 over limit"' \
+  "$(agent-browser eval "[...document.querySelectorAll('pd-ac[id=\"AC-proved\"] .pd-ac-check-label')].map(e=>e.textContent).join('|')" 2>&1)"
+
+# AC-3 — collapsed by default; summary click expands rows + GWT body; click again collapses
+assert "proved card collapsed at rest" "false" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-proved\"] details.pd-ac-disclosure').open" 2>&1)"
+assert "proved card opens on summary click" "true" \
+  "$(agent-browser eval "(() => { const d = document.querySelector('pd-ac[id=\"AC-proved\"] details.pd-ac-disclosure'); d.querySelector('summary').click(); return d.open; })()" 2>&1)"
+assert "open card shows check rows (visible box)" "true" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-proved\"] .pd-ac-checks .pd-ac-check-row').getBoundingClientRect().height > 0" 2>&1)"
+assert "open card shows GWT body (visible box)" "true" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-proved\"] .pd-ac-body md').getBoundingClientRect().height > 0" 2>&1)"
+assert "proved card closes on second summary click" "false" \
+  "$(agent-browser eval "(() => { const d = document.querySelector('pd-ac[id=\"AC-proved\"] details.pd-ac-disclosure'); d.querySelector('summary').click(); return d.open; })()" 2>&1)"
+
+# AC-4 — failing check exposes a nested second-level evidence disclosure + provenance
+assert "contradicted row has nested pd-collapse" "true" \
+  "$(agent-browser eval "!!document.querySelector('pd-ac[id=\"AC-bad\"] .pd-ac-check-row details.pd-collapse')" 2>&1)"
+assert "evidence text revealed on open" "true" \
+  "$(agent-browser eval "(() => { const d = document.querySelector('pd-ac[id=\"AC-bad\"] .pd-ac-check-row details.pd-collapse'); d.open = true; return document.querySelector('pd-ac[id=\"AC-bad\"] .pd-ac-evidence-text').textContent.includes('received 500'); })()" 2>&1)"
+assert "provenance stamp carries commit" "true" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-bad\"] .pd-ac-provenance').textContent.includes('abc1234')" 2>&1)"
+
+# AC-5 — contradicted auto-opens; explicit `open` honoured; plain proved card closed
+assert "contradicted card auto-opens (no interaction)" "true" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-bad\"] details.pd-ac-disclosure').open" 2>&1)"
+assert "explicit-open card is open" "true" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-open\"] details.pd-ac-disclosure').open" 2>&1)"
+assert "plain proved card is closed" "false" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-proved\"] details.pd-ac-disclosure').open" 2>&1)"
+
+# AC-6 — all authored check ELEMENTS stay in the DOM across a toggle (visual disclosure only)
+ac6_before="$(agent-browser eval "document.querySelectorAll('pd-ac-check-command,pd-ac-check-output,pd-ac-check-test,pd-ac-check-file-exists,pd-ac-check-file-contains').length" 2>&1)"
+agent-browser eval "(() => { const d = document.querySelector('pd-ac[id=\"AC-proved\"] details.pd-ac-disclosure'); d.querySelector('summary').click(); d.querySelector('summary').click(); })()" >/dev/null 2>&1
+assert "authored check elements survive toggle (count unchanged)" "$ac6_before" \
+  "$(agent-browser eval "document.querySelectorAll('pd-ac-check-command,pd-ac-check-output,pd-ac-check-test,pd-ac-check-file-exists,pd-ac-check-file-contains').length" 2>&1)"
+
+# AC-7 — click reconciliation: phase chip fires pd:phase-selected WITHOUT toggling
+#         the disclosure; the title toggles the disclosure WITHOUT firing the event.
+assert "chip click fires event but leaves disclosure unchanged" '"1/true"' \
+  "$(agent-browser eval "(() => { window.__pe = 0; const h = () => window.__pe++; window.addEventListener('pd:phase-selected', h); const d = document.querySelector('pd-ac[id=\"AC-proved\"] details.pd-ac-disclosure'); const was = d.open; document.querySelector('pd-ac[id=\"AC-proved\"] .pd-ac-chip-link').click(); const res = window.__pe + '/' + (d.open === was); window.removeEventListener('pd:phase-selected', h); return res; })()" 2>&1)"
+assert "title click toggles disclosure but fires no event" '"0/true"' \
+  "$(agent-browser eval "(() => { window.__pe2 = 0; const h = () => window.__pe2++; window.addEventListener('pd:phase-selected', h); const d = document.querySelector('pd-ac[id=\"AC-proved\"] details.pd-ac-disclosure'); const was = d.open; d.querySelector('summary strong').click(); const res = window.__pe2 + '/' + (d.open !== was); window.removeEventListener('pd:phase-selected', h); return res; })()" 2>&1)"
+
+# AC-8 — purely additive: the check-free card renders today's exact shape
+assert "check-free card has NO pill" "true" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-free\"] .pd-ac-pill') === null" 2>&1)"
+assert "check-free card has NO disclosure" "true" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-free\"] details.pd-ac-disclosure') === null" 2>&1)"
+assert "check-free card has a prepended head" "true" \
+  "$(agent-browser eval "!!document.querySelector('pd-ac[id=\"AC-free\"] > .pd-ac-head')" 2>&1)"
+assert "check-free card GWT body present" "true" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-free\"]').textContent.includes('looks identical to today')" 2>&1)"
+
+# AC-9 — document-level contract banner: n/m ACs proved + contract pill (red while any contradicted)
+assert "contract banner exists" "true" \
+  "$(agent-browser eval "!!document.querySelector('.pd-contract')" 2>&1)"
+assert "contract count n/m ACs proved" '"2/4 ACs proved"' \
+  "$(agent-browser eval "document.querySelector('.pd-contract .pd-contract-count').textContent" 2>&1)"
+assert "contract pill status" '"contradicted"' \
+  "$(agent-browser eval "document.querySelector('.pd-contract .pd-ac-pill').textContent" 2>&1)"
+assert "contract pill is red (pd-pill-bad)" "true" \
+  "$(agent-browser eval "document.querySelector('.pd-contract .pd-ac-pill').classList.contains('pd-pill-bad')" 2>&1)"
 
 agent-browser close >/dev/null 2>&1
 

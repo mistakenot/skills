@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Test: ac-rollup (pill, disclosure, evidence, contract)</title>
+  <script src="../../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="Test: ac-rollup" status="executing" generated="2026-06-20">
+    <pd-tab name="Verification">
+      <pd-section id="acceptance-criteria" title="Acceptance criteria">
+
+        <!-- Document-level contract banner over the set (order-independent: it
+             scans every pd-ac via a descendant query, so its position is free). -->
+        <pd-contract id="contract"></pd-contract>
+
+        <!-- PROVED: ≥2 checks, all status="proved", mixed types. → pill proved /
+             pd-pill-ok, n/n, NOT auto-open (not contradicted, no explicit open). -->
+        <pd-ac id="AC-proved" title="All checks proved" phases="1,2" tests="tests/proved.spec.ts">
+          <md><script type="text/plain">
+- Given every authored check is proved
+- When the card rolls up
+- Then the pill is green and the count is n/n
+          </script></md>
+          <pd-ac-check-command run="tsc --noEmit" expect-exit="0" status="proved"></pd-ac-check-command>
+          <pd-ac-check-test report="junit.xml" name="returns 429 over limit" suite="rate" status="proved"></pd-ac-check-test>
+        </pd-ac>
+
+        <!-- CONTRADICTED: ≥2 checks, one contradicted (carrying multi-line
+             evidence + provenance), one proved. → pill contradicted / pd-pill-bad,
+             auto-open, 1/2. -->
+        <pd-ac id="AC-bad" title="A check is contradicted" phases="2,3" tests="tests/bad.spec.ts">
+          <md><script type="text/plain">
+- Given one authored check is contradicted
+- When the card rolls up
+- Then the pill is red, the card auto-opens, and the count is 1/2
+          </script></md>
+          <pd-ac-check-command run="npm run build" expect-exit="0" status="proved"></pd-ac-check-command>
+          <pd-ac-check-test report="junit.xml" name="rejects malformed token" suite="auth"
+            status="contradicted" commit="abc1234" dirty="2" at="3h ago">
+            <pd-ac-evidence>FAIL tests/auth.spec.ts > rejects malformed token
+expected status 401 but received 500
+  at Object.&lt;anonymous&gt; (tests/auth.spec.ts:42:18)</pd-ac-evidence>
+          </pd-ac-check-test>
+        </pd-ac>
+
+        <!-- ALL-PENDING: ≥2 checks with NO status attribute. → pill pending /
+             pd-pill-neutral, 0/n, NOT auto-open. -->
+        <pd-ac id="AC-pending" title="No checks run yet" phases="3" tests="tests/pending.spec.ts">
+          <md><script type="text/plain">
+- Given no authored check carries a status
+- When the card rolls up
+- Then the pill is neutral and the count is 0/n
+          </script></md>
+          <pd-ac-check-command run="npm test"></pd-ac-check-command>
+          <pd-ac-check-file-exists path="src/limiter.ts"></pd-ac-check-file-exists>
+        </pd-ac>
+
+        <!-- EXPLICIT OPEN: checks that are NOT contradicted (all proved) but the
+             card carries an explicit `open` attribute → must render open (AC-5). -->
+        <pd-ac id="AC-open" title="Explicitly opened, not contradicted" phases="1" tests="tests/open.spec.ts" open>
+          <md><script type="text/plain">
+- Given a non-contradicted card authored with `open`
+- When it renders
+- Then the disclosure is open
+          </script></md>
+          <pd-ac-check-command run="eslint ." expect-exit="0" status="proved"></pd-ac-check-command>
+          <pd-ac-check-file-contains path="README.md" pattern="rate limit" status="proved"></pd-ac-check-file-contains>
+        </pd-ac>
+
+        <!-- CHECK-FREE: no check children → today's exact shape (additive / G1). -->
+        <pd-ac id="AC-free" title="Card with no checks" phases="1,2" tests="tests/free.spec.ts">
+          <md><script type="text/plain">
+- Given a card with no nested checks
+- When it renders with the new bundle
+- Then it looks identical to today (head prepended, body visible, no pill)
+          </script></md>
+        </pd-ac>
+
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>
