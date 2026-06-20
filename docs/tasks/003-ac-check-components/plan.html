@@ -8,7 +8,7 @@
 </head>
 <body>
   <!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
-  <pd-doc title="003: ac-check-components" status="draft" pr="pending" generated="2026-06-20">
+  <pd-doc title="003: ac-check-components" status="executing" pr="pending" generated="2026-06-20">
     <script type="application/json" id="pd-meta">
     {
       "id": "003",
@@ -112,12 +112,16 @@ stage); decisions a reviewer might want to overturn also carry a thread.
   → No enforcement in T1. Components stay permissive; behavioural-check and
   schema linting is T5. T1 may *document* the schema only.
         </script></md>
-        <pd-thread anchor="open-questions" status="unresolved" priority="p2" title="report= stays an opaque string (producer site deferred to T3/S4)">
+        <pd-thread anchor="open-questions" status="resolved" priority="p2" title="report= stays an opaque string (producer site deferred to T3/S4)">
           <pd-comment by="author">Assumption taken to keep S1 freezable now: the `test` check carries `report` as an opaque identifier and the schema does NOT yet define a doc-level report/producer declaration element. Rationale: epic S4 (producer mechanism) is owned by T3 and can be added as a sibling declaration without touching the frozen check-element schema. If we instead want T1 to also reserve a doc-level `<pd-report>`/`produce=` declaration shape, that expands this task's schema surface — flag at the solution stage.</pd-comment>
-        </pd-thread>
-        <pd-thread anchor="open-questions" status="unresolved" priority="p3" title="Evidence reserved as a child element, not an attribute">
+        
+  <pd-comment by="author">Resolved (author): keep `report` an opaque identifier in T1 and defer the doc-level producer/declaration shape to T3/S4. Not expanding T1's frozen schema surface now — consistent with the HTML-first descope (epic D1).</pd-comment>
+</pd-thread>
+        <pd-thread anchor="open-questions" status="resolved" priority="p3" title="Evidence reserved as a child element, not an attribute">
           <pd-comment by="author">Assumption: write-back evidence is a child element (handles multi-line output) rather than an `evidence="…"` attribute. Only the *reservation* lands in T1; T2 does the writing. Revisit if the solution stage prefers an attribute round-trip for simplicity.</pd-comment>
-        </pd-thread>
+        
+  <pd-comment by="author">Resolved (author): evidence is a child element (handles multi-line output, matches the design doc). T1 only reserves the shape; T2 writes it.</pd-comment>
+</pd-thread>
       </pd-section>
 
     </pd-tab>

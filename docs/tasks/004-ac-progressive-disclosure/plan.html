@@ -165,9 +165,9 @@ for the Solution/Plan stages, recorded here so nothing is silently decided.
   decision, reverses the earlier defer).** T4 renders a document-level **contract
   banner** ("n/m ACs proved" + a contract-status pill) via a new `<pd-contract>`
   element driven by `verify-core`'s `rollupContract`. See AC-9 and the resolved
-  Solution thread "Document-level contract rollup is now rendered in T4". New
-  sub-question (Solution stage): banner placement — assumed author-positioned
-  (like `<pd-decisions>`), not auto-injected into `pd-doc`.
+  Solution thread "Document-level contract rollup is now rendered in T4".
+  Decided: the banner is author-positioned (like `<pd-decisions>`), placed just
+  above the acceptance criteria — never auto-injected into `pd-doc`.
         </script></md>
 
         <pd-thread anchor="open-questions" status="resolved" priority="p1" title="G1 'renders unchanged' is preserved only for check-free ACs; with-checks cards change their click + disclosure behaviour by design">
@@ -180,9 +180,11 @@ for the Solution/Plan stages, recorded here so nothing is silently decided.
           <pd-comment by="author">**DECISION (user): ACCEPT the design-doc ordering.** An AC is `proved` **only if every check is proved**; the pill severity order is **`contradicted ≻ missing ≻ weak ≻ pending ≻ proved`** (worst-wins; `null`/absent → `pending`). This is the **frozen contract** `verify-core.js` exposes and the deferred CLI (T2) imports unchanged — pinned by `verify-core.test.mjs` (AC-2) and reused by the document-level contract rollup (AC-9).</pd-comment>
         </pd-thread>
 
-        <pd-thread anchor="open-questions" status="unresolved" priority="p3" title="Provenance/evidence are read-through only; their authored shape is owned by the T1 schema, not invented here">
+        <pd-thread anchor="open-questions" status="resolved" priority="p3" title="Provenance/evidence are read-through only; their authored shape is owned by the T1 schema, not invented here">
           <pd-comment by="author">T4 only *renders* `evidence` (child element) and `provenance` (`commit`/`dirty`/`at`) as reserved by the T1 schema; it must not introduce a different shape. If the Solution stage finds the T1 reservation under-specified for rendering (e.g. evidence needs a `kind`/`label`), that is a schema question to route back through `ac-check-core` (S1), not to solve ad hoc in the renderer.</pd-comment>
-        </pd-thread>
+        
+  <pd-comment by="author">Resolved (author): confirmed. T4 renders evidence/provenance read-through against the T1 schema and invents no shape; any missing field is a schema change routed through ac-check-core (S1), never solved in the renderer.</pd-comment>
+</pd-thread>
       </pd-section>
 
     </pd-tab>
@@ -596,13 +598,17 @@ authored element (hidden), once as a rendered row (visible when expanded). The
           <pd-comment by="author">**DECISION (user): ADD IT NOW** — reverses the defer. T4 renders a **document-level contract banner** ("n/m ACs proved" + a contract-status pill) in addition to the per-AC pills. Design: a new authored light-DOM element **`<pd-contract>`** (folded into `misc.js` alongside `PdAc`, so no `index.js` edit) that scans every `<pd-ac>` in the document, derives each AC's status the same pure way (`parseAcCheck` on its check children → `rollupAc`), then calls **`rollupContract(acStatuses)`** (now a required export of `verify-core.js`) and renders the banner. It computes independently from the DOM, so it does not depend on `pd-ac` init order; it reuses the frozen severity contract (an AC counts as proved only when all its checks are proved; the contract is proved only when all ACs are proved). Threaded through: **AC-9** (Verification), the Approach + file tree (Solution), **Phases 1–4** (Plan), and AC-9 traceability. Sub-question recorded for the Solution stage: banner **placement** (top-of-doc vs author-positioned) — assumption: author-positioned like `<pd-decisions>`; the example/fixture place it just above the acceptance-criteria.</pd-comment>
         </pd-thread>
 
-        <pd-thread anchor="file-changes" status="unresolved" priority="p3" title="Check-row label registry + provenance shape are render-side and read-through only">
+        <pd-thread anchor="file-changes" status="resolved" priority="p3" title="Check-row label registry + provenance shape are render-side and read-through only">
           <pd-comment by="author">The `type · key-attr` row label comes from a tiny render-side registry in `misc.js` (one entry per check type — adding a type is one line), keyed off the T1 schema's type names; it introduces no new authored attributes. Provenance (`commit`/`dirty`/`at`) and the evidence child are **rendered read-through** exactly as the T1 schema reserves them — T4 invents no shape. If rendering needs a field T1 didn't reserve (e.g. an evidence `label`), that is a schema question routed back through `ac-check-core.js` (S1), not solved ad hoc in the renderer.</pd-comment>
-        </pd-thread>
+        
+  <pd-comment by="author">Resolved (author): confirmed. The render-side label registry adds no authored attributes and schema ownership stays with T1 (S1).</pd-comment>
+</pd-thread>
 
-        <pd-thread anchor="approach" status="unresolved" priority="p3" title="T4 is built on merged T1 — fixtures need the real pd-ac-check-* elements + parseAcCheck">
+        <pd-thread anchor="approach" status="resolved" priority="p3" title="T4 is built on merged T1 — fixtures need the real pd-ac-check-* elements + parseAcCheck">
           <pd-comment by="author">T4 `depends-on=T1` and imports `parseAcCheck` from `./ac-check-core.js`, which task 003 delivers but which does **not exist yet**. Assumption: the T4 branch is cut/rebased after T1 merges, so the import resolves and the browser fixture's authored `<pd-ac-check-*>` children upgrade. If T1 slips, T4's build (esbuild resolves the import) and ACs are blocked until it lands — sequencing risk, not a design change.</pd-comment>
-        </pd-thread>
+        
+  <pd-comment by="author">Resolved (author): confirmed sequencing — merge/execute 003 (T1) before 004 (T4) so parseAcCheck / ac-check-core resolves. This is the planned dependency order, not a design change.</pd-comment>
+</pd-thread>
       </pd-section>
 
     </pd-tab>
