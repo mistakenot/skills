@@ -8,7 +8,7 @@
 </head>
 <body>
   <!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
-  <pd-doc title="004: ac-progressive-disclosure" status="executing" pr="pending" generated="2026-06-20">
+  <pd-doc title="004: ac-progressive-disclosure" status="complete" pr="https://github.com/mistakenot/skills/pull/5" generated="2026-06-20">
     <script type="application/json" id="pd-meta">
     {
       "id": "004",
@@ -652,7 +652,7 @@ Solution p3 thread.</script></md></pd-note>
       <pd-section id="phases" title="Phases">
         <pd-stepper>
 
-          <pd-phase n="1" title="Pure rollup core (AC + contract) + Node unit test" files="pd-components/src/verify-core.js,pd-components/tests/verify-core.test.mjs" status="todo">
+          <pd-phase n="1" title="Pure rollup core (AC + contract) + Node unit test" files="pd-components/src/verify-core.js,pd-components/tests/verify-core.test.mjs" status="done">
             <md><script type="text/plain">
 **Delivers:** AC-2 (rollup core pure, DOM-free, unit-testable) + the **core half
 of AC-9** (`rollupContract`). The S2/G5 foundation Phase 2 and the deferred CLI
@@ -686,7 +686,7 @@ key off — write and freeze it first.
             </script></md>
           </pd-phase>
 
-          <pd-phase n="2" title="PdAc rollup + two-level disclosure + reconciled click + styles" files="pd-components/src/misc.js,pd-components/src/styles.css" status="todo" depends-on="1">
+          <pd-phase n="2" title="PdAc rollup + two-level disclosure + reconciled click + styles" files="pd-components/src/misc.js,pd-components/src/styles.css" status="done" depends-on="1">
             <md><script type="text/plain">
 **Delivers (runtime side):** AC-1 (pill), AC-3 (collapse/expand), AC-4 (evidence
 second level), AC-5 (auto-open), AC-6 (checks stay in DOM), AC-7 (click split),
@@ -745,7 +745,7 @@ T1's `ac-check-core.js` to exist.**
             </script></md>
           </pd-phase>
 
-          <pd-phase n="3" title="Browser fixture + playbook + example + regression" files="pd-components/tests/fixtures/ac-rollup.html,pd-components/tests/playbooks/ac-rollup.md,pd-components/tests/run.sh,pd-components/examples/ac-rollup.html" status="todo" depends-on="2">
+          <pd-phase n="3" title="Browser fixture + playbook + example + regression" files="pd-components/tests/fixtures/ac-rollup.html,pd-components/tests/playbooks/ac-rollup.md,pd-components/tests/run.sh,pd-components/examples/ac-rollup.html" status="done" depends-on="2">
             <md><script type="text/plain">
 **Delivers (browser-proven):** AC-1, AC-3, AC-4, AC-5, AC-6, AC-7, AC-8
 (purely additive / G1 regression), and AC-9 (the `<pd-contract>` banner).
@@ -793,7 +793,7 @@ T1's `ac-check-core.js` to exist.**
             </script></md>
           </pd-phase>
 
-          <pd-phase n="4" title="Authoring docs — llms + CLAUDE + render-check" files="pd-components/llms.template.txt,pd-components/CLAUDE.md,planning-doc-workspace/render-check.mjs" status="todo" depends-on="2">
+          <pd-phase n="4" title="Authoring docs — llms + CLAUDE + render-check" files="pd-components/llms.template.txt,pd-components/CLAUDE.md,planning-doc-workspace/render-check.mjs" status="done" depends-on="2">
             <md><script type="text/plain">
 Parallel with Phase 3 (both need only Phase 2's settled render API).
 **Delivers:** the authoring + tooling surface for the rollup/disclosure.

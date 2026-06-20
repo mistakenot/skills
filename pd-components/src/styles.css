@@ -516,6 +516,63 @@ pd-ac ul { margin: 0.5rem 0 0; padding-left: 1.2rem; font-size: 0.92rem; }
 pd-ac.pd-ac-link { cursor: pointer; }
 pd-ac.pd-ac-hl { border-color: var(--pd-accent); box-shadow: inset 0 0 0 1px var(--pd-accent); }
 
+/* AC completion contract: rollup pill + two-level disclosure (T4 / AC-1,3,4,5).
+   Additive — existing pd-ac / .pd-ac-head selectors above are unchanged. */
+.pd-ac-pill {
+  display: inline-block; padding: 0.05rem 0.5rem; border-radius: 0.35rem;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;
+  border: 1px solid transparent;
+}
+.pd-ac-pill.pd-pill-ok { background: var(--pd-ok-bg); color: var(--pd-ok); }
+.pd-ac-pill.pd-pill-bad { background: var(--pd-bad-bg); color: var(--pd-bad); }
+.pd-ac-pill.pd-pill-warn { background: var(--pd-warn-bg); color: var(--pd-warn); }
+.pd-ac-pill.pd-pill-neutral { background: var(--pd-neutral-bg); color: var(--pd-muted); border-color: var(--pd-border); }
+.pd-ac-count { font-size: 0.74rem; color: var(--pd-muted); }
+.pd-ac-chip-link { cursor: pointer; }
+
+/* disclosure: summary carries the head row; custom chevron mirrors pd-collapse */
+.pd-ac-disclosure { margin: 0; }
+.pd-ac-disclosure > summary.pd-ac-head {
+  cursor: pointer; list-style: none;
+  /* keep the head's flex row layout; the chevron is the leading flex item */
+}
+.pd-ac-disclosure > summary::-webkit-details-marker { display: none; }
+.pd-ac-disclosure > summary.pd-ac-head::before {
+  content: '▸'; font-size: 0.7rem; color: var(--pd-muted);
+  transition: transform 0.12s; flex: none;
+}
+.pd-ac-disclosure[open] > summary.pd-ac-head::before { transform: rotate(90deg); }
+.pd-ac-body { margin-top: 0.5rem; }
+
+.pd-ac-checks { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.15rem; }
+.pd-ac-check-row {
+  display: flex; align-items: baseline; gap: 0.45rem; flex-wrap: wrap;
+  font-size: 0.85rem; padding: 0.15rem 0;
+}
+.pd-ac-check-glyph { flex: none; font-weight: 700; }
+.pd-ac-check-row[data-status="proved"] .pd-ac-check-glyph { color: var(--pd-ok); }
+.pd-ac-check-row[data-status="contradicted"] .pd-ac-check-glyph { color: var(--pd-bad); }
+.pd-ac-check-row[data-status="weak"] .pd-ac-check-glyph,
+.pd-ac-check-row[data-status="missing"] .pd-ac-check-glyph { color: var(--pd-warn); }
+.pd-ac-check-row[data-status="pending"] .pd-ac-check-glyph { color: var(--pd-muted); }
+.pd-ac-check-label { font-family: ui-monospace, monospace; }
+.pd-ac-check-row .pd-collapse { flex-basis: 100%; margin: 0.1rem 0 0.2rem 1.2rem; }
+.pd-ac-evidence-text {
+  margin: 0; font-size: 0.78rem; white-space: pre-wrap;
+  background: var(--pd-surface); border: 1px solid var(--pd-border);
+  border-radius: 0.35rem; padding: 0.4rem 0.55rem;
+}
+.pd-ac-provenance { font-size: 0.72rem; color: var(--pd-muted); margin-top: 0.25rem; }
+
+/* document-level contract banner (AC-9) — reuses the pill colour family */
+pd-contract { display: block; margin: 1rem 0; }
+.pd-contract {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.5rem 0.75rem; border: 1px solid var(--pd-border); border-radius: 0.5rem;
+  background: var(--pd-surface);
+}
+.pd-contract-count { font-size: 0.88rem; font-weight: 600; color: var(--pd-fg); }
+
 /* stepper pill highlight (phases involved in an AC/selection) */
 .pd-step.pd-step-hl { border-color: var(--pd-accent); color: var(--pd-accent); }
 
