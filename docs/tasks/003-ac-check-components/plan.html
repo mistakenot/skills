@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>003: ac-check-components</title>
+  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.8.0/pd-components/dist/pd.min.js" defer></script>
+</head>
+<body>
+  <!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
+  <pd-doc title="003: ac-check-components" status="draft" pr="pending" generated="2026-06-20">
+    <script type="application/json" id="pd-meta">
+    {
+      "id": "003",
+      "name": "ac-check-components",
+      "kind": "task",
+      "epic": "001",
+      "status": "planning",
+      "created": "2026-06-20"
+    }
+    </script>
+
+    <!-- ========================= REQUIREMENTS ========================= -->
+    <pd-tab name="Requirements">
+
+      <pd-section id="problem" title="Problem">
+        <md><script type="text/plain">
+A `<pd-ac>` acceptance-criteria card is a **plan-time promise**: it lists what
+must be true and points at test files, but carries nothing machine-runnable and
+no frozen schema for an executor or richer renderer to build on. Epic-001 turns
+each AC into an executable contract; that work is descoped to **HTML-first** and
+sequenced so every later task keys off one schema. This task delivers the
+foundation: **the authorable check-element vocabulary and its frozen schema
+(seam S1)**, with the elements present but inert.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="goals" title="Goals">
+        <md><script type="text/plain">
+- Add the five `pd-ac-check-*` components to the pd-components library
+  (`pd-components/src`) as **light-DOM custom elements**, registered in
+  `index.js`: `pd-ac-check-command`, `pd-ac-check-output`, `pd-ac-check-test`,
+  `pd-ac-check-file-exists`, `pd-ac-check-file-contains`.
+- **Define and freeze seam S1** — the fixed authorable schema: each check's
+  input attributes, the **test identity contract** (a `test` check is identified
+  by `report` + `name` with optional `suite`/`classname`/`file` qualifiers; a
+  lookup matching **zero or more than one** testcase is **non-proof**, never a
+  pass), and the **reserved status / evidence / provenance write-back shape**
+  that T2/T4 will populate.
+- Render **inert** (G5): the elements are present in the DOM carrying their
+  authored attributes, but compute **no status**, run **no rollup**, do **no
+  progressive disclosure**, and perform **no execution or I/O**. The browser
+  never executes — it will only render (in T4).
+- **Purely additive** (G1): existing `<pd-ac>` cards and every already-authored
+  doc render unchanged. Checks are optional children; a `<pd-ac>` with none
+  behaves exactly as today.
+- **Carry ≥1 behavioural check** (G3): the vocabulary must make behavioural
+  checks (`test` / `output` / negative `command`) first-class so a later AC can
+  satisfy "at least one check that fails if the feature were silently broken" —
+  even though enforcement (lint) is deferred to T5.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="out-of-scope" title="Out of Scope">
+        <md><script type="text/plain">
+This task is **schema + inert components only**. Explicitly deferred:
+
+- **No execution engine / `pd-verify` CLI** and no result/rollup core
+  implementation — deferred to T2.
+- **No JUnit-XML parsing, report producer, or test resolution** — deferred to
+  T3 (which also supplies the dialect fixtures that validate the identity
+  contract before S1 is relied upon).
+- **No status computation or rollup** over child checks — deferred to T2/T4.
+- **No progressive-disclosure rendering, evidence display, auto-open of failed
+  ACs, or pd-ac click reconciliation** — deferred to T4.
+- **No write-back**: the schema *reserves* the status/evidence/provenance shape,
+  but nothing in this task writes those values.
+- **No authoring-skill integration and no behavioural-check lint** — deferred to
+  T5.
+- **No changes to the existing `<pd-ac>` rendering behaviour** beyond accepting
+  the new optional child elements.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="open-questions" title="Open Questions">
+        <md><script type="text/plain">
+Autonomous-mode note: no questions were asked. Each item below was resolved with
+a best-judgment assumption (recorded so it can be revisited at the solution
+stage); decisions a reviewer might want to overturn also carry a thread.
+
+- [x] **Does S1 freeze block the unresolved producer-declaration-site question?**
+  → No. T1 freezes the *check-element* schema (tag names + attributes). The
+  report **producer** mechanism is a separate seam (S4, T3) that can add a
+  sibling declaration without changing the check elements, so freezing S1 now
+  does not foreclose it. The `test` check carries `report` as an opaque
+  identifier string; whether it resolves to a path or a doc-level producer id is
+  settled in T3.
+- [x] **Evidence write-back shape — attribute vs child element?**
+  → Reserve **evidence as a child element** (multi-line stdout / exit tails),
+  with `status` and `provenance` as attributes. Design doc leans this way; T1
+  only reserves the shape, T2 writes it.
+- [x] **Do the inert components render any visible UI?**
+  → No. Inert = init is effectively a no-op; the elements add no DOM and inject
+  no visual treatment. All visual rendering (rows, glyphs, pills, disclosure)
+  belongs to T4. This keeps the task trivially additive.
+- [x] **Which `status` values does the schema reserve?**
+  → The contract's status vocabulary — `proved` / `contradicted` / `weak` /
+  `missing` / `pending` — is reserved as the allowed write-back values, unused
+  in T1.
+- [x] **Should components validate/normalize their attributes (e.g. warn a
+  `test` check lacking `name`)?**
+  → No enforcement in T1. Components stay permissive; behavioural-check and
+  schema linting is T5. T1 may *document* the schema only.
+        </script></md>
+        <pd-thread anchor="open-questions" status="unresolved" priority="p2" title="report= stays an opaque string (producer site deferred to T3/S4)">
+          <pd-comment by="author">Assumption taken to keep S1 freezable now: the `test` check carries `report` as an opaque identifier and the schema does NOT yet define a doc-level report/producer declaration element. Rationale: epic S4 (producer mechanism) is owned by T3 and can be added as a sibling declaration without touching the frozen check-element schema. If we instead want T1 to also reserve a doc-level `<pd-report>`/`produce=` declaration shape, that expands this task's schema surface — flag at the solution stage.</pd-comment>
+        </pd-thread>
+        <pd-thread anchor="open-questions" status="unresolved" priority="p3" title="Evidence reserved as a child element, not an attribute">
+          <pd-comment by="author">Assumption: write-back evidence is a child element (handles multi-line output) rather than an `evidence="…"` attribute. Only the *reservation* lands in T1; T2 does the writing. Revisit if the solution stage prefers an attribute round-trip for simplicity.</pd-comment>
+        </pd-thread>
+      </pd-section>
+
+    </pd-tab>
+
+    <!-- ========================= VERIFICATION ========================= -->
+    <pd-tab name="Verification">
+
+      <pd-section id="test-strategy" title="Test Strategy">
+        <md><script type="text/plain">
+This task ships **inert, additive custom elements + a frozen schema**, so every
+acceptance criterion is checkable at the **component / DOM level** — never at
+execution level. There is no status computation, no rollup, no I/O, no CLI to
+test here; *executing* checks and *resolving* test identity are T2/T3, and
+*rendering* them is T4. The strategy therefore proves four things and nothing
+more:
+
+1. **Registration** — the five tags upgrade to custom elements once the bundle
+   loads.
+2. **Schema is frozen and exposed** — a runtime-neutral schema constant
+   enumerates exactly the five check types, their input attributes, the test
+   **identity contract**, and the reserved status/evidence/provenance write-back
+   shape; each element exposes a pure, read-only parse of its own attributes.
+3. **Inertness** — the elements add no DOM, inject no visual treatment, compute
+   no status, fire no events, and trigger no rollup on the parent `<pd-ac>`.
+4. **Purely additive** — existing `<pd-ac>` cards and every already-authored doc
+   render byte-for-identically, with or without nested checks.
+
+**Two test layers**, mirroring the repo's existing split:
+
+- **Node unit test** (`tests/ac-check-core.test.mjs`, modelled on
+  `tests/lint-cli.test.mjs`) imports the **DOM-free** schema/parse module
+  directly and asserts the frozen shape and the parse normalisation. This is the
+  S1-freeze regression guard — if a later task changes the schema, this test
+  fails.
+- **Browser fixture + playbook** (`tests/fixtures/ac-checks.html` +
+  `tests/playbooks/ac-checks.md`, modelled on the existing pairs) loads the built
+  bundle and asserts registration, attribute exposure, inertness, and additive
+  rendering against the live DOM via `agent-browser eval`.
+
+Plus the **existing regression suite** (current playbooks + `lint-cli.test.mjs`)
+must stay green after the build, proving G1.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="coverage-map" title="Coverage Map">
+        <pd-mermaid caption="Two layers: a DOM-free unit test of the frozen schema, a browser test of the live elements">
+flowchart LR
+  CORE[ac-check-core.js<br/>schema + parseAcCheck<br/>DOM-free, pure] --> UNIT[ac-check-core.test.mjs<br/>Node unit: AC-3, AC-6]
+  ELS[ac-check.js<br/>5 inert elements] --> BROWSER[fixtures/ac-checks.html<br/>+ playbook<br/>AC-1, AC-2, AC-4, AC-5]
+  CORE --> ELS
+  EXIST[existing examples<br/>+ playbooks + lint-cli] --> REG[regression suite<br/>AC-5 / G1]
+        </pd-mermaid>
+      </pd-section>
+
+      <pd-section id="acceptance-criteria" title="Acceptance Criteria">
+        <md><script type="text/plain">
+Each criterion is checkable at the component/DOM level. `phases`/`tests` are left
+empty for the Plan stage to backfill.
+        </script></md>
+
+        <pd-ac id="AC-1" title="The five check tags register as custom elements" phases="2,3" tests="pd-components/tests/playbooks/ac-checks.md">
+          <md><script type="text/plain">
+- **Given** the built `pd.min.js` bundle is loaded on a page
+- **When** `customElements.get(tag)` is queried for each of `pd-ac-check-command`,
+  `pd-ac-check-output`, `pd-ac-check-test`, `pd-ac-check-file-exists`,
+  `pd-ac-check-file-contains`
+- **Then** every one returns a constructor (not `undefined`), and an authored
+  instance is an `instanceof` that constructor
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-2" title="Each element parses and exposes its authored attributes" phases="1,2,3" tests="pd-components/tests/ac-check-core.test.mjs,pd-components/tests/playbooks/ac-checks.md">
+          <md><script type="text/plain">
+- **Given** an authored check element, e.g.
+  `<pd-ac-check-test report="junit.xml" name="returns 429" suite="rate" />`
+- **When** its read-only `.check` accessor is read
+- **Then** it returns a normalised object carrying `type` (`test`) and the
+  type's input attributes; for a `test` check the **portable identity** is
+  exposed as `report` + `name` + optional `suite`/`classname`/`file`; absent
+  attributes are `null` and reading never throws (permissive — no validation in
+  T1)
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-3" title="The schema is frozen and runtime-neutral (seam S1)" phases="1" tests="pd-components/tests/ac-check-core.test.mjs">
+          <md><script type="text/plain">
+- **Given** the DOM-free `ac-check-core.js` module
+- **When** its exported `AC_CHECK_SCHEMA` and `parseAcCheck` are imported in
+  Node (no browser, no `customElements`)
+- **Then** the schema enumerates **exactly** the five check types with their
+  input attributes, and declares the reserved write-back shape: the status
+  vocabulary `proved`/`contradicted`/`weak`/`missing`/`pending`, evidence as a
+  **child element** (reserved, unused in T1), and provenance attributes
+  (`commit`/`dirty`/`at`); `parseAcCheck` returns the same normalised object the
+  browser `.check` accessor does, given an equivalent node
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-4" title="The elements are inert — no status, no DOM, no events" phases="2,3" tests="pd-components/tests/playbooks/ac-checks.md">
+          <md><script type="text/plain">
+- **Given** check elements mounted inside a `<pd-ac>`
+- **When** the page settles
+- **Then** each element adds **no child DOM** and is visually inert (renders no
+  box / occupies no layout); `.check.status` is `null` when no status was
+  authored; no `pd:*` event is dispatched on mount; and the parent `<pd-ac>`
+  shows **no** rollup pill or status glyph (that is T4)
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-5" title="Purely additive — existing docs render unchanged (G1)" phases="3" tests="pd-components/tests/playbooks/ac-checks.md,pd-components/tests/lint-cli.test.mjs">
+          <md><script type="text/plain">
+- **Given** an existing `<pd-ac>` with **no** checks, and a second `<pd-ac>` with
+  nested check children
+- **When** both render with the new bundle
+- **Then** the no-check card renders identically to today (id chip + title +
+  phase/test chips + Given/When/Then body), and the with-checks card renders the
+  **same** head/chips/body with the checks not visible; the existing
+  pd-components example/fixture set and `lint-cli.test.mjs` stay green
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-6" title="Behavioural checks are first-class in the vocabulary (G3)" phases="1" tests="pd-components/tests/ac-check-core.test.mjs">
+          <md><script type="text/plain">
+- **Given** the frozen `AC_CHECK_SCHEMA`
+- **When** the `behavioural` flag is read for each check type
+- **Then** `test`, `output`, and a negative `command` (non-zero `expect-exit`)
+  are marked behavioural and `file-exists`/`file-contains` are not — so a later
+  lint (T5) can require "≥1 behavioural check per AC". (T1 only **expresses**
+  this in the schema; enforcement is deferred.)
+          </script></md>
+        </pd-ac>
+      </pd-section>
+
+      <pd-section id="verification-gaps" title="Known Gaps & Risks">
+        <md><script type="text/plain">
+Deliberately **not** covered here (owned by later tasks):
+
+- **Execution / resolution.** No test runs a check, parses JUnit XML, or
+  resolves a test identity against a report. "Ambiguous identity = non-proof" is
+  *expressed* in the schema as documented metadata but **not enforced** — that is
+  T3 (with dialect fixtures).
+- **Status / rollup / disclosure / evidence rendering.** All T4. We assert their
+  *absence* (AC-4), not their behaviour.
+- **Write-back.** The status/evidence/provenance shape is reserved and read-
+  through if present, but nothing writes it; round-trip stability is a T2 concern.
+- **Distribution.** These elements only reach a consuming doc after a
+  `make release` tag bump; the consuming doc must repin its CDN tag (this task's
+  own `plan.html` pins `pd-v0.8.0`, which predates them). Release is a Plan-stage
+  step, not asserted by these ACs.
+- **Lint enforcement of G3.** The schema makes behavioural checks distinguishable
+  (AC-6); requiring one per AC is T5.
+
+**Risk:** the browser fixture's "no DOM added" assertion must tolerate the
+parser's own text nodes — assert on the element's own child *element* count and
+computed box, not raw `childNodes`.
+        </script></md>
+      </pd-section>
+
+    </pd-tab>
+
+    <!-- ========================= SOLUTION ========================= -->
+    <pd-tab name="Solution">
+
+      <pd-section id="approach" title="Approach">
+        <md><script type="text/plain">
+Add the check vocabulary as **two source files plus thin edits**, following the
+library's established "one pure core, thin adapters" pattern (the same shape as
+`lint-core.js` → `lint.js`/`cli/lint.js`):
+
+- **`src/ac-check-core.js` — the frozen S1 artifact (pure, DOM-free).** Exports
+  `AC_CHECK_SCHEMA` and a pure `parseAcCheck(node)`. `AC_CHECK_SCHEMA` is the
+  single source of truth: for each of the five check types it lists the input
+  attributes, a `behavioural` flag (G3), and — for `test` — the **identity
+  contract** (`report` + `name`, optional `suite`/`classname`/`file`, with the
+  rule "0-or-many matches = non-proof" recorded as metadata for T3). It also
+  declares the **reserved write-back shape**: status vocabulary, evidence-as-
+  child, provenance attributes. The module imports nothing DOM-bound, so Node can
+  import and freeze-test it directly. `parseAcCheck(node)` reads attributes via
+  `getAttribute` (works for both a browser element and a `node-html-parser`
+  node), returning a normalised object — and read-through `status`/`provenance`/
+  `evidence` if authored, `null` otherwise. It **computes no status** and judges
+  no ambiguity.
+
+- **`src/ac-check.js` — the five inert custom elements (browser).** A tiny
+  `PdAcCheck extends PdElement` base whose only non-trivial member is a read-only
+  `get check()` returning `parseAcCheck(this)`. `init()` is otherwise a **no-op**:
+  it adds no DOM, injects no visual treatment, computes no status, fires no
+  events, and does not touch the parent `<pd-ac>`. Five `define()` calls register
+  the tags. This is the `PdNote`-style inert pattern, extended only with a pure
+  read accessor.
+
+The rest are **additive edits**: one import line in `index.js`; one
+`display:none` rule in `styles.css` (keeps the elements in the DOM for agents/CLI
+while guaranteeing zero layout effect); an llms-doc section; a committed example;
+and the two test artifacts. `<pd-ac>` itself is **not modified** — it never
+queried its children, so nesting checks is transparent.
+
+**Why a separate pure core now, not later.** The epic's explicit job for T1 is to
+"define and freeze seam S1" as the artifact T2 (CLI) and T4 (renderer) both key
+off. Putting the schema + parse in a DOM-free module makes the freeze a *tested
+constant* rather than prose, and lets the Node unit test assert it without a
+browser — exactly why `lint-core` is split out. The five elements stay the only
+registered tags; the evidence child element and write-back attrs are **reserved
+in the schema, not registered** in T1 (T2 introduces them when it writes them).
+        </script></md>
+      </pd-section>
+
+      <pd-section id="file-changes" title="File Changes">
+        <pd-files caption="Two new source files + a parallel test pair; everything else is additive">
+          <pd-file path="pd-components/src/ac-check-core.js" change="add">Frozen S1 schema (`AC_CHECK_SCHEMA`) + pure `parseAcCheck(node)`; DOM-free so Node can import and freeze-test it. Single source of truth for attributes, behavioural flags, the test identity contract, and the reserved status/evidence/provenance write-back shape.</pd-file>
+          <pd-file path="pd-components/src/ac-check.js" change="add">The five inert custom elements (`pd-ac-check-command/-output/-test/-file-exists/-file-contains`). `PdAcCheck` base with a read-only `.check` accessor → `parseAcCheck(this)`; no-op `init()`; five `define()` calls. No DOM, no visual treatment, no status, no events.</pd-file>
+          <pd-file path="pd-components/src/index.js" change="edit">Add `import './ac-check.js';` (near `misc.js`) so the bundle registers the family.</pd-file>
+          <pd-file path="pd-components/src/styles.css" change="edit">Add a single rule setting the five `pd-ac-check-*` tags to `display:none` — present in the DOM, zero visual treatment / zero layout (inertness, AC-4).</pd-file>
+          <pd-file path="pd-components/llms.template.txt" change="edit">Add a `pd-ac-check-*` family section: the five tags + attributes, the test identity contract, the behavioural-check guidance (G3), the reserved write-back shape, and an explicit "inert in this version — no status/rendering yet" note. (Build regenerates `llms.txt`.)</pd-file>
+          <pd-file path="pd-components/examples/ac-checks.html" change="add">Committed example: a `&lt;pd-ac&gt;` with one of each nested check (and a sibling check-free `&lt;pd-ac&gt;`), referencing `../dist/pd.min.js`. Demonstrates additive authoring + inert render.</pd-file>
+          <pd-file path="pd-components/tests/ac-check-core.test.mjs" change="add">Node unit test (modelled on `lint-cli.test.mjs`): imports the DOM-free core, asserts the frozen schema (exactly five types, attributes, behavioural flags, status vocab, evidence-child + provenance reservation) and `parseAcCheck` normalisation incl. test identity. Guards the S1 freeze (AC-3, AC-6).</pd-file>
+          <pd-file path="pd-components/tests/fixtures/ac-checks.html" change="add">Minimal browser fixture: a `&lt;pd-ac&gt;` with nested checks + a check-free `&lt;pd-ac&gt;`, loading `../../dist/pd.min.js`.</pd-file>
+          <pd-file path="pd-components/tests/playbooks/ac-checks.md" change="add">Playbook asserting registration (AC-1), `.check` exposure (AC-2), inertness — no added child elements / zero box / no rollup pill (AC-4), and additive rendering of both cards (AC-5), via `agent-browser eval`.</pd-file>
+          <pd-file path="pd-components/tests/run.sh" change="edit">Add an `── ac-checks ──` block (open fixture → wait → `agent-browser eval` asserts) so the new playbook runs in the deterministic suite. <strong>Folded in by Plan-stage impact analysis</strong>: `run.sh` hand-wires each playbook (it does not auto-discover), so without this edit `make pd-test` would silently skip the new browser tests.</pd-file>
+          <pd-file path="pd-components/CLAUDE.md" change="edit">Add the `pd-ac-check-*` family to the component inventory table and a one-line note pointing schema changes at `ac-check-core.js` only (mirrors the lint-core guidance).</pd-file>
+        </pd-files>
+        <md><script type="text/plain">
+**Not changed:** `src/misc.js` (`<pd-ac>` is untouched — it never queried its
+children). **Not in this task:** `package.json` version bump + `make release`
+tag + repinning any consuming doc's CDN tag — that is the publish step handled at
+the Plan/ship stage, and `render-check.mjs` counts may optionally be bumped.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="rejected-alternatives" title="Rejected Alternatives">
+        <md><script type="text/plain">
+- **Pure no-op elements, schema only in prose/llms.txt** (empty
+  `extends PdElement {}`, no parse module). Simplest, but "parses and exposes its
+  attributes" would reduce to raw `getAttribute` — true of *any* element — so the
+  ACs couldn't meaningfully assert the schema, and the S1 freeze would be
+  untested prose. Rejected: the epic's whole point is a *load-bearing, testable*
+  schema seam.
+- **Single file (`ac-check.js`) holding schema + parse + elements.** Fewer files,
+  but `define()` references `customElements` at module top level, so Node can't
+  import it — the schema freeze couldn't be unit-tested without a browser.
+  Splitting out a DOM-free core is what makes AC-3 a fast Node assertion, and it
+  mirrors the existing `lint-core` split. Rejected for testability + drift-safety.
+- **Register an evidence element / write-back attrs now.** Over-commits surface
+  T2 owns and exceeds "the five components". Reserving the shape in
+  `AC_CHECK_SCHEMA` (read-through if present) freezes the contract without adding
+  an unused element. Rejected as premature.
+- **Per-tool checks (`-vitest`, `-tsc`, `-eslint`).** Already rejected at the
+  epic level (D2: adapt to output *contracts*, not tools). Out of scope.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="decisions" title="Decisions">
+        <pd-decisions></pd-decisions>
+
+        <pd-thread anchor="approach" status="resolved" priority="p2" title="Inert elements still expose a pure read-only .check accessor (refines the requirements' 'init is a no-op')">
+          <pd-comment by="author">The Requirements Open-Questions answer said inert = "init is effectively a no-op; the elements add no DOM and inject no visual treatment." This solution keeps all of that (no DOM, no visual treatment, no status, no events) but **adds a read-only `.check` getter** returning a pure parse of the element's own attributes. Rationale: the user's Verification steer is that ACs must check "parses and exposes its attributes" — a literal no-op exposes nothing beyond `getAttribute`, making the schema untestable. A getter adds no DOM and no visual treatment, so it stays within the inertness contract while giving AC-2/AC-3 something real to assert and giving T4 a stable parse to render from. Overturn if a reviewer wants the elements to be byte-for-byte `PdNote`-style no-ops with the schema living only in `ac-check-core.js` (T4 would then add the accessor).</pd-comment>
+        </pd-thread>
+
+        <pd-thread anchor="file-changes" status="resolved" priority="p2" title="Schema lives in a DOM-free core module (ac-check-core.js), mirroring lint-core">
+          <pd-comment by="author">Chosen over a single-file implementation so the frozen schema + parser can be unit-tested in Node without a browser (AC-3), and so T2's CLI and T4's renderer import one constant and cannot drift — the same justification as the existing `lint-core.js`/`lint.js` split. Cost: one extra small file. If a reviewer judges this premature given T2 is the deferred follow-on, the fallback is to keep the schema in `ac-check.js` and defer the core extraction to T2.</pd-comment>
+        </pd-thread>
+
+        <pd-thread anchor="file-changes" status="resolved" priority="p3" title="Evidence child + write-back attrs are reserved in the schema, not registered as elements in T1">
+          <pd-comment by="author">Keeps the registered tag set to exactly the five authorable checks (matching the task's "five components" scope) while still freezing the write-back shape: `AC_CHECK_SCHEMA` declares evidence as a reserved child element and `status`/`provenance` as reserved attributes, and `parseAcCheck` reads them through if present (null in T1). T2 introduces the evidence element when it actually writes evidence. Revisit if T4's renderer would prefer the evidence element registered (inert) up front.</pd-comment>
+        </pd-thread>
+
+        <pd-thread anchor="verification-gaps" status="resolved" priority="p3" title="Publishing requires a release bump; this doc pins pd-v0.8.0 which predates the components">
+          <pd-comment by="author">The five elements only reach a consuming doc after `make release VERSION=x.y.z` (new `pd-vX.Y.Z` tag) and the doc repinning its CDN `<script src>`. This task's own `plan.html` pins `pd-v0.8.0`, so its ACs can't be dogfooded as live `<pd-ac-check-*>` children until after release. Left unresolved as a Plan/ship-stage reminder — decide there whether to bump this doc's pin and dogfood the checks once published.</pd-comment>
+          <pd-comment by="author">Plan-stage decision (resolved): (1) **Release happens post-merge**, not inside the feature worktree — `make release VERSION=0.9.0` tags `pd-v0.9.0`. It is documented as the "Ship / publish" step in the Plan tab and is deliberately **not** a numbered execution phase, so `execute-task` never pushes a tag from an unmerged branch. (2) **Repin this doc** to `pd-v0.9.0` after release (harmless, makes it load the new bundle). (3) **Defer adding live `<pd-ac-check-*>` dogfood children** to this doc's own ACs: authoring checks per AC is T5's job (`beta-new-solution`/`beta-new-plan` integration) and would mutate this doc's acceptance criteria — out of scope for T1. The six ACs here are verified by the Node + browser tests, not by dogfooding this doc.</pd-comment>
+        </pd-thread>
+      </pd-section>
+
+    </pd-tab>
+
+    <!-- ============================ PLAN ============================ -->
+    <pd-tab name="Plan">
+
+      <pd-section id="summary" title="Summary">
+        <md><script type="text/plain">
+Build T1 in the library's "one pure core, thin adapters" shape: **Phase 1**
+lands the DOM-free frozen schema + parser (`ac-check-core.js`) with its Node
+unit test as the S1-freeze guard; **Phase 2** adds the five inert custom
+elements that import that core and registers them; **Phase 3** proves
+registration / exposure / inertness / additivity in a real browser and keeps the
+existing suite green; **Phase 4** (parallel) writes the authoring docs. Each
+phase is one subagent, ends in a commit, and is gated by `npm run build` plus the
+relevant tests. Publishing (`make release`) is a post-merge ship step, not an
+execution phase.
+        </script></md>
+        <pd-note><md><script type="text/plain">**Verification convention for this task.** pd-components is plain ES modules with
+**no `tsc` typecheck and no eslint** — the syntax/bundle gate is `npm run build`
+(esbuild, which fails on any syntax/resolution error). So each phase's "typecheck"
+slot is `npm run build`; "tests" are the Node unit test
+(`node tests/ac-check-core.test.mjs`) and the browser suite (`make pd-test`);
+there is no separate lint step at the pd-components level.</script></md></pd-note>
+      </pd-section>
+
+      <pd-section id="sequencing" title="Execution Sequence">
+        <!-- DAG derived from each phase's depends-on + shared files — no hand-drawn diagram.
+             Phases 3 and 4 both depend only on Phase 2, so they dispatch in parallel. -->
+        <pd-dag caption="Execution order — 1 → 2, then 3 and 4 in parallel; click a phase to highlight its files"></pd-dag>
+      </pd-section>
+
+      <pd-section id="phases" title="Phases">
+        <pd-stepper>
+
+          <pd-phase n="1" title="Frozen S1 schema core + Node unit test" files="pd-components/src/ac-check-core.js,pd-components/tests/ac-check-core.test.mjs" status="todo">
+            <md><script type="text/plain">
+**Delivers:** AC-3 (schema frozen & runtime-neutral), AC-6 (behavioural flags).
+The DOM-free foundation T2/T4 key off — write and freeze it first.
+
+**Steps**
+1. Create `src/ac-check-core.js` (pure, imports nothing DOM-bound):
+   - Export `AC_CHECK_SCHEMA` — the single source of truth listing **exactly the
+     five** check types (`command`, `output`, `test`, `file-exists`,
+     `file-contains`), each with its input attributes, a `behavioural` flag, and —
+     for `test` — the **identity contract** (`report` + `name`, optional
+     `suite`/`classname`/`file`; "0-or-many matches = non-proof" recorded as
+     metadata for T3). Declare the **reserved write-back shape**: status vocabulary
+     `proved`/`contradicted`/`weak`/`missing`/`pending`, evidence as a reserved
+     **child element**, provenance attributes `commit`/`dirty`/`at`.
+   - Export `parseAcCheck(node)` — reads attributes via `getAttribute` (works for a
+     browser element *and* a `node-html-parser` node), returns a normalised object
+     (`type` + that type's inputs; absent attrs → `null`; read-through
+     `status`/`provenance`/`evidence` if authored). It **computes no status** and
+     judges no ambiguity. Never throws (permissive — no validation in T1).
+   - *Verify:* `node -e "import('./pd-components/src/ac-check-core.js').then(m=>{if(!m.AC_CHECK_SCHEMA||!m.parseAcCheck)process.exit(1)})"` exits 0 — proves it imports DOM-free in Node.
+2. Create `tests/ac-check-core.test.mjs` (model on `tests/lint-cli.test.mjs`):
+   assert the schema has **exactly five** types with the expected attributes;
+   `behavioural` is true for `test`/`output`/negative `command` and false for
+   `file-exists`/`file-contains` (AC-6); status vocab is exactly the five values;
+   evidence-child + provenance attrs are declared reserved; `parseAcCheck` on a
+   sample `test` node returns the portable identity and `null` for absent attrs
+   and never throws (AC-2's core half / AC-3).
+   - *Verify:* `node tests/ac-check-core.test.mjs` exits 0 with all assertions passing.
+3. **Gate:** `npm run build` succeeds; `node tests/ac-check-core.test.mjs` green.
+4. **Commit:** `pd-components: add ac-check-core.js — frozen S1 schema + parseAcCheck (T1)`.
+            </script></md>
+          </pd-phase>
+
+          <pd-phase n="2" title="Five inert custom elements + registration + style" files="pd-components/src/ac-check.js,pd-components/src/index.js,pd-components/src/styles.css" status="todo" depends-on="1">
+            <md><script type="text/plain">
+**Delivers (runtime side):** AC-1 (registration), AC-2 (`.check` exposure),
+AC-4 (inert). Browser-proven in Phase 3.
+
+**Steps**
+1. Create `src/ac-check.js`: a tiny `PdAcCheck extends PdElement` whose only
+   non-trivial member is a read-only `get check() { return parseAcCheck(this); }`
+   (import `parseAcCheck` from `./ac-check-core.js`). `init()` is a **no-op** —
+   adds no DOM, injects no visual treatment, computes no status, fires no events,
+   does not touch the parent `<pd-ac>`. Five `define(...)` calls register
+   `pd-ac-check-command/-output/-test/-file-exists/-file-contains` (mirrors the
+   `PdNote` inert pattern + the registration block at `misc.js:76-79`).
+   - *Verify:* `grep -c "define('pd-ac-check-" src/ac-check.js` returns `5`.
+2. Edit `src/index.js`: add `import './ac-check.js';` next to `import './misc.js';`
+   — **before** the `mirror.js`/`lint.js` lines (those must stay last).
+   - *Verify:* the import appears above the `mirror.js` import line.
+3. Edit `src/styles.css`: one rule setting the five `pd-ac-check-*` tags to
+   `display:none` — present in the DOM (agents/CLI read them), zero box / zero
+   layout (inertness, AC-4). Touches no existing selector.
+   - *Verify:* `grep pd-ac-check src/styles.css` shows the new rule only.
+4. **Gate:** `npm run build` succeeds (IIFE bundles; `customElements.define`
+   resolves); `node tests/ac-check-core.test.mjs` still green.
+5. **Commit:** `pd-components: register five inert pd-ac-check-* elements (T1)`.
+            </script></md>
+          </pd-phase>
+
+          <pd-phase n="3" title="Browser fixture + playbook + example + regression" files="pd-components/tests/fixtures/ac-checks.html,pd-components/tests/playbooks/ac-checks.md,pd-components/tests/run.sh,pd-components/examples/ac-checks.html" status="todo" depends-on="2">
+            <md><script type="text/plain">
+**Delivers (browser-proven):** AC-1, AC-2, AC-4, AC-5 (purely additive / G1).
+
+**Steps**
+1. Create `tests/fixtures/ac-checks.html` (model on existing fixtures): a `<pd-ac>`
+   with one nested check of **each** of the five types + a sibling **check-free**
+   `<pd-ac>`; loads `../../dist/pd.min.js`.
+2. Create `tests/playbooks/ac-checks.md` (model on existing playbooks) asserting
+   via `agent-browser eval`:
+   - **AC-1:** `customElements.get(tag)` is a function for all five tags; an
+     authored instance is `instanceof` it.
+   - **AC-2:** `.check` returns the normalised object incl. the `test` portable
+     identity; absent attrs are `null`.
+   - **AC-4 (inertness):** each check element has **0 child *elements*** (assert on
+     child element count, not raw `childNodes` — tolerate parser text nodes); its
+     computed box is zero (`display:none`); no `pd:*` event fires on mount; the
+     parent `<pd-ac>` shows **no** rollup pill / status glyph.
+   - **AC-5 (additive):** the check-free card renders id chip + title + phase/test
+     chips + Given/When/Then body identically; the with-checks card shows the
+     **same** head/chips/body with checks not visible.
+3. Edit `tests/run.sh`: add an `── ac-checks ──` block (open fixture → `wait` →
+   the `agent-browser eval` assertions above) so the playbook runs in the
+   deterministic suite (it hand-wires each playbook; no auto-discovery).
+4. Create `examples/ac-checks.html`: committed example (one `<pd-ac>` with one of
+   each check + a check-free sibling) referencing `../dist/pd.min.js`.
+5. **Gate:** `npm run build` then `make pd-test` (a.k.a. `bash tests/run.sh`) — the
+   new `ac-checks` assertions pass **and every existing playbook stays green**
+   (AC-5 / G1 regression); `node tests/lint-cli.test.mjs` stays green.
+6. **Commit:** `pd-components: ac-check browser fixture, playbook, example (T1)`.
+            </script></md>
+          </pd-phase>
+
+          <pd-phase n="4" title="Authoring docs — llms + CLAUDE inventory" files="pd-components/llms.template.txt,pd-components/CLAUDE.md" status="todo" depends-on="2">
+            <md><script type="text/plain">
+Parallel with Phase 3 (both need only Phase 2's settled tags + schema).
+**Delivers:** the authoring surface so later docs/skills can use the family.
+
+**Steps**
+1. Edit `llms.template.txt`: add a `pd-ac-check-*` family section — the five tags
+   with their attributes, the `test` identity contract, the behavioural-check
+   guidance (G3), the reserved write-back shape, and an explicit **"inert in this
+   version — no status / no rendering yet"** note. (`build.mjs:44-48` regenerates
+   the version-stamped `dist/llms.txt`.)
+2. Edit `CLAUDE.md`: add the family to the **Current component inventory** table,
+   plus a one-line note "schema changes → edit `ac-check-core.js` only" (mirrors
+   the existing lint-core guidance).
+3. **Gate:** `npm run build` succeeds; `grep pd-ac-check-test dist/llms.txt`
+   confirms the regenerated agent doc carries the new family.
+4. **Commit:** `pd-components: document pd-ac-check-* family (llms + CLAUDE) (T1)`.
+            </script></md>
+          </pd-phase>
+
+        </pd-stepper>
+      </pd-section>
+
+      <pd-section id="ship" title="Ship / publish (post-merge, not an execution phase)">
+        <md><script type="text/plain">
+Deliberately **outside** the `pd-stepper` so `execute-task` never pushes a tag
+from an unmerged feature branch. After the PR merges to `main`:
+
+1. `make release VERSION=0.9.0` — bumps `package.json`, builds, tags
+   **`pd-v0.9.0`**, pushes, purges + verifies the CDN. (Heads-up: `make release`
+   can die on a `.git/index.lock` pre-commit race — if so, finish the
+   commit/tag/push by hand; never `--no-verify`.)
+2. Repin this doc: update `plan.html`'s `<script src=…@pd-v0.8.0/…>` to
+   `pd-v0.9.0` so it loads the new bundle.
+3. **Deferred (T5):** adding live `<pd-ac-check-*>` dogfood children to this doc's
+   own ACs is authoring work owned by T5 and would mutate its acceptance criteria
+   — out of scope for T1. (See the resolved publishing thread on the Solution tab.)
+        </script></md>
+      </pd-section>
+
+      <pd-section id="success-criteria" title="Success Criteria">
+        <md><script type="text/plain">
+The task is done when **AC-1 through AC-6** pass and the existing suite is green:
+
+- **AC-3, AC-6** — proved by Phase 1's Node unit test (`ac-check-core.test.mjs`):
+  schema frozen to exactly five types, behavioural flags correct, write-back shape
+  reserved.
+- **AC-1, AC-2, AC-4** — proved by Phase 3's browser playbook against the Phase-2
+  elements: the five tags register, `.check` exposes the parsed schema, the
+  elements are inert (no DOM/box/events, no parent rollup).
+- **AC-5 (G1, purely additive)** — proved by Phase 3: with/without-checks cards
+  render identically and the **existing** playbooks + `lint-cli.test.mjs` stay
+  green after the build.
+- **Inert + additive end-to-end:** `npm run build` clean at every phase; no change
+  to `<pd-ac>` rendering (`misc.js` untouched).
+        </script></md>
+      </pd-section>
+
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>
