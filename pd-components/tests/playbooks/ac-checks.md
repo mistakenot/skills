@@ -3,9 +3,16 @@
 Verifies T1 of the executable-completion-contracts epic: the five
 `pd-ac-check-*` tags upgrade to custom elements (AC-1), each exposes a read-only
 `.check` parse of its authored attributes incl. the `test` portable identity
-(AC-2), the elements are inert — no added DOM, zero box, no `pd:*` event on
-mount, no rollup pill on the parent `<pd-ac>` (AC-4), and a card with no checks
-renders byte-identically to a card with checks (purely additive / G1, AC-5).
+(AC-2), and the check **elements themselves** stay inert data-carriers — they add
+no DOM of their own, have zero box, and fire no `pd:*` event on mount (AC-4). The
+with-checks card preserves the same head shape (id chip, title, chips) and GWT
+body as a check-free card, so existing head/chip/body authoring is unaffected
+(AC-5).
+
+(As of T4 / task 004 the **parent** `<pd-ac>` now renders a rollup pill +
+two-level disclosure derived from these checks — proved in the `ac-rollup`
+playbook. Here we assert only that the check elements stay inert and the head
+shape is preserved, not that the parent renders nothing.)
 
 ## Fixture
 
@@ -53,7 +60,7 @@ agent-browser eval "(() => { const c = document.querySelector('pd-ac-check-comma
 
 - **expect:** `true`
 
-### 3. AC-4 — inertness: no added DOM, zero box, no event, no rollup
+### 3. AC-4 — inertness: the check elements add no DOM, zero box, no event
 
 ```bash
 agent-browser eval "[...document.querySelectorAll('pd-ac[id=\"AC-checks\"] > [class*=\"check\"], pd-ac-check-command, pd-ac-check-output, pd-ac-check-test, pd-ac-check-file-exists, pd-ac-check-file-contains')].filter(el => el.tagName.startsWith('PD-AC-CHECK')).every(el => el.childElementCount === 0)"
@@ -79,11 +86,9 @@ agent-browser eval "window.__pdEvents = []; ['pd:phase-selected','pd:status-refr
 
 - **expect:** `0` (no `pd:*` event has fired on mount — the page already settled, so the count stays zero)
 
-```bash
-agent-browser eval "document.querySelectorAll('pd-ac[id=\"AC-checks\"] .pd-ac-rollup, pd-ac[id=\"AC-checks\"] .pd-ac-status, pd-ac[id=\"AC-checks\"] .pd-ac-pill').length"
-```
-
-- **expect:** `0` (the parent `<pd-ac>` shows no rollup pill / status glyph — that is T4)
+(The T1-era assertion that the parent `<pd-ac>` shows no rollup pill was retired
+when T4 / task 004 introduced the with-checks render path — the pill is now
+expected, and is proved in the `ac-rollup` playbook.)
 
 ### 4. AC-5 — purely additive: both cards render the same head / chips / body
 
