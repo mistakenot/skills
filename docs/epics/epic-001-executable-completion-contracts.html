@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>001: executable-completion-contracts</title>
+  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.8.0/pd-components/dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="001: executable-completion-contracts" status="draft" generated="2026-06-20">
+    <script type="application/json" id="pd-meta">
+    {
+      "id": "001",
+      "name": "executable-completion-contracts",
+      "kind": "epic",
+      "status": "planning",
+      "created": "2026-06-20"
+    }
+    </script>
+
+    <!-- ============================ VISION ============================ -->
+    <pd-tab name="Vision">
+      <pd-outcome></pd-outcome>
+
+      <pd-section id="headline" title="The headline">
+        <md><script type="text/plain">
+**An acceptance criterion you can run.** Today a `<pd-ac>` card is a *promise* —
+it says what must be true and points at a test file that's *supposed* to cover
+it. Nothing checks the promise, and a pointer is not proof. This epic turns each
+AC into an **executable contract**: it carries machine-runnable checks, and one
+command computes a trustworthy *proved / not-proved* verdict from the live repo.
+
+The point is autonomy. An agent can only be trusted to run a task unattended if
+it — and we — can tell, without re-reading everything, whether it actually
+finished. A contract whose status is *computed*, not *self-reported*, is that
+signal.
+
+**Scope of THIS epic (HTML-first).** Deliver the contract as an *authorable,
+renderable* artifact: the `pd-ac-check-*` component family and the
+progressive-disclosure rendering, with status read from authored attributes (and
+a pure in-browser rollup). The **execution engine** — the `pd-verify` CLI, the
+shell/JUnit adapters, report producers, provenance/freshness, and pytest
+dogfooding — is **deferred to a follow-on epic** (see Decision D1). The CLI
+verdict below is the north star that follow-on fills in; the commands shown as
+`todo` are not built here.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="verify-experience" title="What success looks like — the verdict">
+        <pd-cli id="C1" title="zsh — verify a task's contract" caption="One command, a per-AC verdict computed from the repo">
+          <pd-cmd note="today: ACs are static promises, no verdict" status="done">cat plan.html  # pd-ac cards with phases/tests chips</pd-cmd>
+          <pd-out>AC-1  Requests over the limit get 429   (phase 1,2 · rate.spec.ts)</pd-out>
+          <pd-cmd note="run every check in the doc against the repo" status="todo">pd-verify run docs/tasks/042-rate-limit/plan.html</pd-cmd>
+          <pd-out><script type="text/plain">
+AC-1  proved        3/3 checks   ✓ tsc  ✓ test "returns 429"  ✓ curl→429
+AC-2  CONTRADICTED  1/2 checks   ✓ file exists  ✗ test "Retry-After present" failed
+AC-3  weak          1/2 checks   ✓ tsc  – test "burst shed" SKIPPED
+contract: 1/3 ACs proved — exit 1
+          </script></pd-out>
+          <pd-cmd note="the doc now shows the same status, recomputed" status="todo">open docs/tasks/042-rate-limit/plan.html</pd-cmd>
+          <pd-out>AC cards render a green/red rollup; click one to see which check failed.</pd-out>
+        </pd-cli>
+        <pd-thread anchor="C1" status="resolved" priority="p2" title="The public pd-verify command has no delivery path">
+          <pd-comment by="review">The headline experience requires `pd-verify run ...`, but the breakdown only promises a CLI implementation, not how that executable becomes available. I checked the current packaging: `pd-components/package.json` is private and has no `bin`, while the analogous linter is bundled as `dist/pd-lint.mjs`, copied into the planning-doc skill, and documented as `node "$CLAUDE_SKILL_DIR/scripts/pd-lint.mjs" ...`. Define the distribution/launcher seam and assign it to a task so C1 is actually reachable with the command shown.</pd-comment>
+          <pd-comment by="author">Agreed. Added seam **S5 · Distribution/launcher** (Architecture) mirroring the linter — bundle `dist/pd-verify.mjs`, copy into the planning-doc skill as a script asset, invoke `node "$CLAUDE_SKILL_DIR/scripts/pd-verify.mjs"` — and noted the `pd-verify` spelling in C1 is the UX shorthand for that launcher. Assigned the distribution work to T2.</pd-comment>
+        </pd-thread>
+      </pd-section>
+
+      <pd-section id="autonomy-outcome" title="Why now — the autonomy payoff">
+        <pd-journey id="J1" title="An agent earns the word &quot;done&quot;" outcome="honest completion: done only when the contract is proved">
+          <pd-leg actor="author/agent" action="writes ACs with runnable checks" status="todo">each AC has ≥1 behavioural check</pd-leg>
+          <pd-leg actor="agent" action="implements, then runs pd-verify" status="todo">checks recomputed from the repo</pd-leg>
+          <pd-leg actor="agent" action="reports the verdict, not a claim" status="todo">contradicted/weak surfaced, never hidden</pd-leg>
+        </pd-journey>
+        <md><script type="text/plain">
+This is the "completion contract" borrowed from loop-library's worldview: an
+agent run is *done* only when every requirement is **proved**; budget exhaustion,
+an error, or a skipped test is a named non-success state, never "done". Making
+the verdict an executable computation is what makes that rule enforceable rather
+than aspirational. (Wiring an executor to *auto-gate* on this verdict is a
+deliberate follow-on — see Decisions D1.)
+        </script></md>
+      </pd-section>
+    </pd-tab>
+
+    <!-- ========================== GUARD RAILS ========================== -->
+    <pd-tab name="Guard rails">
+      <pd-section id="rails" title="Constraints every task inherits">
+        <pd-note><md><script type="text/plain">In scope this epic (HTML-first): **G1, G3, G5**. The execution-layer rails — **G2, G4, G6, G7, G8** — bind the deferred execution follow-on and are kept here as the standing contract that epic inherits (see D1).</script></md></pd-note>
+        <pd-guardrail id="G1" kind="compat" title="Purely additive — nothing existing breaks">
+          <md><script type="text/plain">Existing `<pd-ac>` cards and every already-authored doc render unchanged. Checks are optional children; a doc with none behaves exactly as today.</script></md>
+        </pd-guardrail>
+        <pd-guardrail id="G2" kind="functional" title="The verdict is truthful">
+          <md><script type="text/plain">An AC is "proved" only if every check passes against the live repo. A failed, errored, skipped, or absent check never reads as proved; the contract's exit code reflects the true state. Honesty is the whole product.</script></md>
+        </pd-guardrail>
+        <pd-guardrail id="G3" kind="functional" title="Every AC carries a behavioural check">
+          <md><script type="text/plain">At least one check per AC must be able to *fail if the feature were silently broken* (a test/output/negative check) — not only existence checks. A contract of file-exists checks is theatre.</script></md>
+        </pd-guardrail>
+        <pd-guardrail id="G4" kind="operability" title="Minimal drift surface — contracts, not tools">
+          <md><script type="text/plain">Adapt to output *contracts* (exit code, JUnit XML), not individual tools. One parser per format; tool-specific config (the --reporter flag, the report path) lives in the consumer project. Cap: two format adapters before a per-tool adapter is justified.</script></md>
+        </pd-guardrail>
+        <pd-guardrail id="G5" kind="reliability" title="Shared result core; execution is Node-only">
+          <md><script type="text/plain">The runtime-neutral *result/rollup* core (check-results → status) is shared by the browser component and the CLI, so the rollup logic can never diverge (like lint-core, which is portable because it only reads DOM data). **In scope this epic:** that pure rollup core, computing AC/contract status from authored check `status`. *Executing* checks — shell, filesystem, JUnit parsing — is Node-only and owned by the CLI behind the adapter registry (the deferred follow-on); the browser never executes, it only renders. See seams S2/S3.</script></md>
+        </pd-guardrail>
+        <pd-thread anchor="G5" status="resolved" priority="p1" title="The shared core boundary is impossible as currently stated">
+          <pd-comment by="review">The existing lint-core pattern is portable because it only evaluates DOM data. Verification runners need Node-only capabilities (`child_process`, filesystem access, and repo cwd), while the browser bundle is built by `pd-components/build.mjs` for Chrome/Firefox/Safari and cannot execute shell or read the repo. G5 and S2/S3 currently put check-running plus the runner registry in a core consumed by both faces. Split the seam explicitly: for example, a runtime-neutral result/rollup core shared by browser and CLI, with execution adapters owned only by the Node CLI. Otherwise T2 cannot satisfy both the browser build and G5.</pd-comment>
+          <pd-comment by="author">Correct — the original G5 was wrong. Split exactly as suggested: rewrote **G5** to share only a runtime-neutral *result/rollup* core; recast **S2** as that pure results-in/status-out core and **S3** as a **Node-only** execution adapter registry that lives only in the CLI (the browser renders, never executes); updated the architecture diagram and **T2** to match.</pd-comment>
+        </pd-thread>
+        <pd-guardrail id="G6" kind="security" title="Checks run shell — only on trusted docs">
+          <md><script type="text/plain">pd-verify executes commands authored in the doc. It runs only on operator-trusted planning docs, never auto-runs on untrusted/submitted content, and surfaces what it will execute.</script></md>
+        </pd-guardrail>
+        <pd-guardrail id="G7" kind="operability" title="Only a fresh CLI exit is authoritative; write-back is stamped evidence">
+          <md><script type="text/plain">The authoritative verdict is a **fresh CLI exit code**. Written-back status is *last-run evidence*, not live truth: each verdict is stamped with provenance (commit SHA + dirty-tree fingerprint + timestamp), and the rendered status shows a visible **stale** state whenever the current tree no longer matches the stamp. So a code change can't leave a silently-green doc, and a hand-edited attribute is detectable (its provenance won't verify). Write-back is idempotent and stable-ordered.</script></md>
+        </pd-guardrail>
+        <pd-thread anchor="G7" status="resolved" priority="p1" title="Write-back can become stale or be hand-faked">
+          <pd-comment by="review">D3 deliberately stores status and evidence in mutable HTML, and the Architecture tab says the browser reads that stored status; the browser has no access to the live worktree to validate it. After a successful run, any code change makes the green status stale, and a manual attribute edit can fake it. Re-running repairs the cache but does not make the persisted display intrinsically current. Because truthfulness is the product invariant, define provenance/freshness semantics (for example commit plus dirty-tree fingerprint and a visible stale state) or state that only a fresh CLI exit is authoritative and write-back is last-run evidence.</pd-comment>
+          <pd-comment by="author">Adopted both halves of your suggestion. Rewrote **G7**: only a fresh CLI exit is authoritative; written-back status is *last-run evidence* stamped with provenance (commit SHA + dirty-tree fingerprint + timestamp) and renders a visible **stale** state when the tree no longer matches the stamp, so a code change can't leave a silently-green doc and a hand-edited attribute fails provenance verification. Mirrored the consequence into **D3**.</pd-comment>
+        </pd-thread>
+        <pd-guardrail id="G8" kind="performance" metric="1 suite run per report per verify run" title="Batch checks by format">
+          <md><script type="text/plain">N test checks resolving against one JUnit report trigger one suite run and one parse, not N — a single consistent snapshot.</script></md>
+        </pd-guardrail>
+      </pd-section>
+    </pd-tab>
+
+    <!-- ======================= ARCHITECTURE ======================= -->
+    <pd-tab name="Architecture">
+      <pd-section id="containers" title="Containers & seams">
+        <pd-note><md><script type="text/plain">HTML-first scope covers the left/top of this diagram: **Authoring → DOC → Check components**, plus the pure **Result/rollup core** (seams **S1, S2**). Everything Node-side — the **pd-verify CLI**, **execution adapters**, **report producer**, and seams **S3/S4/S5** — is the deferred execution follow-on, drawn here so the boundary is explicit.</script></md></pd-note>
+        <pd-mermaid caption="Node-only execution; a runtime-neutral result core shared with the browser">
+flowchart TD
+  AUTH[Authoring skills<br/>beta-new-solution / beta-new-plan] -->|write checks| DOC[Planning doc HTML<br/>pd-ac + pd-ac-check-*]
+  DOC -->|parse| CLI[pd-verify CLI<br/>Node only]
+  CLI -->|via registry| EXEC[Execution adapters<br/>Node only: shell · fs · JUnit parse]
+  CLI -->|invoke once per report| PROD[Report producer<br/>consumer-declared command]
+  PROD -->|emits| REP[(JUnit XML report)]
+  EXEC -->|reads| REP
+  EXEC -->|results| RCORE[Result/rollup core<br/>runtime-neutral, pure]
+  CLI -->|write status + evidence + provenance| DOC
+  DOC -->|render| COMP[Check components<br/>browser: render only]
+  COMP -->|rollup from written-back results| RCORE
+        </pd-mermaid>
+        <md><script type="text/plain">
+**Seams — the load-bearing contracts** (a task may do anything behind one as long
+as it honors it):
+
+- **S1 · Check-element schema.** The `pd-ac-check-*` tag names, their attributes,
+  and the status/evidence/provenance write-back format. Authoring, rendering, and
+  verifying all key off this one schema — define it first. Note the **test
+  identity contract** (see T1): a `test` check is identified by `report` plus a
+  *portable* identity (`name` with optional `suite`/`classname`/`file`
+  qualifiers); a lookup matching zero or more-than-one testcase is **non-proof**,
+  never a pass.
+- **S2 · Result/rollup core (runtime-neutral, pure).** Check *results* in → AC and
+  contract status + rollup out. No shell, no filesystem, no I/O — so it is the one
+  piece genuinely shared by the Node CLI and the browser component (like lint-core,
+  which is portable precisely because it only reads DOM data).
+- **S3 · Execution adapter registry (Node-only).** A `check-type → runner` table
+  where each runner performs the actual shell/filesystem/parse work and yields
+  `{status, evidence}`. It lives **only in the CLI**, never in the browser bundle —
+  the browser cannot and must not execute. New check types/formats slot in here.
+- **S4 · The report boundary.** A check declares a **report producer** (a command,
+  run once per report) plus the report path; pd-verify invokes the producer with
+  defined timeout/failure semantics, then the JUnit adapter *reads* the emitted
+  XML. "Runs every check against the live repo" means pd-verify *triggers* the
+  producer — it never trusts a pre-existing XML it didn't just generate (see T3,
+  G7). The tool stays at one parsed format (G4); the producer command is the
+  consumer-project edge.
+- **S5 · Distribution/launcher.** How `pd-verify` becomes runnable, mirroring the
+  linter: bundled to `dist/pd-verify.mjs` and copied into the planning-doc skill
+  as a script asset, invoked as `node "$CLAUDE_SKILL_DIR/scripts/pd-verify.mjs"`.
+  The `pd-verify` spelling in C1 is the UX shorthand for that launcher.
+        </script></md>
+      </pd-section>
+    </pd-tab>
+
+    <!-- ========================= BREAKDOWN ========================= -->
+    <pd-tab name="Breakdown">
+      <pd-section id="breakdown" title="Deployable, sequenced tasks">
+        <pd-breakdown caption="Build order — T1 → T2 ship this epic; T3–T5 are the deferred execution follow-on"></pd-breakdown>
+
+        <pd-note><md><script type="text/plain">**In scope this epic (HTML-first): T1 (components + schema) and T4 (rendering + rollup).** T2, T3, T5 (the CLI, the JUnit/producer engine, authoring + lint) are the deferred execution follow-on — kept here as cards so the boundary and the dependency staircase stay explicit. Ids are unchanged to preserve the review threads. See Decision D1.</script></md></pd-note>
+
+        <pd-task id="T1" title="Check component family + schema (S1)" status="todo" deployable
+                 delivers="C1" honors="G1,G3">
+          <md><script type="text/plain">Add the five `pd-ac-check-*` components (command, output, test, file-exists, file-contains) to pd-components as light-DOM elements with the fixed schema; render inert (present, no status yet). The schema must settle the **test identity contract** (`report` + `name` + optional `suite`/`classname`/`file`; ambiguous = non-proof) and the status/evidence/provenance write-back shape before freezing, since later tasks key off it. Existing docs unaffected.</script></md>
+        </pd-task>
+        <pd-thread anchor="T1" status="resolved" priority="p2" title="The test selector is not unambiguous enough to freeze">
+          <pd-comment by="review">T1 freezes S1 before the JUnit adapter is built. The referenced design currently identifies a testcase with only `report` + `name`, but JUnit permits the same testcase name under different suites/classes (and parametrized emitters vary), so a name-only lookup can prove the wrong test. Define a portable identity contract before freezing the schema—such as optional suite/class/file qualifiers with ambiguous matches treated as non-proof—and require dialect fixtures for the supported producers.</pd-comment>
+          <pd-comment by="author">Folded the identity contract into seam **S1** and **T1**: a `test` check is identified by `report` + `name` with optional `suite`/`classname`/`file` qualifiers, and a lookup matching zero or more-than-one testcase is **non-proof** (never a pass). T3 now requires dialect fixtures for supported producers and must validate this before S1 is frozen.</pd-comment>
+        </pd-thread>
+
+        <pd-task id="T2" title="(deferred) verify-core + generic checks + CLI write-back" status="todo" deployable depends-on="T1"
+                 delivers="C1" honors="G2,G5,G6,G7">
+          <md><script type="text/plain">Runtime-neutral result/rollup core (S2) + Node-only execution adapter registry (S3); pd-verify CLI for the framework-agnostic checks (command/output/file-*); run against the repo, write status+evidence+provenance back into the HTML (G7), set exit code. Cloned from the lint-core/cli split. Includes the distribution/launcher (S5): bundle `dist/pd-verify.mjs`, copy into the planning-doc skill as a script asset.</script></md>
+        </pd-task>
+
+        <pd-task id="T3" title="(deferred) JUnit test adapter — dogfood on pytest" status="todo" deployable depends-on="T2"
+                 delivers="C1" honors="G2,G4,G8">
+          <md><script type="text/plain">Add the `test` check + a JUnit-XML adapter behind the registry, plus the **report-producer** mechanism (S4): a consumer-declared command run once per report with timeout/failure semantics, generating fresh XML the adapter then reads (never trusting pre-existing XML). Resolve the producer for this repo (wire pytest `--junitxml`, absent today). Batch one suite run per report. Dogfood end-to-end on this repo's pytest suite; proves the named-test / skipped-test / ambiguous-identity verdicts.</script></md>
+        </pd-task>
+        <pd-thread anchor="T3" status="resolved" priority="p1" title="No contract produces a fresh JUnit report">
+          <pd-comment by="review">The epic simultaneously says pd-verify runs every check against the live repo, S4 says it only reads a consumer-produced report, and T3 promises one suite run per report. No schema or seam says what command generates that report, how it is batched, or how freshness is established. This repo confirms the gap: `pyproject.toml` has no pytest/JUnit configuration and the Makefile runs pytest without `--junitxml`. The referenced design also leaves “run vs read” and report freshness as open questions. Resolve that contract before T1/T3 (for example an explicit report producer command run once per report, with failure/timeout/freshness semantics); otherwise stale XML can yield a false proved verdict.</pd-comment>
+          <pd-comment by="author">Resolved the run-vs-read contradiction in seam **S4**: a check declares a **report producer** (a command run once per report, with timeout/failure semantics); pd-verify *invokes* the producer to generate fresh XML and never trusts a pre-existing report it didn't just produce — so "runs against the live repo" = triggers the producer. **T3** now owns building this mechanism and wiring this repo's producer (pytest `--junitxml`, absent today). Freshness ties into the G7 provenance stamp.</pd-comment>
+        </pd-thread>
+
+        <pd-task id="T4" title="Progressive-disclosure rendering + rollup" status="todo" deployable depends-on="T1"
+                 delivers="C1" honors="G1,G5">
+          <md><script type="text/plain">The pd-ac browser component computes a pure rollup from the child checks' authored `status` and renders a top-level rollup pill; click to reveal the check list; failing checks expand to evidence (second level); auto-open contradicted ACs. Reconcile the existing card-click (phase highlight moves to the chips). Keeps all checks in the DOM while collapsed. No execution — status is whatever is authored/written-back.</script></md>
+        </pd-task>
+
+        <pd-task id="T5" title="(deferred) Authoring integration + behavioural-check lint" status="todo" deployable depends-on="T3"
+                 delivers="J1" honors="G3">
+          <md><script type="text/plain">Teach beta-new-solution / beta-new-plan to author checks per AC, and add a pd-verify lint mode that flags any AC with only structural checks (enforces G3). This is what makes contracts actually get written.</script></md>
+        </pd-task>
+      </pd-section>
+    </pd-tab>
+
+    <!-- ========================= DECISIONS ========================= -->
+    <pd-tab name="Decisions">
+      <pd-section id="decisions" title="Strategic bets">
+        <pd-decisions></pd-decisions>
+
+        <pd-decision id="D1" title="HTML-first; defer the entire execution engine (and the executor gate)" status="accepted" by="author"
+                     summary="This epic ships only the authorable + renderable contract (components + rollup). pd-verify, adapters, producers, freshness, pytest, and the executor gate are follow-ons.">
+          <md><script type="text/plain">
+**Decision.** Narrowed twice. This epic delivers **only the HTML layer**: the
+`pd-ac-check-*` component family + schema (T1) and progressive-disclosure
+rendering with a pure rollup over authored status (T4). The **execution engine** —
+the pd-verify CLI, shell/JUnit adapters, report producers, provenance/freshness,
+and pytest dogfooding (T2/T3/T5) — is deferred to a follow-on epic, and wiring an
+autonomous executor to gate on the verdict is a further one after that.
+
+**Why.** Execution is where all the complexity and the unresolved questions live
+(producer declaration, freshness, sandboxing, parametrised identity). The HTML
+layer is independently valuable and shippable: it fixes the schema, gives authors
+and reviewers a place to express and read checks, and a future CLI just writes
+status into elements that already render. Decoupling lets us ship momentum now and
+design execution under less pressure.
+
+**Alternatives.** Build the engine in this epic (rejected: too much at once — the
+explicit reason for this descope). Go all the way to the executor gate (rejected:
+also needs the beta-HTML ↔ markdown-workflow bridge).
+
+**Consequences.** Authored checks render but are inert until the follow-on engine
+lands — status is whatever is authored/written-back, not yet computed. G2/G4/G6/
+G7/G8 and seams S3/S4/S5 bind that follow-on; they stay recorded here as its
+inherited contract. The review threads on T3 (producer) and G7 (freshness)
+describe deferred work and remain as the design record for that epic.
+          </script></md>
+        </pd-decision>
+
+        <pd-decision id="D2" title="Adapt to output contracts, not tools" status="accepted" by="author"
+                     summary="One JUnit-XML adapter covers vitest/jest/pytest/Playwright/Go; exit code is the oracle for build/lint.">
+          <md><script type="text/plain">
+**Decision.** Structured parsing only where granularity is load-bearing (named
+tests), and parse a *format* (JUnit XML), not a tool. Everything else (build,
+typecheck, lint, migrate) uses the exit code as a complete oracle.
+
+**Why.** The drift surface is the number of formats parsed, not tools supported.
+A `pd-ac-check-eslint`/`-tsc`/`-vitest` family is pure maintenance for no signal.
+
+**Consequences.** Five runners, one parser. Per-framework JSON adapters and a TAP
+adapter are deferred until a generic check provably loses needed information.
+          </script></md>
+        </pd-decision>
+
+        <pd-decision id="D3" title="Write status back into the HTML (doc-as-baton)" status="accepted" by="author"
+                     summary="pd-verify mutates the doc in place rather than emitting a sidecar report.">
+          <md><script type="text/plain">
+**Decision.** Status + evidence are written back onto the check elements in the
+planning doc.
+
+**Why.** It makes the doc a self-contained, resumable state baton (a resuming
+session recomputes truth from one artifact), gives git-visible progress, and —
+because status is always recomputed — keeps it drift-proof.
+
+**Alternatives.** A sidecar JSON report (rejected: splits spec from runtime state,
+weakens the doc-as-baton story).
+
+**Consequences.** Executing a contract produces diffs on the planning doc; the
+write-back must be idempotent and stable-ordered to keep those diffs clean. And
+because the browser can't validate stored status against the worktree, written-back
+status is **last-run evidence, not live truth** — it carries provenance (commit +
+dirty-tree fingerprint + timestamp) and renders a visible *stale* state when the
+tree has moved; only a fresh CLI exit is authoritative (G7).
+          </script></md>
+        </pd-decision>
+
+        <pd-decision id="D4" title="pytest is the first adapter & dogfood target" status="accepted" by="author"
+                     summary="It runs in this repo today, so the full round-trip is dogfoodable immediately.">
+          <md><script type="text/plain">
+**Decision.** The first JUnit adapter targets pytest.
+
+**Why.** This repo runs pytest today (`uv run pytest`), so we can exercise the
+whole author→run→write-back→render loop on our own code without standing up a
+fixture project. vitest/jest (what consumer projects use most) follow on demand.
+
+**Consequences.** Initial example contracts in this repo verify Python; the
+adapter set grows to match the projects these skills actually run in.
+          </script></md>
+        </pd-decision>
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

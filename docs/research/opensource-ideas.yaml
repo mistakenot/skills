@@ -1,0 +1,674 @@
+profile:
+  recorded: 2026-06-20
+  project: |
+    A public repository of reusable, multi-agent-compatible agent skills. The
+    headline product is the "Portable Task Workflow" — an AI-agent-driven feature
+    delivery lifecycle (requirements -> solution -> context -> plan -> worktree
+    execution -> PR -> review -> merge -> feedback), with each stage a discrete
+    skill invoked via slash command. Beyond the planning workflow it also ships
+    skills for ideation, exploration, reflection, maintenance, research, and an
+    assurance-strategist with its own eval harness.
+  architecture: |
+    Skills are authored in `src/<group>/` (planning-workflow, beta-planning,
+    ideation, exploration, reflection, maintenance, research, rich-docs,
+    assurance) and COMPILED by `src/compile.py` into the flat `skills/` output
+    dir (29 skills today). `make compile` regenerates output; `make install`
+    runs `npx skills install` to publish into claude-code + codex agents.
+    Tooling: `autoskill lint`; `autodoc` for the docs index. `uv` runs all
+    Python. The autonomous-execution family — execute-task, delegate,
+    delegate-task, status-report, complete-task — is where agents already run
+    with the least human supervision, and is the primary surface for the
+    autonomy doctrine below.
+  stack: [Python, "Markdown skills", TypeScript, JavaScript, HTML, Bash]
+  goals: |
+    PRIMARY (clarified 2026-06-20): increase the AUTONOMY of our agents by
+    embodying the "loop mentality" — restructure our autonomous skills as
+    bounded feedback loops that can run unattended *because* they have a
+    verifiable definition of done, independent verification, resumable state,
+    explicit terminal states, and consequential decisions held behind gates.
+    Autonomy is unlocked by reliable stopping and verification, not by removing
+    the human.
+    Supporting goals:
+    - Skills multi-agent compatible (Claude Code, Codex, Opencode, ...).
+    - High-quality routing descriptions so the right skill triggers.
+    - Reusable across projects; quality enforced by lint/compile.
+  non_goals: |
+    - SEO / GEO / search-engine visibility work.
+    - A public marketing website, social-card generation, or web hosting.
+    - Backend infrastructure (Cloudflare Workers, form handling, here.now).
+    - "Endless autonomy" / unbounded agents: the goal is BOUNDED autonomy with
+      terminal states, never an agent with permission to run forever.
+
+sources:
+  - repo: Forward-Future/loop-library
+    url: https://github.com/Forward-Future/loop-library
+    added: 2026-06-20
+    why: |
+      A peer library of reusable agent "loops". Its real value to us is not the
+      individual workflows but the consistent DOCTRINE underneath all 31 of
+      them: how to make an agent trustworthy enough to run unattended. That
+      doctrine maps directly onto our autonomous-execution skills.
+    last_investigated_commit: 6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1
+    last_investigated_at: 2026-06-20T15:30:00Z
+    investigations:
+      - from_commit: null
+        to_commit: 6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1
+        investigated_at: 2026-06-20T14:09:15Z
+        ideas_added: 9
+      - from_commit: 6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1
+        to_commit: 6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1
+        investigated_at: 2026-06-20T15:30:00Z
+        ideas_added: 8
+        note: |
+          Re-read of the same snapshot through an autonomy lens (no new commits).
+          Added the autonomy-doctrine ideas (I010-I017) and re-shortlisted around
+          them; demoted the pure-tooling ideas (I001/I005/I008) out of the
+          shortlist per user steer toward qualitative, mentality-level borrows.
+
+ideas:
+  # newest first. I010-I017 are the autonomy-doctrine pass.
+
+  - id: I017
+    title: "Capstone: a shared 'loop doctrine' reference every autonomous skill inherits"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [skills/loop-library/SKILL.md]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/skills/loop-library/SKILL.md
+    discovered: 2026-06-20
+    status: candidate
+    change_type: structural-rebuild
+    area: "new src/ reference doc + execute-task, delegate, delegate-task, status-report, complete-task"
+    effort: L
+    impact: high
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 4
+    summary: |
+      loop-library's SKILL.md is really one doctrine applied 31 times: build
+      every loop around Observe -> Choose -> Act -> Verify -> Record ->
+      Repeat-or-Stop, with an observable success gate, named terminal states, a
+      no-progress stop, one bounded reversible change per cycle, and approval
+      held for consequential actions. The individual loops barely vary; the
+      discipline is the product.
+    application: |
+      Write one canonical "autonomy loop doctrine" reference in src/ that all our
+      autonomous skills link to, instead of re-deriving stopping/verification
+      rules per skill. It would define the six-step cycle, the terminal-state
+      vocabulary (I010/I002), the verification bar (I012), the review gate
+      (I011), the resumable baton (I014), and the authority/observation split
+      (I013). Each autonomous skill then references it and specifies only its
+      task-specific gates. This is the literal "embody the loop mentality" move —
+      it makes the doctrine the default rather than an option. The other
+      doctrine ideas (I010-I016) are the sections of this reference.
+    evidence: |
+      SKILL.md "Design the feedback cycle" enumerates the cycle + terminal states
+      once and every loop conforms to it; "Designing a loop does not authorize
+      enabling a schedule, changing production, or sending external messages."
+    notes: |
+      Umbrella idea. Best treated as the home for the doctrine sections below;
+      could ship incrementally (one section per skill) rather than as one big PR.
+
+  - id: I016
+    title: "Self-strengthening loops: every failure becomes durable coverage or a rule"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [site/loops/quality-streak-loop/index.html, site/loops/recent-feedback-sweep/index.html]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/scripts/loop-data.mjs
+    discovered: 2026-06-20
+    status: candidate
+    change_type: additive
+    area: "execute-task, task-feedback-analyser, assurance-strategist"
+    effort: M
+    impact: medium
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 5
+    summary: |
+      The quality-streak loop converts every failed scenario into regression +
+      benchmark coverage and restarts the streak; the recent-feedback sweep turns
+      one-off corrections into a reusable failure-pattern rubric, then audits the
+      whole project for siblings. The loop gets stronger after every miss instead
+      of just recovering.
+    application: |
+      Make our autonomous loops compounding: when execute-task hits a real
+      failure mid-run, it should add regression coverage before continuing, not
+      just fix-and-move-on. Wire task-feedback-analyser so recurring failures
+      become durable rules/checks (it already clusters feedback — close the loop
+      so the rules feed back into the autonomous skills' gates). Autonomy is
+      safer when each run hardens the next.
+    evidence: |
+      quality-streak why: "Converting each failure into durable coverage makes
+      the evaluation stronger after every miss." recent-feedback why: "Grouping
+      them into failure patterns turns one-off feedback into a reusable audit
+      rubric."
+    notes: |
+
+  - id: I015
+    title: "Observe-fresh-state-first: never act on stale state or a stale worktree"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [site/loops/recent-feedback-sweep/index.html, site/loops/five-minute-repository-maintainer-loop/index.html, site/loops/stale-safe-batch-release-loop/index.html]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/skills/loop-library/SKILL.md
+    discovered: 2026-06-20
+    status: candidate
+    change_type: additive
+    area: "execute-task, complete-task, delegate, status-report"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 6
+    summary: |
+      Across loops the first step is always to re-read current state before any
+      consequential action: "Re-read current state before consequential actions.
+      Do not ship stale code, partial artifacts, or assumptions carried from an
+      earlier cycle." The five-minute maintainer "reads each thread's latest
+      state before steering"; recent-feedback "verifies current state" rather
+      than trusting old threads; stale-safe-batch refuses to release from a stale
+      worktree.
+    application: |
+      Add an explicit Observe step to our autonomous skills: re-read the plan,
+      the diff, and the relevant files before each consequential action; verify
+      the worktree is current before completing/merging; never carry an
+      assumption from an earlier subagent phase without re-checking. Cheap,
+      high-leverage correctness guard that prevents the classic "acted on stale
+      context" autonomy failure.
+    evidence: |
+      SKILL.md "Apply these rules": "Re-read current state before consequential
+      actions. Do not ship stale code, partial artifacts, or assumptions carried
+      from an earlier cycle."
+    notes: |
+      Supports the cycle's Observe step in I017.
+
+  - id: I014
+    title: "Resumable state baton (LOOP-STATE.md) + 'an interruption is never success'"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [site/loops/autonomy-loop/index.html, site/loops/revolve-self-improvement-loop/index.html, site/loops/clodex-adversarial-review-loop/index.html]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/scripts/loop-data.mjs
+    discovered: 2026-06-20
+    status: shortlisted
+    change_type: additive
+    area: "execute-task, delegate-task, status-report"
+    effort: M
+    impact: high
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 6
+    summary: |
+      Long autonomous runs keep a durable, git-backed state file (autonomy-loop's
+      LOOP-STATE.md baton; Revolve's checkpoints; Clodex's resumable PR/findings
+      state). It records what's done, what's pending, and the current terminal
+      status, so the work survives interruption — and crucially, an interruption
+      is reported as in-progress/blocked, never as completion.
+    application: |
+      Give execute-task / delegate-task a persistent per-run state file (a
+      git-backed LOOP-STATE.md in the worktree) capturing phase, evidence so far,
+      and terminal status. This makes a long autonomous run resumable by another
+      session (or by status-report) and makes "stopped early" legible instead of
+      silently looking done. Directly raises how long we can let a run go
+      unattended. Pairs with I010 (the contract) as the persisted artifact.
+    evidence: |
+      autonomy-loop why: "a git-backed LOOP-STATE.md baton keep[s] the roles
+      independent and resumable." clodex why: "Persisted state keeps the work
+      resumable without treating an interruption as approval."
+    notes: |
+
+  - id: I013
+    title: "Automate observation, not authority: decouple cadence from consequential decisions"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [site/loops/five-minute-repository-maintainer-loop/index.html]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/scripts/loop-data.mjs
+    discovered: 2026-06-20
+    status: shortlisted
+    change_type: additive
+    area: "delegate, delegate-task, status-report, execute-task, complete-task"
+    effort: M
+    impact: high
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 6
+    summary: |
+      The five-minute maintainer is the clearest statement of the safety frame:
+      "A heartbeat automates observation, not authority." It raises how OFTEN the
+      agent observes and how much bounded reversible work it does, while keeping
+      triage, delegation, push, merge, release, and irreversible/security/product
+      decisions as SEPARATE, explicitly-granted permissions. Protected or
+      repeatedly-failing work is parked for a human (circuit breaker); accepted
+      work reports a "trust tier."
+    application: |
+      This is the principle that lets us raise autonomy responsibly. Restructure
+      our autonomous skills so cadence/observation and bounded reversible edits
+      are free, but push/merge/release/destructive/external actions are explicit
+      gates with escalation. Add a circuit breaker (park work after N repeated
+      failures or on protected paths) and report a trust tier with each result.
+      Lets us dial autonomy UP without dialing safety down — the user's exact
+      goal.
+    evidence: |
+      five-minute why/note: "A heartbeat automates observation, not authority:
+      triage, delegation, implementation, push, merge, and release remain
+      separate permissions." autonomy-loop: "park protected or repeated-failure
+      work for a human ... Finish with the ... trust tier, and risks."
+    notes: |
+
+  - id: I012
+    title: "Verification that earns autonomy: prove the test (revert-or-mutate, red-before/green-after)"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [site/loops/autonomy-loop/index.html, site/loops/quality-streak-loop/index.html]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/scripts/loop-data.mjs
+    discovered: 2026-06-20
+    status: shortlisted
+    change_type: additive
+    area: "execute-task, code-review, complete-task"
+    effort: M
+    impact: high
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 6
+    summary: |
+      autonomy-loop's reviewer "proves the test by reverting or mutating the fix"
+      — a test only counts if removing the fix makes it fail (red-before,
+      green-after). This catches tests that execute the code without actually
+      proving the behavior, which is the failure mode that makes "all tests
+      pass" untrustworthy for an unattended agent.
+    application: |
+      Add a prove-the-test step to execute-task / code-review: for each new test,
+      demonstrate it fails without the change (red-before) and passes with it
+      (green-after), or mutate the fix and confirm the test catches it. This is
+      what makes an agent's "verified, tests pass" trustworthy enough to land
+      work without a human re-checking — a direct autonomy multiplier.
+    evidence: |
+      autonomy-loop why: "The revert-or-mutate check catches tests that execute
+      code without proving the fix." builder adds "a red-before, green-after
+      test."
+    notes: |
+
+  - id: I011
+    title: "Generator != approver: wire independent review as a required gate, not advice"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [site/loops/loop-harness-verification-loop/index.html, site/loops/clodex-adversarial-review-loop/index.html, site/loops/autonomy-loop/index.html]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/scripts/loop-data.mjs
+    discovered: 2026-06-20
+    status: shortlisted
+    change_type: structural-rebuild
+    area: "execute-task, request-claude-review, request-codex-review, address-feedback, complete-task"
+    effort: M
+    impact: high
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 6
+    summary: |
+      Three loops independently insist the same thing: the agent that creates
+      high-impact output must not be the one that approves it. Loop Harness uses
+      a second Claude session to verify against explicit criteria before shipping;
+      Clodex has Codex adversarially review each Claude repair round; autonomy-loop
+      splits builder and reviewer into separate worktrees and accepts only on both
+      passes. All add "never describe an errored or exhausted run as approved."
+    application: |
+      We already have the pieces (request-claude-review, request-codex-review,
+      address-feedback) but they're advisory steps a human triggers. Wire them
+      into execute-task as a REQUIRED gate: an independent reviewer session must
+      pass before the loop lands the PR, repair findings above a severity ceiling
+      and re-review, bounded by an iteration cap, with state kept resumable. This
+      is what lets the build-review cycle run unattended without one session
+      grading its own homework.
+    evidence: |
+      loop-harness why: "the second-agent gate separates generation from approval.
+      The result can run repeatedly without relying on one session's confidence."
+      clodex: "Stop when Codex approves ... Never describe an errored or exhausted
+      run as approved."
+    notes: |
+      Builds on existing review skills; the borrow is making review a loop gate
+      with a severity ceiling + iteration cap, not a one-shot advisory pass.
+
+  - id: I010
+    title: "Completion contract: a requirement->evidence table is the definition of done"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [site/loops/codex-completion-contract-loop/index.html, site/loops/quality-streak-loop/index.html]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/scripts/loop-data.mjs
+    discovered: 2026-06-20
+    status: accepted
+    change_type: structural-rebuild
+    area: "execute-task, complete-task, delegate-task"
+    effort: M
+    impact: high
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 6
+    summary: |
+      The Codex completion-contract loop is the single biggest autonomy unlock in
+      the repo: before acting, enumerate every required outcome and the evidence
+      it needs; after each bounded action, mark each requirement proved / weak /
+      missing / contradicted; the goal is complete ONLY when all are proved,
+      otherwise stop as blocked, stalled, or exhausted. "Budget exhaustion never
+      counts as success." A durable requirement-to-evidence table keeps the
+      definition of done visible across a long session and makes false completion
+      easy to detect.
+    application: |
+      Give execute-task / complete-task an explicit completion contract derived
+      from the task's acceptance criteria: a requirement->evidence table the loop
+      maintains and must fully satisfy before declaring done. Each AC maps to
+      concrete evidence (a passing test, a diff, a live check). The run ends in a
+      named terminal state and reports the table. This is the artifact that lets
+      an agent run a whole task unattended and still be trusted to know — and
+      honestly report — whether it actually finished. The persisted form is I014.
+
+      SHARPENED + SCOPED INTO epic-001 (docs/epics/epic-001-executable-completion-
+      contracts.html; design: docs/ac-completion-contract-design.md). Make the
+      contract EXECUTABLE rather than a prose ledger: add a `pd-ac-check-*`
+      component family nested inside `<pd-ac>` (command, output, test[JUnit XML],
+      file-exists, file-contains), plus a `pd-verify` CLI that runs the checks,
+      writes pass/fail + evidence back into the HTML, and exits non-zero unless
+      every AC is proved. Subsumes I011 (the deterministic checker is the
+      independent approver), I012 (named-test/negative checks), I014 (doc as
+      resumable baton) and generalises I001 (self-auditing).
+
+      Codex-reviewed refinements (now in the epic): (1) the shared core is only a
+      runtime-neutral RESULT/rollup core — check EXECUTION is Node-only, the
+      browser renders and never executes; (2) "produce then read" — a check
+      declares a report-producer command run once per report, never trusting
+      pre-existing XML; (3) freshness — written-back status is last-run evidence
+      stamped with provenance (commit + dirty-tree fingerprint + timestamp), only
+      a fresh CLI exit is authoritative, stale state is shown; (4) test identity
+      is portable (name + optional suite/classname/file; ambiguous = non-proof);
+      (5) distribution mirrors pd-lint (bundle + copy into the skill). Load-bearing
+      authoring rule: every AC needs >=1 behavioural check. Front end uses
+      progressive disclosure (rollup pill; click to reveal checks; evidence
+      collapse). Scope NARROWED 2026-06-20 to HTML-first: epic-001 builds only the
+      check components + rendering (epic tasks T1, T4); the whole execution engine
+      (pd-verify CLI, adapters, report producers, freshness, pytest — tasks
+      T2/T3/T5) and executor auto-gating are deferred follow-ons.
+    evidence: |
+      codex-completion-contract prompt: "Before acting, define every required
+      outcome and its evidence. After each bounded action, mark requirements
+      proved, weak, missing, or contradicted. Complete the Goal only when all are
+      proved; otherwise stop as blocked, stalled, or exhausted." note: "budget
+      exhaustion never counts as success."
+    notes: |
+      Generalizes pass-1 idea I002 (terminal states) into a positive artifact:
+      the contract is what the terminal states are evaluated against. We already
+      do AC traceability in beta-new-plan — extend it into a live execution-time
+      contract.
+
+  # ---- Pass 1 (tooling/quality) ideas. Kept for the record; demoted out of the
+  # ---- shortlist per the autonomy-focused steer. I002 and I004 are the
+  # ---- loop-mentality survivors and feed the doctrine above.
+
+  - id: I009
+    title: "Fresh-clone onboarding loop to prove setup docs from a clean env"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [site/loops/fresh-clone-loop/index.html, scripts/loop-data.mjs]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/scripts/loop-data.mjs
+    discovered: 2026-06-20
+    status: candidate
+    change_type: additive
+    area: "revise-readme, install.sh / sk.sh / README install instructions"
+    effort: M
+    impact: low
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 3
+    summary: |
+      Clone the repo into a disposable env and follow ONLY the README to the
+      documented ready state; on any failure, record the gap, fix the doc,
+      DESTROY the env, and start over carrying nothing. Stop when one
+      uninterrupted fresh clone reaches the ready state.
+    application: |
+      Verify our install path (install.sh, sk.sh, README "Installation") works
+      from scratch, feeding fixes back into revise-readme.
+    evidence: |
+      loop why: "Destroying the environment after each repair prevents local
+      state from hiding the next problem."
+    notes: |
+      Low impact; periodic maintenance, not core.
+
+  - id: I008
+    title: "Per-skill cross-agent interface manifest (agents/openai.yaml)"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [skills/loop-library/agents/openai.yaml]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/skills/loop-library/agents/openai.yaml
+    discovered: 2026-06-20
+    status: candidate
+    change_type: additive
+    area: "src/compile.py output / skill packaging"
+    effort: M
+    impact: medium
+    risk: low
+    confidence: low
+    dependencies: none
+    score: 3
+    summary: |
+      Each skill ships an `agents/openai.yaml` declaring a per-agent interface:
+      display_name, short_description, and a default_prompt.
+    application: |
+      compile.py could emit a per-skill agent interface manifest for non-Claude
+      agents, serving our multi-agent goal.
+    evidence: |
+      agents/openai.yaml: interface.{display_name, short_description,
+      default_prompt}.
+    notes: |
+      Low confidence: may be redundant with `npx skills install -a codex`.
+
+  - id: I007
+    title: "A 'design a bounded loop' skill (Observe->Choose->Act->Verify->Record->Stop)"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [skills/loop-library/SKILL.md]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/skills/loop-library/SKILL.md
+    discovered: 2026-06-20
+    status: candidate
+    change_type: additive
+    area: "new skill under src/ (workflow/automation design)"
+    effort: M
+    impact: medium
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 3
+    summary: |
+      The loop-library skill itself: a plain-language interview that turns an
+      outcome into a bounded feedback loop with an observable success gate, named
+      terminal states, and a compact copy-ready prompt.
+    application: |
+      A "design-loop" skill could turn "keep improving X" requests into a safe
+      bounded loop prompt. Note: largely the user-facing twin of the I017
+      doctrine — if we internalize the doctrine, a design skill is the natural
+      external surface.
+    evidence: |
+      SKILL.md six-step cycle + "Deliver the loop" compression guide.
+    notes: |
+      Reframed as complementary to I017 rather than a standalone.
+
+  - id: I006
+    title: "Devil's-advocate red-team loop with a persistent objection log"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [site/loops/devils-advocate-design-loop/index.html, scripts/loop-data.mjs]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/scripts/loop-data.mjs
+    discovered: 2026-06-20
+    status: candidate
+    change_type: additive
+    area: "review-task, request-claude-review/request-codex-review, tech-spike"
+    effort: M
+    impact: medium
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 4
+    summary: |
+      A critic argues a design is wrong; objections + status logged in
+      .agent-reviews/redteam.md; builder fixes or documents acceptance with
+      evidence; stop on no high-impact objection or a two-round stalemate.
+    application: |
+      An adversarial variant of review-task for plans before execution, with a
+      persistent objection log and evidence-based stop. Related to I011 (review
+      as a gate) but aimed at the design stage.
+    evidence: |
+      loop prompt: critic logs to ".agent-reviews/redteam.md", stop on two-round
+      stalemate without new evidence.
+    notes: |
+
+  - id: I005
+    title: "Machine-readable skills catalog (catalog.json + catalog.md) from frontmatter"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [scripts/build-skill-catalog.mjs, skills/loop-library/references/catalog.md]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/scripts/build-skill-catalog.mjs
+    discovered: 2026-06-20
+    status: candidate
+    change_type: additive
+    area: "src/compile.py output, find-skills skill"
+    effort: M
+    impact: medium
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 4
+    summary: |
+      Publish a generated catalog.md + catalog.json (per-skill title, useWhen,
+      keywords, related) alongside the human README.
+    application: |
+      compile.py emits skills/catalog.json + catalog.md; find-skills consumes it.
+      Pairs with I001.
+    evidence: |
+      build-skill-catalog.mjs renderCatalogJson.
+    notes: |
+      Tooling, not loop-mentality; demoted per user steer.
+
+  - id: I004
+    title: "Champion/holdout eval loop to prevent overfitting skill optimization"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [site/loops/self-improving-champion-loop/index.html, site/loops/revolve-self-improvement-loop/index.html]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/scripts/loop-data.mjs
+    discovered: 2026-06-20
+    status: candidate
+    change_type: structural-rebuild
+    area: "skill-creator evals / src/assurance/evals harness"
+    effort: M
+    impact: high
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 5
+    summary: |
+      Champion + score + working set + UNTOUCHED holdout + must-pass checks;
+      change one thing per round; promote a challenger only on a regression-free
+      holdout win, else keep the champion. Revolve adds revision boundaries +
+      checkpoints + an internal-before-live promotion gate. Separating the
+      working signal from a fresh acceptance gate limits overfitting.
+    application: |
+      Restructure our description/skill optimization (skill-creator + assurance
+      evals) to split a frozen holdout, keep the current best by default, and
+      promote only on a regression-free holdout win. This is the loop mentality
+      applied to our own self-improvement — a self-strengthening loop that does
+      not game its own metric.
+    evidence: |
+      champion why: "Separating the working set from fresh holdout cases limits
+      overfitting." SKILL.md: "Separate the working signal from a fresh
+      acceptance gate ... that could overfit its own metric."
+    notes: |
+      Loop-mentality survivor from pass 1; sits under the I017 doctrine for
+      self-optimizing loops.
+
+  - id: I003
+    title: "Anti-hallucination grounding rules for interview-style skills"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [skills/loop-library/SKILL.md]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/skills/loop-library/SKILL.md
+    discovered: 2026-06-20
+    status: candidate
+    change_type: additive
+    area: "new-task, new-solution, new-plan, beta-* planning skills, CLAUDE.md authoring rules"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 6
+    summary: |
+      "Keep adaptations grounded": never invent a stack, tool, metric, file,
+      count, schedule, budget, or permission; use neutral wording, omit, or ask
+      one short question; never present a guess as a "sensible default."
+    application: |
+      Fold a compact grounding rule into our planning skills / CLAUDE.md. Doubles
+      as an autonomy safeguard: an unsupervised agent that won't fabricate
+      missing facts is one you can trust to run further. Sits under I017.
+    evidence: |
+      SKILL.md "Keep adaptations grounded" + "Run the design interview".
+    notes: |
+
+  - id: I002
+    title: "Explicit terminal-state taxonomy for autonomous/loop skills"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [skills/loop-library/SKILL.md]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/skills/loop-library/SKILL.md
+    discovered: 2026-06-20
+    status: candidate
+    change_type: additive
+    area: "execute-task, delegate, delegate-task, status-report"
+    effort: S
+    impact: high
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 8
+    summary: |
+      Name distinct outcomes for every loop: success, clean no-op, blocked,
+      approval-required, exhausted, stagnated — and "Never report an error or
+      exhausted budget as success." Prefer a no-progress stop over inventing
+      arbitrary limits.
+    application: |
+      Add the six-state taxonomy + "exhausted != success" to our autonomous
+      skills. Folded into the I010 completion contract (the states are what the
+      contract is evaluated against) and the I017 doctrine. Cheap and core.
+    evidence: |
+      SKILL.md "Design the feedback cycle".
+    notes: |
+      Loop-mentality survivor from pass 1; now a section of the I010/I017 work.
+
+  - id: I001
+    title: "Drift-check: assert committed catalog/README equals rendered-from-source"
+    source: Forward-Future/loop-library
+    commits: []
+    files: [scripts/check.mjs, scripts/build-skill-catalog.mjs, scripts/loop-data.mjs]
+    permalink: https://github.com/Forward-Future/loop-library/blob/6ee3345b2a8c8bc6c3e2ecbcc51ddf8f4e56c5a1/scripts/check.mjs
+    discovered: 2026-06-20
+    status: candidate
+    change_type: additive
+    area: "src/compile.py + Makefile `check` / lint"
+    effort: S
+    impact: high
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 9
+    summary: |
+      Render the catalog from one source of truth, then assert the committed
+      artifact byte-equals the rendered output; fail the check on drift.
+    application: |
+      Confirmed live drift: README lists 16 skills, skills/ has 29. Add a
+      generator + assertion to compile.py / make check. Pure tooling win — real
+      and cheap, but not the loop-mentality borrow the user is prioritizing.
+    evidence: |
+      check.mjs: assert.equal(skillCatalog, renderCatalogMarkdown()).
+    notes: |
+      Still worth doing; demoted out of the shortlist as a tech hack, not a
+      mentality borrow.
