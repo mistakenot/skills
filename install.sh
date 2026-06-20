@@ -13,7 +13,7 @@ Install skills from mistakenot/skills.
 
 Options:
   --module <name>   Install only skills from a specific module.
-                    Available modules: planning-workflow, ideation, maintenance, exploration, rich-docs, reflection, beta-planning, assurance, research
+                    Available modules: planning-workflow, ideation, maintenance, exploration, rich-docs, reflection, assurance, research
   --agent <agents>  Override target agents (default: claude-code codex).
                     Use '*' for all agents.
   -h, --help        Show this help message.
@@ -52,7 +52,7 @@ if [[ -z "$MODULE" ]]; then
 else
   case "$MODULE" in
     planning-workflow)
-      SKILLS="new-task,new-solution,new-plan,review-task,request-codex-review,request-claude-review,resolve-comments,commit-task,execute-task,new-mini-task,delegate-task,delegate,status-report,address-feedback,complete-task,code-review,task-feedback-analyser"
+      SKILLS="new-epic,new-task,new-solution,new-plan,review-task,request-codex-review,request-claude-review,resolve-comments,commit-task,execute-task,delegate-task,delegate,status-report,address-feedback,complete-task,code-review,task-feedback-analyser"
       ;;
     ideation)
       SKILLS="generate-10-ideas,fan-out-user-simulation"
@@ -69,9 +69,6 @@ else
     reflection)
       SKILLS="learning-diary"
       ;;
-    beta-planning)
-      SKILLS="beta-new-epic,beta-new-task,beta-new-solution,beta-new-plan"
-      ;;
     assurance)
       SKILLS="assurance-strategist"
       ;;
@@ -80,7 +77,7 @@ else
       ;;
     *)
       echo "Unknown module: $MODULE" >&2
-      echo "Available modules: planning-workflow, ideation, maintenance, exploration, rich-docs, reflection, beta-planning, assurance, research" >&2
+      echo "Available modules: planning-workflow, ideation, maintenance, exploration, rich-docs, reflection, assurance, research" >&2
       exit 1
       ;;
   esac

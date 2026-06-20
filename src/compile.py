@@ -847,16 +847,16 @@ if __name__ == "__main__":
     overview = ref("workflow-overview.md")
 
     planning = module("planning-workflow",
-        skill("new-task",               refs=[overview, ref("template-requirements.md")]),
-        skill("new-solution",           refs=[overview, ref("template-solution.md"), ref("template-context.md"), ref("artifact-guidelines.md")]),
-        skill("new-plan",               refs=[overview, ref("template-context.md"), ref("template-plan.md"), ref("artifact-guidelines.md")]),
+        skill("new-epic",               refs=[overview, ref("epic-overview.md"), ref("epic-tabs.md")]),
+        skill("new-task",               refs=[overview, ref("tab-requirements.md")]),
+        skill("new-solution",           refs=[overview, ref("tab-verification.md"), ref("tab-solution.md"), ref("template-context.md")]),
+        skill("new-plan",               refs=[overview, ref("tab-plan.md")]),
         skill("review-task",            refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
         skill("request-codex-review",   refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
         skill("request-claude-review",  refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
         skill("resolve-comments",       refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
         skill("commit-task",            refs=[overview, ref("commit-conventions.md"), ref("task-status.md")]),
-        skill("execute-task",           refs=[overview, ref("template-pr-body.md"), ref("worktree-conventions.md"), ref("commit-conventions.md"), ref("execute-task-full.md"), ref("execute-task-mini.md"), ref("task-status.md")]),
-        skill("new-mini-task",          refs=[overview, ref("template-mini-plan.md")]),
+        skill("execute-task",           refs=[overview, ref("template-pr-body.md"), ref("worktree-conventions.md"), ref("commit-conventions.md"), ref("execute-task-full.md"), ref("task-status.md")]),
         skill("delegate-task",          refs=[overview, ref("task-status.md"), ref("delegating-to-agents.md")]),
         skill("delegate",               refs=[ref("delegating-to-agents.md")]),
         skill("status-report",          refs=[overview, ref("delegating-to-agents.md")]),
@@ -907,19 +907,6 @@ if __name__ == "__main__":
         keywords=["learning", "reflection", "diary"],
     )
 
-    beta_planning = module("beta-planning",
-        skill("beta-new-epic",     refs=[ref("beta-workflow-overview.md"),
-                                         ref("epic-overview.md"), ref("epic-tabs.md")]),
-        skill("beta-new-task",     refs=[ref("beta-workflow-overview.md"),
-                                         ref("tab-requirements.md")]),
-        skill("beta-new-solution", refs=[ref("beta-workflow-overview.md"), ref("tab-verification.md"),
-                                         ref("tab-solution.md"), ref("template-context.md")]),
-        skill("beta-new-plan",     refs=[ref("beta-workflow-overview.md"), ref("tab-plan.md")]),
-        description="HTML-based task planning (beta): requirements, verification, solution, and plan tabs authored into a single plan.html.",
-        category="productivity",
-        keywords=["planning", "html", "beta"],
-    )
-
     assurance = module("assurance",
         skill("assurance-strategist", refs=[ref("technique-unit-testing.md"), ref("technique-property-based-testing.md"), ref("technique-react-unit-testing.md")]),
         description="Design end-to-end assurance and testing strategies for autonomous agent-built software.",
@@ -934,4 +921,4 @@ if __name__ == "__main__":
         keywords=["research", "inspiration", "open-source", "competitive-analysis"],
     )
 
-    compile([planning, ideation, maintenance, exploration, rich_docs, reflection, beta_planning, assurance, research])
+    compile([planning, ideation, maintenance, exploration, rich_docs, reflection, assurance, research])

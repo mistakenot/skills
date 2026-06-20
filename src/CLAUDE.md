@@ -46,10 +46,10 @@ SKILL.md files support two directives:
 
 - `{{ ref:<filename> }}` — replaced with the full contents of `refs/<filename>` from the same module. The referenced file is also copied to `references/<filename>` in the compiled output. Must appear on its own line (line-anchored).
 
-- `{{ skill:<name> }}` — replaced with the compiled skill name. Appears inline (not line-anchored) — typically used mid-sentence, e.g. `run /{{ skill:beta-new-solution }}`. Works in both SKILL.md templates and ref files.
+- `{{ skill:<name> }}` — replaced with the compiled skill name. Appears inline (not line-anchored) — typically used mid-sentence, e.g. `run /{{ skill:new-solution }}`. Works in both SKILL.md templates and ref files.
 
   **Resolution rules:**
-  - Bare name (e.g. `{{ skill:beta-new-solution }}`) — resolves if the skill exists in exactly one module. If the name exists in multiple modules, the compiler errors and requires the qualified form.
+  - Bare name (e.g. `{{ skill:new-solution }}`) — resolves if the skill exists in exactly one module. If the name exists in multiple modules, the compiler errors and requires the qualified form.
   - Qualified name (e.g. `{{ skill:rich-docs/planning-doc }}`) — resolves in the named module. Errors if the module or skill is not found.
 
   **Validation:** The compiler validates all `{{ skill:X }}` references in Phase 1 (before writing any output). Unknown skills, unknown modules, and ambiguous bare names all produce errors.

@@ -20,7 +20,7 @@ REPO="mistakenot/skills"
 SELF_URL="${SKILLS_SELF_URL:-https://raw.githubusercontent.com/mistakenot/skills/main/sk.sh}"
 AGENTS="${SKILLS_AGENTS:-claude-code codex}"
 
-PACKAGES="planning-workflow ideation maintenance exploration rich-docs reflection beta-planning assurance research"
+PACKAGES="planning-workflow ideation maintenance exploration rich-docs reflection assurance research"
 
 pkg_desc() {
   case "$1" in
@@ -30,7 +30,6 @@ pkg_desc() {
     exploration) echo "De-risk ideas before building: run exploratory tech spikes that validate assumptions and stress-test approaches." ;;
     rich-docs) echo "Author rich single-file HTML planning docs with tabs, mermaid diagrams, file-change trees, and inline comment threads." ;;
     reflection) echo "Mine git history, PRs, and session transcripts into a structured learning diary of techniques and breakthroughs." ;;
-    beta-planning) echo "HTML-based task planning (beta): requirements, verification, solution, and plan tabs authored into a single plan.html." ;;
     assurance) echo "Design end-to-end assurance and testing strategies for autonomous agent-built software." ;;
     research) echo "External-research skills: track open-source repos and mine their updates into a ranked backlog of ideas to borrow." ;;
     *) return 1 ;;
@@ -39,13 +38,12 @@ pkg_desc() {
 
 pkg_skills() {
   case "$1" in
-    planning-workflow) echo "new-task new-solution new-plan review-task request-codex-review request-claude-review resolve-comments commit-task execute-task new-mini-task delegate-task delegate status-report address-feedback complete-task code-review task-feedback-analyser" ;;
+    planning-workflow) echo "new-epic new-task new-solution new-plan review-task request-codex-review request-claude-review resolve-comments commit-task execute-task delegate-task delegate status-report address-feedback complete-task code-review task-feedback-analyser" ;;
     ideation) echo "generate-10-ideas fan-out-user-simulation" ;;
     maintenance) echo "revise-readme" ;;
     exploration) echo "tech-spike" ;;
     rich-docs) echo "planning-doc" ;;
     reflection) echo "learning-diary" ;;
-    beta-planning) echo "beta-new-epic beta-new-task beta-new-solution beta-new-plan" ;;
     assurance) echo "assurance-strategist" ;;
     research) echo "borrow-from-oss" ;;
     *) return 1 ;;

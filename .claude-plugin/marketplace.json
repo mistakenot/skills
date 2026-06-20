@@ -45,12 +45,6 @@
       "category": "productivity"
     },
     {
-      "name": "beta-planning",
-      "source": "./plugins/beta-planning",
-      "description": "HTML-based task planning (beta): requirements, verification, solution, and plan tabs authored into a single plan.html.",
-      "category": "productivity"
-    },
-    {
       "name": "assurance",
       "source": "./plugins/assurance",
       "description": "Design end-to-end assurance and testing strategies for autonomous agent-built software.",
