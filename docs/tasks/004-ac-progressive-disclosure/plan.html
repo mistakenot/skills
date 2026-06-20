@@ -83,6 +83,12 @@ epic-001 (T4, depends on T1).
 - **Purely additive (G1).** A `<pd-ac>` with **no** checks renders **exactly as
   today** — no pill, no disclosure wrapper, body visible — and every
   already-authored doc is unaffected.
+- **Document-level contract banner.** A new `<pd-contract>` element renders a
+  doc-wide **"n/m ACs proved"** summary + a contract-status pill, driven by
+  `verify-core`'s `rollupContract` over every `<pd-ac>`'s rolled-up status — the
+  same frozen severity contract as the per-AC pill. The contract is `proved` only
+  when **every** AC is `proved`. It renders authored/written-back status only (no
+  execution), and is purely additive (a doc with no `<pd-contract>` is unaffected).
         </script></md>
       </pd-section>
 
@@ -106,10 +112,9 @@ executable. Explicitly deferred:
 - **No authoring-skill integration and no behavioural-check lint** (G3
   enforcement) — that is T5.
 - **No new check types or per-tool checks** — the vocabulary is fixed by T1/D2.
-- **Rendered document-level contract banner is deferred** (see Open Questions):
-  the rollup core *may* expose contract-wide status, but T4 only renders the
-  **per-AC** pill the epic asks for; a doc-spanning "1/3 ACs proved" banner is
-  not built here.
+- **No execution/write-back of the contract status.** The document-level banner
+  **is** in scope (see Goals + AC-9), but like the per-AC pill it renders only
+  *authored / written-back* status — it computes nothing from the repo.
         </script></md>
       </pd-section>
 
@@ -156,19 +161,23 @@ for the Solution/Plan stages, recorded here so nothing is silently decided.
   *last-run* stamp (e.g. "verified at `abc123`, 2 files dirty, 3h ago"); never
   validate against git. Absent → render nothing. Minimal treatment; rich stale
   styling can follow when the CLI actually writes stamps (T2/G7).
-- [x] **Render a document-level contract rollup?** → **Defer.** The epic's T4
-  ask is the per-AC pill; no anchor/host element for a doc-wide banner is
-  specified, and the contract verdict is most meaningful once the CLI writes real
-  status. The pure core *may* expose `contractStatus`, but T4 renders only the
-  per-AC pill. Revisit if the Verification stage wants a visible contract summary.
+- [x] **Render a document-level contract rollup?** → **YES — in scope (user
+  decision, reverses the earlier defer).** T4 renders a document-level **contract
+  banner** ("n/m ACs proved" + a contract-status pill) via a new `<pd-contract>`
+  element driven by `verify-core`'s `rollupContract`. See AC-9 and the resolved
+  Solution thread "Document-level contract rollup is now rendered in T4". New
+  sub-question (Solution stage): banner placement — assumed author-positioned
+  (like `<pd-decisions>`), not auto-injected into `pd-doc`.
         </script></md>
 
-        <pd-thread anchor="open-questions" status="unresolved" priority="p1" title="G1 'renders unchanged' is preserved only for check-free ACs; with-checks cards change their click + disclosure behaviour by design">
+        <pd-thread anchor="open-questions" status="resolved" priority="p1" title="G1 'renders unchanged' is preserved only for check-free ACs; with-checks cards change their click + disclosure behaviour by design">
           <pd-comment by="author">Epic G1 says existing `<pd-ac>` cards "render unchanged". T4 necessarily changes the render path for any AC that *has* checks (adds a rollup pill, wraps the body in a disclosure, and moves the phase-highlight click from the whole card onto the phase chips). The assumption taken: G1 is satisfied because (a) **check-free** ACs — which is every already-authored doc, since the check elements only landed in T1 — render byte-for-identically, and (b) the click/disclosure change applies only to the *new* with-checks shape the epic explicitly introduces (the design's "Resolve the existing click conflict" + "Auto-open failures"). If a reviewer reads G1 as "the whole-card phase-highlight click must survive even on with-checks cards", flag it at the solution stage — that would force a different reconciliation (e.g. header-only summary region rather than card-wide toggle).</pd-comment>
+          <pd-comment by="author">**DECISION (user): ACCEPT.** With-checks AC cards intentionally change their click/disclosure behaviour; G1 guarantees only that **check-free / already-authored docs render unchanged**. This is the binding scope of G1 for T4 — confirmed by AC-8 (additive proof on check-free cards + the existing suite). No header-only fallback is needed; the card-wide summary toggle on with-checks cards stands. See Solution D2.</pd-comment>
         </pd-thread>
 
-        <pd-thread anchor="open-questions" status="unresolved" priority="p2" title="Rollup severity order and 'proved = all proved' should be confirmed against the eventual CLI rollup">
+        <pd-thread anchor="open-questions" status="resolved" priority="p2" title="Rollup severity order and 'proved = all proved' should be confirmed against the eventual CLI rollup">
           <pd-comment by="author">The combine rule (`contradicted ≻ missing ≻ weak ≻ pending ≻ proved`, AC proved iff all checks proved) is taken from the design's status-vocabulary table and the "all checks pass" definition. Because the deferred T2 CLI must share this exact core (S2/G5), the order is a contract, not a cosmetic choice. Recorded here so the Solution stage freezes it deliberately and the CLI later imports the same module rather than re-deriving it. Overturn only with an explicit alternative ordering.</pd-comment>
+          <pd-comment by="author">**DECISION (user): ACCEPT the design-doc ordering.** An AC is `proved` **only if every check is proved**; the pill severity order is **`contradicted ≻ missing ≻ weak ≻ pending ≻ proved`** (worst-wins; `null`/absent → `pending`). This is the **frozen contract** `verify-core.js` exposes and the deferred CLI (T2) imports unchanged — pinned by `verify-core.test.mjs` (AC-2) and reused by the document-level contract rollup (AC-9).</pd-comment>
         </pd-thread>
 
         <pd-thread anchor="open-questions" status="unresolved" priority="p3" title="Provenance/evidence are read-through only; their authored shape is owned by the T1 schema, not invented here">
@@ -227,8 +236,8 @@ render path — those values are *authored into the fixture*, never computed.
       <pd-section id="coverage-map" title="Coverage Map">
         <pd-mermaid caption="Two layers: a DOM-free unit test of the rollup algebra, a browser test of the live render/interaction">
 flowchart LR
-  CORE[verify-core.js<br/>rollupAc — pure, DOM-free] --> UNIT[verify-core.test.mjs<br/>Node unit: AC-2]
-  MISC[misc.js<br/>PdAc rollup + disclosure] --> BROWSER[fixtures/ac-rollup.html<br/>+ playbook<br/>AC-1,3,4,5,6,7]
+  CORE[verify-core.js<br/>rollupAc + rollupContract — pure, DOM-free] --> UNIT[verify-core.test.mjs<br/>Node unit: AC-2, AC-9 core]
+  MISC[misc.js<br/>PdAc rollup + disclosure<br/>+ PdContract banner] --> BROWSER[fixtures/ac-rollup.html<br/>+ playbook<br/>AC-1,3,4,5,6,7,9]
   CORE --> MISC
   EXIST[existing examples<br/>+ playbooks + lint-cli] --> REG[regression suite<br/>AC-8 / G1]
         </pd-mermaid>
@@ -343,6 +352,22 @@ Each criterion is checkable at the component / DOM level — no execution.
   build
           </script></md>
         </pd-ac>
+
+        <pd-ac id="AC-9" title="A document-level contract banner rolls up every AC's status" phases="1,2,3" tests="pd-components/tests/verify-core.test.mjs,pd-components/tests/playbooks/ac-rollup.md">
+          <md><script type="text/plain">
+- **Given** a document containing a `<pd-contract>` element and several `<pd-ac>`
+  cards — some `proved`, at least one `contradicted`
+- **When** the page settles
+- **Then** `<pd-contract>` renders a banner showing **`n/m ACs proved`** (n =
+  ACs whose rolled-up status is `proved`, m = total ACs) and a contract-status
+  **pill** computed by `verify-core`'s `rollupContract` over each AC's status —
+  `proved` (green) only when **every** AC is `proved`, else the worst-severity
+  status (`contradicted` → red); the count + pill are a pure function of the
+  authored child-check `status` values (no execution), and `rollupContract` is
+  unit-tested DOM-free in Node; a document with **no** `<pd-contract>` renders
+  unchanged (additive)
+          </script></md>
+        </pd-ac>
       </pd-section>
 
       <pd-section id="verification-gaps" title="Known Gaps & Risks">
@@ -355,8 +380,9 @@ Deliberately **not** covered here (owned by later / deferred tasks):
 - **Freshness / stale enforcement (G7).** The browser only *displays* a last-run
   provenance stamp; comparing it to the live worktree is a CLI concern. We assert
   the stamp renders read-through, **not** that it reflects truth.
-- **Document-level contract banner.** T4 renders the per-AC pill only; a doc-wide
-  "n/m ACs proved" summary is out of scope (see Solution open question).
+- **Contract-status write-back.** The document-level banner (AC-9) **is** built,
+  but — like the per-AC pill — it rolls up only *authored / written-back* status;
+  computing the real contract verdict from the repo is the deferred CLI (T2).
 - **Behavioural-check lint (G3).** Requiring ≥1 behavioural check per AC is T5.
 
 **Risks / test cautions:**
@@ -394,8 +420,10 @@ Add the rollup + disclosure as **one new pure module plus a focused rewrite of
   unknown normalises to `pending`; `passing` counts `proved`. No I/O, never
   throws. `misc.js` imports it now; the deferred `pd-verify` CLI imports the same
   constant later, so the rollup logic can never diverge between the two faces.
-  (Optionally also exports `rollupContract(acStatuses)` for the future doc-level
-  banner — computed but not rendered in T4.)
+  It **also** exports `rollupContract(acStatuses) → { status, proved, total }`
+  (same frozen severity contract; contract `proved` only when every AC is
+  `proved`), which the document-level banner consumes — now a required export, not
+  optional.
 
 - **`src/misc.js` — `PdAc.init()` gains a with-checks render path.** It reads its
   direct `pd-ac-check-*` children via `parseAcCheck(child)` (imported from the
@@ -423,12 +451,25 @@ Add the rollup + disclosure as **one new pure module plus a focused rewrite of
   (prepend head, whole-card `pd:phase-selected` click, body visible, no pill, no
   disclosure) — guaranteeing G1 for every already-authored doc.
 
-The rest are **additive edits**: status-pill / disclosure / check-row CSS in
-`styles.css` (reusing the existing `--pd-ok|warn|bad|neutral` variables and the
-collapse chevron pattern); an expanded `<pd-ac>` section in `llms.template.txt`;
-a committed example; the Node unit test + the browser fixture/playbook pair wired
-into `run.sh`; and inventory notes in `pd-components/CLAUDE.md`. The T1
-`ac-check-core.js` schema is **consumed, never modified**.
+- **`src/misc.js` — a new `<pd-contract>` document-level banner element.** Folded
+  into `misc.js` beside `PdAc` (a small light-DOM element registered with
+  `define('pd-contract', …)`, so **no `index.js` edit**). On `init()` it scans
+  `document.querySelectorAll('pd-ac')`, derives each AC's status the **same pure
+  way** the card does (`parseAcCheck` over that AC's check children → `rollupAc`),
+  then calls `rollupContract(acStatuses)` and renders an **`n/m ACs proved`** count
+  + a contract-status pill (reusing the `.pd-ac-pill` colour family). It computes
+  independently from the DOM, so it does **not** depend on `pd-ac` init order, and
+  executes nothing. Author-positioned (like `<pd-decisions>`); a doc without one is
+  unaffected. (See open sub-question on placement.)
+
+The rest are **additive edits**: status-pill / disclosure / check-row / contract-
+banner CSS in `styles.css` (reusing the existing `--pd-ok|warn|bad|neutral`
+variables and the collapse chevron pattern); an expanded `<pd-ac>` section + a new
+`<pd-contract>` section in `llms.template.txt`; a committed example; the Node unit
+test (now also covering `rollupContract`) + the browser fixture/playbook pair
+(now also exercising `<pd-contract>`) wired into `run.sh`; and inventory notes in
+`pd-components/CLAUDE.md`. The T1 `ac-check-core.js` schema is **consumed, never
+modified**.
 
 **Why a separate pure core now, not inline in `misc.js`.** Epic G5/S2 require the
 rollup to be a runtime-neutral core shared with the deferred CLI so the two can
@@ -440,17 +481,17 @@ test, no browser) and gives T2 a single import instead of a re-implementation.
 
       <pd-section id="file-changes" title="File Changes">
         <pd-files caption="One new pure core + a focused PdAc rewrite; everything else is additive">
-          <pd-file path="pd-components/src/verify-core.js" change="add">Runtime-neutral rollup core (epic S2). Exports the status severity order and `rollupAc(statuses) → {status, passing, total}` (worst-wins; proved iff all proved; null→pending). DOM-free / no I/O so Node can import and unit-test it, and the deferred CLI can share it (G5).</pd-file>
-          <pd-file path="pd-components/src/misc.js" change="edit">Rewrite `PdAc.init()` to add the **with-checks** render path: read children via `parseAcCheck` (from `./ac-check-core.js`), roll up via `verify-core`, render the pill + `n/m` count, wrap body + raw checks + rendered rows in a `&lt;details class="pd-ac-disclosure"&gt;` summary, auto-open on `contradicted`/`open`, and move the phase-highlight click onto the phase chips (header toggles disclosure). **Check-free ACs keep today's exact behaviour.** Adds the small check-row label registry + glyph map.</pd-file>
-          <pd-file path="pd-components/src/styles.css" change="edit">Add rules for `.pd-ac-pill` (status colours from `--pd-ok|warn|bad|neutral`), `.pd-ac-disclosure` summary (reuse the `.pd-collapse` chevron pattern), the `.pd-ac-checks` row list, `.pd-ac-check-row`, and glyph colouring. Touches no existing `pd-ac` selector's meaning; raw `pd-ac-check-*` stay `display:none` (from T1).</pd-file>
-          <pd-file path="pd-components/llms.template.txt" change="edit">Expand the `&lt;pd-ac&gt;` section: document the rollup pill + `n/m` count, the status→colour mapping, two-level progressive disclosure, auto-open on contradicted, and the phase-chip-vs-header click model. (Build regenerates `dist/llms.txt`.)</pd-file>
-          <pd-file path="pd-components/examples/ac-rollup.html" change="add">Committed example: a `&lt;pd-ac&gt;` with authored-status checks (proved + contradicted-with-evidence) rendering a rollup + disclosure, alongside a check-free `&lt;pd-ac&gt;` for the additive contrast. References `../dist/pd.min.js`.</pd-file>
-          <pd-file path="pd-components/tests/verify-core.test.mjs" change="add">Node unit test (modelled on `lint-cli.test.mjs`): imports the DOM-free core, asserts the severity order, proved-iff-all-proved, the `n/m` count, and null→pending normalisation (AC-2). Guards the S2/G5 shared contract.</pd-file>
-          <pd-file path="pd-components/tests/fixtures/ac-rollup.html" change="add">Browser fixture: with-checks `&lt;pd-ac&gt;` cards spanning the status range (proved, contradicted-with-evidence+provenance, all-pending) + a check-free `&lt;pd-ac&gt;`; loads `../../dist/pd.min.js`.</pd-file>
-          <pd-file path="pd-components/tests/playbooks/ac-rollup.md" change="add">Playbook asserting (via `agent-browser eval`): pill text/colour from authored status (AC-1), collapse→expand reveals body+rows (AC-3), evidence second level (AC-4), contradicted auto-open (AC-5), all checks stay in the DOM across toggles (AC-6), phase-chip vs header click split (AC-7), check-free card unchanged (AC-8).</pd-file>
+          <pd-file path="pd-components/src/verify-core.js" change="add">Runtime-neutral rollup core (epic S2). Exports the status severity order, `rollupAc(statuses) → {status, passing, total}` (worst-wins; proved iff all proved; null→pending), **and `rollupContract(acStatuses) → {status, proved, total}`** for the document-level banner (contract proved iff every AC proved). DOM-free / no I/O so Node can import and unit-test it, and the deferred CLI can share it (G5).</pd-file>
+          <pd-file path="pd-components/src/misc.js" change="edit">Rewrite `PdAc.init()` to add the **with-checks** render path: read children via `parseAcCheck` (from `./ac-check-core.js`), roll up via `verify-core`, render the pill + `n/m` count, wrap body + raw checks + rendered rows in a `&lt;details class="pd-ac-disclosure"&gt;` summary, auto-open on `contradicted`/`open`, and move the phase-highlight click onto the phase chips (header toggles disclosure). **Check-free ACs keep today's exact behaviour.** Adds the small check-row label registry + glyph map. **Also adds a new `PdContract` element** (`define('pd-contract', …)`, no `index.js` edit) — the document-level banner that scans every `&lt;pd-ac&gt;`, derives each AC's status via `parseAcCheck`+`rollupAc`, and renders `n/m ACs proved` + a contract pill via `rollupContract` (AC-9).</pd-file>
+          <pd-file path="pd-components/src/styles.css" change="edit">Add rules for `.pd-ac-pill` (status colours from `--pd-ok|warn|bad|neutral`), `.pd-ac-disclosure` summary (reuse the `.pd-collapse` chevron pattern), the `.pd-ac-checks` row list, `.pd-ac-check-row`, glyph colouring, **and `.pd-contract` (the banner: reuses the pill colour family)**. Touches no existing `pd-ac` selector's meaning; raw `pd-ac-check-*` stay `display:none` (from T1).</pd-file>
+          <pd-file path="pd-components/llms.template.txt" change="edit">Expand the `&lt;pd-ac&gt;` section: document the rollup pill + `n/m` count, the status→colour mapping, two-level progressive disclosure, auto-open on contradicted, and the phase-chip-vs-header click model. **Add a new `&lt;pd-contract&gt;` section** documenting the document-level "n/m ACs proved" banner. (Build regenerates `dist/llms.txt`.)</pd-file>
+          <pd-file path="pd-components/examples/ac-rollup.html" change="add">Committed example: a `&lt;pd-ac&gt;` with authored-status checks (proved + contradicted-with-evidence) rendering a rollup + disclosure, a check-free `&lt;pd-ac&gt;` for the additive contrast, **and a `&lt;pd-contract&gt;` banner over them**. References `../dist/pd.min.js`.</pd-file>
+          <pd-file path="pd-components/tests/verify-core.test.mjs" change="add">Node unit test (modelled on `lint-cli.test.mjs`): imports the DOM-free core, asserts the severity order, proved-iff-all-proved, the `n/m` count, null→pending normalisation (AC-2), **and `rollupContract` (contract proved iff every AC proved) — AC-9 core half**. Guards the S2/G5 shared contract.</pd-file>
+          <pd-file path="pd-components/tests/fixtures/ac-rollup.html" change="add">Browser fixture: with-checks `&lt;pd-ac&gt;` cards spanning the status range (proved, contradicted-with-evidence+provenance, all-pending), a check-free `&lt;pd-ac&gt;`, **and a `&lt;pd-contract&gt;` banner**; loads `../../dist/pd.min.js`.</pd-file>
+          <pd-file path="pd-components/tests/playbooks/ac-rollup.md" change="add">Playbook asserting (via `agent-browser eval`): pill text/colour from authored status (AC-1), collapse→expand reveals body+rows (AC-3), evidence second level (AC-4), contradicted auto-open (AC-5), all checks stay in the DOM across toggles (AC-6), phase-chip vs header click split (AC-7), check-free card unchanged (AC-8), **and the `&lt;pd-contract&gt;` banner's `n/m ACs proved` count + contract pill (AC-9)**.</pd-file>
           <pd-file path="pd-components/tests/run.sh" change="edit">Add an `── ac-rollup ──` block (open fixture → wait → the `agent-browser eval` assertions) so the new playbook runs in the deterministic suite (it hand-wires each playbook; no auto-discovery).</pd-file>
-          <pd-file path="pd-components/CLAUDE.md" change="edit">Add `verify-core.js` to the "one pure core" note (rollup shared by browser + future CLI) and update the `pd-ac` inventory line to mention the rollup/disclosure. Folded in by impact analysis.</pd-file>
-          <pd-file path="planning-doc-workspace/render-check.mjs" change="edit">Optional: add a `.pd-ac-pill` count to the mounted-element JSON so headless render checks can see the rollup. Folded in by impact analysis; non-blocking.</pd-file>
+          <pd-file path="pd-components/CLAUDE.md" change="edit">Add `verify-core.js` to the "one pure core" note (rollup shared by browser + future CLI) and update the `pd-ac` inventory line to mention the rollup/disclosure; **add `&lt;pd-contract&gt;` to the component inventory**. Folded in by impact analysis.</pd-file>
+          <pd-file path="planning-doc-workspace/render-check.mjs" change="edit">Optional: add `.pd-ac-pill` **and `.pd-contract`** counts to the mounted-element JSON so headless render checks can see the rollup + banner. Folded in by impact analysis; non-blocking.</pd-file>
         </pd-files>
         <md><script type="text/plain">
 **Not changed:** `src/ac-check-core.js` / `src/ac-check.js` (the frozen T1 schema
@@ -545,12 +586,14 @@ authored element (hidden), once as a rendered row (visible when expanded). The
           </script></md>
         </pd-decision>
 
-        <pd-thread anchor="approach" status="unresolved" priority="p2" title="Rollup severity order + 'proved = all proved' is a shared contract with the deferred CLI">
+        <pd-thread anchor="approach" status="resolved" priority="p2" title="Rollup severity order + 'proved = all proved' is a shared contract with the deferred CLI">
           <pd-comment by="author">The order `contradicted ≻ missing ≻ weak ≻ pending ≻ proved` and "proved iff every check proved" are taken from the design's status-vocabulary table and frozen in `verify-core.js`. Because the deferred T2 CLI imports the **same** module (G5/S2), this ordering is a contract, not a cosmetic choice — `verify-core.test.mjs` pins it. The `missing` vs `weak` ranking only affects the displayed pill on mixed amber states (both render amber; only `contradicted` auto-opens), so it is low-risk, but recorded so the Plan stage freezes it deliberately. Overturn only with an explicit alternative ordering.</pd-comment>
+          <pd-comment by="author">**DECISION (user): ACCEPT.** The ordering and "proved = all proved" are frozen as the shared contract for `verify-core.js` and the deferred CLI. `rollupAc` (per-AC) and `rollupContract` (document-level, AC-9) both apply it; `verify-core.test.mjs` is the regression guard.</pd-comment>
         </pd-thread>
 
-        <pd-thread anchor="file-changes" status="unresolved" priority="p2" title="Document-level contract rollup is computed-but-not-rendered in T4">
+        <pd-thread anchor="file-changes" status="resolved" priority="p2" title="Document-level contract rollup is now rendered in T4 (banner in scope)">
           <pd-comment by="author">`verify-core.js` may export `rollupContract(acStatuses)` (cheap, and T2 needs it), but T4 renders **only** the per-AC pill — the epic's explicit T4 ask. No host element/anchor for a doc-wide "n/m ACs proved" banner is specified, and the contract verdict is most meaningful once the CLI writes real status. Assumption: defer the rendered banner. If the Plan/Verification stage wants a visible contract summary in this task, it adds a small render target (e.g. on `pd-doc`) and an AC — flag there.</pd-comment>
+          <pd-comment by="author">**DECISION (user): ADD IT NOW** — reverses the defer. T4 renders a **document-level contract banner** ("n/m ACs proved" + a contract-status pill) in addition to the per-AC pills. Design: a new authored light-DOM element **`<pd-contract>`** (folded into `misc.js` alongside `PdAc`, so no `index.js` edit) that scans every `<pd-ac>` in the document, derives each AC's status the same pure way (`parseAcCheck` on its check children → `rollupAc`), then calls **`rollupContract(acStatuses)`** (now a required export of `verify-core.js`) and renders the banner. It computes independently from the DOM, so it does not depend on `pd-ac` init order; it reuses the frozen severity contract (an AC counts as proved only when all its checks are proved; the contract is proved only when all ACs are proved). Threaded through: **AC-9** (Verification), the Approach + file tree (Solution), **Phases 1–4** (Plan), and AC-9 traceability. Sub-question recorded for the Solution stage: banner **placement** (top-of-doc vs author-positioned) — assumption: author-positioned like `<pd-decisions>`; the example/fixture place it just above the acceptance-criteria.</pd-comment>
         </pd-thread>
 
         <pd-thread anchor="file-changes" status="unresolved" priority="p3" title="Check-row label registry + provenance shape are render-side and read-through only">
@@ -603,10 +646,11 @@ Solution p3 thread.</script></md></pd-note>
       <pd-section id="phases" title="Phases">
         <pd-stepper>
 
-          <pd-phase n="1" title="Pure rollup core + Node unit test" files="pd-components/src/verify-core.js,pd-components/tests/verify-core.test.mjs" status="todo">
+          <pd-phase n="1" title="Pure rollup core (AC + contract) + Node unit test" files="pd-components/src/verify-core.js,pd-components/tests/verify-core.test.mjs" status="todo">
             <md><script type="text/plain">
-**Delivers:** AC-2 (rollup core pure, DOM-free, unit-testable). The S2/G5
-foundation Phase 2 and the deferred CLI key off — write and freeze it first.
+**Delivers:** AC-2 (rollup core pure, DOM-free, unit-testable) + the **core half
+of AC-9** (`rollupContract`). The S2/G5 foundation Phase 2 and the deferred CLI
+key off — write and freeze it first.
 
 **Steps**
 1. Create `src/verify-core.js` (pure, imports nothing DOM-bound):
@@ -618,24 +662,30 @@ foundation Phase 2 and the deferred CLI key off — write and freeze it first.
      when **every** input is `proved`, else the **worst-severity** present status;
      any `null`/`undefined`/unknown value normalises to `pending`. No I/O; never
      throws on malformed input (non-array → empty rollup).
-   - (Optionally) export `rollupContract(acStatuses)` reusing the same algebra —
-     computed for the future doc-level banner, **not rendered** in T4.
-   - *Verify:* `node -e "import('./pd-components/src/verify-core.js').then(m=>{if(typeof m.rollupAc!=='function')process.exit(1)})"` exits 0 (imports DOM-free in Node).
+   - Export `rollupContract(acStatuses) → { status, proved, total }` reusing the
+     **same** severity algebra over per-AC statuses: `proved` = count of `proved`
+     ACs, `total` = AC count, `status` = `proved` only when every AC is `proved`,
+     else worst-severity. This drives the document-level banner (AC-9); it is a
+     **required** export, no longer optional.
+   - *Verify:* `node -e "import('./pd-components/src/verify-core.js').then(m=>{if(typeof m.rollupAc!=='function'||typeof m.rollupContract!=='function')process.exit(1)})"` exits 0 (imports DOM-free, both exports present).
 2. Create `tests/verify-core.test.mjs` (model on `tests/lint-cli.test.mjs`:
    `node:assert` strict + a tiny `check()` wrapper): assert worst-wins for each
    mixed pair, `proved` only when all proved, `passing`/`total` counts,
-   `null`/absent → `pending`, and the empty/malformed cases don't throw.
+   `null`/absent → `pending`, empty/malformed cases don't throw (AC-2); **and
+   `rollupContract`** — contract `proved` iff every AC `proved`, the
+   `proved`/`total` count, and worst-severity otherwise (AC-9 core).
    - *Verify:* `node tests/verify-core.test.mjs` exits 0, all assertions pass.
 3. **Gate:** `npm run build` succeeds; `node tests/verify-core.test.mjs` green.
-4. **Commit:** `pd-components: add verify-core.js — pure AC rollup core + unit test (T4)`.
+4. **Commit:** `pd-components: add verify-core.js — pure AC + contract rollup core + unit test (T4)`.
             </script></md>
           </pd-phase>
 
           <pd-phase n="2" title="PdAc rollup + two-level disclosure + reconciled click + styles" files="pd-components/src/misc.js,pd-components/src/styles.css" status="todo" depends-on="1">
             <md><script type="text/plain">
 **Delivers (runtime side):** AC-1 (pill), AC-3 (collapse/expand), AC-4 (evidence
-second level), AC-5 (auto-open), AC-6 (checks stay in DOM), AC-7 (click split).
-Browser-proven in Phase 3. **Requires T1's `ac-check-core.js` to exist.**
+second level), AC-5 (auto-open), AC-6 (checks stay in DOM), AC-7 (click split),
+AC-9 (the `<pd-contract>` banner render). Browser-proven in Phase 3. **Requires
+T1's `ac-check-core.js` to exist.**
 
 **Steps**
 1. Edit `src/misc.js` — rewrite `PdAc.init()` with two branches:
@@ -664,30 +714,43 @@ Browser-proven in Phase 3. **Requires T1's `ac-check-core.js` to exist.**
        toggling); the `<summary>` toggles the disclosure natively. Keep the
        existing `pd:phase-selected` **listener** that toggles `.pd-ac-hl`.
    - *Verify:* `grep -n "rollupAc\|parseAcCheck\|pd-ac-disclosure" src/misc.js` shows all three wired; `npm run build` resolves the imports.
-2. Edit `src/styles.css`: add `.pd-ac-pill` (status colours from
+2. In `src/misc.js`, add the **`PdContract` element** (the document-level banner):
+   - A small `class PdContract extends PdElement` whose `init()` queries
+     `document.querySelectorAll('pd-ac')`, and for each AC derives its status the
+     **same pure way** as the card (`parseAcCheck` over that AC's check children →
+     `rollupAc(...).status`; a check-free AC contributes no status / is excluded
+     from the contract count per the AC-9 wording — confirm during build).
+   - Call `rollupContract(acStatuses)` (from `./verify-core.js`) and render a
+     `.pd-contract` banner: the text `n/m ACs proved` + a contract-status pill
+     (reusing the `.pd-ac-pill` colour family). Computes independently of `pd-ac`
+     init order; executes nothing. Register with `define('pd-contract', PdContract)`
+     (no `index.js` edit — `misc.js` is already imported).
+   - *Verify:* `grep -n "pd-contract\|rollupContract" src/misc.js` shows the element + the contract call wired.
+3. Edit `src/styles.css`: add `.pd-ac-pill` (status colours from
    `--pd-ok|warn|bad|neutral` + `*-bg`), `.pd-ac-disclosure > summary` (reuse the
    `.pd-collapse > summary` chevron pattern + hidden marker), `.pd-ac-checks`,
-   `.pd-ac-check-row`, and glyph colouring. Do not alter existing `pd-ac`
-   selectors' meaning; raw `pd-ac-check-*` stay `display:none` (from T1).
-   - *Verify:* `grep -c "pd-ac-pill\|pd-ac-disclosure\|pd-ac-check-row" src/styles.css` ≥ 3; no existing selector removed.
-3. **Gate:** `npm run build` succeeds (IIFE bundles, imports resolve);
+   `.pd-ac-check-row`, glyph colouring, **and `.pd-contract`** (the banner; reuse
+   the pill colour family). Do not alter existing `pd-ac` selectors' meaning; raw
+   `pd-ac-check-*` stay `display:none` (from T1).
+   - *Verify:* `grep -c "pd-ac-pill\|pd-ac-disclosure\|pd-ac-check-row\|pd-contract" src/styles.css` ≥ 4; no existing selector removed.
+4. **Gate:** `npm run build` succeeds (IIFE bundles, imports resolve);
    `node tests/verify-core.test.mjs` still green.
-4. **Commit:** `pd-components: pd-ac rollup pill + two-level disclosure + click split (T4)`.
+5. **Commit:** `pd-components: pd-ac rollup pill + two-level disclosure + click split + pd-contract banner (T4)`.
             </script></md>
           </pd-phase>
 
           <pd-phase n="3" title="Browser fixture + playbook + example + regression" files="pd-components/tests/fixtures/ac-rollup.html,pd-components/tests/playbooks/ac-rollup.md,pd-components/tests/run.sh,pd-components/examples/ac-rollup.html" status="todo" depends-on="2">
             <md><script type="text/plain">
-**Delivers (browser-proven):** AC-1, AC-3, AC-4, AC-5, AC-6, AC-7, and AC-8
-(purely additive / G1 regression).
+**Delivers (browser-proven):** AC-1, AC-3, AC-4, AC-5, AC-6, AC-7, AC-8
+(purely additive / G1 regression), and AC-9 (the `<pd-contract>` banner).
 
 **Steps**
 1. Create `tests/fixtures/ac-rollup.html` (model on existing fixtures): cards that
    span the render space — a **proved** AC (all checks `status="proved"`), a
    **contradicted** AC (one check `status="contradicted"` with a written-back
    evidence child + `commit`/`dirty`/`at` provenance), an **all-pending** AC (checks
-   with no authored status), and a **check-free** `<pd-ac>` (with `phases`/`tests`).
-   Loads `../../dist/pd.min.js`.
+   with no authored status), and a **check-free** `<pd-ac>` (with `phases`/`tests`);
+   plus a **`<pd-contract>`** element over the set. Loads `../../dist/pd.min.js`.
 2. Create `tests/playbooks/ac-rollup.md` (model on existing playbooks) asserting
    via `agent-browser eval`:
    - **AC-1:** the proved card's `.pd-ac-pill` reads `proved`/green with `n/n`; the
@@ -707,12 +770,16 @@ Browser-proven in Phase 3. **Requires T1's `ac-check-core.js` to exist.**
      clicking the title toggles the `<details>` and fires no `pd:phase-selected`.
    - **AC-8:** the check-free card renders id chip + title + phase/test chips +
      GWT body identically, with no `.pd-ac-pill` and no `<details>` wrapper.
+   - **AC-9:** the `<pd-contract>` banner renders `.pd-contract` reading
+     `n/m ACs proved` (the count of `proved` ACs over total) with a contract pill
+     whose status/colour matches `rollupContract` (red while any AC is
+     contradicted); a fixture variant with **no** `<pd-contract>` is unaffected.
 3. Edit `tests/run.sh`: add an `── ac-rollup ──` block (open fixture → `wait` → the
    `agent-browser eval` assertions above) so the playbook runs in the deterministic
    suite (it hand-wires each playbook; no auto-discovery).
 4. Create `examples/ac-rollup.html`: committed example (a proved + a
-   contradicted-with-evidence AC + a check-free sibling) referencing
-   `../dist/pd.min.js`.
+   contradicted-with-evidence AC + a check-free sibling + a `<pd-contract>` banner)
+   referencing `../dist/pd.min.js`.
 5. **Gate:** `npm run build` then `make pd-test` (a.k.a. `bash tests/run.sh`) — the
    new `ac-rollup` assertions pass **and every existing playbook stays green**
    (AC-8 / G1 regression); `node tests/lint-cli.test.mjs` stays green.
@@ -729,18 +796,21 @@ Parallel with Phase 3 (both need only Phase 2's settled render API).
 1. Edit `llms.template.txt`: expand the `<pd-ac>` section — document the rollup
    pill + `n/m` count, the status→colour mapping, two-level progressive disclosure
    (AC → checks → evidence), auto-open on `contradicted` / explicit `open`, and the
-   phase-chip-vs-header click model. (`build.mjs` regenerates the version-stamped
-   `dist/llms.txt`.)
-   - *Verify:* `npm run build` then `grep -i "rollup\|disclosure" dist/llms.txt` shows the new copy.
+   phase-chip-vs-header click model. **Add a new `<pd-contract>` section** (the
+   document-level `n/m ACs proved` banner driven by `rollupContract`).
+   (`build.mjs` regenerates the version-stamped `dist/llms.txt`.)
+   - *Verify:* `npm run build` then `grep -i "rollup\|disclosure\|pd-contract" dist/llms.txt` shows the new copy.
 2. Edit `pd-components/CLAUDE.md`: add `verify-core.js` to the "one pure core"
-   note (rollup shared by the browser now and the deferred CLI later) and update
-   the `<pd-ac>` inventory line to mention the rollup/disclosure render.
-3. Edit `planning-doc-workspace/render-check.mjs`: add a `.pd-ac-pill` count to the
-   mounted-element JSON (optional/non-blocking headless validation).
-   - *Verify:* `grep pd-ac-pill planning-doc-workspace/render-check.mjs` shows the new count key.
-4. **Gate:** `npm run build` succeeds; `grep -i rollup dist/llms.txt` confirms the
+   note (rollup shared by the browser now and the deferred CLI later), update the
+   `<pd-ac>` inventory line to mention the rollup/disclosure render, **and add
+   `<pd-contract>` to the component inventory**.
+3. Edit `planning-doc-workspace/render-check.mjs`: add `.pd-ac-pill` **and
+   `.pd-contract`** counts to the mounted-element JSON (optional/non-blocking
+   headless validation).
+   - *Verify:* `grep -E "pd-ac-pill|pd-contract" planning-doc-workspace/render-check.mjs` shows the new count keys.
+4. **Gate:** `npm run build` succeeds; `grep -iE "rollup|pd-contract" dist/llms.txt` confirms the
    regenerated agent doc carries the new behaviour.
-5. **Commit:** `pd-components: document pd-ac rollup + disclosure (llms + CLAUDE + render-check) (T4)`.
+5. **Commit:** `pd-components: document pd-ac rollup + disclosure + pd-contract banner (llms + CLAUDE + render-check) (T4)`.
             </script></md>
           </pd-phase>
 
@@ -766,20 +836,23 @@ merged, since both land in the same bundle):
 
       <pd-section id="success-criteria" title="Success Criteria">
         <md><script type="text/plain">
-The task is done when **AC-1 through AC-8** pass and the existing suite is green:
+The task is done when **AC-1 through AC-9** pass and the existing suite is green:
 
-- **AC-2** — proved by Phase 1's Node unit test (`verify-core.test.mjs`): rollup
-  algebra (severity order, proved-iff-all-proved, `n/m`, null→pending), DOM-free.
-- **AC-1, AC-3, AC-4, AC-5, AC-6, AC-7** — proved by Phase 3's browser playbook
-  against the Phase-2 render path: the pill matches authored status, collapse/
-  expand + evidence second level work, contradicted auto-opens, all checks stay in
-  the DOM, and the phase-chip-vs-header click split holds.
+- **AC-2, AC-9 (core)** — proved by Phase 1's Node unit test
+  (`verify-core.test.mjs`): the AC rollup algebra (severity order,
+  proved-iff-all-proved, `n/m`, null→pending) **and** `rollupContract` (contract
+  proved iff every AC proved), DOM-free.
+- **AC-1, AC-3, AC-4, AC-5, AC-6, AC-7, AC-9 (render)** — proved by Phase 3's
+  browser playbook against the Phase-2 render path: the per-AC pill matches
+  authored status, collapse/expand + evidence second level work, contradicted
+  auto-opens, all checks stay in the DOM, the phase-chip-vs-header click split
+  holds, and the `<pd-contract>` banner shows the right `n/m ACs proved` + pill.
 - **AC-8 (G1, purely additive)** — proved by Phase 3: the check-free card renders
   identically and the **existing** playbooks + `lint-cli.test.mjs` stay green after
   the build.
 - **Pure + additive end-to-end:** `npm run build` clean at every phase; the rollup
-  logic lives only in `verify-core.js` (shared with the deferred CLI); no
-  execution, no I/O, no change to the frozen T1 schema.
+  logic (AC + contract) lives only in `verify-core.js` (shared with the deferred
+  CLI); no execution, no I/O, no change to the frozen T1 schema.
         </script></md>
       </pd-section>
 
