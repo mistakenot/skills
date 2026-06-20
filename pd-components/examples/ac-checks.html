@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Example: pd-ac-check-* family</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="Example: pd-ac-check-* family" status="executing" generated="2026-06-20">
+    <pd-tab name="Verification">
+      <pd-section id="acceptance-criteria" title="Acceptance criteria">
+        <md><script type="text/plain">
+A `<pd-ac>` card may carry optional nested `<pd-ac-check-*>` children that record
+the machine-runnable contract behind the criterion. In this version (T1) the
+checks are **inert**: they sit in the DOM carrying their authored attributes but
+add no DOM, render no box, and compute no status. A card with no checks behaves
+exactly as before (purely additive).
+        </script></md>
+
+        <!-- A card with no checks renders exactly as today. -->
+        <pd-ac id="AC-1" title="Requests over the limit get 429" phases="1,2" tests="e2e/rate-limit.spec.ts">
+          <md><script type="text/plain">
+- Given a client that has used its request budget for the window
+- When it sends one more request
+- Then the gateway responds `429` with a `Retry-After` header
+          </script></md>
+        </pd-ac>
+
+        <!-- A card carrying one of each of the five check types. -->
+        <pd-ac id="AC-2" title="Limits are configurable per plan" phases="2" tests="unit/limiter-config.spec.ts">
+          <md><script type="text/plain">
+- Given clients on the free and partner plans
+- When both exceed the free-plan limit
+- Then only the free-plan client is throttled
+          </script></md>
+          <pd-ac-check-command run="npm test -- limiter-config" expect-exit="0"></pd-ac-check-command>
+          <pd-ac-check-output run="curl -s -o /dev/null -w '%{http_code}' localhost:8080/v1/search" matches="429"></pd-ac-check-output>
+          <pd-ac-check-test report="junit.xml" name="free plan is throttled" suite="rate"></pd-ac-check-test>
+          <pd-ac-check-file-exists path="src/limiter.ts"></pd-ac-check-file-exists>
+          <pd-ac-check-file-contains path="README.md" pattern="rate limit"></pd-ac-check-file-contains>
+        </pd-ac>
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

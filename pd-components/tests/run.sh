@@ -229,6 +229,49 @@ assert "task → journey: T1 delivers J1 → J1 highlighted" "true" \
 
 agent-browser close >/dev/null 2>&1
 
+# ── ac-checks ──────────────────────────────────────────────────
+run_playbook "ac-checks"
+agent-browser open "file://$FIXTURES/ac-checks.html" >/dev/null 2>&1
+agent-browser wait 3000 >/dev/null 2>&1
+
+# AC-1 — the five tags register as custom elements
+assert "five check tags register" "true" \
+  "$(agent-browser eval "['pd-ac-check-command','pd-ac-check-output','pd-ac-check-test','pd-ac-check-file-exists','pd-ac-check-file-contains'].every(t => typeof customElements.get(t) === 'function')" 2>&1)"
+assert "authored instance is instanceof its constructor" "true" \
+  "$(agent-browser eval "document.querySelector('pd-ac-check-test') instanceof customElements.get('pd-ac-check-test')" 2>&1)"
+
+# AC-2 — .check exposes the normalised, parsed attributes
+assert ".check exposes test portable identity" "true" \
+  "$(agent-browser eval "(() => { const c = document.querySelector('pd-ac-check-test').check; return c.type === 'test' && c.report === 'junit.xml' && c.name === 'returns 429' && c.suite === 'rate'; })()" 2>&1)"
+assert ".check absent attrs are null" "true" \
+  "$(agent-browser eval "(() => { const c = document.querySelector('pd-ac-check-test').check; return c.classname === null && c.file === null; })()" 2>&1)"
+assert ".check parses command attrs" "true" \
+  "$(agent-browser eval "(() => { const c = document.querySelector('pd-ac-check-command').check; return c.type === 'command' && c.run === 'npm test' && c['expect-exit'] === '0'; })()" 2>&1)"
+
+# AC-4 — inertness: no added DOM, zero box, no event, no rollup
+assert "check elements add no child elements" "true" \
+  "$(agent-browser eval "['pd-ac-check-command','pd-ac-check-output','pd-ac-check-test','pd-ac-check-file-exists','pd-ac-check-file-contains'].every(t => document.querySelector(t).childElementCount === 0)" 2>&1)"
+assert "check element computed box is zero" "true" \
+  "$(agent-browser eval "(() => { const r = document.querySelector('pd-ac-check-test').getBoundingClientRect(); return r.width === 0 && r.height === 0; })()" 2>&1)"
+assert "check element display is none" '"none"' \
+  "$(agent-browser eval "getComputedStyle(document.querySelector('pd-ac-check-test')).display" 2>&1)"
+assert "parent pd-ac shows no rollup pill / status glyph" "0" \
+  "$(agent-browser eval "document.querySelectorAll('pd-ac[id=\"AC-checks\"] .pd-ac-rollup, pd-ac[id=\"AC-checks\"] .pd-ac-status, pd-ac[id=\"AC-checks\"] .pd-ac-pill').length" 2>&1)"
+
+# AC-5 — purely additive: both cards render the same head / chips / body
+assert "check-free card id chip" '"AC-free"' \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-free\"] .pd-ac-head .pd-chip-id').textContent" 2>&1)"
+assert "with-checks card id chip" '"AC-checks"' \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-checks\"] .pd-ac-head .pd-chip-id').textContent" 2>&1)"
+assert "both cards render a title in the head" "true" \
+  "$(agent-browser eval "document.querySelectorAll('pd-ac[id=\"AC-free\"] .pd-ac-head strong').length === 1 && document.querySelectorAll('pd-ac[id=\"AC-checks\"] .pd-ac-head strong').length === 1" 2>&1)"
+assert "both cards render the same chip count" "true" \
+  "$(agent-browser eval "document.querySelector('pd-ac[id=\"AC-free\"] .pd-ac-chips').children.length === document.querySelector('pd-ac[id=\"AC-checks\"] .pd-ac-chips').children.length" 2>&1)"
+assert "both cards render a Given/When/Then body" "true" \
+  "$(agent-browser eval "!!document.querySelector('pd-ac[id=\"AC-free\"] md ul') && !!document.querySelector('pd-ac[id=\"AC-checks\"] md ul')" 2>&1)"
+
+agent-browser close >/dev/null 2>&1
+
 # ── Summary ────────────────────────────────────────────────────
 echo ""
 echo "════════════════════════════════════════"
