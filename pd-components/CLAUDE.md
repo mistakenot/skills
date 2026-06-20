@@ -82,6 +82,16 @@ Test it with `node tests/lint-cli.test.mjs` (needs `npm run build` first);
 fixtures: `tests/fixtures/lint-clean.html`, `tests/fixtures/lint-issues.html`.
 When changing a check, edit `lint-core.js` only.
 
+## AC completion-contract checks (one frozen schema)
+
+The five `pd-ac-check-*` elements (`src/ac-check.js`) are inert data-carriers;
+their schema — the input attributes, the `test` identity contract, the
+behavioural flags, and the reserved status/evidence/provenance write-back shape —
+lives once in `src/ac-check-core.js` (`AC_CHECK_SCHEMA` + the pure `parseAcCheck`),
+the same pure-core/thin-adapter shape as the linter. The browser elements and the
+(later) CLI/renderer both import it so they cannot drift.
+When changing the check schema, edit `ac-check-core.js` only.
+
 ## Component architecture
 
 - Custom elements, light DOM only (no shadow DOM — Tailwind can't style shadow DOM)
@@ -102,5 +112,6 @@ When changing a check, edit `lint-core.js` only.
 | `<pd-code>` `<pd-api>` `<pd-member>` | `code.js` | Syntax-highlighted code, API outlines |
 | `<pd-unit>` `<pd-dep>` `<pd-fn>` `<pd-prop>` | `unit.js` | TS code-unit outline: identity, constructor deps, public surface |
 | `<pd-ac>` `<pd-wire>` `<pd-note>` | `misc.js` | Acceptance criteria cards, wireframe placeholders |
+| `<pd-ac-check-command>` `<pd-ac-check-output>` `<pd-ac-check-test>` `<pd-ac-check-file-exists>` `<pd-ac-check-file-contains>` | `ac-check.js` | Inert completion-contract checks nested in a `pd-ac` (schema in `ac-check-core.js`; no status/rendering yet) |
 | `<pd-decision>` | `decision.js` | Authored architectural decision record (feeds `<pd-decisions>`) |
 | `<md>` | `md.js` | Client-side markdown (marked, loaded from CDN on demand) |

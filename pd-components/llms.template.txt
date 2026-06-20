@@ -423,6 +423,59 @@ phase numbers covering it; tests: comma-separated test files.
 </pd-ac>
 ```
 
+### <pd-ac-check-* family> (pd-ac-check-command / -output / -test / -file-exists / -file-contains)
+Five inert checks that nest inside a pd-ac to declare *how* the criterion is
+proved (executable completion contract). Each carries only input attributes; the
+authored shape is the single source of truth (`src/ac-check-core.js`,
+`AC_CHECK_SCHEMA`). The five types and their attributes:
+
+- `pd-ac-check-command run expect-exit` — run a command, assert its exit code
+  (`expect-exit` defaults to 0).
+- `pd-ac-check-output run matches` — run a command, assert stdout matches the
+  `matches` regex.
+- `pd-ac-check-test report name suite classname file` — look up a testcase in a
+  JUnit XML `report` by portable identity (see contract below).
+- `pd-ac-check-file-exists path` — assert `path` exists.
+- `pd-ac-check-file-contains path pattern` — assert `path` matches `pattern`.
+
+**test identity contract.** `report` + `name` are the required portable identity;
+`suite` / `classname` / `file` are optional qualifiers that narrow the match.
+Lookup rule: 0-or-many matches = non-proof, never a pass.
+
+**Behavioural checks (G3).** A check is behavioural when it proves runtime
+behaviour rather than static presence: `test`, `output`, and a *negative*
+`command` (one with a non-zero `expect-exit`) are behavioural; a plain exit-0
+`command`, `file-exists`, and `file-contains` are static gates.
+
+**Reserved write-back shape.** A later phase writes a result back onto each check;
+the shape is reserved (frozen) now, unused in this version:
+- `status` attribute, vocabulary: `proved` · `contradicted` · `weak` · `missing`
+  · `pending`.
+- evidence as a reserved **child element** (carries multi-line output), not an
+  attribute.
+- provenance as reserved attributes: `commit`, `dirty`, `at` (when the write
+  happened and against what tree).
+
+**Inert in this version — no status / no rendering yet.** The elements register
+and expose a read-only `.check` parse of their own attributes, but add no DOM,
+no visual treatment, no status, and no events; the write-back / status fields
+above are reserved and not yet written or rendered.
+
+```html
+<pd-ac id="AC-1" title="Requests over the limit get 429" phases="1,2" tests="e2e/rate-limit.spec.ts">
+  <md><script type="text/plain">
+- Given a client at its request budget
+- When it sends one more request within the window
+- Then the gateway responds `429` with a `Retry-After` header
+  </script></md>
+  <pd-ac-check-test report="junit.xml" name="returns 429 over budget" classname="RateLimit"></pd-ac-check-test>
+  <pd-ac-check-command run="npm run typecheck" expect-exit="0"></pd-ac-check-command>
+  <pd-ac-check-output run="curl -s -o /dev/null -w '%{http_code}' localhost/api" matches="429"></pd-ac-check-output>
+  <pd-ac-check-file-exists path="src/rate-limit.ts"></pd-ac-check-file-exists>
+  <pd-ac-check-file-contains path="src/rate-limit.ts" pattern="Retry-After"></pd-ac-check-file-contains>
+</pd-ac>
+```
+
 ### <pd-scope>
 At-a-glance summary strip, fully derived — no attributes, no authoring. Counts
 the pd-phase / pd-file / pd-ac / pd-thread elements already in the doc and
