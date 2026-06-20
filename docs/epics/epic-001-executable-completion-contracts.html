@@ -180,7 +180,7 @@ as it honors it):
 
         <pd-note><md><script type="text/plain">**In scope this epic (HTML-first): T1 (components + schema) and T4 (rendering + rollup).** T2, T3, T5 (the CLI, the JUnit/producer engine, authoring + lint) are the deferred execution follow-on — kept here as cards so the boundary and the dependency staircase stay explicit. Ids are unchanged to preserve the review threads. See Decision D1.</script></md></pd-note>
 
-        <pd-task id="T1" title="Check component family + schema (S1)" status="todo" deployable
+        <pd-task id="T1" title="Check component family + schema (S1)" status="done" deployable
                  delivers="C1" honors="G1,G3" href="docs/tasks/003-ac-check-components/plan.html">
           <md><script type="text/plain">Add the five `pd-ac-check-*` components (command, output, test, file-exists, file-contains) to pd-components as light-DOM elements with the fixed schema; render inert (present, no status yet). The schema must settle the **test identity contract** (`report` + `name` + optional `suite`/`classname`/`file`; ambiguous = non-proof) and the status/evidence/provenance write-back shape before freezing, since later tasks key off it. Existing docs unaffected.</script></md>
         </pd-task>
