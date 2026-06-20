@@ -1,4 +1,4 @@
-.PHONY: compile lint check install pd-components pd-dev pd-test test eval-assurance release
+.PHONY: compile lint check install pd-components pd-dev pd-test test test-review-stdin eval-assurance release
 
 # Compiles skill source files from ./src/ into ./skills/ output.
 # Run after editing any skill source in ./src/.
@@ -45,6 +45,12 @@ check: compile lint
 # Run to validate compiler extensions and card schema.
 test:
 	uv run pytest src/assurance/tests/
+
+# Verifies request-codex-review / request-claude-review don't hang on stdin when
+# launched as background reviews. Needs codex + claude installed and authed.
+# Set SKIP_NEG=1 to skip the ~10s codex negative-control hang.
+test-review-stdin: compile
+	bash src/planning-workflow/tests/test-background-review-stdin.sh
 
 # Runs the two-arm assurance eval harness.
 # Run after compiling to produce a with-vs-without comparison report.
