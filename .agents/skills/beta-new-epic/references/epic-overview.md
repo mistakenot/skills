@@ -36,8 +36,7 @@ The breakdown is the bridge to the task workflow:
 
 ## Conventions
 
-- Epic folder: `docs/epics/$ID-$NAME/` (3-digit ID, kebab-case name).
-- Artifact: `epic.html` (single file — no separate context file at epic level).
+- Artifact: a single file `docs/epics/epic-$ID-$NAME.html` (3-digit ID, kebab-case name) — no per-epic folder and no separate context file at epic level. The next ID is the highest existing `epic-*.html` number in `docs/epics/` + 1.
 - `pd-meta`: `id`, `name`, `kind: "epic"`, `status` (`planning` → `active` → `complete`), `created`.
 - `pd-doc status` (draft/in-review/approved) tracks document review state, separate from the `pd-meta` lifecycle.
 - Planning happens on `main`. The epic hard-stops for review before any task is planned.
