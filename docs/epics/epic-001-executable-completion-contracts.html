@@ -181,7 +181,7 @@ as it honors it):
         <pd-note><md><script type="text/plain">**In scope this epic (HTML-first): T1 (components + schema) and T4 (rendering + rollup).** T2, T3, T5 (the CLI, the JUnit/producer engine, authoring + lint) are the deferred execution follow-on — kept here as cards so the boundary and the dependency staircase stay explicit. Ids are unchanged to preserve the review threads. See Decision D1.</script></md></pd-note>
 
         <pd-task id="T1" title="Check component family + schema (S1)" status="todo" deployable
-                 delivers="C1" honors="G1,G3">
+                 delivers="C1" honors="G1,G3" href="docs/tasks/003-ac-check-components/plan.html">
           <md><script type="text/plain">Add the five `pd-ac-check-*` components (command, output, test, file-exists, file-contains) to pd-components as light-DOM elements with the fixed schema; render inert (present, no status yet). The schema must settle the **test identity contract** (`report` + `name` + optional `suite`/`classname`/`file`; ambiguous = non-proof) and the status/evidence/provenance write-back shape before freezing, since later tasks key off it. Existing docs unaffected.</script></md>
         </pd-task>
         <pd-thread anchor="T1" status="resolved" priority="p2" title="The test selector is not unambiguous enough to freeze">
@@ -204,7 +204,7 @@ as it honors it):
         </pd-thread>
 
         <pd-task id="T4" title="Progressive-disclosure rendering + rollup" status="todo" deployable depends-on="T1"
-                 delivers="C1" honors="G1,G5">
+                 delivers="C1" honors="G1,G5" href="docs/tasks/004-ac-progressive-disclosure/plan.html">
           <md><script type="text/plain">The pd-ac browser component computes a pure rollup from the child checks' authored `status` and renders a top-level rollup pill; click to reveal the check list; failing checks expand to evidence (second level); auto-open contradicted ACs. Reconcile the existing card-click (phase highlight moves to the chips). Keeps all checks in the DOM while collapsed. No execution — status is whatever is authored/written-back.</script></md>
         </pd-task>
 
