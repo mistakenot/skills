@@ -409,9 +409,37 @@ Drop one at the top of the Vision tab.
 <pd-outcome></pd-outcome>
 ```
 
-### <pd-ac id title phases tests>
+### <pd-ac id title phases tests open>
 Acceptance-criteria card with traceability chips. phases: comma-separated
 phase numbers covering it; tests: comma-separated test files.
+
+**Check-free cards (every already-authored doc) are unchanged:** a pd-ac with no
+pd-ac-check-* child renders exactly as before — head chips, body visible, no
+pill, no disclosure, whole-card click dispatches `pd:phase-selected`.
+
+**With ≥1 pd-ac-check-* child the card renders its completion contract:**
+
+- **Rollup pill + count.** The head gains a `.pd-ac-pill` coloured by the rolled-
+  up status plus an `n/m checks passing` count (m = total checks, n = checks
+  authored `status="proved"`). The AC rolls up `proved` only when EVERY check is
+  `proved`; otherwise the worst-severity status present, ordered
+  `contradicted ≻ missing ≻ weak ≻ pending ≻ proved` (absent/unknown → pending).
+  Colour: `proved`→green · `contradicted`→red · `weak`/`missing`→amber ·
+  `pending`→grey (reuses the existing ok/bad/warn/neutral vars).
+- **Two-level progressive disclosure (AC → checks → evidence).** The card is
+  collapsed by default behind a native `<details>` whose summary is the AC head.
+  Expanding reveals the Given/When/Then body and one row per check (status glyph
+  + a `type · key-attr` label). A check carrying a `<pd-ac-evidence>` child
+  reveals its captured evidence (+ a muted commit/dirty/at last-run stamp) at a
+  second disclosure level. Author evidence as a direct child of the check:
+  `<pd-ac-check-* …><pd-ac-evidence>…captured output…</pd-ac-evidence></…>`.
+- **Auto-open.** A card whose rollup is `contradicted` renders expanded
+  automatically; `<pd-ac open>` pins it open explicitly.
+- **Click model.** The header/summary toggles the disclosure; only the **phase
+  chips** (not the whole card) fire the `pd:phase-selected` reverse-traceability
+  trigger. (Check-free cards keep the old whole-card click.)
+- Purely additive: rollup/disclosure engage only when checks are present; the
+  rollup is over AUTHORED/written-back status — it executes nothing.
 
 ```html
 <pd-ac id="AC-1" title="Requests over the limit get 429" phases="1,2" tests="e2e/rate-limit.spec.ts">
@@ -421,6 +449,21 @@ phase numbers covering it; tests: comma-separated test files.
 - Then the gateway responds `429` with a `Retry-After` header
   </script></md>
 </pd-ac>
+```
+
+### <pd-contract>
+Document-level completion banner. Author it (like pd-decisions) where you want
+the summary — e.g. just above the acceptance criteria. Fully derived, no
+attributes: it scans every pd-ac that carries checks, rolls each up the SAME way
+the card does (`rollupContract` over each AC's status), and renders an
+`n/m ACs proved` count (m = ACs that carry checks, n = those that rolled up to
+`proved`) + a contract-status pill. The contract is `proved` only when EVERY
+participating AC is `proved`. Check-free ACs are excluded. It renders
+authored/written-back status only — it executes nothing — and a doc with no
+pd-contract is unaffected.
+
+```html
+<pd-contract></pd-contract>
 ```
 
 ### <pd-ac-check-* family> (pd-ac-check-command / -output / -test / -file-exists / -file-contains)

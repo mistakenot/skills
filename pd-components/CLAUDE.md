@@ -82,6 +82,17 @@ Test it with `node tests/lint-cli.test.mjs` (needs `npm run build` first);
 fixtures: `tests/fixtures/lint-clean.html`, `tests/fixtures/lint-issues.html`.
 When changing a check, edit `lint-core.js` only.
 
+## AC rollup algebra (one pure core)
+
+The rollup algebra — how check statuses fold into one AC status and how AC
+statuses fold into the document contract — lives once in `src/verify-core.js`
+(`rollupAc`, `rollupContract`, `SEVERITY_ORDER`). It is DOM-free, performs no
+I/O, and never throws, the same pure-core/thin-adapter shape as `lint-core.js`.
+The browser consumes it now (`misc.js` → the `pd-ac` pill + the `pd-contract`
+banner) and the deferred `pd-verify` CLI will consume the SAME core later, so the
+two faces can't drift. Unit-tested with `node tests/verify-core.test.mjs`.
+When changing the rollup, edit `verify-core.js` only.
+
 ## AC completion-contract checks (one frozen schema)
 
 The five `pd-ac-check-*` elements (`src/ac-check.js`) are inert data-carriers;
@@ -111,7 +122,8 @@ When changing the check schema, edit `ac-check-core.js` only.
 | `<pd-mermaid>` | `mermaid.js` | Mermaid diagram renderer (bundled, no CDN fetch) |
 | `<pd-code>` `<pd-api>` `<pd-member>` | `code.js` | Syntax-highlighted code, API outlines |
 | `<pd-unit>` `<pd-dep>` `<pd-fn>` `<pd-prop>` | `unit.js` | TS code-unit outline: identity, constructor deps, public surface |
-| `<pd-ac>` `<pd-wire>` `<pd-note>` | `misc.js` | Acceptance criteria cards, wireframe placeholders |
+| `<pd-ac>` `<pd-wire>` `<pd-note>` | `misc.js` | Acceptance criteria cards (with-checks: rollup pill + two-level AC→checks→evidence disclosure), wireframe placeholders |
+| `<pd-contract>` | `misc.js` | Document-level "n/m ACs proved" completion banner (rolls up every with-checks `<pd-ac>` via `verify-core`) |
 | `<pd-ac-check-command>` `<pd-ac-check-output>` `<pd-ac-check-test>` `<pd-ac-check-file-exists>` `<pd-ac-check-file-contains>` | `ac-check.js` | Inert completion-contract checks nested in a `pd-ac` (schema in `ac-check-core.js`; no status/rendering yet) |
 | `<pd-decision>` | `decision.js` | Authored architectural decision record (feeds `<pd-decisions>`) |
 | `<md>` | `md.js` | Client-side markdown (marked, loaded from CDN on demand) |
