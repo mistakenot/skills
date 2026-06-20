@@ -2,6 +2,10 @@
 
 This is my public repository of useful, reusable skills. These are designed to be reused across multiple projects.
 
+## Goal
+
+- Create a reusable set of skills to allow me to operate AI with increasing accuracy, autonomy and productivity.
+
 ## Design principles
 
 - Must be multi-agent compatible. (Claude Code, Codex, Opencode, etc)
