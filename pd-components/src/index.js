@@ -17,6 +17,7 @@ import './guardrail.js';
 import './breakdown.js';
 import './outcome.js';
 import './misc.js';
+import './ac-check.js';
 import './decision.js';
 import './scope.js';
 import './dag.js';

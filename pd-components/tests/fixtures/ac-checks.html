@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Test: ac-check components</title>
+  <script src="../../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="Test: ac-check components" status="executing" generated="2026-06-20">
+    <pd-tab name="Verification">
+      <pd-section id="acceptance-criteria" title="Acceptance criteria">
+
+        <!-- A check-free card: must render exactly as today (G1 / additive). -->
+        <pd-ac id="AC-free" title="Card with no checks" phases="1,2" tests="tests/free.spec.ts">
+          <md><script type="text/plain">
+- Given a card with no nested checks
+- When it renders with the new bundle
+- Then it looks identical to today
+          </script></md>
+        </pd-ac>
+
+        <!-- A card carrying one nested check of each of the five types. -->
+        <pd-ac id="AC-checks" title="Card with one of each check" phases="2,3" tests="tests/checks.spec.ts">
+          <md><script type="text/plain">
+- Given a card with nested checks
+- When it renders with the new bundle
+- Then the checks are inert (no DOM, no box, no events, no rollup)
+          </script></md>
+          <pd-ac-check-command run="npm test" expect-exit="0"></pd-ac-check-command>
+          <pd-ac-check-output run="curl -s localhost/x" matches="429"></pd-ac-check-output>
+          <pd-ac-check-test report="junit.xml" name="returns 429" suite="rate"></pd-ac-check-test>
+          <pd-ac-check-file-exists path="src/limiter.ts"></pd-ac-check-file-exists>
+          <pd-ac-check-file-contains path="README.md" pattern="rate limit"></pd-ac-check-file-contains>
+        </pd-ac>
+
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

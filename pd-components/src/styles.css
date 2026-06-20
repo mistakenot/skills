@@ -566,6 +566,11 @@ pd-note {
   border-radius: 0 0.4rem 0.4rem 0;
 }
 
+/* ---- ac checks (inert: present in DOM for agents/CLI, zero layout) ---- */
+
+pd-ac-check-command, pd-ac-check-output, pd-ac-check-test,
+pd-ac-check-file-exists, pd-ac-check-file-contains { display: none; }
+
 /* ---- generic content niceties inside pd-doc ---- */
 
 pd-doc table { border-collapse: collapse; font-size: 0.9rem; margin: 0.75rem 0; }
