@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Test: question workflow</title>
+  <script src="../../dist/pd.min.js" defer></script>
+</head>
+<body>
+  <pd-doc title="Test: question workflow" status="draft" generated="2026-06-20">
+    <pd-tab name="Overview">
+      <pd-section id="approach" title="Approach">
+        <md>
+A section so the doc has some content alongside the questions.
+        </md>
+      </pd-section>
+
+      <pd-question id="Q-1" status="open" priority="p1" for="product"
+                   title="Which tier do internal services use?">
+        Internal callers hit the same gateway. Shared bucket or separate tier?
+      </pd-question>
+
+      <pd-question id="Q-2" status="answered" priority="p2" title="Token TTL?">
+        How long should issued tokens live?
+        <pd-answer by="charlie">24 hours.</pd-answer>
+      </pd-question>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

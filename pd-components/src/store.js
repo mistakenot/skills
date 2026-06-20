@@ -21,7 +21,7 @@ export const store = {
   all: () => items.slice(),
   count: () => items.length,
 
-  // entry: { kind: 'reply'|'new', thread?, anchor?, priority?, text }
+  // entry: { kind: 'reply'|'new'|'answer', thread?, question?, anchor?, priority?, text }
   add(entry) {
     items.push({ ...entry, ts: new Date().toISOString() });
     persist();
@@ -53,15 +53,18 @@ export const store = {
       `doc: ${docTitle || document.title}`,
       '',
       'INSTRUCTIONS — you MUST follow these steps in order:',
-      '1. Merge every comment below into the HTML doc file FIRST, before responding.',
+      '1. Merge every item below into the HTML doc file FIRST, before responding.',
       '   - REPLY → append <pd-comment by="review">…</pd-comment> to the named thread.',
       '   - NEW → create a <pd-thread anchor="…" priority="…" title="…"> after the anchored element, containing the comment.',
+      '   - ANSWER → append <pd-answer by="review">…</pd-answer> to the named pd-question and set its status="answered".',
       '2. Then respond to each comment in the same thread (append your own <pd-comment by="author">).',
-      '   Set status="resolved" when addressed, or "rejected" with reasoning. Never edit or delete existing comments.',
+      '   Set status="resolved" when addressed, or "rejected" with reasoning. Never edit or delete existing comments or answers.',
     ];
     items.forEach((it, i) => {
       if (it.kind === 'reply') {
         lines.push('', `[${i + 1}] REPLY to thread "${it.thread}"${it.anchor ? ` (anchor: ${it.anchor})` : ''}`);
+      } else if (it.kind === 'answer') {
+        lines.push('', `[${i + 1}] ANSWER to question "${it.question}"${it.anchor ? ` (anchor: ${it.anchor})` : ''}`);
       } else {
         lines.push('', `[${i + 1}] NEW ${it.priority || 'p2'} comment on "${it.thread}"${it.anchor ? ` (anchor: ${it.anchor})` : ''}`);
       }

@@ -168,6 +168,38 @@ a person's name. Open threads render a reply box; closed ones collapse.
 </pd-thread>
 ```
 
+### <pd-question id status priority for title> / <pd-answer by>
+A question the HUMAN must answer before the plan can proceed — the reverse of a
+pd-thread (there the human reviews you; here you block on the human). Use it
+whenever you hit a decision you cannot resolve from the requirements, the code,
+or a sensible default — don't bury it in prose or guess. status: open (default)
+| answered. priority: p1 (blocking) | p2 (important) | p3 (minor). for: who
+should answer (optional). Give each a stable id so links and tooling can anchor
+to it. The question prose is the body; the human's answer arrives via the
+"Copy for agent" paste-back as an ANSWER item — merge it as a <pd-answer
+by="…"> child and set status="answered".
+
+Open questions are a gate, not chatter: while any exist the doc's status bar
+shows "blocked", and the headless linter reports them (code "open-question",
+non-zero exit) so an automated step won't run past them. They are NOT a defect
+you fix — surface them to the human and wait for the answer.
+
+```html
+<pd-question id="Q-1" status="open" priority="p1" for="product"
+             title="Which tier do internal services use?">
+  Internal callers hit the same gateway. Do they share the public tier's bucket,
+  or get a separate unlimited tier? This changes how the limiter keys clients.
+</pd-question>
+
+<!-- once answered: -->
+<pd-question id="Q-1" status="answered" priority="p1" for="product"
+             title="Which tier do internal services use?">
+  Internal callers hit the same gateway. Do they share the public tier's bucket,
+  or get a separate unlimited tier? This changes how the limiter keys clients.
+  <pd-answer by="charlie">Separate unlimited tier; key by service identity.</pd-answer>
+</pd-question>
+```
+
 ### <pd-files> / <pd-file path change>
 File-change list. Write flat pd-file children (cheap to append); renders as a
 collapsible tree with +/~/− markers, per-file notes, and open-thread badges
@@ -449,7 +481,9 @@ structured attributes (files in the tree no phase touches, files a phase touches
 that are missing from the tree, depends-on pointing at a missing phase, and
 dependency cycles). Findings show in a panel at the top and are queued as a
 single pending "lint" comment, so they ride the "Copy for agent" export to the
-agent. Resolve them by fixing the attributes — clean plans show no panel.
+agent. Resolve them by fixing the attributes — clean plans show no panel. The
+headless linter additionally reports any open pd-question (code "open-question",
+non-zero exit) as a human gate — surface those to the user, don't "fix" them.
 
 ### <pd-decision id title status by date summary>
 An authored architectural decision record (ADR). Use it for a call you (the
@@ -513,16 +547,19 @@ The block contains inline instructions — follow them exactly. Example:
 doc: 021: API rate limiting
 
 INSTRUCTIONS — you MUST follow these steps in order:
-1. Merge every comment below into the HTML doc file FIRST, before responding.
+1. Merge every item below into the HTML doc file FIRST, before responding.
    - REPLY → append <pd-comment by="review">…</pd-comment> to the named thread.
    - NEW → create a <pd-thread anchor="…" priority="…" title="…"> after the anchored element, containing the comment.
+   - ANSWER → append <pd-answer by="review">…</pd-answer> to the named pd-question and set its status="answered".
 2. Then respond to each comment in the same thread (append your own <pd-comment by="author">).
-   Set status="resolved" when addressed, or "rejected" with reasoning. Never edit or delete existing comments.
+   Set status="resolved" when addressed, or "rejected" with reasoning. Never edit or delete existing comments or answers.
 
 [1] REPLY to thread "Why not sliding window?" (anchor: approach)
     Fine, but document the burst size limit.
 [2] NEW p1 comment on "Files" (anchor: files)
     The limiter must also cover the websocket gateway.
+[3] ANSWER to question "Which tier do internal services use?" (anchor: Q-1)
+    Separate unlimited tier; key by service identity.
 === END DOC COMMENTS ===
 ```
 

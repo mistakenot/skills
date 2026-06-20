@@ -69,6 +69,12 @@ Authoring rules that matter most (full set in llms.txt):
   requirements or an existing repo pattern — as a `<pd-decision>` (rationale +
   alternatives + consequences), not buried in prose. It feeds `<pd-decisions>`
   alongside resolved threads.
+- When you hit a decision you genuinely cannot resolve — not from the
+  requirements, the code, or a sensible default — raise it as a `<pd-question>`
+  (status `open`) rather than guessing or burying it in prose. It flags the doc
+  as blocked, surfaces in the headless linter as `open-question`, and the human
+  answers it via the paste-back flow. Reserve it for answers only the human can
+  give; for calls you can make yourself, use `<pd-decision>`.
 - Preserve `<script type="application/json" id="pd-meta">` blocks when editing
   existing docs. Never modify, move, or delete the pd-meta block — it tracks
   task lifecycle state managed by the planning workflow.
@@ -99,6 +105,9 @@ doc already carries — no extra authoring:
 - **untracked-file** — a phase touches a file missing from the `<pd-files>` tree
 - **missing-dep** — a `depends-on` points at a phase `n` that doesn't exist
 - **dependency-cycle** — phases form a `depends-on` cycle
+- **open-question** — a `<pd-question>` still awaiting a human answer. This is a
+  *gate*, not a defect: don't try to "fix" it — surface it to the user and wait.
+  The non-zero exit lets an automated step refuse to proceed while questions are open.
 
 Single file → bare result object; multiple files → `{ ok, fileCount, results }`.
 Example output:
@@ -121,7 +130,9 @@ Reviewers comment in the browser and paste back an export block delimited by
 - `NEW <priority> comment on "X" (anchor: id)` → insert a new
   `<pd-thread anchor="<id>" priority="<priority>" title="<short summary you
   write>">` directly after the anchored element, containing the comment.
-- Never edit or delete existing comments — threads are the decision log.
+- `ANSWER to question "X" (anchor: id)` → append a `<pd-answer by="review">`
+  with the text to that `<pd-question>` and set its `status="answered"`.
+- Never edit or delete existing comments or answers — threads are the decision log.
 - Report what you merged and resolved; the user clears their pending copy
   with the doc's Clear button.
 
@@ -136,6 +147,9 @@ Classic scripts in head (never `type="module"`):
 - `<pd-section id title>` titled/anchorable section, freeform body
 - `<pd-thread anchor status{unresolved|resolved|rejected} priority{p1|p2|p3} title>`
   with `<pd-comment by{review|author|name}>` children — append-only
+- `<pd-question id status{open|answered} priority{p1|p2|p3} for title>` a question
+  the human must answer (gates the doc; lints as `open-question`) — answered by
+  appending a `<pd-answer by{review|name}>` child and flipping status
 - `<pd-files>` + `<pd-file path change{add|edit|delete}>note</pd-file>`
 - `<pd-stepper>` + `<pd-phase n title files status{done|active|todo}>`
 - `<pd-mermaid caption>` source as text content; flowchart/graph, sequence,

@@ -39,7 +39,10 @@ function queueComment(doc, issues) {
 function run() {
   const doc = document.querySelector('pd-doc');
   if (!doc) return;
-  const issues = findIssues(collect(doc));
+  // Open questions are surfaced in the browser by pd-question cards and the
+  // blocked status bar — not as lint defects to "fix". They stay in the CLI
+  // linter (a gate for automated steps); the panel/queue shows only fixables.
+  const issues = findIssues(collect(doc)).filter((i) => i.code !== 'open-question');
   renderPanel(doc, issues);
   queueComment(doc, issues);
 }

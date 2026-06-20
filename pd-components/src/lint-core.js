@@ -15,6 +15,8 @@
 //   - untracked-file:    a file a phase touches that's missing from the tree
 //   - missing-dep:       depends-on pointing at a phase that doesn't exist
 //   - dependency-cycle:  a dependency cycle among phases
+//   - open-question:     a pd-question awaiting a human answer (a gate, not a
+//                        defect — surface it to the human, don't "fix" it)
 
 const split = (s) => (s || '').split(',').map((x) => x.trim()).filter(Boolean);
 
@@ -34,12 +36,19 @@ export function collect(root) {
   const filePaths = [...doc.querySelectorAll('pd-file')]
     .map((f) => f.getAttribute('path') || '')
     .filter(Boolean);
-  return { phases, filePaths };
+  const openQuestions = [...doc.querySelectorAll('pd-question')]
+    .filter((q) => (q.getAttribute('status') || 'open') !== 'answered')
+    .map((q, i) => ({
+      id: q.getAttribute('id') || `Q${i + 1}`,
+      priority: q.getAttribute('priority') || 'p1',
+      title: q.getAttribute('title') || 'Question',
+    }));
+  return { phases, filePaths, openQuestions };
 }
 
 // Returns an array of { code, message } issue objects. The message wording is
 // stable — the browser comment export and the CLI JSON both surface it verbatim.
-export function findIssues({ phases, filePaths }) {
+export function findIssues({ phases, filePaths, openQuestions }) {
   const issues = [];
   const add = (code, message) => issues.push({ code, message });
 
@@ -73,6 +82,16 @@ export function findIssues({ phases, filePaths }) {
   };
   phases.forEach((p) => { if ((color.get(p.n) || 0) === 0) dfs(p.n, []); });
   cycles.forEach((c) => add('dependency-cycle', `Dependency cycle among phases: ${c}.`));
+
+  // Open questions are a human gate, not a defect: an automated step shouldn't
+  // proceed while any remain. Each issue carries id/priority so a caller can act
+  // on them structurally, not just read the message.
+  (openQuestions || []).forEach((q) => issues.push({
+    code: 'open-question',
+    id: q.id,
+    priority: q.priority,
+    message: `Question ${q.id} (${q.priority}) "${q.title}" is awaiting a human answer.`,
+  }));
 
   return issues;
 }

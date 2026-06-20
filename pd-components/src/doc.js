@@ -54,11 +54,19 @@ class PdDoc extends PdElement {
     const status = (this.getAttribute('status') || 'draft').toLowerCase();
     const open = [...this.querySelectorAll('pd-thread')]
       .filter((t) => { const s = t.getAttribute('status'); return !s || s === 'unresolved'; });
+    const openQ = [...this.querySelectorAll('pd-question')]
+      .filter((q) => (q.getAttribute('status') || 'open') !== 'answered');
 
-    // Blocked overrides every stage while any comment thread is unresolved.
-    if (open.length || status === 'blocked') {
-      const n = open.length;
-      return { kind: 'blocked', blockers: open, label: n ? `Blocked — ${n} open comment thread${n === 1 ? '' : 's'}` : 'Blocked' };
+    // Blocked overrides every stage while any question awaits a human answer or
+    // any comment thread is unresolved. Questions come first — they gate on the
+    // human and the status bar jumps to one when clicked.
+    if (openQ.length || open.length || status === 'blocked') {
+      const nq = openQ.length; const nt = open.length;
+      const parts = [];
+      if (nq) parts.push(`${nq} open question${nq === 1 ? '' : 's'}`);
+      if (nt) parts.push(`${nt} open thread${nt === 1 ? '' : 's'}`);
+      const label = parts.length ? `Blocked — ${parts.join(', ')}` : 'Blocked';
+      return { kind: 'blocked', blockers: [...openQ, ...open], label };
     }
     // Lifecycle stage: draft → pending → executing → complete.
     if (['complete', 'merged', 'shipped', 'done'].includes(status)) {

@@ -20,9 +20,10 @@ export function attachComposer(host, meta, trigger) {
   const existing = host.querySelector(':scope > .pd-composer');
   if (existing) { existing.remove(); return; }
 
+  const placeholder = { reply: 'Write a reply…', answer: 'Write your answer…' }[meta.kind] || 'Write a comment…';
   const ta = el('textarea', {
     class: 'pd-composer-input',
-    placeholder: meta.kind === 'reply' ? 'Write a reply…' : 'Write a comment…',
+    placeholder,
     rows: 3,
   });
   const queue = el('button', { class: 'pd-btn pd-btn-primary' }, 'Queue');

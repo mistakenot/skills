@@ -251,6 +251,44 @@ pd-comment[by="author"]::before { color: var(--pd-accent); }
 
 .pd-thread-actions { margin-top: 0.5rem; }
 
+/* ---- questions for the human (pd-question / pd-answer) ---- */
+
+pd-question {
+  display: block; margin: 1rem 0;
+  border: 1px solid var(--pd-border);
+  border-left: 3px solid var(--pd-accent);
+  border-radius: 0.5rem;
+  background: var(--pd-surface);
+  padding: 0.6rem 0.9rem;
+}
+pd-question[status="answered"] { border-left-color: var(--pd-ok); }
+
+.pd-question-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-size: 0.92rem; }
+.pd-question-title { font-size: 0.98rem; }
+.pd-question-for { color: var(--pd-muted); font-size: 0.78rem; margin-left: auto; }
+.pd-q-flag {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+  padding: 0.05rem 0.5rem; border-radius: 999px;
+  background: var(--pd-accent); color: #fff;
+}
+.pd-q-flag[data-answered="yes"] { background: var(--pd-ok-bg); color: var(--pd-ok); }
+.pd-question-body { margin-top: 0.5rem; font-size: 0.92rem; }
+.pd-question-body > :first-child { margin-top: 0; }
+.pd-question-body > :last-child { margin-bottom: 0; }
+.pd-question-actions { margin-top: 0.5rem; }
+
+pd-answer {
+  display: block; margin: 0.6rem 0 0; padding: 0.5rem 0.7rem;
+  background: var(--pd-bg); border: 1px solid var(--pd-border); border-radius: 0.4rem;
+  font-size: 0.9rem;
+}
+pd-answer::before {
+  content: attr(by);
+  display: block;
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--pd-ok); margin-bottom: 0.2rem;
+}
+
 .pd-pending {
   margin-top: 0.6rem; padding: 0.5rem 0.7rem;
   border: 1px dashed var(--pd-accent); border-radius: 0.4rem;

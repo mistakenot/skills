@@ -5,6 +5,7 @@ import css from './styles.css';
 
 import './doc.js';
 import './threads.js';
+import './question.js';
 import './files.js';
 import './stepper.js';
 import './mermaid.js';

@@ -11,6 +11,14 @@
       <pd-file path="src/auth.ts" change="add">new auth module</pd-file>
     </pd-files>
   </pd-section>
+  <pd-section id="open-q" title="Open questions">
+    <!-- an unanswered question -> open-question (a human gate) -->
+    <pd-question id="Q-1" status="open" priority="p1" title="Which auth provider?">Pick one before we build.</pd-question>
+    <!-- an answered one must NOT be reported -->
+    <pd-question id="Q-2" status="answered" priority="p2" title="Token TTL?">
+      <pd-answer by="charlie">24h.</pd-answer>
+    </pd-question>
+  </pd-section>
   <pd-section id="plan" title="Plan">
     <pd-stepper>
       <!-- touches src/ghost.ts which is missing from the tree -> untracked-file -->

@@ -46,6 +46,20 @@ check('problem doc → exit 1 with all four codes', () => {
   }
 });
 
+check('open question → open-question issue (only the unanswered one), exit 1', () => {
+  const { code, json } = run(fixture('lint-issues.html'));
+  assert.equal(code, 1);
+  const questions = json.issues.filter((i) => i.code === 'open-question');
+  assert.equal(questions.length, 1, 'only the unanswered question should be reported');
+  assert.equal(questions[0].id, 'Q-1');
+  assert.equal(questions[0].priority, 'p1');
+});
+
+check('clean doc has no open-question issue', () => {
+  const { json } = run(fixture('lint-clean.html'));
+  assert.ok(!json.issues.some((i) => i.code === 'open-question'));
+});
+
 check('multiple files → summary envelope, exit 1 if any fail', () => {
   const { code, json } = run(fixture('lint-clean.html'), fixture('lint-issues.html'));
   assert.equal(code, 1);
