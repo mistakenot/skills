@@ -1,1 +1,1 @@
-**autoskill** — Author and lint reusable agent skills. Run `autoskill quickstart` to learn more.
+**auto skill** — Author and lint reusable agent skills. Run `auto skill quickstart` to learn more.

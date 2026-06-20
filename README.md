@@ -68,6 +68,6 @@ Files in `./skills/` are compiled output. Edit the source files in `./src/` and 
 ```sh
 make compile   # Compile src/ -> skills/
 make install   # Compile + install locally into .claude/skills/ and .agents/skills/
-make lint      # Lint all skills with autoskill
+make lint      # Lint all skills with auto skill
 make check     # Compile + lint (pre-commit check)
 ```

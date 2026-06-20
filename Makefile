@@ -35,7 +35,7 @@ pd-test:
 # Lints all skills for structural and content issues.
 # Run before committing to catch problems early.
 lint:
-	autoskill lint
+	auto skill lint
 
 # Runs compile + lint as a pre-commit check.
 # Run before pushing to ensure everything is valid.
