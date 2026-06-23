@@ -65,8 +65,798 @@ sources:
           them; demoted the pure-tooling ideas (I001/I005/I008) out of the
           shortlist per user steer toward qualitative, mentality-level borrows.
 
+  - repo: Fission-AI/OpenSpec
+    url: https://github.com/Fission-AI/OpenSpec
+    added: 2026-06-20
+    why: |
+      A spec-driven development framework with a CLI and multi-agent workflow
+      delivery system. Its value to us is the engineering of its workflow
+      abstractions: artifact graphs as DAGs, filesystem-as-state, layered
+      instruction assembly, three-dimension verification, and a mature
+      adapter pattern that fans one workflow out to 26+ AI coding tools.
+    last_investigated_commit: 1b06fddd59d8e592d5b5794a1970b22867e85b1f
+    last_investigated_at: 2026-06-20T23:03:00Z
+    investigations:
+      - from_commit: null
+        to_commit: 1b06fddd59d8e592d5b5794a1970b22867e85b1f
+        investigated_at: 2026-06-20T23:03:00Z
+        ideas_added: 7
+
+  - repo: obra/superpowers
+    url: https://github.com/obra/superpowers
+    added: 2026-06-23
+    why: |
+      A mature multi-agent skill suite (v6) with a battle-tested planning
+      workflow: brainstorming → spec → writing-plans → subagent-driven-
+      development (SDD) → code-review → finishing. Its value to us is the
+      engineering of its execution model: Consumes/Produces interface blocks
+      for task isolation, file-based handoffs, compaction-proof progress
+      ledgers, anti-pre-judgment reviewer rules, and a verification-as-honesty
+      culture with iron laws. Directly relevant to our planning workflow and
+      autonomy goals.
+    last_investigated_commit: 896224c4b1879920ab573417e68fd51d2ccc9072
+    last_investigated_at: 2026-06-23T11:30:00Z
+    investigations:
+      - from_commit: null
+        to_commit: 896224c4b1879920ab573417e68fd51d2ccc9072
+        investigated_at: 2026-06-23T11:30:00Z
+        ideas_added: 11
+
 ideas:
-  # newest first. I010-I017 are the autonomy-doctrine pass.
+  # newest first. I025-I035 are from obra/superpowers baseline snapshot.
+  # I018-I024 are from Fission-AI/OpenSpec baseline snapshot.
+  # I010-I017 are the autonomy-doctrine pass from Forward-Future/loop-library.
+
+  - id: I035
+    title: "Two-verdict reviewer: require separate spec-compliance and code-quality verdicts"
+    source: obra/superpowers
+    commits: []
+    files: [skills/subagent-driven-development/task-reviewer-prompt.md]
+    permalink: https://github.com/obra/superpowers/blob/896224c4b1879920ab573417e68fd51d2ccc9072/skills/subagent-driven-development/task-reviewer-prompt.md
+    discovered: 2026-06-23
+    status: candidate
+    change_type: additive
+    area: "request-claude-review, request-codex-review, code-review"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 6
+    summary: |
+      SDD's task reviewer must return TWO independent verdicts: spec compliance
+      (does the implementation match the plan?) and code quality (is the code
+      well-written?). Missing either verdict is a Red Flag. Critical/Important
+      findings trigger a fix→re-review loop. The reviewer reads the diff file
+      in one read, doesn't re-run tests, and doesn't crawl the codebase except
+      for one focused check per named risk. "Cannot verify from diff" items
+      don't block but the controller must resolve each (it holds cross-task
+      context the reviewer lacks).
+    application: |
+      Structure our review skills (request-claude-review, request-codex-review)
+      to require two separate verdicts: (1) spec/plan compliance — does this
+      implement what was asked? and (2) code quality — is the code sound? This
+      prevents the common failure where a clean code review passes work that
+      doesn't match the spec, or spec-compliant code with quality issues slips
+      through. Our I018 (three-dimension verification) provides the vocabulary;
+      this is the concrete reviewer output format.
+    evidence: |
+      task-reviewer-prompt.md: reviewer returns both verdicts, missing either =
+      Red Flag. Controller resolves "cannot verify from diff" items that the
+      reviewer flags but can't check.
+    notes: |
+      Complements [[I018]]. The dimensions are the framework; this is how the
+      reviewer actually reports them.
+
+  - id: I034
+    title: "Verification-as-honesty: iron law + revert proof + rationalization prevention tables"
+    source: obra/superpowers
+    commits: []
+    files: [skills/verification-before-completion/SKILL.md]
+    permalink: https://github.com/obra/superpowers/blob/896224c4b1879920ab573417e68fd51d2ccc9072/skills/verification-before-completion/SKILL.md
+    discovered: 2026-06-23
+    status: shortlisted
+    change_type: additive
+    area: "execute-task, complete-task, verify skill"
+    effort: S
+    impact: high
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 10
+    summary: |
+      "Claiming work is complete without verification is dishonesty, not
+      efficiency." The verification-before-completion skill defines an iron
+      law: NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE. Gate
+      function: IDENTIFY proving command → RUN fresh → READ full output + exit
+      code → VERIFY → ONLY THEN claim. A red-green revert mechanic: run
+      (pass) → revert fix → run (MUST FAIL) → restore → run (pass). Includes
+      exhaustive tables: Common Failures (claim→required evidence→insufficient),
+      Red Flags-STOP ("using should/probably", "saying Done! pre-verification",
+      "trusting agent reports"), Rationalization Prevention ("Different words so
+      rule doesn't apply" → "Spirit over letter"). Born from 24 failure
+      memories; stakes: "if you lie, you'll be replaced."
+    application: |
+      Add a verification-as-honesty section to our execute-task and
+      complete-task skills: (1) the iron law — no completion claims without
+      fresh evidence run THIS turn; (2) the revert-proof mechanic — a test
+      only counts if removing the fix makes it fail; (3) a compact
+      rationalization-prevention table tuned to our context. This is the
+      CULTURE that makes our I010 completion contract trustworthy — the
+      contract defines what done means, this defines the honesty bar for
+      claiming you reached it. The revert-proof extends our I012 (prove-the-
+      test) with a concrete procedure. Together they make "verified, tests
+      pass" a statement an autonomous agent can be trusted to make.
+    evidence: |
+      SKILL.md iron law: "NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION
+      EVIDENCE." Gate: identify→run→read→verify→claim. Red Flags table:
+      "saying Great!/Perfect!/Done! before verification." Rationalization
+      Prevention: "It's about spirit not ritual" → "Violating the letter of
+      the rules is violating the spirit of the rules."
+    notes: |
+      Strengthens [[I010]], [[I012]]. The contract is what; the honesty bar
+      is how. S effort because it's adding rules/tables to existing skills,
+      not building new machinery.
+
+  - id: I033
+    title: "Recorded BASE commit: the HEAD~1 trap for multi-commit tasks"
+    source: obra/superpowers
+    commits: []
+    files: [skills/subagent-driven-development/SKILL.md]
+    permalink: https://github.com/obra/superpowers/blob/896224c4b1879920ab573417e68fd51d2ccc9072/skills/subagent-driven-development/SKILL.md
+    discovered: 2026-06-23
+    status: candidate
+    change_type: additive
+    area: "execute-task, code-review, complete-task"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 6
+    summary: |
+      SDD records the BASE commit BEFORE dispatching each task implementer,
+      then uses that recorded BASE (not HEAD~1) for the review diff. HEAD~1
+      is a documented trap: a multi-commit task's review would only show the
+      last commit, silently dropping all earlier work from the diff. The
+      review-package script takes explicit BASE and HEAD arguments.
+    application: |
+      Add to execute-task and code-review: before dispatching each task,
+      record the current HEAD as the task's BASE commit. Use that recorded
+      BASE for all review diffs — never HEAD~1. This is a subtle correctness
+      fix that prevents review gaps in multi-commit tasks. Cheap to implement
+      (one `git rev-parse HEAD` before dispatch, stored in the progress
+      ledger alongside the task entry).
+    evidence: |
+      SKILL.md: "BASE = commit recorded BEFORE dispatch, never HEAD~1."
+      review-package script takes explicit BASE HEAD arguments.
+    notes: |
+      Pairs naturally with [[I032]] (progress ledger stores the BASE).
+
+  - id: I032
+    title: "Progress ledger: compaction-proof one-line-per-task resumability"
+    source: obra/superpowers
+    commits: []
+    files: [skills/subagent-driven-development/SKILL.md]
+    permalink: https://github.com/obra/superpowers/blob/896224c4b1879920ab573417e68fd51d2ccc9072/skills/subagent-driven-development/SKILL.md
+    discovered: 2026-06-23
+    status: shortlisted
+    change_type: additive
+    area: "execute-task, delegate-task, status-report"
+    effort: S
+    impact: high
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 10
+    summary: |
+      SDD's worst observed failure: after context compaction, the controller
+      re-dispatched an entire completed task sequence. Mitigation: a progress
+      ledger at .superpowers/sdd/progress.md — one line per task: "Task N:
+      complete (commits <base7>..<head7>, review clean)". On start, cat the
+      ledger; completed = DONE, resume at first incomplete. Rule: "After
+      compaction, trust the ledger and git log over your own recollection."
+    application: |
+      Give execute-task / delegate-task a one-line-per-task progress ledger
+      in the self-ignoring workspace (see I031). Each entry: task ID,
+      status, commit range, review verdict. On session start or after
+      compaction, read the ledger before doing anything — resume at the
+      first incomplete task, never re-do completed work. This is the
+      concrete, opinionated implementation of our I014 (resumable state
+      baton) — the baton is specifically a progress ledger, and the rule is
+      specifically "trust the ledger over your memory." Directly extends
+      how long a run can go unattended.
+    evidence: |
+      SKILL.md: progress ledger at .superpowers/sdd/progress.md, one line
+      per task: "Task N: complete (commits <base7>..<head7>, review clean)."
+      "After compaction, trust the ledger and git log over your own
+      recollection." Worst failure: controller re-dispatched completed
+      tasks after compaction.
+    notes: |
+      Concrete implementation of [[I014]]. Pairs with [[I031]] (workspace)
+      and [[I033]] (recorded BASE stored in the ledger).
+
+  - id: I031
+    title: "Self-ignoring artifact workspace: .superpowers/sdd/ with gitignore '*'"
+    source: obra/superpowers
+    commits: []
+    files: [skills/subagent-driven-development/SKILL.md]
+    permalink: https://github.com/obra/superpowers/blob/896224c4b1879920ab573417e68fd51d2ccc9072/skills/subagent-driven-development/SKILL.md
+    discovered: 2026-06-23
+    status: candidate
+    change_type: additive
+    area: "execute-task, delegate-task"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 6
+    summary: |
+      SDD creates .superpowers/sdd/ in the WORKING TREE (not .git/, which
+      harnesses deny agent writes to) with a .gitignore containing just `*`.
+      This makes the directory invisible to git status/add without touching
+      tracked .gitignore files. Worktree-aware: each linked worktree resolves
+      its own workspace. Contains briefs, review packages, and the progress
+      ledger. The sdd-workspace script handles creation + self-ignoring setup.
+    application: |
+      Adopt a self-ignoring workspace pattern for our autonomous execution
+      skills: a .<project>/task/ directory (or .task/) with its own `*`
+      gitignore. Store the progress ledger (I032), task briefs, review
+      packages, and any transient state here. Benefits: (1) invisible to git
+      without editing tracked files, (2) each worktree gets its own, (3) no
+      .git/ write issues, (4) `rm -rf` cleans up completely. This is the
+      concrete filesystem mechanism for I014 (resumable state baton) and I020
+      (filesystem-as-state).
+    evidence: |
+      sdd-workspace script: creates .superpowers/sdd/ + .gitignore with `*`.
+      test-sdd-workspace.sh: verifies git invisibility, per-worktree
+      isolation, brief/review-package output locations.
+    notes: |
+      Mechanism for [[I014]], [[I020]], [[I032]]. Tested in their test suite.
+
+  - id: I030
+    title: "One fixer per final review, not per-finding: the context-rebuild cost trap"
+    source: obra/superpowers
+    commits: []
+    files: [skills/subagent-driven-development/SKILL.md]
+    permalink: https://github.com/obra/superpowers/blob/896224c4b1879920ab573417e68fd51d2ccc9072/skills/subagent-driven-development/SKILL.md
+    discovered: 2026-06-23
+    status: candidate
+    change_type: additive
+    area: "execute-task, address-feedback"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 6
+    summary: |
+      SDD's final whole-branch review dispatches ONE fix subagent with the
+      full list of findings, not one subagent per finding. Lesson learned from
+      a real session: per-finding fix waves "cost more than all its tasks
+      combined" because each fixer rebuilds the full codebase context and
+      re-runs the test suite independently. One fixer with the full list
+      amortizes context-building and test runs.
+    application: |
+      When our execute-task or address-feedback dispatches fixes for review
+      findings, batch all findings into ONE fix subagent rather than spawning
+      one per finding. This is especially important for the final whole-branch
+      review where findings span multiple files. The per-finding pattern looks
+      more parallel but the context-rebuild cost dominates. Add this as a
+      documented anti-pattern in execute-task: "one fixer with all findings,
+      not one fixer per finding."
+    evidence: |
+      SKILL.md: "ONE fix subagent with full list" for final-review findings.
+      Per-finding wave cited as a real session cost disaster.
+    notes: |
+      Cost/efficiency lesson from production use. Applies to our
+      address-feedback skill as well.
+
+  - id: I029
+    title: "No-placeholders rule with exhaustive plan-failure definitions"
+    source: obra/superpowers
+    commits: []
+    files: [skills/writing-plans/SKILL.md]
+    permalink: https://github.com/obra/superpowers/blob/896224c4b1879920ab573417e68fd51d2ccc9072/skills/writing-plans/SKILL.md
+    discovered: 2026-06-23
+    status: candidate
+    change_type: additive
+    area: "new-plan, beta-new-plan, review-task"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 6
+    summary: |
+      writing-plans declares specific "plan failures" — patterns that make a
+      plan unusable by an isolated subagent: (1) "TBD/TODO" anywhere, (2) "add
+      appropriate error handling" without code, (3) "write tests for the above"
+      without test code, (4) "Similar to Task N" (tasks may be read out of
+      order, so must repeat). Plans assume the implementer "has zero context
+      for our codebase and questionable taste" / doesn't know good test design.
+      The self-review checklist scans for these before handoff.
+    application: |
+      Add a no-placeholders scan to our new-plan / beta-new-plan self-review
+      step: enumerate the specific failure patterns (TBD, vague directives,
+      cross-references without repetition) and reject them. This is cheap
+      (a few lines in the plan-writing skill) and directly improves plan
+      quality for autonomous execution. Our plans already have AC traceability;
+      this adds the complement — ensuring the plan BODY is implementable by
+      an isolated agent, not just traceable to requirements.
+    evidence: |
+      SKILL.md: "No 'TBD/TODO'", "No 'add appropriate error handling'", "No
+      'write tests for the above' without test code", "No 'Similar to Task N'
+      (must repeat code since tasks may be read out of order)." Plans assume
+      implementer has zero context.
+    notes: |
+      Quality gate that directly supports autonomous execution.
+
+  - id: I028
+    title: "Anti-pre-judgment rule: controller must not bias the reviewer"
+    source: obra/superpowers
+    commits: []
+    files: [skills/subagent-driven-development/SKILL.md]
+    permalink: https://github.com/obra/superpowers/blob/896224c4b1879920ab573417e68fd51d2ccc9072/skills/subagent-driven-development/SKILL.md
+    discovered: 2026-06-23
+    status: candidate
+    change_type: additive
+    area: "execute-task, request-claude-review, request-codex-review"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 6
+    summary: |
+      SDD's controller must NEVER tell the reviewer what not to flag, pre-rate
+      severity ("at most Minor", "the plan chose this approach"), or otherwise
+      bias the review. Plan-mandated defects (things the plan deliberately
+      chose that the reviewer flags as issues) are HUMAN decisions, not
+      controller decisions. "The plan does not grade its own work." A stated
+      rationale never downgrades a finding's severity.
+    application: |
+      Add an anti-pre-judgment rule to our execute-task and review-dispatch
+      skills: when dispatching a reviewer, provide only the diff, the spec,
+      and global constraints — never include controller commentary on what
+      to ignore or how severe findings are. If the reviewer flags something
+      the plan deliberately chose, escalate to the human rather than
+      dismissing it. This strengthens our I011 (generator != approver) with
+      a concrete mechanism: the separation isn't just "different agent" but
+      "no information leakage from generator to approver about expected
+      findings."
+    evidence: |
+      SKILL.md: controller must NEVER tell reviewer what not to flag or
+      pre-rate severity. "The plan does not grade its own work." Plan-
+      mandated defects are human decisions.
+    notes: |
+      Extends [[I011]] with a concrete information-barrier mechanism.
+
+  - id: I027
+    title: "File-based handoffs: pass paths not pasted content to subagents"
+    source: obra/superpowers
+    commits: []
+    files: [skills/subagent-driven-development/SKILL.md, skills/dispatching-parallel-agents/SKILL.md]
+    permalink: https://github.com/obra/superpowers/blob/896224c4b1879920ab573417e68fd51d2ccc9072/skills/subagent-driven-development/SKILL.md
+    discovered: 2026-06-23
+    status: shortlisted
+    change_type: additive
+    area: "execute-task, delegate-task, delegate"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 7
+    summary: |
+      SDD passes briefs, reports, and review diffs as FILE PATHS to subagents,
+      never pasting the content into the dispatch prompt. Pasted text stays
+      resident in every subsequent turn and gets re-read on each compaction.
+      Real failure cited: a dispatch hit 42k chars, 99% was pasted history from
+      prior tasks. The dispatching-parallel-agents skill reinforces: "They
+      should never inherit your session's context or history — you construct
+      exactly what they need."
+    application: |
+      Restructure our execute-task / delegate-task subagent dispatch to pass
+      file paths instead of pasting plan content, task briefs, or review
+      diffs into the prompt. Write transient artifacts (task brief, review
+      package) to the self-ignoring workspace (I031) and pass the path. The
+      subagent reads what it needs; the controller's context stays clean for
+      coordination. This directly extends how many tasks a single controller
+      session can manage before compaction — a concrete autonomy multiplier.
+    evidence: |
+      SKILL.md: "pasted text stays resident + re-read every turn, so
+      briefs/reports/diffs all move as FILE PATHS, never pasted." Real
+      failure: dispatch hit 42k chars. dispatching-parallel-agents: "you
+      construct exactly what they need... preserves your own context for
+      coordination work."
+    notes: |
+      Serves the autonomy goal by extending controller session lifespan.
+      +1 for serving stated goal.
+
+  - id: I026
+    title: "Pre-flight plan review: batch all contradictions into one human question before execution"
+    source: obra/superpowers
+    commits: []
+    files: [skills/subagent-driven-development/SKILL.md]
+    permalink: https://github.com/obra/superpowers/blob/896224c4b1879920ab573417e68fd51d2ccc9072/skills/subagent-driven-development/SKILL.md
+    discovered: 2026-06-23
+    status: shortlisted
+    change_type: additive
+    area: "execute-task"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 7
+    summary: |
+      Before executing any task, SDD's controller scans the plan ONCE for
+      self-contradictions and for anything the plan mandates that the review
+      rubric would treat as a defect. ALL conflicts are batched into one
+      human question before execution begins. If the plan is clean, proceed
+      silently. This prevents wasting subagent cycles on tasks that will fail
+      review due to plan-level issues.
+    application: |
+      Add a pre-flight scan step to execute-task: before dispatching the
+      first task, read the full plan once and check for (1) internal
+      contradictions (e.g. Task 3 says clearLayers() but Task 7 says
+      clearFullLayers()), (2) plan-mandated choices that our review criteria
+      would flag as defects, (3) missing interface definitions between
+      tasks. Batch all findings into one question for the user. This is
+      cheap (one plan read + one question) and prevents the expensive
+      failure of discovering plan bugs mid-execution after several subagent
+      cycles have already run.
+    evidence: |
+      SKILL.md: "scan once for self-contradictions and for anything the plan
+      mandates that the rubric treats as a defect; batch ALL conflicts into
+      one human question before execution." Self-review checklist: "type
+      consistency across tasks (e.g. clearLayers() in T3 vs clearFullLayers()
+      in T7 is a bug)."
+    notes: |
+      Serves the autonomy goal by front-loading plan-quality checks.
+      +1 for serving stated goal.
+
+  - id: I025
+    title: "Consumes/Produces interface blocks for isolated subagent task execution"
+    source: obra/superpowers
+    commits: []
+    files: [skills/writing-plans/SKILL.md]
+    permalink: https://github.com/obra/superpowers/blob/896224c4b1879920ab573417e68fd51d2ccc9072/skills/writing-plans/SKILL.md
+    discovered: 2026-06-23
+    status: shortlisted
+    change_type: additive
+    area: "new-plan, beta-new-plan, execute-task"
+    effort: M
+    impact: high
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 6
+    summary: |
+      Each task in a writing-plans plan carries a structured interface block:
+      Consumes (exact function signatures, types, and names from earlier tasks
+      this task depends on) and Produces (exact names and types later tasks
+      rely on). "A task's implementer sees only their own task; this block is
+      how they learn the names and types neighboring tasks use." This is the
+      linchpin that makes isolated subagent execution possible — each
+      implementer can work without reading the full plan or other tasks.
+      Plans also carry a Files block (Create:/Modify:path:line-range/Test:)
+      per task and Global Constraints copied verbatim into every dispatch.
+    application: |
+      Add Consumes/Produces interface blocks to our plan format (new-plan,
+      beta-new-plan). Each task declares what it needs from prior tasks
+      (names, types, signatures) and what it exports for later tasks. This
+      enables our execute-task to dispatch genuinely isolated subagents —
+      each gets only its own task + interface block, not the full plan. The
+      plan-writing skill's self-review checks type consistency across tasks
+      (e.g. clearLayers() in T3 vs clearFullLayers() in T7). This is the
+      mechanism that makes our I011 (generator != approver) and I013
+      (automate observation not authority) concrete at the plan level.
+    evidence: |
+      SKILL.md: "Interfaces block: Consumes: exact signatures from earlier
+      tasks. Produces: exact names/types later tasks rely on." "A task's
+      implementer sees only their own task; this block is how they learn the
+      names and types neighboring tasks use."
+    notes: |
+      The single most transferable planning-workflow idea from this repo.
+      M effort because it changes our plan format, but the format change is
+      additive (new section, not a rewrite).
+
+  - id: I024
+    title: "Layered instruction assembly: context → rules → template as structured prompt injection"
+    source: Fission-AI/OpenSpec
+    commits: []
+    files: [src/core/artifact-graph/instruction-loader.ts]
+    permalink: https://github.com/Fission-AI/OpenSpec/blob/1b06fddd59d8e592d5b5794a1970b22867e85b1f/src/core/artifact-graph/instruction-loader.ts
+    discovered: 2026-06-20
+    status: candidate
+    change_type: structural-rebuild
+    area: "src/compile.py, skill format, SKILL.md structure"
+    effort: M
+    impact: medium
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 3
+    summary: |
+      OpenSpec assembles per-artifact agent prompts in fixed precedence:
+      <context> (project background) → <rules> (per-artifact constraints) →
+      <template> (literal output format). Each layer is injected via XML tags.
+      The prompt also carries dependency metadata (done/path) and unlocks
+      (what finishing this enables), so a stateless agent self-orients in one
+      read. Separating the three concerns means users customize rules without
+      touching templates, and project context applies to every artifact
+      without being repeated.
+    application: |
+      Restructure our skill bodies so compile.py can layer: (1) project
+      context from CLAUDE.md or a config, (2) per-skill rules/constraints,
+      and (3) the output template. Today SKILL.md is a monolithic blob; this
+      separation would let users inject project-specific context into any
+      skill without forking the skill body, and let skill authors write
+      reusable templates independently from project-specific rules.
+    evidence: |
+      instruction-loader.ts generateInstructions(): assembles <context>,
+      <rules>, <template> in fixed order; enriches with dependencies
+      (done+path) and unlocks. Config rules are keyed by artifact ID.
+    notes: |
+      Worth doing but large — rebuilds our skill format. More a "v2 of
+      compile.py" idea than a quick win.
+
+  - id: I023
+    title: "Workflow-as-DAG: declare planning stages as a dependency graph in data"
+    source: Fission-AI/OpenSpec
+    commits: []
+    files: [src/core/artifact-graph/graph.ts, openspec/schemas/spec-driven/schema.yaml]
+    permalink: https://github.com/Fission-AI/OpenSpec/blob/1b06fddd59d8e592d5b5794a1970b22867e85b1f/src/core/artifact-graph/graph.ts
+    discovered: 2026-06-20
+    status: candidate
+    change_type: structural-rebuild
+    area: "planning-workflow skills, src/compile.py"
+    effort: L
+    impact: high
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 4
+    summary: |
+      OpenSpec's entire multi-step workflow is DATA, not code: a schema.yaml
+      declares artifact nodes (id, generates, template, instruction, requires)
+      forming a DAG. ArtifactGraph (graph.ts) provides getBuildOrder() (Kahn
+      topo-sort), getNextArtifacts(completed), getBlocked(), isComplete() in
+      ~10 lines each. Validation rejects dup IDs, dangling requires, and
+      cycles (DFS reconstructs the cycle path for the error). New workflows =
+      drop a YAML + templates dir, no code change. 40+ specs dogfood this.
+    application: |
+      Our planning workflow is a hardcoded prose sequence (requirements →
+      solution → plan). A declarative DAG schema would make the workflow
+      data-driven: each skill declares what it produces and what it requires,
+      and the executor resolves the order. This would let users customize the
+      planning workflow (skip solution? add a research step?) without editing
+      skill internals, and would make the workflow machine-checkable (detect
+      missing steps, cycles, unmet deps). The DAG model also enables parallel
+      artifact creation — specs and design can proceed in parallel if both
+      only require proposal.
+    evidence: |
+      schemas/spec-driven/schema.yaml: 4 artifacts, 4 edges, ~20 lines.
+      graph.ts getBuildOrder(): Kahn topological sort with deterministic
+      tie-breaking. state.ts detectCompleted(): filesystem glob existence.
+    notes: |
+      Ambitious — fundamentally changes how we define workflows. Would make
+      the planning-workflow skills declarative rather than procedural. Worth
+      exploring but gated by the effort of a schema format + resolver.
+
+  - id: I022
+    title: "Adapter/registry pattern for multi-tool skill delivery"
+    source: Fission-AI/OpenSpec
+    commits: []
+    files: [src/core/command-generation/types.ts, src/core/command-generation/generator.ts, src/core/command-generation/registry.ts]
+    permalink: https://github.com/Fission-AI/OpenSpec/blob/1b06fddd59d8e592d5b5794a1970b22867e85b1f/src/core/command-generation/registry.ts
+    discovered: 2026-06-20
+    status: shortlisted
+    change_type: additive
+    area: "src/compile.py, skill packaging"
+    effort: M
+    impact: medium
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 4
+    summary: |
+      OpenSpec fans one source of workflow content out to 26 AI coding tools
+      through three clean layers: (1) CommandContent — tool-agnostic data
+      (id, name, description, body); (2) ToolCommandAdapter interface — each
+      tool implements getFilePath(id) and formatFile(content); (3)
+      CommandAdapterRegistry — a Map<toolId, adapter>. The generator is
+      tool-blind: {path: adapter.getFilePath(id), content:
+      adapter.formatFile(content)}. Each adapter is ~30 lines. A parallel
+      AI_TOOLS registry holds tool metadata (skillsDir, detectionPaths).
+      Generated files embed generatedBy version in frontmatter so update can
+      distinguish managed vs user-authored files.
+    application: |
+      We currently rely on `npx skills install` to handle multi-agent
+      delivery, which works but is opaque. Adding an adapter layer to
+      compile.py would let us emit different formats per agent natively:
+      SKILL.md for Claude Code, a different format for Codex, etc. More
+      importantly, the content/packaging separation is the right abstraction
+      — write the skill content once, let adapters handle the per-tool
+      quirks (path, frontmatter dialect, file extension). The version-stamp
+      idea (generatedBy) belongs here too.
+    evidence: |
+      registry.ts: 26 adapters, each ~30 lines. generator.ts generate():
+      tool-blind {path, fileContent} pairs. skills.ts
+      extractGeneratedByVersion: only touch files with matching provenance.
+    notes: |
+      Serves the multi-agent supporting goal. Partially overlaps I008
+      (per-skill cross-agent manifest) — this is the fuller version.
+
+  - id: I021
+    title: "Version-stamped compiled output for drift-aware updates"
+    source: Fission-AI/OpenSpec
+    commits: []
+    files: [src/core/workspace/skills.ts]
+    permalink: https://github.com/Fission-AI/OpenSpec/blob/1b06fddd59d8e592d5b5794a1970b22867e85b1f/src/core/workspace/skills.ts
+    discovered: 2026-06-20
+    status: shortlisted
+    change_type: additive
+    area: "src/compile.py, skills/ output"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 6
+    summary: |
+      OpenSpec stamps every generated file with generatedBy: <version> in
+      frontmatter. On update, extractGeneratedByVersion() identifies which
+      files OpenSpec manages vs which the user authored manually. This
+      enables idempotent, drift-aware updates: only touch managed files,
+      never clobber user-authored ones, and prune skills for workflows no
+      longer in the active profile.
+    application: |
+      compile.py currently emits skills/ output with no provenance. Adding a
+      generated-by header (version + timestamp or source hash) to every
+      compiled SKILL.md would enable: (1) `make check` can verify compiled
+      output matches source without byte-diffing the whole body — just check
+      the hash; (2) `make install` can skip unchanged skills; (3) users who
+      manually edit a compiled skill would not have their edits silently
+      overwritten. Complements I001 (drift-check) — the stamp is the
+      mechanism, I001 is the assertion.
+    evidence: |
+      skills.ts:277 extractGeneratedByVersion(): parses generatedBy from
+      SKILL.md frontmatter, only manages files it recognizes as its own.
+      Prune step removes skills for deactivated workflows.
+    notes: |
+      Complements [[I001]]. Cheap, mechanical, high-confidence.
+
+  - id: I020
+    title: "Filesystem-as-state: derive workflow readiness from disk, not a separate tracker"
+    source: Fission-AI/OpenSpec
+    commits: []
+    files: [src/core/artifact-graph/state.ts, src/core/artifact-graph/outputs.ts]
+    permalink: https://github.com/Fission-AI/OpenSpec/blob/1b06fddd59d8e592d5b5794a1970b22867e85b1f/src/core/artifact-graph/state.ts
+    discovered: 2026-06-20
+    status: shortlisted
+    change_type: additive
+    area: "execute-task, delegate-task, status-report"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 7
+    summary: |
+      OpenSpec computes artifact completion purely from filesystem existence:
+      detectCompleted() checks whether each artifact's generates path (or
+      glob) exists on disk. No separate state file, no tracker to corrupt or
+      de-sync. Done iff output file exists. Manual rm resets that step.
+      State is recomputed from disk every call, never cached or persisted.
+      This kills the "tracker says X but disk says Y" failure class entirely.
+    application: |
+      For our autonomous execution skills: derive phase completion from disk
+      artifacts rather than (only) from a persisted state file. Is the plan
+      written? Check if plan.md exists and has content. Is the PR open? Check
+      git branch state. Are tests passing? Run them. This is the concrete
+      mechanism behind I015's principle (observe-fresh-state-first) — instead
+      of maintaining a separate tracker that can diverge, make the artifacts
+      themselves the source of truth for workflow progress. Complementary
+      to I014 (state baton): the baton records intent/terminal-status, while
+      filesystem checks verify actual progress.
+    evidence: |
+      state.ts detectCompleted(): for each artifact, check if generates path
+      exists on disk (glob-aware via outputs.ts). Returns Set<artifactId>.
+      No database, no JSON state file, no in-memory cache.
+    notes: |
+      Complements [[I014]] and [[I015]]. The baton says what you intended;
+      the filesystem says what actually happened. Use both.
+
+  - id: I019
+    title: "'Do Not Promise Yet' guards: explicitly list deferred capabilities in skill descriptions"
+    source: Fission-AI/OpenSpec
+    commits: []
+    files: [docs/workspaces-beta/agent-cli-playbook.md]
+    permalink: https://github.com/Fission-AI/OpenSpec/blob/1b06fddd59d8e592d5b5794a1970b22867e85b1f/docs/workspaces-beta/agent-cli-playbook.md
+    discovered: 2026-06-20
+    status: shortlisted
+    change_type: additive
+    area: "CLAUDE.md skill-description guidelines, skill-creator, skill-reviewer"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: medium
+    dependencies: none
+    score: 7
+    summary: |
+      OpenSpec's agent-cli-playbook includes an explicit "Do Not Promise Yet"
+      list: capabilities that are planned but not yet built, so agents don't
+      hallucinate them into existence. This is distinct from the "Not
+      applicable for X" boundary in skill descriptions — it guards against
+      the agent promising the skill's OWN deferred features, not just
+      preventing mis-triggers with other skills.
+    application: |
+      Add a "Not yet" authoring rule to our skill-description guidelines:
+      when a skill has known deferred scope (planned features, gated-off
+      capabilities, beta limitations), the description should explicitly list
+      what it CANNOT do yet. This prevents agents from hallucinating that a
+      skill can do something it's been designed for but not yet built. Our
+      existing "Don't" clause handles cross-skill boundaries; this handles
+      within-skill scope. Cheap addition to the description-writing rules in
+      CLAUDE.md and the skill-reviewer lint checks. Complements I003
+      (anti-hallucination grounding) — I003 says "don't fabricate external
+      facts"; this says "don't fabricate your own capabilities."
+    evidence: |
+      agent-cli-playbook.md "Do Not Promise Yet" section: explicit list of
+      unbuilt workspace capabilities agents must not claim to support.
+      Prevents hallucination at the skill's own boundary, not just at
+      cross-skill boundaries.
+    notes: |
+      Complements [[I003]]. Serves the routing-quality supporting goal.
+
+  - id: I018
+    title: "Three-dimension verification: completeness × correctness × coherence"
+    source: Fission-AI/OpenSpec
+    commits: []
+    files: [docs/workflows.md, docs/commands.md]
+    permalink: https://github.com/Fission-AI/OpenSpec/blob/1b06fddd59d8e592d5b5794a1970b22867e85b1f/docs/workflows.md
+    discovered: 2026-06-20
+    status: shortlisted
+    change_type: additive
+    area: "execute-task, code-review, complete-task, verify skill"
+    effort: S
+    impact: medium
+    risk: low
+    confidence: high
+    dependencies: none
+    score: 7
+    summary: |
+      OpenSpec's /opsx:verify checks implementation against artifacts across
+      three orthogonal dimensions: COMPLETENESS (all tasks done, all
+      requirements implemented, scenarios covered), CORRECTNESS
+      (implementation matches spec intent, edge cases handled, error states
+      match), COHERENCE (design decisions reflected in code, naming
+      consistent, patterns match). Each dimension surfaces issues as
+      CRITICAL/WARNING/SUGGESTION. The taxonomy is memorable, exhaustive, and
+      prevents the common failure where "tests pass" is mistaken for "done."
+    application: |
+      Adopt the three-dimension framework as a structured verification step
+      in execute-task and complete-task: before declaring done, the agent
+      checks (1) completeness — every AC has evidence, (2) correctness —
+      implementation matches the plan's intent, not just the letter, (3)
+      coherence — solution design is reflected in the actual code structure.
+      This gives our I010 completion contract a concrete verification
+      vocabulary: the contract rows map to completeness, the evidence quality
+      maps to correctness, and the design-vs-code alignment maps to
+      coherence. The taxonomy is also a natural structure for code-review
+      findings. Cheap to add as a checklist to existing skills.
+    evidence: |
+      docs/commands.md /opsx:verify: three-dimension table with examples.
+      docs/workflows.md: "verify checks completeness, correctness, and
+      coherence" with per-dimension output showing pass/warning counts.
+    notes: |
+      Strengthens [[I010]] (completion contract) and [[I012]] (prove-the-
+      test). The dimensions are the vocabulary; the contract is the
+      mechanism.
 
   - id: I017
     title: "Capstone: a shared 'loop doctrine' reference every autonomous skill inherits"
