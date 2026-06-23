@@ -185,10 +185,12 @@ then run `/resolve-comments` in the coordinator.
 | ----- | ---------------- | ------------ | ------------------ |
 | **Claude Code** | `claude -p --add-dir "$CWD" --dangerously-skip-permissions "/review-task …"` | **Requires** `< /dev/null` — inherited open stdin stalls ~3s or blocks in background | `--dangerously-skip-permissions` |
 | **Codex** | `codex exec --cd "$CWD" --sandbox workspace-write "…"` | **Requires** `< /dev/null` — blocks on open stdin with "Reading additional input from stdin…" | `--sandbox workspace-write` (writes task docs) |
-| **Grok** | `grok -p --cwd "$CWD" --permission-mode bypassPermissions --always-approve "/review-task …"` | **No redirect needed** — headless mode ignores piped stdin | `--permission-mode bypassPermissions --always-approve` |
+| **Grok** | `grok --cwd "$CWD" --permission-mode bypassPermissions --always-approve --single "/review-task …"` | **No redirect needed** — headless mode ignores piped stdin | `--permission-mode bypassPermissions --always-approve` |
 
 Grok discovers skills from `.agents/skills/` (same tree `npx skills install`
 writes for Codex). Ensure `review-task` is installed before delegating.
+`--single` (short form `-p`) takes the prompt as its immediate value; never put
+other flags between it and the prompt.
 
 Auth: Claude uses `~/.claude/.credentials.json`; Codex uses `codex login`;
 Grok uses `~/.grok/auth.json` or `XAI_API_KEY`.

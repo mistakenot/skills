@@ -12,11 +12,22 @@
 
 **docs**
 
+- [Design: Executable Completion Contracts via `<pd-ac>` Checks](docs/ac-completion-contract-design.md): Design record for turning acceptance criteria into execution-time executable contracts — nested declarative check elements inside `<pd-ac>`, a check vocabulary, progressive-disclosure rendering, and the deferred pd-verify execution engine. Read when: designing or extending the `<pd-ac>` completion-contract mechanism, epic-001's check components, or the deferred pd-verify execution engine
 - [Spike: Clean-room isolation for assurance-strategist evals](docs/assurance-eval-isolation-spike.md): Tech spike (task 001) verifying clean-room isolation for headless `claude -p` eval runs: auth via copied credentials, config-dir relocation, skill discovery, the two required isolation conditions, and the built-in command floor. Verdict GO (conditional). The reusable recipe distilled from this lives in headless-claude-cli-evals.md. Read when: deciding how the assurance-strategist eval harness isolates with-skill vs without-skill arms, or wanting the evidence behind the headless clean-room recipe (what was run, observed, and concluded)
 - [Assurance Eval System](docs/assurance-eval-system.md): Two-arm differential eval harness for the assurance-strategist skill: architecture, how to run (stub vs live), mechanical checks (T1/T2), grader dimensions, how to add new cases and dimensions. Read when: running evals, adding new eval cases, or understanding how the with-skill vs without-skill comparison works
 - [Assurance Strategist — Research Diary](docs/assurance-strategist-research-diary.md): Research diary for the assurance-strategist skill: breadth-first catalog of testing/assurance techniques, composition frames for combining them, and open design questions. Read when: designing or extending the assurance-strategist skill, or looking up the technique catalog and composition frames behind it
+- [Compound Engineering vs Our Planning Workflow](docs/ce-plan-comparison.md): Feature-by-feature comparison of the ce-plan (Compound Engineering) skill ecosystem with our task planning workflow: document structure, execution model, knowledge loop, and feature presence table. Read when: comparing our planning workflow to Compound Engineering, evaluating which CE features to adopt, or understanding architectural tradeoffs between single-artifact and multi-document planning approaches
 - [Headless Claude CLI for Evals (isolation, flags, output)](docs/headless-claude-cli-evals.md): Reference for running headless `claude -p` in an isolated clean room: how auth, config-dir relocation, skill discovery, and context inheritance actually behave, the isolation recipe for eval arms, the relevant CLI flags, the JSON output shape, and the non-obvious gotchas. Verified empirically against Claude Code 2.1.175. Read when: building or debugging anything that runs `claude -p` headlessly — especially eval harnesses that need a clean-room agent isolated from this repo's skills/CLAUDE.md/hooks; also a reference for the headless CLI flags and JSON output envelope
+- [pd-components — Visual Redesign Research](docs/pd-visual-redesign-research.md): Research diary for making planning-doc more visual and graphical: sources examined, findings, proposed new components, the derivation insight, and prioritised next steps. Read when: planning the next batch of pd-components work, adding new engineering-specific components, or understanding the rationale behind the visual-first redesign direction
 - [Portable Task Workflow](docs/portable-task-workflow.md): Self-contained reference for implementing the full AI-agent-driven feature delivery workflow from requirements through merged PR with feedback, designed for reuse across repos. Read when: setting up the task workflow in a new repo, or understanding the end-to-end plan-to-merge lifecycle
+
+**docs/reflection**
+
+- [Basic Three-File Reflection Playbook Design](docs/reflection/basic-three-file-design.md): Three-stage design for mining task observations, refining evergreen rules, and analyzing append-only rule-retrieval telemetry. Read when: designing or implementing the reflection playbook's observe, refine, or search stages
+
+**docs/research**
+
+- [inreasing-planning-autonomy.md](docs/research/inreasing-planning-autonomy.md)
 
 **docs/reviews**
 
