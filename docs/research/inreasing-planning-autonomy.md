@@ -1,3 +1,10 @@
+---
+hash: "6cf2c620"
+read_when: "researching autonomous planning techniques or reducing gatekeeping in an AI agent planning workflow"
+summary: "Recency-biased 2026 research refresh on autonomous planning for AI software factories: spec-driven development, human-on-the-loop oversight, autonomy levels, and the comment-don't-block artifact-review pattern."
+title: "Autonomous Planning for Software Factories — 2026 Update"
+---
+
 # Autonomous Planning for Software Factories — 2026 Update (last 6–12 months)
 
 *Recency-biased refresh. Prioritizes Dec 2025–Jun 2026. Supersedes stale items in the prior report (notably GitHub Copilot Workspace, now discontinued). Current as of June 2026.*

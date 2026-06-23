@@ -67,7 +67,7 @@ else
       SKILLS="planning-doc"
       ;;
     reflection)
-      SKILLS="learning-diary"
+      SKILLS="learning-diary,playbook-observe,playbook-refine,playbook-search"
       ;;
     assurance)
       SKILLS="assurance-strategist"

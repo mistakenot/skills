@@ -29,7 +29,7 @@ pkg_desc() {
     maintenance) echo "Documentation maintenance: keep READMEs and docs in sync with the current state of the code." ;;
     exploration) echo "De-risk ideas before building: run exploratory tech spikes that validate assumptions and stress-test approaches." ;;
     rich-docs) echo "Author rich single-file HTML planning docs with tabs, mermaid diagrams, file-change trees, and inline comment threads." ;;
-    reflection) echo "Mine git history, PRs, and session transcripts into a structured learning diary of techniques and breakthroughs." ;;
+    reflection) echo "Reflection loop: mine learnings into a diary, and observe→refine→search reusable task rules." ;;
     assurance) echo "Design end-to-end assurance and testing strategies for autonomous agent-built software." ;;
     research) echo "External-research skills: track open-source repos and mine their updates into a ranked backlog of ideas to borrow." ;;
     *) return 1 ;;
@@ -43,7 +43,7 @@ pkg_skills() {
     maintenance) echo "revise-readme" ;;
     exploration) echo "tech-spike" ;;
     rich-docs) echo "planning-doc" ;;
-    reflection) echo "learning-diary" ;;
+    reflection) echo "learning-diary playbook-observe playbook-refine playbook-search" ;;
     assurance) echo "assurance-strategist" ;;
     research) echo "borrow-from-oss" ;;
     *) return 1 ;;

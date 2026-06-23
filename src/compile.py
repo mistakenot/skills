@@ -901,11 +901,16 @@ if __name__ == "__main__":
         keywords=["planning", "documentation", "html"],
     )
 
+    reflect_overview = ref("reflection-overview.md")
+    reflect_helper = asset("src/reflection/scripts/reflect.py", "scripts/reflect.py")
     reflection = module("reflection",
         skill("learning-diary"),
-        description="Mine git history, PRs, and session transcripts into a structured learning diary of techniques and breakthroughs.",
+        skill("playbook-observe", refs=[reflect_overview], assets=[reflect_helper]),
+        skill("playbook-refine",  refs=[reflect_overview], assets=[reflect_helper]),
+        skill("playbook-search",  refs=[reflect_overview], assets=[reflect_helper]),
+        description="Reflection loop: mine learnings into a diary, and observe→refine→search reusable task rules.",
         category="productivity",
-        keywords=["learning", "reflection", "diary"],
+        keywords=["learning", "reflection", "diary", "rules", "playbook"],
     )
 
     assurance = module("assurance",

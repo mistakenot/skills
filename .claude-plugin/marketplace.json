@@ -41,7 +41,7 @@
     {
       "name": "reflection",
       "source": "./plugins/reflection",
-      "description": "Mine git history, PRs, and session transcripts into a structured learning diary of techniques and breakthroughs.",
+      "description": "Reflection loop: mine learnings into a diary, and observe\u2192refine\u2192search reusable task rules.",
       "category": "productivity"
     },
     {

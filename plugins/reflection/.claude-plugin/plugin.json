@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "reflection",
-  "description": "Mine git history, PRs, and session transcripts into a structured learning diary of techniques and breakthroughs.",
+  "description": "Reflection loop: mine learnings into a diary, and observe\u2192refine\u2192search reusable task rules.",
   "author": {
     "name": "Charlie",
     "email": "github.5ef725@todevnull.work"
@@ -12,6 +12,8 @@
   "keywords": [
     "learning",
     "reflection",
-    "diary"
+    "diary",
+    "rules",
+    "playbook"
   ]
 }
