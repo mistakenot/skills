@@ -72,7 +72,7 @@ content. pd-* components style themselves.
 
 ## Components
 
-### <pd-doc title status pr generated>
+### <pd-doc title status pr generated next-prompt>
 Document shell: status banner, header, PR link bar, tab navigation (when it
 contains pd-tab children), floating "Copy for agent" bar for pending comments,
 provenance footer. Direct children: either pd-tab elements, or sections directly.
@@ -88,6 +88,18 @@ pr: "pending" shows a muted placeholder; a URL (e.g.
 "https://github.com/org/repo/pull/42") renders a clickable badge. Omit entirely
 if no PR tracking is needed. When the executor opens a PR, it should update
 pr="pending" to the actual URL.
+
+next-prompt: optional. The prompt/command a human runs to advance this doc to
+its NEXT workflow stage once they're satisfied with the current one — e.g. after
+reviewing the Requirements tab, the next prompt is the solution step. Rendered as
+a prominent "Next step" banner at the top of the doc with a copy-to-clipboard
+button, so the reviewer can approve and push to the next stage in one click. It's
+a hint, not an action: the doc author fills it in; the human stays the gate (the
+banner dims automatically while any thread/question is open, since the next step
+isn't actionable until the doc is unblocked). Set it to the exact thing the human
+should paste — usually a slash command with the task id, e.g.
+next-prompt="/new-solution 042". Clear or update it when the stage changes; omit
+it on terminal docs (nothing comes next) or one-off docs with no pipeline.
 
 ### <pd-tab name>
 One page of a tabbed doc. Tab buttons show a badge with the count of open
@@ -409,9 +421,37 @@ Drop one at the top of the Vision tab.
 <pd-outcome></pd-outcome>
 ```
 
-### <pd-ac id title phases tests>
+### <pd-ac id title phases tests open>
 Acceptance-criteria card with traceability chips. phases: comma-separated
 phase numbers covering it; tests: comma-separated test files.
+
+**Check-free cards (every already-authored doc) are unchanged:** a pd-ac with no
+pd-ac-check-* child renders exactly as before — head chips, body visible, no
+pill, no disclosure, whole-card click dispatches `pd:phase-selected`.
+
+**With ≥1 pd-ac-check-* child the card renders its completion contract:**
+
+- **Rollup pill + count.** The head gains a `.pd-ac-pill` coloured by the rolled-
+  up status plus an `n/m checks passing` count (m = total checks, n = checks
+  authored `status="proved"`). The AC rolls up `proved` only when EVERY check is
+  `proved`; otherwise the worst-severity status present, ordered
+  `contradicted ≻ missing ≻ weak ≻ pending ≻ proved` (absent/unknown → pending).
+  Colour: `proved`→green · `contradicted`→red · `weak`/`missing`→amber ·
+  `pending`→grey (reuses the existing ok/bad/warn/neutral vars).
+- **Two-level progressive disclosure (AC → checks → evidence).** The card is
+  collapsed by default behind a native `<details>` whose summary is the AC head.
+  Expanding reveals the Given/When/Then body and one row per check (status glyph
+  + a `type · key-attr` label). A check carrying a `<pd-ac-evidence>` child
+  reveals its captured evidence (+ a muted commit/dirty/at last-run stamp) at a
+  second disclosure level. Author evidence as a direct child of the check:
+  `<pd-ac-check-* …><pd-ac-evidence>…captured output…</pd-ac-evidence></…>`.
+- **Auto-open.** A card whose rollup is `contradicted` renders expanded
+  automatically; `<pd-ac open>` pins it open explicitly.
+- **Click model.** The header/summary toggles the disclosure; only the **phase
+  chips** (not the whole card) fire the `pd:phase-selected` reverse-traceability
+  trigger. (Check-free cards keep the old whole-card click.)
+- Purely additive: rollup/disclosure engage only when checks are present; the
+  rollup is over AUTHORED/written-back status — it executes nothing.
 
 ```html
 <pd-ac id="AC-1" title="Requests over the limit get 429" phases="1,2" tests="e2e/rate-limit.spec.ts">
@@ -420,6 +460,74 @@ phase numbers covering it; tests: comma-separated test files.
 - When it sends one more request within the window
 - Then the gateway responds `429` with a `Retry-After` header
   </script></md>
+</pd-ac>
+```
+
+### <pd-contract>
+Document-level completion banner. Author it (like pd-decisions) where you want
+the summary — e.g. just above the acceptance criteria. Fully derived, no
+attributes: it scans every pd-ac that carries checks, rolls each up the SAME way
+the card does (`rollupContract` over each AC's status), and renders an
+`n/m ACs proved` count (m = ACs that carry checks, n = those that rolled up to
+`proved`) + a contract-status pill. The contract is `proved` only when EVERY
+participating AC is `proved`. Check-free ACs are excluded. It renders
+authored/written-back status only — it executes nothing — and a doc with no
+pd-contract is unaffected.
+
+```html
+<pd-contract></pd-contract>
+```
+
+### <pd-ac-check-* family> (pd-ac-check-command / -output / -test / -file-exists / -file-contains)
+Five inert checks that nest inside a pd-ac to declare *how* the criterion is
+proved (executable completion contract). Each carries only input attributes; the
+authored shape is the single source of truth (`src/ac-check-core.js`,
+`AC_CHECK_SCHEMA`). The five types and their attributes:
+
+- `pd-ac-check-command run expect-exit` — run a command, assert its exit code
+  (`expect-exit` defaults to 0).
+- `pd-ac-check-output run matches` — run a command, assert stdout matches the
+  `matches` regex.
+- `pd-ac-check-test report name suite classname file` — look up a testcase in a
+  JUnit XML `report` by portable identity (see contract below).
+- `pd-ac-check-file-exists path` — assert `path` exists.
+- `pd-ac-check-file-contains path pattern` — assert `path` matches `pattern`.
+
+**test identity contract.** `report` + `name` are the required portable identity;
+`suite` / `classname` / `file` are optional qualifiers that narrow the match.
+Lookup rule: 0-or-many matches = non-proof, never a pass.
+
+**Behavioural checks (G3).** A check is behavioural when it proves runtime
+behaviour rather than static presence: `test`, `output`, and a *negative*
+`command` (one with a non-zero `expect-exit`) are behavioural; a plain exit-0
+`command`, `file-exists`, and `file-contains` are static gates.
+
+**Reserved write-back shape.** A later phase writes a result back onto each check;
+the shape is reserved (frozen) now, unused in this version:
+- `status` attribute, vocabulary: `proved` · `contradicted` · `weak` · `missing`
+  · `pending`.
+- evidence as a reserved **child element** (carries multi-line output), not an
+  attribute.
+- provenance as reserved attributes: `commit`, `dirty`, `at` (when the write
+  happened and against what tree).
+
+**Inert in this version — no status / no rendering yet.** The elements register
+and expose a read-only `.check` parse of their own attributes, but add no DOM,
+no visual treatment, no status, and no events; the write-back / status fields
+above are reserved and not yet written or rendered.
+
+```html
+<pd-ac id="AC-1" title="Requests over the limit get 429" phases="1,2" tests="e2e/rate-limit.spec.ts">
+  <md><script type="text/plain">
+- Given a client at its request budget
+- When it sends one more request within the window
+- Then the gateway responds `429` with a `Retry-After` header
+  </script></md>
+  <pd-ac-check-test report="junit.xml" name="returns 429 over budget" classname="RateLimit"></pd-ac-check-test>
+  <pd-ac-check-command run="npm run typecheck" expect-exit="0"></pd-ac-check-command>
+  <pd-ac-check-output run="curl -s -o /dev/null -w '%{http_code}' localhost/api" matches="429"></pd-ac-check-output>
+  <pd-ac-check-file-exists path="src/rate-limit.ts"></pd-ac-check-file-exists>
+  <pd-ac-check-file-contains path="src/rate-limit.ts" pattern="Retry-After"></pd-ac-check-file-contains>
 </pd-ac>
 ```
 

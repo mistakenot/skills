@@ -11,3 +11,6 @@ src/assurance/evals/results/**
 .venv/
 __pycache__/
 .claude/worktrees
+
+# bv (beads viewer) local config and caches
+.bv/

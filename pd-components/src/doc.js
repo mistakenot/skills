@@ -19,6 +19,7 @@ class PdDoc extends PdElement {
 
     this._initPrLink(header);
     this._initTabs(header);
+    this._initNextStep(header);
     this._initStatusBar();
     this._initFooter();
     this._initExportBar(title);
@@ -86,6 +87,38 @@ class PdDoc extends PdElement {
     this._statusLabel.textContent = s.label;
     this._statusJumpTarget = s.kind === 'blocked' ? (s.blockers && s.blockers[0]) : null;
     bar.classList.toggle('pd-sb-clickable', !!this._statusJumpTarget);
+    // The next step isn't actionable while the doc is blocked — dim it so the
+    // reader resolves open threads/questions before advancing the workflow.
+    if (this._nextStep) this._nextStep.classList.toggle('pd-next-blocked', s.kind === 'blocked');
+  }
+
+  // Optional "next step" banner: the prompt a human runs to advance the doc to
+  // the next workflow stage once they're satisfied with it (e.g. after reviewing
+  // the Requirements tab, run /beta-new-solution). Rendered prominently at the
+  // top with a copy-to-clipboard button. The author fills in the next-prompt
+  // attribute; the gating (human review) stays with the human.
+  _initNextStep(header) {
+    const next = this.getAttribute('next-prompt');
+    if (!next) return;
+    const copyBtn = el('button', {
+      class: 'pd-btn pd-btn-primary pd-next-copy',
+      onclick: async () => {
+        const ok = await copyText(next);
+        copyBtn.textContent = ok ? 'Copied!' : 'Select & copy';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+      },
+    }, 'Copy');
+    const banner = el('div', { class: 'pd-nextstep' }, [
+      el('span', { class: 'pd-next-label' }, 'Next step'),
+      el('code', { class: 'pd-next-cmd' }, next),
+      copyBtn,
+    ]);
+    // Insert before the tab bar so it stays full-width above the sidenav split;
+    // fall back to just after the PR link / header for tabless docs.
+    const tabnav = this.querySelector('.pd-tabnav');
+    if (tabnav) tabnav.before(banner);
+    else (this.querySelector('.pd-pr-link') || header).after(banner);
+    this._nextStep = banner;
   }
 
   _initPrLink(header) {

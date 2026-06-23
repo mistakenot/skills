@@ -72,7 +72,7 @@ content. pd-* components style themselves.
 
 ## Components
 
-### <pd-doc title status pr generated>
+### <pd-doc title status pr generated next-prompt>
 Document shell: status banner, header, PR link bar, tab navigation (when it
 contains pd-tab children), floating "Copy for agent" bar for pending comments,
 provenance footer. Direct children: either pd-tab elements, or sections directly.
@@ -88,6 +88,18 @@ pr: "pending" shows a muted placeholder; a URL (e.g.
 "https://github.com/org/repo/pull/42") renders a clickable badge. Omit entirely
 if no PR tracking is needed. When the executor opens a PR, it should update
 pr="pending" to the actual URL.
+
+next-prompt: optional. The prompt/command a human runs to advance this doc to
+its NEXT workflow stage once they're satisfied with the current one — e.g. after
+reviewing the Requirements tab, the next prompt is the solution step. Rendered as
+a prominent "Next step" banner at the top of the doc with a copy-to-clipboard
+button, so the reviewer can approve and push to the next stage in one click. It's
+a hint, not an action: the doc author fills it in; the human stays the gate (the
+banner dims automatically while any thread/question is open, since the next step
+isn't actionable until the doc is unblocked). Set it to the exact thing the human
+should paste — usually a slash command with the task id, e.g.
+next-prompt="/new-solution 042". Clear or update it when the stage changes; omit
+it on terminal docs (nothing comes next) or one-off docs with no pipeline.
 
 ### <pd-tab name>
 One page of a tabbed doc. Tab buttons show a badge with the count of open
