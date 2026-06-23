@@ -1,5 +1,6 @@
 ---
 hash: "0fee0e5e"
+id: "6fa813f1"
 read_when: "designing or extending the `<pd-ac>` completion-contract mechanism, epic-001's check components, or the deferred pd-verify execution engine"
 summary: "Design record for turning acceptance criteria into execution-time executable contracts — nested declarative check elements inside `<pd-ac>`, a check vocabulary, progressive-disclosure rendering, and the deferred pd-verify execution engine."
 title: "Design: Executable Completion Contracts via `<pd-ac>` Checks"
