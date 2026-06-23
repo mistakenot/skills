@@ -75,6 +75,35 @@ echo '<ndjson-or-json-array>' | python3 "$CLAUDE_SKILL_DIR/scripts/reflect.py" \
 `$CLAUDE_SKILL_DIR` is this skill's install directory (Codex: substitute the
 directory containing this `SKILL.md`).
 
+### Requirements and operating at scale
+
+Runtime tools: `python3` (+ the bundled `reflect.py`), `yq` (mikefarah), `auto
+search`, and `sha256sum`. `duckdb` is needed **only** for Refine's retrieval
+analytics — if it is absent, skip analytics (it only *nominates* rules, it never
+gates correctness). If `yq` is unavailable, `python3` with `pyyaml` is a working
+fallback for YAML reads/writes (slower; it loads the whole file).
+
+These stores are built to scale to thousands of records **without ever loading a
+whole file into agent context**. Use the streaming tools, never read-all-then-
+rewrite:
+
+- **Append** in place (verified: appending to a 5,000-record / 1.3 MB file
+  streams in <0.5 s):
+  `yq -i '.observations += [ {…}, {…} ]' docs/reflection/observations.yaml`
+- **Select** only the records you need by id (e.g. observations after a cursor):
+  `yq '.observations[] | select(.id > "<cursor>")' docs/reflection/observations.yaml`
+- **Match** rules cheaply by reading only `(id, read_when, lifecycle)` tuples
+  (~20× smaller than the full file), then fetch `value`/`why` for the few
+  selected ids:
+  `yq -r '.rules[] | [.id, .read_when, .lifecycle] | @tsv' docs/reflection/rules.yaml`
+- **Analyse** `retrievals.ndjson` with DuckDB, which queries the file directly
+  (200k events aggregate in <0.2 s). Write any intermediate JSON to a non-hidden
+  working path the tools can read.
+
+Tooling caveat: a snap-packaged `yq` (the strict `home` interface) can only read
+files under **non-hidden `$HOME`** paths — operate on the repo's
+`docs/reflection/` paths, not `/tmp` or dot-directories like `~/.cache`.
+
 ## What an observation is
 
 An ID-keyed, immutable record:
@@ -195,7 +224,9 @@ For each accepted observation, mint an ID:
 python3 "$CLAUDE_SKILL_DIR/scripts/reflect.py" gen-id --count <N>
 ```
 
-Append the new immutable `observations[]` records. **Then** update the ledger:
+Append the new immutable `observations[]` records **in place** with
+`yq -i '.observations += [ … ]'` (see "operating at scale" above) — do not read
+the whole file into context and rewrite it. **Then** update the ledger:
 add every processed session ID to `cursors.sessions.processed`; for each
 feedback file write its `content_sha256` + `processed_at`; advance
 `cursors.sessions.last_scan_started_at` to this run's `scan_started_at`

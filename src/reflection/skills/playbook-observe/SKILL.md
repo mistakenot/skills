@@ -131,7 +131,9 @@ For each accepted observation, mint an ID:
 python3 "$CLAUDE_SKILL_DIR/scripts/reflect.py" gen-id --count <N>
 ```
 
-Append the new immutable `observations[]` records. **Then** update the ledger:
+Append the new immutable `observations[]` records **in place** with
+`yq -i '.observations += [ … ]'` (see "operating at scale" above) — do not read
+the whole file into context and rewrite it. **Then** update the ledger:
 add every processed session ID to `cursors.sessions.processed`; for each
 feedback file write its `content_sha256` + `processed_at`; advance
 `cursors.sessions.last_scan_started_at` to this run's `scan_started_at`

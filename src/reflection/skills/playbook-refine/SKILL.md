@@ -43,7 +43,10 @@ rules:
 Because observation IDs are time-ordered, select every observation whose ID
 sorts lexically **after** `last_processed_observation`, process oldest-first,
 and advance the cursor only after a successful write. No new observations is a
-no-op.
+no-op. At scale, fetch just the new slice with
+`yq '.observations[] | select(.id > "<cursor>")'` rather than loading the whole
+file, and read existing rules as `(id, read_when, lifecycle)` tuples (see
+"operating at scale" above) to decide ADD vs UPDATE/MERGE.
 
 ## Per-observation action (pick exactly one)
 

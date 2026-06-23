@@ -38,10 +38,12 @@ python3 "$CLAUDE_SKILL_DIR/scripts/reflect.py" gen-id   # -> search_id
 ```
 
 1. **Read lightweight tuples only.** From `rules.yaml`, read just
-   `(id, read_when, updated, lifecycle)` for each rule. If the file is large,
-   shard those tuples across matcher sub-agents so no single matcher needs the
-   whole file. Skip `retired` rules; skip `draft` rules unless the caller
-   explicitly asked for provisional guidance.
+   `(id, read_when, updated, lifecycle)` for each rule — never the full bodies
+   (these tuples are ~20× smaller; see "operating at scale" above):
+   `yq -r '.rules[] | [.id, .read_when, .updated, .lifecycle] | @tsv' docs/reflection/rules.yaml`
+   If the file is large, shard those tuples across matcher sub-agents so no single
+   matcher needs the whole file. Skip `retired` rules; skip `draft` rules unless
+   the caller explicitly asked for provisional guidance.
 2. **Match `read_when` against the current task.** Each matcher returns candidate
    rule IDs to the coordinator. Candidate rules examined during sharding are
    **not** retrievals.
