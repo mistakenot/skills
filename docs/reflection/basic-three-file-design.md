@@ -1,5 +1,6 @@
 ---
 hash: "3d381f6b"
+id: "bee52e64"
 read_when: "designing or implementing the reflection playbook's observe, refine, or search stages"
 summary: "Three-stage design for mining task observations, refining evergreen rules, and analyzing append-only rule-retrieval telemetry."
 title: "Basic Three-File Reflection Playbook Design"
