@@ -46,8 +46,9 @@ check: compile lint
 test:
 	uv run pytest src/assurance/tests/
 
-# Verifies request-codex-review / request-claude-review don't hang on stdin when
-# launched as background reviews. Needs codex + claude installed and authed.
+# Verifies request-codex-review / request-claude-review / request-grok-review
+# don't hang on stdin when launched as background reviews. Needs codex + claude
+# + grok installed and authed.
 # Set SKIP_NEG=1 to skip the ~10s codex negative-control hang.
 test-review-stdin: compile
 	bash src/planning-workflow/tests/test-background-review-stdin.sh

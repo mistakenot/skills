@@ -38,7 +38,7 @@ pkg_desc() {
 
 pkg_skills() {
   case "$1" in
-    planning-workflow) echo "new-epic new-task new-solution new-plan review-task request-codex-review request-claude-review resolve-comments commit-task execute-task delegate-task delegate status-report address-feedback complete-task code-review task-feedback-analyser" ;;
+    planning-workflow) echo "new-epic new-task new-solution new-plan review-task request-codex-review request-claude-review request-grok-review resolve-comments commit-task execute-task delegate-task delegate status-report address-feedback complete-task code-review task-feedback-analyser" ;;
     ideation) echo "generate-10-ideas fan-out-user-simulation" ;;
     maintenance) echo "revise-readme" ;;
     exploration) echo "tech-spike" ;;

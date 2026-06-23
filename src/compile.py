@@ -854,6 +854,7 @@ if __name__ == "__main__":
         skill("review-task",            refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
         skill("request-codex-review",   refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
         skill("request-claude-review",  refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
+        skill("request-grok-review",    refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
         skill("resolve-comments",       refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
         skill("commit-task",            refs=[overview, ref("commit-conventions.md"), ref("task-status.md")]),
         skill("execute-task",           refs=[overview, ref("template-pr-body.md"), ref("worktree-conventions.md"), ref("commit-conventions.md"), ref("execute-task-full.md"), ref("task-status.md")]),

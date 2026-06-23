@@ -22,7 +22,9 @@ Planning happens on `main`. Implementation happens on feature branches in isolat
 | `complete-task` | Finalize a feature branch and merge it to main with PR, testing, and cleanup |
 | `code-review` | Perform a structured code review with severity labels |
 | `review-task` | Review task planning documents and leave structured inline comments |
+| `request-claude-review` | Send task planning docs to Claude Code for review, then resolve any comments |
 | `request-codex-review` | Send task planning docs to Codex for review, then resolve any comments |
+| `request-grok-review` | Send task planning docs to Grok for review, then resolve any comments |
 | `address-feedback` | Work through open PR review threads by fixing code and resolving threads |
 | `resolve-comments` | Resolve inline review comment threads in planning docs (markdown and HTML) |
 | `task-feedback-analyser` | Extract recurring patterns from completed task feedback into workflow rules |
