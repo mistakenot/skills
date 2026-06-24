@@ -1,5 +1,5 @@
 ---
-hash: "3d381f6b"
+hash: "aa415525"
 id: "bee52e64"
 read_when: "designing or implementing the reflection playbook's observe, refine, or search stages"
 summary: "Three-stage design for mining task observations, refining evergreen rules, and analyzing append-only rule-retrieval telemetry."
@@ -81,16 +81,30 @@ The files have deliberately different semantics:
 ## Observe (`/playbook:observe`)
 
 A dedicated team of agents reviews previous task runs and records observations.
-An observation is an ID-keyed instance of:
+Following the ACE reflector framing (see the prompt examples below), an
+observation's core is a **diagnostic chain** rather than a flat description. An
+observation is an ID-keyed instance of:
 
-- `description`: a short sentence or two stating what was learned.
-- `context`: the additional background needed to understand when it applies.
+- `description`: a short headline of what was learned.
+- `context`: the background needed to understand when it applies; becomes a
+  rule's `read_when`.
+- `what_happened`: the concrete symptom from the trajectory — the error,
+  surprise, correction, or gap, grounded in observed evidence.
+- `root_cause`: why it happened — the wrong assumption or misunderstood concept;
+  becomes a rule's `why`.
+- `correct_approach`: concretely what should have been done instead.
+- `key_insight`: the single transferable principle to remember; with
+  `correct_approach` it becomes a rule's `value`.
 - `git_commit`: the repository commit checked out when it was observed.
 - `files`: optional relevant repository paths.
 - `session_ids`: the Claude/Codex sessions providing the raw process evidence.
 - `task_id`: the task folder or other stable task identifier, when available.
 - `sources`: the concrete transcript messages and feedback artifacts supporting
   the observation.
+
+The chain (`what_happened` → `root_cause` → `correct_approach` → `key_insight`)
+is what lets Refine derive a sharp rule; an observation that only restates what
+the task did, with no root cause and no transferable insight, is low-signal.
 
 Observation IDs must be immutable and lexically time ordered. Use an ISO-like
 UTC timestamp with microseconds plus a monotonic per-process counter, for example

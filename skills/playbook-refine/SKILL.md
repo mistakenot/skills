@@ -125,8 +125,8 @@ rules:
   - id: prefer-get-value-in-react-prop-tests
     lifecycle: confirmed          # draft | confirmed | retired
     read_when: Writing a unit test that reads React props before rendering.
-    value: Prefer using X ...      # evergreen, self-contained
-    why: Using another method can cause ...
+    value: Read prop state with getValue(); assert on the prop API, not innerHTML.
+    why: innerHTML reflects rendered DOM, not the live prop, so it lags a tick.
     sources: [20260623T123045.123456Z-0001]
     updated: "2026-06-23"
     predecessor_ids: []            # transitive retired ancestors that roll up here
@@ -140,6 +140,57 @@ no-op. At scale, fetch just the new slice with
 `yq '.observations[] | select(.id > "<cursor>")'` rather than loading the whole
 file, and read existing rules as `(id, read_when, lifecycle)` tuples (see
 "operating at scale" above) to decide ADD vs UPDATE/MERGE.
+
+## Deriving a rule from an observation's diagnostic chain
+
+Each observation carries a diagnostic chain. Map it straight onto the rule
+fields — do not re-derive guidance from scratch:
+
+| Observation field | Rule field |
+|---|---|
+| `context` | `read_when` (the recognisable trigger) |
+| `correct_approach` + `key_insight` | `value` (evergreen, self-contained action) |
+| `root_cause` | `why` (the failure mode / tradeoff) |
+
+The `key_insight` is the generalised principle; the `correct_approach` is the
+concrete action. A good `value` states the action and carries the principle so
+it transfers beyond the originating incident. When an observation has a weak or
+missing chain (no root cause, no transferable insight), prefer SKIP over
+manufacturing a rule from a one-off.
+
+### Worked example (ADD)
+
+Observation:
+
+```yaml
+- id: 20260623T140210.001122Z-0007
+  context: Running a Python script or Makefile target in this repo's dev environment.
+  what_happened: >
+    `python src/compile.py` failed with `python: command not found` (exit 127);
+    `python3` succeeded.
+  root_cause: Assumed a `python` shim exists; only `python3` is installed here.
+  correct_approach: Invoke `python3` (or `uv run`) for every script and target.
+  key_insight: Don't assume a `python` alias exists in an environment you don't control.
+```
+
+No existing rule covers it → **ADD**:
+
+```yaml
+- id: use-python3-not-python
+  lifecycle: draft
+  read_when: Running a Python script or Makefile target in this repo's dev environment.
+  value: >
+    Invoke `python3` (or `uv run`, the repo standard) for every script and
+    Makefile target — never a bare `python`, which doesn't exist here.
+  why: Bare `python` is not installed (exit 127); the assumption it exists fails outright.
+  sources: [20260623T140210.001122Z-0007]
+  updated: "2026-06-23"
+  predecessor_ids: []
+  successor_ids: []
+```
+
+`read_when` ← `context`, `value` ← `correct_approach` + `key_insight`, `why` ←
+`root_cause`. The rule is `draft` until a second distinct session reinforces it.
 
 ## Per-observation action (pick exactly one)
 
