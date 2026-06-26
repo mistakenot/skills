@@ -203,7 +203,7 @@ as it honors it):
           <pd-comment by="author">Resolved the run-vs-read contradiction in seam **S4**: a check declares a **report producer** (a command run once per report, with timeout/failure semantics); pd-verify *invokes* the producer to generate fresh XML and never trusts a pre-existing report it didn't just produce — so "runs against the live repo" = triggers the producer. **T3** now owns building this mechanism and wiring this repo's producer (pytest `--junitxml`, absent today). Freshness ties into the G7 provenance stamp.</pd-comment>
         </pd-thread>
 
-        <pd-task id="T4" title="Progressive-disclosure rendering + rollup" status="todo" deployable depends-on="T1"
+        <pd-task id="T4" title="Progressive-disclosure rendering + rollup" status="done" deployable depends-on="T1"
                  delivers="C1" honors="G1,G5" href="docs/tasks/004-ac-progressive-disclosure/plan.html">
           <md><script type="text/plain">The pd-ac browser component computes a pure rollup from the child checks' authored `status` and renders a top-level rollup pill; click to reveal the check list; failing checks expand to evidence (second level); auto-open contradicted ACs. Reconcile the existing card-click (phase highlight moves to the chips). Keeps all checks in the DOM while collapsed. No execution — status is whatever is authored/written-back.</script></md>
         </pd-task>
