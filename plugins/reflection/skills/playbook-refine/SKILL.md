@@ -154,9 +154,26 @@ fields — do not re-derive guidance from scratch:
 
 The `key_insight` is the generalised principle; the `correct_approach` is the
 concrete action. A good `value` states the action and carries the principle so
-it transfers beyond the originating incident. When an observation has a weak or
-missing chain (no root cause, no transferable insight), prefer SKIP over
-manufacturing a rule from a one-off.
+it transfers beyond the originating incident.
+
+**Keep `value` terse — one action, not a tutorial.** Map the chain into a single
+imperative sentence (two at most): the primary action, with the principle folded
+in as a short clause. Do not enumerate every step, flag, or alternative the
+observation happened to mention — those belong in the originating session, not an
+evergreen rule. If a `value` needs a bulleted procedure or more than ~3 lines,
+the observation is really several lessons (SPLIT) or one over-specific incident
+(SKIP). A rule an engineer can skim in one glance beats a complete one they
+won't read.
+
+**SKIP one-off, project-bound incidents.** A diagnostic chain alone does not make
+a rule worth keeping — the lesson must plausibly recur *for a reader of this
+playbook*. SKIP an observation when its `read_when` is bound to a specific app,
+stack, or environment that won't be seen again here (e.g. a frontend-app build
+quirk in a skills/playbook repo), or when the trigger is so narrow it would
+essentially never fire again. Generalise it to a portable principle if one
+exists; otherwise leave it in the immutable backlog rather than padding the rule
+set. Each rule costs skim time on every search — fewer, more general rules raise
+the floor; niche war stories lower it.
 
 ### Worked example (ADD)
 
@@ -179,9 +196,7 @@ No existing rule covers it → **ADD**:
 - id: use-python3-not-python
   lifecycle: draft
   read_when: Running a Python script or Makefile target in this repo's dev environment.
-  value: >
-    Invoke `python3` (or `uv run`, the repo standard) for every script and
-    Makefile target — never a bare `python`, which doesn't exist here.
+  value: Use `python3` (or the repo's `make`/`uv` target), never a bare `python`.
   why: Bare `python` is not installed (exit 127); the assumption it exists fails outright.
   sources: [20260623T140210.001122Z-0007]
   updated: "2026-06-23"
@@ -205,9 +220,9 @@ No existing rule covers it → **ADD**:
 - **REMOVE** — evidence shows a rule is wrong/obsolete (e.g. the code it
   referenced is gone); retire it (do not delete) so historical retrievals stay
   interpretable.
-- **SKIP** — too one-off / low-signal to generalize; advance the cursor without
-  changing a rule. The observation stays in the immutable backlog for later
-  clustering.
+- **SKIP** — too one-off / low-signal / project-bound to generalize (see "SKIP
+  one-off, project-bound incidents" above); advance the cursor without changing a
+  rule. The observation stays in the immutable backlog for later clustering.
 
 ## Evidence threshold (separates early capture from trusted guidance)
 
