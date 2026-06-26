@@ -10,7 +10,7 @@ Task ID (numeric, e.g. `042`).
 2. Read ALL files: `requirements.md`, `solution.md`, `context.md`, `plan.md`
 3. Verify prerequisites:
    - All 4 docs exist
-   - No unanswered Open Questions
+   - No unanswered Open Questions (for HTML docs, no open `<pd-question>` — pd-lint reports `open-question` with a non-zero exit; a clean lint is the gate)
    - Every AC is covered by plan steps
 4. Create isolated worktree with branch `task/$ID-$NAME`
 5. Parse `plan.md` for phases, steps, and the Execution Sequence DAG

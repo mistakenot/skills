@@ -20,7 +20,7 @@ Find the active task from user input or recent context. Locate the task folder u
 All checks must pass before committing:
 
 - [ ] **All 4 files exist**: `requirements.md`, `solution.md`, `context.md`, `plan.md`
-- [ ] **No unanswered Open Questions**: check Open Questions sections in requirements.md and plan.md -- all must be resolved or empty
+- [ ] **No unanswered Open Questions**: check Open Questions sections in requirements.md and plan.md -- all must be resolved or empty. For HTML docs, every `<pd-question>` must be answered (`status="answered"`); the pd-lint CLI reports any open one (`open-question`, non-zero exit), so a clean lint is the gate.
 - [ ] **All ACs addressed**: every acceptance criterion in requirements.md has corresponding test coverage in solution.md and plan steps in plan.md
 - [ ] **Plan consistent with solution**: the approach in solution.md matches the phases and steps in plan.md
 - [ ] **Context covers plan references**: files and patterns referenced in plan.md are documented in context.md

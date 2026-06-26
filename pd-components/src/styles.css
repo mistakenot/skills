@@ -297,6 +297,16 @@ pd-question[status="answered"] { border-left-color: var(--pd-ok); }
 .pd-question-body { margin-top: 0.5rem; font-size: 0.92rem; }
 .pd-question-body > :first-child { margin-top: 0; }
 .pd-question-body > :last-child { margin-bottom: 0; }
+.pd-question-rec {
+  margin-top: 0.5rem; padding: 0.4rem 0.6rem;
+  background: var(--pd-bg); border: 1px dashed var(--pd-border);
+  border-radius: 0.4rem; font-size: 0.88rem;
+}
+.pd-question-rec-label {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--pd-muted); margin-right: 0.4rem;
+}
+.pd-question-rec-text { color: var(--pd-fg); }
 .pd-question-actions { margin-top: 0.5rem; }
 
 pd-answer {

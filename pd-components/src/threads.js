@@ -26,6 +26,8 @@ export function attachComposer(host, meta, trigger) {
     placeholder,
     rows: 3,
   });
+  // Pre-fill (e.g. a pd-question's recommendedAnswer) so accepting it is an edit-free submit.
+  if (meta.prefill) ta.value = meta.prefill;
   const queue = el('button', { class: 'pd-btn pd-btn-primary' }, 'Queue');
   const cancel = el('button', { class: 'pd-btn' }, 'Cancel');
   const box = el('div', { class: 'pd-composer' }, [ta, el('div', { class: 'pd-composer-actions' }, [queue, cancel])]);

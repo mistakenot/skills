@@ -180,7 +180,7 @@ a person's name. Open threads render a reply box; closed ones collapse.
 </pd-thread>
 ```
 
-### <pd-question id status priority for title> / <pd-answer by>
+### <pd-question id status priority for title recommendedAnswer> / <pd-answer by>
 A question the HUMAN must answer before the plan can proceed — the reverse of a
 pd-thread (there the human reviews you; here you block on the human). Use it
 whenever you hit a decision you cannot resolve from the requirements, the code,
@@ -191,6 +191,14 @@ to it. The question prose is the body; the human's answer arrives via the
 "Copy for agent" paste-back as an ANSWER item — merge it as a <pd-answer
 by="…"> child and set status="answered".
 
+recommendedAnswer (optional): YOUR suggested answer — what you'd do absent a
+human ruling. Add it whenever you have a defensible lean, so the human can
+rubber-stamp (it pre-fills the answer box — one click) or override instead of
+starting cold. It is a suggestion, NOT an answer: it does NOT close the gate or
+clear the linter; only a <pd-answer> + status="answered" does. Prefer a question
+WITH a recommendedAnswer over silently guessing — you still surface the decision,
+you just make it cheap to confirm.
+
 Open questions are a gate, not chatter: while any exist the doc's status bar
 shows "blocked", and the headless linter reports them (code "open-question",
 non-zero exit) so an automated step won't run past them. They are NOT a defect
@@ -198,14 +206,16 @@ you fix — surface them to the human and wait for the answer.
 
 ```html
 <pd-question id="Q-1" status="open" priority="p1" for="product"
-             title="Which tier do internal services use?">
+             title="Which tier do internal services use?"
+             recommendedAnswer="Separate unlimited tier, keyed by service id — safest default.">
   Internal callers hit the same gateway. Do they share the public tier's bucket,
   or get a separate unlimited tier? This changes how the limiter keys clients.
 </pd-question>
 
 <!-- once answered: -->
 <pd-question id="Q-1" status="answered" priority="p1" for="product"
-             title="Which tier do internal services use?">
+             title="Which tier do internal services use?"
+             recommendedAnswer="Separate unlimited tier, keyed by service id — safest default.">
   Internal callers hit the same gateway. Do they share the public tier's bucket,
   or get a separate unlimited tier? This changes how the limiter keys clients.
   <pd-answer by="charlie">Separate unlimited tier; key by service identity.</pd-answer>
