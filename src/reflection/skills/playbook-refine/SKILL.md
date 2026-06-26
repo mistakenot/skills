@@ -32,8 +32,8 @@ rules:
   - id: prefer-get-value-in-react-prop-tests
     lifecycle: confirmed          # draft | confirmed | retired
     read_when: Writing a unit test that reads React props before rendering.
-    value: Prefer using X ...      # evergreen, self-contained
-    why: Using another method can cause ...
+    value: Read prop state with getValue(); assert on the prop API, not innerHTML.
+    why: innerHTML reflects rendered DOM, not the live prop, so it lags a tick.
     sources: [20260623T123045.123456Z-0001]
     updated: "2026-06-23"
     predecessor_ids: []            # transitive retired ancestors that roll up here
@@ -48,6 +48,72 @@ no-op. At scale, fetch just the new slice with
 file, and read existing rules as `(id, read_when, lifecycle)` tuples (see
 "operating at scale" above) to decide ADD vs UPDATE/MERGE.
 
+## Deriving a rule from an observation's diagnostic chain
+
+Each observation carries a diagnostic chain. Map it straight onto the rule
+fields — do not re-derive guidance from scratch:
+
+| Observation field | Rule field |
+|---|---|
+| `context` | `read_when` (the recognisable trigger) |
+| `correct_approach` + `key_insight` | `value` (evergreen, self-contained action) |
+| `root_cause` | `why` (the failure mode / tradeoff) |
+
+The `key_insight` is the generalised principle; the `correct_approach` is the
+concrete action. A good `value` states the action and carries the principle so
+it transfers beyond the originating incident.
+
+**Keep `value` terse — one action, not a tutorial.** Map the chain into a single
+imperative sentence (two at most): the primary action, with the principle folded
+in as a short clause. Do not enumerate every step, flag, or alternative the
+observation happened to mention — those belong in the originating session, not an
+evergreen rule. If a `value` needs a bulleted procedure or more than ~3 lines,
+the observation is really several lessons (SPLIT) or one over-specific incident
+(SKIP). A rule an engineer can skim in one glance beats a complete one they
+won't read.
+
+**SKIP one-off, project-bound incidents.** A diagnostic chain alone does not make
+a rule worth keeping — the lesson must plausibly recur *for a reader of this
+playbook*. SKIP an observation when its `read_when` is bound to a specific app,
+stack, or environment that won't be seen again here (e.g. a frontend-app build
+quirk in a skills/playbook repo), or when the trigger is so narrow it would
+essentially never fire again. Generalise it to a portable principle if one
+exists; otherwise leave it in the immutable backlog rather than padding the rule
+set. Each rule costs skim time on every search — fewer, more general rules raise
+the floor; niche war stories lower it.
+
+### Worked example (ADD)
+
+Observation:
+
+```yaml
+- id: 20260623T140210.001122Z-0007
+  context: Running a Python script or Makefile target in this repo's dev environment.
+  what_happened: >
+    `python src/compile.py` failed with `python: command not found` (exit 127);
+    `python3` succeeded.
+  root_cause: Assumed a `python` shim exists; only `python3` is installed here.
+  correct_approach: Invoke `python3` (or `uv run`) for every script and target.
+  key_insight: Don't assume a `python` alias exists in an environment you don't control.
+```
+
+No existing rule covers it → **ADD**:
+
+```yaml
+- id: use-python3-not-python
+  lifecycle: draft
+  read_when: Running a Python script or Makefile target in this repo's dev environment.
+  value: Use `python3` (or the repo's `make`/`uv` target), never a bare `python`.
+  why: Bare `python` is not installed (exit 127); the assumption it exists fails outright.
+  sources: [20260623T140210.001122Z-0007]
+  updated: "2026-06-23"
+  predecessor_ids: []
+  successor_ids: []
+```
+
+`read_when` ← `context`, `value` ← `correct_approach` + `key_insight`, `why` ←
+`root_cause`. The rule is `draft` until a second distinct session reinforces it.
+
 ## Per-observation action (pick exactly one)
 
 - **ADD** — no existing rule covers it and the evidence threshold is met; author
@@ -61,9 +127,9 @@ file, and read existing rules as `(id, read_when, lifecycle)` tuples (see
 - **REMOVE** — evidence shows a rule is wrong/obsolete (e.g. the code it
   referenced is gone); retire it (do not delete) so historical retrievals stay
   interpretable.
-- **SKIP** — too one-off / low-signal to generalize; advance the cursor without
-  changing a rule. The observation stays in the immutable backlog for later
-  clustering.
+- **SKIP** — too one-off / low-signal / project-bound to generalize (see "SKIP
+  one-off, project-bound incidents" above); advance the cursor without changing a
+  rule. The observation stays in the immutable backlog for later clustering.
 
 ## Evidence threshold (separates early capture from trusted guidance)
 

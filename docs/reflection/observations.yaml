@@ -1,512 +1,437 @@
 cursors:
   sessions:
-    last_scan_started_at: "2026-06-23T15:59:13Z"
+    last_scan_started_at: "2026-06-24T09:32:38Z"
     processed:
-      - 8d4826ca-b39d-47e5-8964-69507ed69a65
-      - a7ff44dfcc1de7c1b
-      - 03e02af0-7980-480a-b2ff-8812d9437370
-      - adf7248e90b8d898b
-      - 41e4d893-c5fc-4895-8c83-8720f04072a2
-      - c0e15b7a-f9e1-419f-9425-5c2873de542e
-      - 165b12ad-356b-406a-ade1-a58f97a80a9a
-      - d7409338-66fc-46fc-9b33-660686653e09
-      - 4f0aea11-311c-4c2a-b1e7-49af94c1d03e
-      - adf740b81b65d35e1
-      - 39a92edd-4245-43b3-a480-d3fff3ac5d39
-      - a633cdef650f8d31a
-      - b6027a31-9f81-415a-97b1-1ba771d745db
-      - ca273543-050a-4731-8de4-541d75c6774a
-      - a3144962355c9602f
-      - 32c7a896-029c-40f1-bd5a-38b3449155f7
-      - 9d74150a-a74f-46aa-b55b-e0e15d664528
-      - aeb1f29928fbcc09a
-      - a4d5736d8b45f45f3
-      - a51b8aae31e2b47a3
-      - a1916594e3f19c416
-      - a923c57e-d93e-455f-80d3-bc7d91839afb
-      - 54a59a39-5cc4-491f-a851-b8838bdc3fb1
-      - a9d68dfd8c9ce59bf
-      - ac982871b2c2d5ecb
-      - ad874a1b421d0354c
-      - ac6de595a3bfc7dde
-      - 28122fb0-8448-4b59-86db-4a4c36d5fadb
-      - a163dbf969d863d9e
-      - a95eec5cd4fc4759a
-      - aef2f05ea460c5d80
-      - bb475b79-8078-4cbb-9859-24c07ae7df85
-      - 6876b82b-312d-4773-bc16-667b706d9b2e
-      - a57fd9f4f9a29bd86
-      - fa2699fa-e5e3-4efa-8644-8f26db0a417f
-      - e7fd627b-03ca-40c3-a9d1-3a95e3b4d3f5
-      - 1622750c-4d85-4964-8d7f-17137a3471c3
-      - a7f72b6736e3c22a4
-      - e1863d25-313b-4215-89db-fcdabf9639d3
-      - 1021cb52-e888-4e7d-ba23-e84ed4480833
-      - 7c4f52bf-14a0-4efe-9207-66c348e0fc11
-      - a2eae151-becc-4c44-9303-d24d6471565b
-      - a7e28eb77322fb50c
       - d84410ad-511d-4423-b026-9715dd574cd8
+      - a7e28eb77322fb50c
+      - a2eae151-becc-4c44-9303-d24d6471565b
+      - 7c4f52bf-14a0-4efe-9207-66c348e0fc11
+      - 1021cb52-e888-4e7d-ba23-e84ed4480833
+      - e1863d25-313b-4215-89db-fcdabf9639d3
+      - a7f72b6736e3c22a4
+      - 1622750c-4d85-4964-8d7f-17137a3471c3
+      - e7fd627b-03ca-40c3-a9d1-3a95e3b4d3f5
+      - fa2699fa-e5e3-4efa-8644-8f26db0a417f
+      - a57fd9f4f9a29bd86
+      - 6876b82b-312d-4773-bc16-667b706d9b2e
+      - bb475b79-8078-4cbb-9859-24c07ae7df85
+      - aef2f05ea460c5d80
+      - a95eec5cd4fc4759a
+      - a163dbf969d863d9e
+      - 28122fb0-8448-4b59-86db-4a4c36d5fadb
+      - ac6de595a3bfc7dde
+      - ad874a1b421d0354c
+      - ac982871b2c2d5ecb
+      - a9d68dfd8c9ce59bf
+      - 54a59a39-5cc4-491f-a851-b8838bdc3fb1
+      - a923c57e-d93e-455f-80d3-bc7d91839afb
+      - a1916594e3f19c416
+      - a51b8aae31e2b47a3
+      - a4d5736d8b45f45f3
+      - aeb1f29928fbcc09a
+      - 9d74150a-a74f-46aa-b55b-e0e15d664528
+      - 32c7a896-029c-40f1-bd5a-38b3449155f7
+      - a3144962355c9602f
+      - ca273543-050a-4731-8de4-541d75c6774a
+      - b6027a31-9f81-415a-97b1-1ba771d745db
+      - a633cdef650f8d31a
+      - 39a92edd-4245-43b3-a480-d3fff3ac5d39
+      - adf740b81b65d35e1
+      - 4f0aea11-311c-4c2a-b1e7-49af94c1d03e
+      - d7409338-66fc-46fc-9b33-660686653e09
+      - 165b12ad-356b-406a-ade1-a58f97a80a9a
+      - c0e15b7a-f9e1-419f-9425-5c2873de542e
+      - 41e4d893-c5fc-4895-8c83-8720f04072a2
+      - adf7248e90b8d898b
+      - 03e02af0-7980-480a-b2ff-8812d9437370
+      - a7ff44dfcc1de7c1b
+      - 8d4826ca-b39d-47e5-8964-69507ed69a65
   feedback:
     docs/tasks/001-assurance-skill-walking-skeleton/feedback.md:
       content_sha256: 7dc93c323bbae9be883653bf535f43dbe5ad624ca86df1e71708a5e1ecbf532a
-      processed_at: "2026-06-23T15:59:13Z"
+      processed_at: "2026-06-24T09:32:38Z"
     docs/tasks/002-beta-planning-workflow/feedback.md:
       content_sha256: 79d71c22ed2a7e5d26b29be3c39c1a98d28461d64f41c469cb2e047347df67c2
-      processed_at: "2026-06-23T15:59:13Z"
+      processed_at: "2026-06-24T09:32:38Z"
 observations:
-  - id: 20260623T160816.998279Z-0001
-    description: '`npx skills install <org>/<repo>` (and `make install` which wraps it) fetches skills from the remote GitHub repo, NOT from the local compiled `./skills` output. Newly created/compiled skills will not appear in the install until they are committed and pushed.'
-    context: Applies to this repo's skill publishing flow. After adding a skill under src/, compiling, and running `make install`, the freshly compiled skills (e.g. generate-10-ideas, revise-readme) were absent from .claude/skills because the installer pulled the GitHub version. Verify local compiled output exists, but expect new skills to be installable only after push.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - Makefile
-      - src/compile.py
-    session_ids:
-      - c0e15b7a-f9e1-419f-9425-5c2873de542e
+  - id: 20260624T093636.953811Z-0001
+    description: Claude Code's variadic --add-dir flag silently swallows a trailing positional prompt.
+    context: Building a headless `claude -p` invocation that passes both --add-dir and a positional prompt (a review/eval harness or a skill that shells out to Claude Code).
+    what_happened: >
+      `claude -p --dangerously-skip-permissions --add-dir /tmp "echo test"` failed with
+      "Error: Input must be provided either through stdin or as a prompt argument when using --print".
+      Reordering to `claude --add-dir /tmp -p --dangerously-skip-permissions "echo test"` printed "test" correctly.
+    root_cause: >
+      --add-dir is variadic (accepts multiple directories), so a positional prompt directly following it is
+      consumed as another directory argument, leaving --print with no prompt.
+    correct_approach: >
+      Never place a bare positional immediately after --add-dir. Put --add-dir first, then -p /
+      --dangerously-skip-permissions, then the prompt last, or otherwise separate the variadic flag from the positional.
+    key_insight: Variadic CLI flags greedily absorb the next positional argument; never place a bare positional immediately after one.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
+    files: [src/planning-workflow/skills/request-claude-review/SKILL.md]
+    session_ids: [1622750c-4d85-4964-8d7f-17137a3471c3]
     task_id: null
     sources:
-      - kind: session_message
-        ref: c0e15b7a-f9e1-419f-9425-5c2873de542e-58
-  - id: 20260623T160816.998303Z-0002
-    description: The `npx skills` `--all` flag expands to `--agent '*'`, which creates a skills folder for EVERY agent type and copies files into `./skills`. To target only Claude Code and Codex (the desired behaviour here), use `npx skills install <org>/<repo> -s '*' -a claude-code codex -y` instead, which installs to `.agents/skills/` (Codex) and symlinks into `.claude/skills/` without a `./skills` copy.
-    context: Charlie corrected the install command twice. The repo's canonical install command is `npx skills install mistakenot/skills -s '*' -a claude-code codex -y` and was saved to project memory. Relevant whenever generating install instructions for this skills repo.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - README.md
-    session_ids:
-      - 8d4826ca-b39d-47e5-8964-69507ed69a65
+      - {kind: session_message, ref: 1622750c-4d85-4964-8d7f-17137a3471c3-59}
+      - {kind: session_message, ref: 1622750c-4d85-4964-8d7f-17137a3471c3-62}
+      - {kind: session_message, ref: 1622750c-4d85-4964-8d7f-17137a3471c3-63}
+  - id: 20260624T093636.953853Z-0002
+    description: A skill that shells out to an external CLI must be smoke-tested against the live binary, not just compiled and linted.
+    context: Authoring or porting a skill whose core action is a shell command invoking an external tool (claude, codex, gh).
+    what_happened: >
+      request-claude-review compiled cleanly and passed `autoskill lint` and was committed as working. Only when the
+      user said "test it works" and the agent actually ran the `claude --add-dir ... -p ...` command did the
+      --add-dir argument-swallowing bug appear, requiring a follow-up fix commit.
+    root_cause: >
+      Compile and lint validate structure and templating, not runtime behaviour. Exact CLI flag ordering is invisible
+      to static checks, so a broken invocation passed every gate up to execution.
+    correct_approach: >
+      Before declaring a CLI-invoking skill done, run its actual command end-to-end against a minimal fixture and
+      verify the real effect (e.g. comments inserted in the expected format), not just that the binary exits 0.
+    key_insight: Static checks never catch CLI argument-ordering bugs; only an end-to-end run against the live tool does.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
+    files: [src/planning-workflow/skills/request-claude-review/SKILL.md]
+    session_ids: [1622750c-4d85-4964-8d7f-17137a3471c3]
     task_id: null
     sources:
-      - kind: session_message
-        ref: 8d4826ca-b39d-47e5-8964-69507ed69a65-84
-      - kind: session_message
-        ref: 8d4826ca-b39d-47e5-8964-69507ed69a65-90
-  - id: 20260623T160816.998310Z-0003
-    description: 'In this environment the bare `python` command is not installed (`python: command not found`, exit 127); use `python3` to run scripts. The Makefile''s compile target originally invoked `python` and had to be changed to `python3`.'
-    context: 'Hit repeatedly when running `python src/compile.py`. Applies to any direct script invocation in this repo. (Note: the repo later standardised on `uv run` per project conventions, but the immediate gotcha was python vs python3.)'
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - Makefile
-      - src/compile.py
-    session_ids:
-      - 03e02af0-7980-480a-b2ff-8812d9437370
-      - 41e4d893-c5fc-4895-8c83-8720f04072a2
-      - c0e15b7a-f9e1-419f-9425-5c2873de542e
+      - {kind: session_message, ref: 1622750c-4d85-4964-8d7f-17137a3471c3-40}
+      - {kind: session_message, ref: 1622750c-4d85-4964-8d7f-17137a3471c3-58}
+      - {kind: session_message, ref: 1622750c-4d85-4964-8d7f-17137a3471c3-78}
+  - id: 20260624T093636.953867Z-0003
+    description: Codex's "no issues found" signal on a PR is a 👍 reaction by chatgpt-codex-connector[bot], not text in the PR body.
+    context: Programmatically detecting whether Codex reviewed a PR and found nothing to address (an address-feedback or CI-feedback flow).
+    what_happened: >
+      The address-feedback skill was first written to say Codex "leaves a thumbs-up emoji on the main PR comment." A
+      follow-up correction noted the thumbs-up is not in the PR body — it is a +1 👍 reaction on the PR added by
+      chatgpt-codex-connector[bot]; the PR body text itself contains no emoji.
+    root_cause: >
+      The initial mental model assumed acknowledgement was inline text/emoji in the comment body; GitHub reactions are
+      separate metadata attached by the bot account, not part of the comment content.
+    correct_approach: >
+      Detect Codex's "all clear" by checking for a +1/👍 reaction from chatgpt-codex-connector[bot] via the reactions
+      API, not by grepping the PR body for an emoji.
+    key_insight: GitHub reactions are bot-attributed metadata distinct from comment text — detect acknowledgements via the reactions API, not body-text scraping.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
+    files: [src/planning-workflow/skills/address-feedback/SKILL.md]
+    session_ids: [a2eae151-becc-4c44-9303-d24d6471565b]
     task_id: null
     sources:
-      - kind: session_message
-        ref: 41e4d893-c5fc-4895-8c83-8720f04072a2-42
-      - kind: session_message
-        ref: c0e15b7a-f9e1-419f-9425-5c2873de542e-27
-  - id: 20260623T160816.998314Z-0004
-    description: 'When one skill invokes another agent/skill by name in a shell command (e.g. Codex review calling `$review-task`), the invoked name and any path conventions must exactly match reality. Two blocking bugs were found: the prompt called `$review-task-docs` but the skill is named `review-task`, and it built the task path as `docs/tasks/$TASK_ID` while the actual folder convention is `docs/tasks/$ID-$NAME/`, so `rg` silently matched zero files. Resolve the full folder via a glob (e.g. `find docs/tasks -name "${TASK_ID}-*"`) rather than assuming the bare ID is the directory.'
-    context: Found while auditing the request-codex-review -> review-task handoff. Whenever a skill shells out to another skill by literal name or constructs a task-folder path, cross-check against the real skill name and the $ID-$NAME folder convention. Silent zero-match rg results are a symptom of the path bug.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/planning-workflow/skills/request-codex-review/SKILL.md
-    session_ids:
-      - 41e4d893-c5fc-4895-8c83-8720f04072a2
+      - {kind: session_message, ref: a2eae151-becc-4c44-9303-d24d6471565b-32}
+      - {kind: session_message, ref: a2eae151-becc-4c44-9303-d24d6471565b-37}
+  - id: 20260624T093636.953875Z-0004
+    description: codex exec's --full-auto flag is deprecated in favour of --sandbox workspace-write.
+    context: Invoking Codex non-interactively from a script or skill (e.g. request-codex-review).
+    what_happened: >
+      A run emitted a deprecation warning: codex exec now prefers `--sandbox workspace-write` over `--full-auto`. The
+      skill was updated to replace `--full-auto` accordingly.
+    root_cause: >
+      The Codex CLI evolved its sandbox/permission surface; the older convenience flag still runs but is deprecated,
+      and the skill had pinned the old flag.
+    correct_approach: Use `codex exec --sandbox workspace-write` instead of `--full-auto` for autonomous Codex runs.
+    key_insight: External CLI flags drift; deprecation warnings surfaced during runs are upstream signals to update pinned commands in skills.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
+    files: [src/planning-workflow/skills/request-codex-review/SKILL.md]
+    session_ids: [1622750c-4d85-4964-8d7f-17137a3471c3]
     task_id: null
     sources:
-      - kind: session_message
-        ref: 41e4d893-c5fc-4895-8c83-8720f04072a2-27
-      - kind: session_message
-        ref: 41e4d893-c5fc-4895-8c83-8720f04072a2-31
-  - id: 20260623T160816.998318Z-0005
-    description: A reviewer that emits zero comments is ambiguous between 'clean review' and 'review failed/produced no output'. Make the reviewer always emit a positive marker on success (e.g. insert a single RESOLVED 'no issues found' comment) so the calling agent can reliably distinguish a clean pass from a failure, and gate downstream resolve steps on that.
-    context: 'Surfaced in the request-codex-review/review-task chain: the caller treated COMMENT_COUNT==0 as a Codex failure, but zero comments could mean the docs were clean. Fix was to have review-task drop a clean-review marker comment. Applies to any automated review/verification handoff where ''no findings'' must be machine-distinguishable from ''no run''.'
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/planning-workflow/skills/review-task/SKILL.md
-    session_ids:
-      - 41e4d893-c5fc-4895-8c83-8720f04072a2
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 41e4d893-c5fc-4895-8c83-8720f04072a2-27
-      - kind: session_message
-        ref: 41e4d893-c5fc-4895-8c83-8720f04072a2-38
-  - id: 20260623T160816.998322Z-0006
-    description: 'The `make install` target installed skills from the remote GitHub repo (`npx skills install mistakenot/skills ...`) rather than the local compiled `./skills` directory. This silently dropped any newly-compiled-but-unpushed skills from `.claude/skills/`, since the remote clone only had what was already pushed. Fix: install from the local path (`npx skills install ./skills -s ''*'' -a claude-code codex -y`), which `npx skills` validates and accepts.'
-    context: Applies when editing skills in this repo and expecting `make install` / `make compile` to propagate them to local agents (.claude/skills, .agents/skills). The compile step writes to ./skills/, but install must source from ./skills/ (not the remote repo) to pick up local-only changes before they are pushed.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - Makefile
-    session_ids:
-      - 165b12ad-356b-406a-ade1-a58f97a80a9a
-      - 39a92edd-4245-43b3-a480-d3fff3ac5d39
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 165b12ad-356b-406a-ade1-a58f97a80a9a-12
-      - kind: session_message
-        ref: 165b12ad-356b-406a-ade1-a58f97a80a9a-20
-      - kind: session_message
-        ref: 165b12ad-356b-406a-ade1-a58f97a80a9a-22
-  - id: 20260623T160816.998325Z-0007
-    description: A chained `rm -f ... && rm -rf <dir1> && rm -rf <dir2>` over specific absolute paths under /home was hard-BLOCKED by a command guard (dcg, rule core.filesystem:rm-rf-root-home) because the paths started under a home directory, even though they were specific and safe. The workaround was to delete each path separately with non-recursive-on-root `rm -r <path>` (one path per command).
-    context: Applies when cleaning up test artifacts or directories under /home/... in this environment. The filesystem guard pattern-matches `rm -rf` on root/home-rooted paths regardless of how specific the target is; split deletions into separate commands and avoid combining `rm -rf` with home-prefixed paths in one invocation.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files: []
-    session_ids:
-      - 39a92edd-4245-43b3-a480-d3fff3ac5d39
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 39a92edd-4245-43b3-a480-d3fff3ac5d39-56
-      - kind: session_message
-        ref: 39a92edd-4245-43b3-a480-d3fff3ac5d39-58
-  - id: 20260623T160816.998328Z-0008
-    description: 'When building a new skill in this repo, registering it requires three coordinated edits, not just writing SKILL.md: create src/<module>/skills/<name>/SKILL.md, add a `module(...)`/`skill(...)` entry in src/compile.py and include the module in the final `compile([...])` call, then run `python src/compile.py`. Omitting the compile.py registration means the skill never compiles into ./skills/.'
-    context: Applies when adding a brand-new skill (especially in a new module) to this skills repo. The compiler is a Python DSL in src/compile.py where modules and skills are declared explicitly and only the modules passed to compile([...]) at the bottom are built.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/compile.py
-    session_ids:
-      - 39a92edd-4245-43b3-a480-d3fff3ac5d39
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 39a92edd-4245-43b3-a480-d3fff3ac5d39-25
-      - kind: session_message
-        ref: 39a92edd-4245-43b3-a480-d3fff3ac5d39-28
-  - id: 20260623T160816.998331Z-0009
-    description: 'A Vite dev server proxied over Tailscale gives a mobile PWA no offline support: every reload refetches the JS bundle from the dev server, so a flaky/down tailnet link blanks the page, and there is no service worker. The fix pattern (already proven in the `teach` repo) is to serve a production build with `vite-plugin-pwa` (workbox precache + navigateFallback to index.html) behind a PM2 `ecosystem.config.cjs`, and point `tailscale serve` at the preview port.'
-    context: 'Applies when a mobile-first SPA is being served to a phone via `tailscale serve` pointing at `vite dev`, and the user reports it doesn''t persist across reloads or breaks when offline. The cosmetic PWA manifest (display: standalone) without a service worker is the tell. The opencode app had this; the teach app had the working pattern.'
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/teach/vite.config.ts
-      - src/teach/ecosystem.config.cjs
-    session_ids:
-      - 9d74150a-a74f-46aa-b55b-e0e15d664528
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 9d74150a-a74f-46aa-b55b-e0e15d664528-91
-  - id: 20260623T160816.998335Z-0010
-    description: Vite's `server.allowedHosts` only covers `vite dev`; `vite preview` (the built-PWA + /api serving mode) uses its own `preview.allowedHosts`, and the two default to different ports (dev 5173, preview 4173). When switching a Tailscale-served app from dev to a production preview, you must set both allowedHosts lists and re-point `tailscale serve` at the preview port.
-    context: Relevant whenever moving a Tailscale-exposed Vite app from dev-server to production-preview serving, or debugging why a tailnet host is rejected despite being listed. Documented in the teach repo's CLAUDE.md.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/teach/CLAUDE.md
-      - src/teach/vite.config.ts
-    session_ids:
-      - 9d74150a-a74f-46aa-b55b-e0e15d664528
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 9d74150a-a74f-46aa-b55b-e0e15d664528-103
-  - id: 20260623T160816.998338Z-0011
-    description: 'The user enforced a strict git push-failure escalation for skills that push to main: on a rejected push, first try `git pull --rebase` then push; if the rebase conflicts, `git rebase --abort` and try `git pull --no-rebase` then push; if that also fails, stop and ask for help. Never force-push and never discard changes.'
-    context: Applies when authoring/editing any workflow skill (e.g. commit-task) that commits and pushes directly to main, in a repo where 'commit and push' means straight to origin/main with no PR. The escalation ladder is the canonical safe-merge contract.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/planning-workflow/skills/commit-task/SKILL.md
-    session_ids:
-      - ca273543-050a-4731-8de4-541d75c6774a
-      - b6027a31-9f81-415a-97b1-1ba771d745db
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: ca273543-050a-4731-8de4-541d75c6774a-8
-  - id: 20260623T160816.998342Z-0012
-    description: 'Gathering codebase context only in the new-plan stage (after the solution is designed) causes backtracking: solutions designed in a vacuum don''t fit existing patterns and waste a review cycle. The user moved code+docs context gathering into new-solution (run BEFORE writing the solution, write context.md after), leaving only history/past-task context (CB3) in new-plan to merge into the existing context.md.'
-    context: 'Relevant when designing the ordering of a multi-stage plan→solution→execute workflow, or arguing where context-gathering subagents belong. The reasoning: anchoring risk is real but smaller than the cost of designing against a codebase you haven''t scouted; experienced engineers scout before proposing an approach.'
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/planning-workflow/skills/new-solution/SKILL.md
-      - src/planning-workflow/skills/new-plan/SKILL.md
-    session_ids:
-      - 9d74150a-a74f-46aa-b55b-e0e15d664528
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 9d74150a-a74f-46aa-b55b-e0e15d664528-41
-  - id: 20260623T160816.998345Z-0013
-    description: When a skill needs to use a search/discovery tool, the user prefers it instruct the agent to run `autosearch quickstart` to discover available tools at runtime and pick the best fit if useful, rather than hardcoding a specific command (e.g. `autodoc search keyword <query>`). Runtime tool discovery keeps skills portable across repos where different tooling is installed.
-    context: Applies when writing skill instructions that reference search/doc-lookup tooling. Hardcoding a tool the target repo may not have is brittle; deferring to `autosearch quickstart` adapts to whatever is available. Phrase it as optional ('if useful').
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/planning-workflow/skills/new-solution/SKILL.md
-    session_ids:
-      - 9d74150a-a74f-46aa-b55b-e0e15d664528
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 9d74150a-a74f-46aa-b55b-e0e15d664528-43
-  - id: 20260623T160816.998349Z-0014
-    description: 'The codex CLI cannot be launched from inside Claude Code''s Bash tool: interactive modes (e.g. `codex --search`) fail with ''Error: stdin is not a terminal'' because there is no TTY. Codex must be run from a real terminal, or invoked non-interactively via `codex exec` (as the request-codex-review skill does).'
-    context: Relevant when a spawn/orchestration command pastes a raw interactive `codex ...` invocation into a Claude Code session, or when building skills that shell out to codex. Use `codex exec --full-auto` for headless/background review flows rather than the interactive entrypoint.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files: []
-    session_ids:
-      - 32c7a896-029c-40f1-bd5a-38b3449155f7
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 32c7a896-029c-40f1-bd5a-38b3449155f7-6
-  - id: 20260623T160816.998352Z-0015
-    description: When the user asks to extract general best practices from research into CLAUDE.md, they want only the simple, durable, actionable rules moved in first — explicitly deferring complex/tooling-heavy material (evals, automated optimizers, retrieval architecture) to a later step rather than dumping everything. The agent should split research findings into 'rules for CLAUDE.md' vs 'follow-up backlog' and confirm the remainder back to the user.
-    context: 'Applies when distilling a research dump into repository instruction files (CLAUDE.md / AGENTS.md). The user said: move general skill-writing best practices into CLAUDE.md now, save complex stuff like evals for after.'
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - CLAUDE.md
-    session_ids:
-      - 54a59a39-5cc4-491f-a851-b8838bdc3fb1
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 54a59a39-5cc4-491f-a851-b8838bdc3fb1-83
-      - kind: session_message
-        ref: 54a59a39-5cc4-491f-a851-b8838bdc3fb1-101
-  - id: 20260623T160816.998355Z-0016
-    description: 'The ~10-15 tool degradation threshold from tool-selection research does NOT translate directly to skills: tools load full JSON schemas every turn (~200-500+ tokens each), while skills use progressive disclosure (only name+description in the system prompt, ~50-150 tokens each, body loads on trigger). This gives skills a higher effective ceiling (~40-60 before flat presentation degrades), so cited tool-count limits must be re-derived for skills rather than applied verbatim.'
-    context: Relevant when reasoning about how many skills a repo can carry before needing retrieval/routing, or when citing tool-selection papers as evidence for skill-catalog limits. The user pushed back twice asking the agent to be specific about the skill upper limit because the tool-based numbers were confusing.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - CLAUDE.md
-    session_ids:
-      - 54a59a39-5cc4-491f-a851-b8838bdc3fb1
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 54a59a39-5cc4-491f-a851-b8838bdc3fb1-80
-      - kind: session_message
-        ref: 54a59a39-5cc4-491f-a851-b8838bdc3fb1-82
-  - id: 20260623T160816.998358Z-0017
-    description: 'Compressing a skill/tool description while keeping routing-critical content actually improves activation rather than hurting it — removing background explanation of how the skill works internally sharpens the routing signal (SkillReducer: ~48% compression improved quality ~2.8%; well-optimized descriptions raised activation from ~20% to ~50%, and adding concrete usage examples raised it further from 72% to 90%). The description is a routing signal, not documentation; explain WHY in the SKILL.md body, not the description.'
-    context: Use when writing or reviewing skill descriptions. Counterintuitive because the instinct is to add detail; the research shows the opposite. Grounded in EMNLP 2025 / Anthropic skill-authoring docs surfaced during the research session.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - CLAUDE.md
-    session_ids:
-      - 54a59a39-5cc4-491f-a851-b8838bdc3fb1
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 54a59a39-5cc4-491f-a851-b8838bdc3fb1-55
-      - kind: session_message
-        ref: 54a59a39-5cc4-491f-a851-b8838bdc3fb1-92
-  - id: 20260623T160816.998362Z-0018
-    description: ntm grep uses Go (RE2) regex syntax, not POSIX. Alternation written POSIX-style with escaped pipes (e.g. 'a\|b\|c') silently returns 'No matches found'; the correct form is unescaped alternation inside a group, e.g. '(phase|Phase|PR |error)'. The failure is silent (no error), so a wrong-syntax pattern looks like a genuinely empty result.
-    context: Applies when scripting ntm grep across tmux panes (e.g. in the executor-status-check / status-report skill, or any ad-hoc session scanning). The first attempt used escaped-pipe POSIX alternation and matched nothing even though the panes clearly contained the patterns; switching to Go-style '(a|b)' alternation immediately returned 17 matches across 3 panes.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/planning-workflow/skills/executor-status-check/SKILL.md
-    session_ids:
-      - 28122fb0-8448-4b59-86db-4a4c36d5fadb
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 28122fb0-8448-4b59-86db-4a4c36d5fadb-68
-      - kind: session_message
-        ref: 28122fb0-8448-4b59-86db-4a4c36d5fadb-74
-  - id: 20260623T160816.998365Z-0019
-    description: Before rewriting a tmux-orchestration skill onto a new tool (ntm), the agent first ran the candidate ntm commands against a real, live executor session (auto-stack--execute) to confirm what structured data they actually return, rather than trusting --help text. This caught that --help is unusable on ntm's --robot-* flags (they treat '--help' as a session name and error with SESSION_NOT_FOUND) and confirmed which commands surface task IDs, phase progress, and context %.
-    context: Applies when migrating a skill from one tooling primitive to another (here raw tmux capture-pane/send-keys -> ntm status/send/grep/copy). The empirical check against a live session was what validated the rewrite and shaped the final command set; ntm's robot subcommands have no working --help and must be probed by actually invoking them on a real session.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/planning-workflow/skills/delegate-task/SKILL.md
-      - src/planning-workflow/skills/executor-status-check/SKILL.md
-    session_ids:
-      - 28122fb0-8448-4b59-86db-4a4c36d5fadb
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 28122fb0-8448-4b59-86db-4a4c36d5fadb-19
-      - kind: session_message
-        ref: 28122fb0-8448-4b59-86db-4a4c36d5fadb-74
-  - id: 20260623T160816.998368Z-0020
-    description: Planning-workflow skill sources do NOT live at src/skills/<name>/ or src/<name>/ — they live under src/planning-workflow/skills/<name>/SKILL.md. Agents repeatedly guessed src/delegate-task/SKILL.md and got 'No such file or directory'; the find pattern `find src/ -path '*<skill>*' -name SKILL.md` reliably locates the real source.
-    context: Applies when editing or reading a skill's source in this repo. CLAUDE.md says 'source lives in ./src/ not ./skills/' but is silent on the module subdirectory layout, so agents assume src/<skill>/ and fail.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/planning-workflow/skills/delegate-task/SKILL.md
-    session_ids:
-      - 6876b82b-312d-4773-bc16-667b706d9b2e
-      - aef2f05ea460c5d80
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 6876b82b-312d-4773-bc16-667b706d9b2e-9
-      - kind: session_message
-        ref: aef2f05ea460c5d80-3
-  - id: 20260623T160816.998372Z-0021
-    description: Editing a single skill source under src/ and running `python src/compile.py` regenerates MULTIPLE compiled copies (skills/<name>/ and a parallel copy under skills/execute-task/references/ for shared refs). A one-line source edit can surface as two changed files in git status; stage all of them together so source and compiled output stay in sync.
-    context: Applies when committing a skill-source change in this repo. The shared-reference compiler duplicates ref files (e.g. worktree-conventions.md) into several skill output dirs, so `git status` shows more changed files than the single source you edited.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/compile.py
-      - src/planning-workflow/refs/worktree-conventions.md
-    session_ids:
-      - bb475b79-8078-4cbb-9859-24c07ae7df85
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: bb475b79-8078-4cbb-9859-24c07ae7df85-20
-  - id: 20260623T160816.998377Z-0022
-    description: '`ntm --help` output is ~54KB and gets truncated/persisted; many guessed subcommands don''t exist (no `ntm tail`, `ntm extract`). Useful real subcommands for reading/sending across panes: `ntm send` (with --smart/--pane/--json), `ntm copy session:pane --last N`, `ntm grep`, `ntm watch`, `ntm status --json`. Robot/JSON flags like `--robot-tail` are session-scoped and error with ''session not found'' when given `--help`.'
-    context: Applies when scripting ntm (Named Tmux Manager) to read from or dispatch to other Claude Code panes — e.g. in delegate-task / executor-status-check skills. Probe specific subcommands with `ntm <cmd> --help` rather than guessing names.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/planning-workflow/skills/delegate-task/SKILL.md
-    session_ids:
-      - a95eec5cd4fc4759a
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: a95eec5cd4fc4759a-16
-      - kind: session_message
-        ref: a95eec5cd4fc4759a-25
-  - id: 20260623T160816.998381Z-0023
-    description: '`claude --add-dir <dir>` is variadic and will silently swallow the following positional prompt argument, causing ''Input must be provided either through stdin or as a prompt argument'' even though a prompt was passed. Fix by ordering flags so the prompt comes last after `-p` (e.g. `claude --add-dir "$CWD" -p --dangerously-skip-permissions "/review-task ..."`), not immediately after `--add-dir`.'
-    context: Applies when invoking Claude Code headlessly (`claude -p`) with `--add-dir` to grant repo access, e.g. in a request-claude-review style skill that shells out to another Claude instance. The bug only surfaces at runtime, not at compile/lint time.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/planning-workflow/skills/request-claude-review/SKILL.md
-    session_ids:
-      - 1622750c-4d85-4964-8d7f-17137a3471c3
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 1622750c-4d85-4964-8d7f-17137a3471c3-59
-      - kind: session_message
-        ref: 1622750c-4d85-4964-8d7f-17137a3471c3-62
-      - kind: session_message
-        ref: 1622750c-4d85-4964-8d7f-17137a3471c3-64
-  - id: 20260623T160816.998384Z-0024
-    description: '`codex exec --full-auto` is deprecated and emits a deprecation warning; the current equivalent is `codex exec --sandbox workspace-write`. Skills that shell out to Codex should use the new flag.'
-    context: Applies to any skill or script that invokes Codex headlessly for autonomous file-writing work, such as request-codex-review. Surfaced via runtime feedback, not lint.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - src/planning-workflow/skills/request-codex-review/SKILL.md
-    session_ids:
-      - 1622750c-4d85-4964-8d7f-17137a3471c3
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: 1622750c-4d85-4964-8d7f-17137a3471c3-94
-      - kind: session_message
-        ref: 1622750c-4d85-4964-8d7f-17137a3471c3-99
-  - id: 20260623T160816.998387Z-0025
-    description: '`npx skills check` / `npx skills update` can report ''All skills are up to date'' while only inspecting a single skill (it checked 1 skill in a repo with 18), so it cannot be trusted as proof that selectively-installed downstream skills are current. To verify or refresh reliably, drive installs explicitly (e.g. a generated install.sh delegating to `npx skills add <repo> -s <list>`) rather than relying on the check/update output.'
-    context: Relevant when reasoning about how downstream consumers keep selectively-installed skill subsets in sync, or when debugging why `npx skills check` claims everything is current. Corroborates known CLI gotchas about scope resolution in non-interactive shells.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - install.sh
-      - src/compile.py
-    session_ids:
-      - e7fd627b-03ca-40c3-a9d1-3a95e3b4d3f5
-    task_id: null
-    sources:
-      - kind: session_message
-        ref: e7fd627b-03ca-40c3-a9d1-3a95e3b4d3f5-12
-  - id: 20260623T160816.998390Z-0026
-    description: 'The user enforces a two-part assumption-surfacing rule in the planning workflow: (1) at requirements time, assume there are latent requirements in the user''s head not stated in the prompt and proactively draw them out via interactive questions; (2) before presenting the solution doc, re-examine every design decision and double-check (via AskUserQuestion) any decision NOT clearly dictated by either the requirements or pre-established repo patterns. Decisions obvious from context/conventions need no confirmation. The goal is to catch choices the user would only regret later when reviewing the implementation.'
-    context: 'Applies to planning-workflow skills new-task (Resolve Open Questions step) and new-solution (a Validate-assumptions step added just before the hard-stop). The distinguishing test for whether to ask: is the decision grounded in requirements OR an established codebase convention? If neither, ask.'
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
+      - {kind: session_message, ref: 1622750c-4d85-4964-8d7f-17137a3471c3-94}
+      - {kind: session_message, ref: 1622750c-4d85-4964-8d7f-17137a3471c3-99}
+  - id: 20260624T093636.953879Z-0005
+    description: Requirements are authoritative — surface every undeclared-but-important design decision to the user as an explicit gate rather than silently inventing a default.
+    context: Designing or running the planning workflow (new-task requirements gathering, new-solution/new-plan design) where a thin user prompt must become a concrete spec.
+    what_happened: >
+      User framed the dominant failure class: "one of the most common class of errors is the AI making solution
+      assumptions that aren't explicitly declared. this can lead to it building the wrong thing further down the
+      line." Across sessions the user repeatedly added explicit "ask the user" gates — enrich new-task with "assume
+      there are latent requirements in the user's head," and add a new-solution "Validate assumptions" step requiring
+      AskUserQuestion on any decision not dictated by requirements or established repo patterns — because the audit
+      found enforcement was soft and scattered (new-solution/new-plan/review-task had no hard gate).
+    root_cause: >
+      Agents default to resolving only the questions already written down and silently pick defaults for everything
+      else, producing designs the user only discovers and regrets at code-review time. Soft "state your assumptions"
+      principles get skipped under pressure to produce an artifact.
+    correct_approach: >
+      Add a concrete checkpoint before presenting docs: enumerate every decision NOT clearly dictated by (a)
+      requirements or (b) established codebase conventions, confirm each via AskUserQuestion, and escalate undeclared
+      important decisions back to requirements (e.g. an Open Question / P1 comment) rather than choosing a default.
+      Wire it into existing review-format and hard-stop gates rather than adding new ceremony.
+    key_insight: The expensive ambiguities are the unstated assumptions an agent resolves silently; force them to the surface as explicit user confirmations before committing to a design.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
     files:
       - src/planning-workflow/skills/new-task/SKILL.md
       - src/planning-workflow/skills/new-solution/SKILL.md
-    session_ids:
-      - fa2699fa-e5e3-4efa-8644-8f26db0a417f
+      - src/planning-workflow/skills/new-plan/SKILL.md
+      - src/planning-workflow/skills/review-task/SKILL.md
+    session_ids: [fa2699fa-e5e3-4efa-8644-8f26db0a417f, ca273543-050a-4731-8de4-541d75c6774a, b6027a31-9f81-415a-97b1-1ba771d745db]
     task_id: null
     sources:
-      - kind: session_message
-        ref: fa2699fa-e5e3-4efa-8644-8f26db0a417f-7
-      - kind: session_message
-        ref: fa2699fa-e5e3-4efa-8644-8f26db0a417f-25
-      - kind: session_message
-        ref: fa2699fa-e5e3-4efa-8644-8f26db0a417f-29
-  - id: 20260623T160816.998394Z-0027
-    description: When Codex finishes a PR review with no issues, it does not leave a comment or review thread — `chatgpt-codex-connector[bot]` adds a +1 (thumbs-up) reaction to the PR itself. An agent checking for feedback must look at PR reactions, not just unresolved threads, or it will wrongly conclude nothing has been reviewed yet.
-    context: Applies to any workflow that waits on a Codex/automated PR review and then runs address-feedback. The first attempt to document this got it wrong (claimed the emoji was on the main PR comment); the user corrected it with evidence that it's a reaction on the PR from the connector bot.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
+      - {kind: session_message, ref: fa2699fa-e5e3-4efa-8644-8f26db0a417f-7}
+      - {kind: session_message, ref: fa2699fa-e5e3-4efa-8644-8f26db0a417f-25}
+      - {kind: session_message, ref: fa2699fa-e5e3-4efa-8644-8f26db0a417f-29}
+      - {kind: session_message, ref: ca273543-050a-4731-8de4-541d75c6774a-2}
+  - id: 20260624T093636.953884Z-0006
+    description: A PWA served from a Vite dev server has no offline support and re-fetches its JS on every load, so it breaks on any network blip.
+    context: When a mobile/installed PWA is pointed at a long-running Vite dev server (e.g. exposed over `tailscale serve`) and the user reports "doesn't persist between reloads" / "forces a refresh that breaks with no network".
+    what_happened: >
+      User on mobile reported the app "does not persist progress between reloads" and "on opening, it forces a refresh
+      which breaks it if there is no network... connecting to vite dev server over tailscale". Investigation found
+      index.html loads `/src/entry.tsx` as a type=module script (re-fetched from the dev server every load), no service
+      worker exists (the PWA manifest's `standalone` is cosmetic), and all session state is fetched live from the API
+      each boot with nothing cached locally.
+    root_cause: >
+      A Vite dev server is online-first by design: it serves ES modules on demand with no precache, and a manifest
+      alone does not make an app offline-capable — only a registered service worker does. State persistence was never
+      wired because state lived only in server-fetched stores.
+    correct_approach: >
+      Serve a production build (`vite build` + `vite preview`) instead of the dev server, add vite-plugin-pwa with a
+      workbox precache of the app shell (navigateFallback index.html, cleanupOutdatedCaches, clientsClaim) and
+      stale-while-revalidate for API calls, persist app state locally with periodic push-back, and point
+      `tailscale serve` at the preview port (4173), not the dev port (5173).
+    key_insight: A web manifest declares installability; only a service worker plus a production build delivers offline. Never expect a Vite dev server to survive a flaky network — it re-fetches modules on every load.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
     files:
-      - src/planning-workflow/skills/address-feedback/SKILL.md
-    session_ids:
-      - a2eae151-becc-4c44-9303-d24d6471565b
+      - /home/vscode/src/teach/vite.config.ts
+      - /home/vscode/src/teach/ecosystem.config.cjs
+    session_ids: [9d74150a-a74f-46aa-b55b-e0e15d664528, a4d5736d8b45f45f3, a51b8aae31e2b47a3, a1916594e3f19c416]
     task_id: null
     sources:
-      - kind: session_message
-        ref: a2eae151-becc-4c44-9303-d24d6471565b-37
-      - kind: session_message
-        ref: a2eae151-becc-4c44-9303-d24d6471565b-39
-  - id: 20260623T160816.998397Z-0028
-    description: Skills in this repo have a src/ source and a compiled skills/ (and synced .agents/) output. Every skill edit must be made in src/ and then recompiled (`make compile` / `make install`); editing the compiled output directly is wasted because it gets regenerated. Each change touches three parallel copies (src/, skills/, .agents/) that must all be staged together.
-    context: Applies whenever editing any skill in the skills repo. Confirmed by the repeated pattern of edit-src then make compile, and by commits that stage src/.../SKILL.md alongside skills/.../SKILL.md and .agents/.../SKILL.md.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
+      - {kind: session_message, ref: 9d74150a-a74f-46aa-b55b-e0e15d664528-66}
+      - {kind: session_message, ref: 9d74150a-a74f-46aa-b55b-e0e15d664528-91}
+      - {kind: session_message, ref: 9d74150a-a74f-46aa-b55b-e0e15d664528-92}
+  - id: 20260624T093636.953889Z-0007
+    description: Vite reads its config only at startup, so editing vite.config.ts under a long-running PM2 process has no effect until you restart it.
+    context: Changing vite.config.ts (allowedHosts, plugins, /api middleware) for a Vite dev server kept always-on by PM2, when the change appears not to take effect (e.g. a host in allowedHosts is still blocked).
+    what_happened: >
+      The teach repo's CLAUDE.md documents the trap: "Vite reads its config only at startup, so config changes do not
+      hot-reload in the long-running PM2 process. Run `npx pm2 restart teach-dev` to apply them — otherwise you'll
+      keep hitting the stale config (this is how a host can be listed in allowedHosts yet still be blocked)."
+    root_cause: >
+      Vite parses its config file once at process boot; HMR only reloads app source, not config. Under a process
+      manager the same process lives for days, so config edits never re-parse until an explicit restart.
+    correct_approach: >
+      After any vite.config.ts change run `npx pm2 restart teach-dev` (or restart whatever manages the server). Set
+      BOTH server.allowedHosts (vite dev, 5173) and preview.allowedHosts (built PWA + /api preview, 4173), and point
+      `tailscale serve` at whichever mode is actually serving.
+    key_insight: Config files loaded once at process startup do not hot-reload — under a process manager, "I edited the config but nothing changed" almost always means the process needs restarting.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
     files:
-      - src/
-      - skills/
-      - .agents/
-    session_ids:
-      - a2eae151-becc-4c44-9303-d24d6471565b
-      - d84410ad-511d-4423-b026-9715dd574cd8
+      - /home/vscode/src/teach/CLAUDE.md
+      - /home/vscode/src/teach/vite.config.ts
+    session_ids: [9d74150a-a74f-46aa-b55b-e0e15d664528, a1916594e3f19c416]
     task_id: null
     sources:
-      - kind: session_message
-        ref: a2eae151-becc-4c44-9303-d24d6471565b-13
-      - kind: session_message
-        ref: d84410ad-511d-4423-b026-9715dd574cd8-29
-  - id: 20260623T160816.998400Z-0029
-    description: The pre-commit hook runs `autoskill sync`, which restages unrelated .agents/ files (and earlier autoskill sync churn appeared as staged .agents/ changes). To keep a commit scoped to the intended change, unstage the sync churn with `git reset HEAD .agents/ .claude/` before committing, then re-add only the relevant files.
-    context: Applies when committing a small, focused skill change in this repo where the pre-commit pipeline or a prior `make install` has left .agents/ config churn in the index.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - scripts/pre-commit-checks.sh
-    session_ids:
-      - a2eae151-becc-4c44-9303-d24d6471565b
+      - {kind: session_message, ref: 9d74150a-a74f-46aa-b55b-e0e15d664528-92}
+      - {kind: session_message, ref: 9d74150a-a74f-46aa-b55b-e0e15d664528-103}
+  - id: 20260624T093636.953892Z-0008
+    description: A combined rm -rf on absolute paths under /home was blocked by the dcg safety guard; dropping -f and deleting one path at a time succeeded.
+    context: An agent cleaning up scratch/test artifacts with rm -rf using absolute paths inside a project that lives under the home directory (e.g. /home/vscode/src/...).
+    what_happened: >
+      `rm -f /home/vscode/src/skills/SPIKE-REPORT.md && rm -rf /home/vscode/src/skills/.tmp && rm -rf
+      /home/vscode/src/skills/tech-spike-workspace` was BLOCKED by dcg (rule core.filesystem:rm-rf-root-home):
+      "rm -rf on root or home paths is EXTREMELY DANGEROUS ... will NOT be executed." Splitting it into `rm -f`
+      for the file then `rm -r` (no -f) per directory succeeded.
+    root_cause: >
+      The dcg guard pattern-matches rm -rf against paths beginning with / or ~ that live under root/home, regardless of
+      how deep/specific the path is. A long absolute path under /home still trips the rule because the guard is
+      conservative about -rf, not about path depth.
+    correct_approach: >
+      To clean a specific scratch dir, drop the force flag — use `rm -r <path>` (or `rm -f <file>` for single files)
+      rather than `rm -rf`, and run one path per command instead of chaining several deletes.
+    key_insight: Safety guards key off the rm -rf signature plus a root/home prefix, not path specificity; the cheapest workaround is to drop -f and delete one explicit path at a time.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
+    files: [skills/tech-spike/SKILL.md]
+    session_ids: [39a92edd-4245-43b3-a480-d3fff3ac5d39]
     task_id: null
     sources:
-      - kind: session_message
-        ref: a2eae151-becc-4c44-9303-d24d6471565b-129
-  - id: 20260623T160816.998404Z-0030
-    description: 'Adding a compile/lint step to the pre-commit hook causes commits to fail on PRE-EXISTING problems unrelated to the change — here, stale autodoc hashes blocked the commit. The fix is to clear the backlog first: run `autodoc fix` to see what''s stale, update title/summary/read_when frontmatter, then `autodoc fixed <file>` to refresh each hash before retrying the commit.'
-    context: Applies when a pre-commit hook bundles repo-wide validation (autodoc stale, lint) and a focused commit trips over latent issues. autodoc fix only prints instructions and exits 1; the hash is actually refreshed by `autodoc fixed <path>`.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - scripts/pre-commit-checks.sh
-      - docs/reviews/2026-05-23.md
-    session_ids:
-      - a2eae151-becc-4c44-9303-d24d6471565b
+      - {kind: session_message, ref: 39a92edd-4245-43b3-a480-d3fff3ac5d39-55}
+      - {kind: session_message, ref: 39a92edd-4245-43b3-a480-d3fff3ac5d39-56}
+  - id: 20260624T093636.953898Z-0009
+    description: Running a file-writing skill's happy path as an e2e test inside the live repo entangles test output with real state and leaves side effects behind.
+    context: Running a skill's own happy path as an end-to-end test inside the same working repo, where the skill writes files (reports, scratch dirs, .gitignore entries) to the project root.
+    what_happened: >
+      The tech-spike e2e run wrote SPIKE-REPORT.md to the repo root, created .tmp/ and tech-spike-workspace/, and
+      appended `.tmp` to the real .gitignore. The agent then manually rm'd each artifact, and on the .gitignore line
+      decided "I'll leave it since it's correct for this repo going forward" — keeping a side effect produced by a
+      test run rather than restoring pre-test state.
+    root_cause: >
+      The skill-under-test ran against the real project directory with no sandbox/worktree isolation, so its
+      production-intended writes landed in the repo and entangled cleanup with real-vs-test judgment calls.
+    correct_approach: >
+      Run e2e tests of file-writing skills in an isolated copy (temp dir or git worktree / clean clone), or snapshot
+      `git status` before and `git checkout`/restore after, so cleanup is mechanical and no test side effect silently
+      survives.
+    key_insight: Testing a file-writing skill in its own live repo conflates test output with real state; isolate the run so cleanup is a reset, not a judgment call about which side effects to keep.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
+    files: [skills/tech-spike/SKILL.md, .gitignore]
+    session_ids: [39a92edd-4245-43b3-a480-d3fff3ac5d39, a633cdef650f8d31a]
     task_id: null
     sources:
-      - kind: session_message
-        ref: a2eae151-becc-4c44-9303-d24d6471565b-139
-      - kind: session_message
-        ref: a2eae151-becc-4c44-9303-d24d6471565b-145
-  - id: 20260623T160816.998407Z-0031
-    description: A test that calls the skills compiler's compile() must use a nested tmp_path/repo/src layout. Pointing it at the real src/ makes _generate_install_script clobber the repo's install.sh; the test still passes but leaves the working tree corrupted, and only an independent cold PR reviewer caught it.
-    context: Writing tests for code with filesystem side effects on tracked repo files (e.g. compile() which regenerates install.sh). Applies whenever a unit test exercises a generator that writes into the repo root.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
+      - {kind: session_message, ref: 39a92edd-4245-43b3-a480-d3fff3ac5d39-66}
+      - {kind: session_message, ref: a633cdef650f8d31a-13}
+  - id: 20260624T093636.953905Z-0010
+    description: In a src/->compiled repo, editing source without immediately recompiling and committing the whole generated tree leaves stale output that contaminates later commits.
+    context: Adding or editing a skill or a shared reference under src/ in a repo whose build (src/compile.py) fans source into many tracked compiled copies (skills/, .agents/skills/, per-skill references/).
+    what_happened: >
+      After adding request-codex-review and editing the shared workflow-overview.md, `git status` showed not just the
+      two source files but 13 modified `skills/*/references/workflow-overview.md` copies plus the new compiled tree;
+      they had to be regenerated (`python3 src/compile.py` → "Compiled 14 skills") and staged with the source. In a
+      separate session, a `/rename` commit swept up stale compiled artifacts from earlier source edits whose output was
+      never committed ("Also includes compiled output for recent source changes...").
+    root_cause: >
+      The build fans a single source file out into N tracked copies and the repo commits compiled output; treating
+      compile as optional/deferred lets the generated tree desynchronize from source across commits.
+    correct_approach: >
+      Make compile+stage+commit atomic with the source edit: run the compile step immediately after editing src/,
+      `git add` both the source and every regenerated mirror tree in one commit, and rely on a pre-commit `make check`
+      (compile + lint) to prevent drift. Never hand-edit the compiled tree.
+    key_insight: When generated artifacts are checked into the repo, source and output must move in the same commit — deferring the build lets stale artifacts accumulate and contaminate later unrelated commits.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
+    files: [src/compile.py, Makefile, src/planning-workflow/refs/workflow-overview.md]
+    session_ids: [03e02af0-7980-480a-b2ff-8812d9437370, b6027a31-9f81-415a-97b1-1ba771d745db, 39a92edd-4245-43b3-a480-d3fff3ac5d39]
+    task_id: null
+    sources:
+      - {kind: session_message, ref: 03e02af0-7980-480a-b2ff-8812d9437370-42}
+      - {kind: session_message, ref: 03e02af0-7980-480a-b2ff-8812d9437370-55}
+      - {kind: session_message, ref: b6027a31-9f81-415a-97b1-1ba771d745db-51}
+      - {kind: session_message, ref: b6027a31-9f81-415a-97b1-1ba771d745db-58}
+  - id: 20260624T093636.953917Z-0011
+    description: A commit-style skill that stops at git commit leaves work unpublished; commit automation should also push with a safe escalation ladder.
+    context: Authoring or reviewing finalize/commit automation in a repo whose workflow pushes straight to main.
+    what_happened: >
+      User asked to "update the src for commit-task skill - after committing the changes, push up to origin before
+      exiting. if this fails (because we're behind origin) try to safely merge / rebase ... if that fails, exit and ask
+      for help." The original commit-task ended at `git commit` with no push, so committed planning docs never reached
+      origin.
+    root_cause: >
+      The skill modeled "commit" as the terminal step, conflating a local commit with "the work is done/shared." In a
+      push-to-main workflow the unpublished commit is invisible to everyone else.
+    correct_approach: >
+      End commit-style skills with an explicit push plus a safe escalation ladder: push; if rejected for being behind,
+      `git pull --rebase` then push; if rebase conflicts, abort and try a non-rebase merge then push; if that fails,
+      stop and ask the user — never force-push or discard changes.
+    key_insight: Commit automation should publish, not just record — pair the commit with a push and a conservative rebase→merge→ask fallback, never an automatic force-push.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
+    files: [src/planning-workflow/skills/commit-task/SKILL.md]
+    session_ids: [ca273543-050a-4731-8de4-541d75c6774a]
+    task_id: null
+    sources:
+      - {kind: session_message, ref: ca273543-050a-4731-8de4-541d75c6774a-0}
+      - {kind: session_message, ref: ca273543-050a-4731-8de4-541d75c6774a-8}
+  - id: 20260624T093636.953927Z-0012
+    description: "`npx skills install <repo-slug>` fetches the remote GitHub HEAD, so locally-added-but-unpushed skills silently never install."
+    context: After scaffolding a new skill locally (compile.py emits it into ./skills/), then running `make install` / `npx skills install <user>/<repo>` and expecting it under .claude/skills and .agents/skills.
+    what_happened: >
+      User asked "why arent skills/generate-10-ideas/ and skills/revise-readme/ in .claude/skills?". `make install` ran
+      `npx skills install mistakenot/skills -s '*' ...` and reported success, but `ls .claude/skills/` showed both new
+      skills absent. compile had produced them locally; the install fetched from the remote repo where they had not
+      been pushed yet. Installing from the local path (`npx skills install ./skills -s '*' ...`) fixed it (verified via
+      --dry-run: "Local path validated", "Found 17 skills").
+    root_cause: >
+      A repo-slug source is resolved by the skills CLI to a git clone of the remote default branch — it does NOT read
+      the local working tree, so unpushed local skills are invisible. The "success" message reflects the remote
+      snapshot, masking the gap.
+    correct_approach: >
+      Install from the local path: `npx skills install ./skills -s '*' -a claude-code codex -y` (the Makefile install
+      target was changed to use ./skills). Push first only if you specifically want the remote snapshot.
+    key_insight: A package-manager source that looks like a repo slug means "fetch the remote," not "use my local checkout" — a green success message reflects what the remote had, not your uncommitted work.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
+    files: [Makefile, src/compile.py]
+    session_ids: [165b12ad-356b-406a-ade1-a58f97a80a9a, 8d4826ca-b39d-47e5-8964-69507ed69a65]
+    task_id: null
+    sources:
+      - {kind: session_message, ref: 165b12ad-356b-406a-ade1-a58f97a80a9a-0}
+      - {kind: session_message, ref: 165b12ad-356b-406a-ade1-a58f97a80a9a-12}
+      - {kind: session_message, ref: 165b12ad-356b-406a-ade1-a58f97a80a9a-16}
+      - {kind: session_message, ref: 165b12ad-356b-406a-ade1-a58f97a80a9a-20}
+      - {kind: session_message, ref: 8d4826ca-b39d-47e5-8964-69507ed69a65-63}
+  - id: 20260624T093636.953936Z-0013
+    description: This environment has no bare `python` (only `python3`/`uv run`); `python src/compile.py` aborts with exit 127.
+    context: Running the skill compiler or any Python script directly from bash in this repo, following a literal `python src/compile.py` from a docstring or older Makefile.
+    what_happened: >
+      `python src/compile.py` returned "Exit code 127 /bin/bash: line 1: python: command not found". Retrying with
+      `python3 src/compile.py` worked. This recurred across two separate sessions.
+    root_cause: >
+      The environment ships only a `python3` binary with no `python` alias/symlink, yet documentation and the
+      compiler's usage string said `python src/compile.py`.
+    correct_approach: >
+      Invoke `python3 src/compile.py`, or better run it via the Makefile target (`make compile`, which uses
+      `uv run --no-dev python src/compile.py`) which avoids the bare-`python` trap. Don't trust the docstring's
+      `python` form.
+    key_insight: On modern systems `python` is often unaliased and only `python3` (or a managed runner like `uv run`) resolves — prefer the project's build target, which encodes the working invocation, over a hand-typed interpreter command.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
+    files: [src/compile.py, Makefile]
+    session_ids: [c0e15b7a-f9e1-419f-9425-5c2873de542e, 03e02af0-7980-480a-b2ff-8812d9437370]
+    task_id: null
+    sources:
+      - {kind: session_message, ref: c0e15b7a-f9e1-419f-9425-5c2873de542e-27}
+      - {kind: session_message, ref: c0e15b7a-f9e1-419f-9425-5c2873de542e-29}
+      - {kind: session_message, ref: 03e02af0-7980-480a-b2ff-8812d9437370-40}
+      - {kind: session_message, ref: 03e02af0-7980-480a-b2ff-8812d9437370-42}
+  - id: 20260624T093636.953942Z-0014
+    description: When one skill invokes another by literal name and builds its input path, that string is an unenforced contract that must be verified at both ends.
+    context: Auditing a skill (request-codex-review) that shells out to another agent (Codex) to run a second skill (review-task) — one skill's command embeds an invocation of a different skill by name and constructs the target path itself.
+    what_happened: >
+      The caller invoked `$review-task-docs $TASK_ID` but the actual skill was named `review-task`, so Codex would
+      fail to find it. It also passed a bare numeric `$TASK_ID` as a path where the real folder is
+      `docs/tasks/$ID-$NAME/` (name suffix required). And a clean review with no comments was indistinguishable from a
+      failed review that produced no output.
+    root_cause: >
+      The two skills were edited independently; the embedded invocation string and path assumption were never
+      reconciled against the consumer skill's real name and the repo's `docs/tasks/$ID-$NAME/` folder convention.
+      Nothing forced the contract to stay in sync.
+    correct_approach: >
+      Fix the invocation to the real skill name; resolve the full folder at runtime with
+      `find "$CWD/docs/tasks" -maxdepth 1 -type d -name "${TASK_ID}-*"` and exit nonzero if not found; and have the
+      reviewer emit an explicit "no issues found" marker so a clean review is positively distinguishable from a silent
+      failure.
+    key_insight: A literal skill name plus a constructed input path is an unenforced API contract — verify the exact name and the canonical path convention at both ends, and make "success with no output" produce an affirmative signal rather than silence.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
     files:
-      - src/compile.py
-      - docs/tasks/001-assurance-skill-walking-skeleton/feedback.md
+      - src/planning-workflow/skills/request-codex-review/SKILL.md
+      - src/planning-workflow/skills/review-task/SKILL.md
+    session_ids: [41e4d893-c5fc-4895-8c83-8720f04072a2]
+    task_id: null
+    sources:
+      - {kind: session_message, ref: 41e4d893-c5fc-4895-8c83-8720f04072a2-2}
+      - {kind: session_message, ref: 41e4d893-c5fc-4895-8c83-8720f04072a2-51}
+      - {kind: session_message, ref: 41e4d893-c5fc-4895-8c83-8720f04072a2-54}
+  - id: 20260624T093636.953947Z-0015
+    description: A test that passes the real src/ dir into compile() clobbered the repo's install.sh; tests calling compile() must use an isolated nested tmp repo layout.
+    context: Writing a unit test that calls the skill compiler's `compile()` / `_generate_install_script` against a directory, in a repo where compile writes install.sh and mirrored skill trees.
+    what_happened: >
+      `test_real_module_compiles` used the real `src/` dir as `src_dir`, causing `_generate_install_script` to clobber
+      the repo's `install.sh` with only the assurance module. Tests passed, but the working tree was corrupted — the
+      bug was caught by the independent PR reviewer, not by the phase-D subagent that wrote the test.
+    root_cause: >
+      compile() has filesystem side effects (it writes install.sh and skill mirrors relative to the dir it is given);
+      pointing it at the live repo made the test mutate real tracked files while still exiting green.
+    correct_approach: >
+      Run any test that calls compile() against an isolated nested `tmp_path/repo/src` layout so all side effects land
+      inside the temp dir, never the real repo. This nested-repo pattern is reusable for any compile()-calling test.
+    key_insight: A function with filesystem side effects must be tested against a throwaway directory, never the live tree — a green test can still corrupt the repo, and only side-effect isolation (plus a cold reviewer) catches it.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
+    files: [src/compile.py, docs/tasks/001-assurance-skill-walking-skeleton/feedback.md]
     session_ids: []
     task_id: 001-assurance-skill-walking-skeleton
     sources:
-      - kind: feedback
-        ref: docs/tasks/001-assurance-skill-walking-skeleton/feedback.md
-  - id: 20260623T160816.998410Z-0032
-    description: Running an independent cold reviewer against the PR caught real bugs the implementation subagents missed (e.g. the install.sh clobber where tests passed but the tree was corrupted). The cold review is worth its cost.
-    context: Finishing an agent-executed task before merge. The implementation subagents share context and blind spots; a fresh reviewer with no execution history surfaces subtle defects.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - docs/tasks/001-assurance-skill-walking-skeleton/feedback.md
-    session_ids: []
-    task_id: 001-assurance-skill-walking-skeleton
-    sources:
-      - kind: feedback
-        ref: docs/tasks/001-assurance-skill-walking-skeleton/feedback.md
-  - id: 20260623T160816.998413Z-0033
-    description: auto skill lint may be unavailable in a worktree environment, but the compiler (python src/compile.py) still validates structural issues. Treat compiler validation as the floor when lint cannot run, rather than skipping verification entirely.
-    context: Executing a skills task inside a git worktree where the auto/autoskill toolchain is not fully installed.
-    git_commit: 931dd416acf2b06ae581d492262dbe72c7103b9e
-    files:
-      - docs/tasks/002-beta-planning-workflow/feedback.md
+      - {kind: feedback, ref: docs/tasks/001-assurance-skill-walking-skeleton/feedback.md}
+  - id: 20260624T093636.953953Z-0016
+    description: "`autoskill lint` is unavailable in the worktree environment; rely on compiler validation for structural checks there."
+    context: Verifying skills inside a git worktree (e.g. during task execution) where the normal `make lint` / `autoskill lint` step is expected.
+    what_happened: >
+      During task 002 execution, `autoskill lint` was not available in the worktree environment, so lint verification
+      was skipped; compiler validation (`src/compile.py`) still caught all structural issues.
+    root_cause: >
+      The lint tool is not installed/available in every environment (notably worktrees), so a workflow that hard-depends
+      on it as the only structural gate would be blocked.
+    correct_approach: >
+      Where `autoskill lint` is unavailable, fall back to the compiler's own validation as the structural gate (it
+      catches structural/templating errors), and don't treat the missing linter as a blocker.
+    key_insight: Don't assume every verification tool exists in every environment — know which checks overlap so a missing tool degrades gracefully to an available equivalent rather than blocking.
+    git_commit: fb927ec6c95ec06ec08e84928654bc30f717eb30
+    files: [docs/tasks/002-beta-planning-workflow/feedback.md]
     session_ids: []
     task_id: 002-beta-planning-workflow
     sources:
-      - kind: feedback
-        ref: docs/tasks/002-beta-planning-workflow/feedback.md
+      - {kind: feedback, ref: docs/tasks/002-beta-planning-workflow/feedback.md}

@@ -13,18 +13,71 @@ never edits rules or retrievals.
 
 ## What an observation is
 
-An ID-keyed, immutable record:
+An ID-keyed, immutable record. Its core is a **diagnostic chain** — do not just
+describe what happened, diagnose *why* and distil the reusable principle:
 
-- `description`: a short sentence or two stating what was learned.
-- `context`: background needed to understand when it applies.
+- `description`: a short headline of what was learned (one sentence).
+- `context`: when it applies — the situation that should trigger the lesson.
+  This becomes a rule's `read_when`, so phrase it as a recognisable trigger.
+- `what_happened`: the concrete symptom from the trajectory — the error, the
+  surprise, the correction, the dead end, or the thing that could be better.
+  Ground it in observed evidence, not speculation.
+- `root_cause`: *why* it happened — the wrong assumption, misunderstood concept,
+  or missing knowledge behind the symptom. This becomes a rule's `why`.
+- `correct_approach`: concretely what should have been done instead. This
+  becomes the actionable core of a rule's `value`.
+- `key_insight`: the single evergreen, transferable principle to remember — the
+  generalised takeaway, not the specific incident.
 - `git_commit`: the repository commit checked out when observed.
 - `files`: optional relevant repository paths.
 - `session_ids`: the Claude/Codex sessions providing raw process evidence.
 - `task_id`: the task folder or other stable task identifier, when available.
 - `sources`: concrete transcript messages / feedback artifacts supporting it.
 
+The diagnostic chain (`what_happened` → `root_cause` → `correct_approach` →
+`key_insight`) is what makes an observation refinable into a sharp rule. An
+observation that only restates *what the task did* — with no root cause and no
+transferable insight — is low-signal; skip it.
+
+Not every observation is a failure. "Could be better", a discovered
+environment fact, or a user correction all qualify. Frame `what_happened` as the
+gap or surprise, not strictly as an error.
+
 Observation IDs come from the shared helper (`reflect.py gen-id`) so they are
 immutable and lexically time-ordered.
+
+### Worked example
+
+A transcript shows the agent ran `python src/compile.py`, hit
+`python: command not found` (exit 127), retried with `python3`, and it worked:
+
+```yaml
+- id: 20260623T140210.001122Z-0007
+  description: This environment has no bare `python`; use `python3`.
+  context: Running a Python script or Makefile target in this repo's dev environment.
+  what_happened: >
+    `python src/compile.py` failed with `python: command not found` (exit 127);
+    the same command under `python3` succeeded.
+  root_cause: >
+    Assumed a `python` shim exists. This environment installs only `python3`,
+    and the Makefile's compile target hard-coded `python`.
+  correct_approach: >
+    Invoke `python3` (or `uv run`, the repo's standard) for every script and
+    Makefile target; never rely on a bare `python`.
+  key_insight: >
+    Don't assume a `python` alias exists — probe or default to `python3` in any
+    environment you don't control.
+  git_commit: 23e7a7b
+  files: [Makefile]
+  session_ids: [6c71f534-8a37-4157-9ae2-cabe1ab541c9]
+  task_id: 004-ac-progressive-disclosure
+  sources:
+    - {kind: session_message, ref: 6c71f534-8a37-4157-9ae2-cabe1ab541c9-98}
+```
+
+Note the chain: the symptom (`what_happened`) is grounded in a real error, the
+`root_cause` names the wrong assumption, and `key_insight` generalises beyond
+this one command. A bare "used python3 instead of python" would lose all of that.
 
 ## Sources of truth
 
@@ -70,10 +123,15 @@ cursors:
       processed_at: "2026-06-23T12:30:45Z"
 observations:
   - id: 20260623T123045.123456Z-0001
-    description: >
-      Prefer JSDOM getValue() to read values instead of ...
-    context: >
-      Writing a unit test that needs to read React prop state ...
+    description: Prefer JSDOM getValue() to read prop state in unit tests.
+    context: Writing a unit test that reads React prop state before render.
+    what_happened: >
+      Reading prop state via innerHTML returned stale values; the test passed
+      locally but flaked in CI until switched to getValue().
+    root_cause: >
+      innerHTML reflects rendered DOM, not the live prop, so it lags a tick.
+    correct_approach: Read the value with getValue() rather than innerHTML.
+    key_insight: Assert on the source of truth (prop API), not rendered output.
     git_commit: 23e7a7b...
     files: [src/components/example.test.tsx]
     session_ids: [6c71f534-8a37-4157-9ae2-cabe1ab541c9]
@@ -119,9 +177,17 @@ per task or small batch) to extract observations. Each agent returns candidate
 observations as structured data; the coordinator does not need full transcripts
 in its own context. Instruct each agent to:
 
+- fill the full **diagnostic chain** for every observation: `what_happened`
+  (grounded in a concrete observed symptom), `root_cause` (the wrong assumption
+  or misunderstood concept behind it), `correct_approach` (what to do instead),
+  and `key_insight` (the transferable principle);
+- look hardest at the moments that carry signal: errors, exceptions, failed
+  commands, reversals, explicit user corrections, and review feedback — these
+  expose root causes that a smooth success would not;
 - quote the concrete supporting message/feedback ref in `sources`;
 - record the `git_commit`, `files`, `session_ids`, and `task_id`;
-- prefer specific, reusable lessons over restating what the task did.
+- prefer specific, reusable lessons over restating what the task did; drop any
+  candidate that has no root cause and no transferable insight.
 
 ### 4. Write observations
 
