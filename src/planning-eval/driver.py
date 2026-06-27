@@ -81,7 +81,11 @@ class Session:
             timeout=180,
         )
         s = cls(name=name)
-        s._await_ready()
+        try:
+            s._await_ready()
+        except Exception:
+            s.kill()  # never leave a half-spawned session orphaned
+            raise
         return s
 
     def kill(self) -> None:

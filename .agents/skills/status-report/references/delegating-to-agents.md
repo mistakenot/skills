@@ -90,6 +90,11 @@ fresh Claude Code pane instead of giving up:
 ntm add <session> --cc=1 --json
 ```
 
+> **Respect the ceiling.** Before adding, count the Claude panes. A session is
+> capped at **6** Claude panes (see [§9](#9-reclaiming-panes-garbage-collection)).
+> If it is already at the ceiling and nothing is eligible, every worker is
+> genuinely busy — report and wait/re-check, do **not** add a seventh pane.
+
 Then bring it online before sending (verified flow):
 
 1. **Re-discover the pane index from `ntm status` — do not trust `ntm add`'s
@@ -236,3 +241,47 @@ other flags between it and the prompt.
 
 Auth: Claude uses `~/.claude/.credentials.json`; Codex uses `codex login`;
 Grok uses `~/.grok/auth.json` or `XAI_API_KEY`.
+
+## 9. Reclaiming panes (garbage collection)
+
+On-demand workers (§4) accumulate: after a burst of parallel tasks finishes, the
+session is left holding idle Claude panes forever (each is a full `claude`
+process with a ~7.8 GB `MemoryMax`). Reclaim the surplus so the pool shrinks back
+toward a warm floor.
+
+**Policy — shared across delegate, delegate-task, and
+status-report:**
+
+- **Warm floor = 4** — never reap below 4 Claude panes, so the next dispatch
+  reuses one instantly instead of paying spawn + `robot-wait` latency. (The
+  floor is a *don't-shrink-below* line, not a target — panes aren't spawned
+  eagerly to reach it.)
+- **Ceiling = 6** — never let a session exceed 6 Claude panes. At the ceiling
+  with everything busy, dispatch **waits / reports** instead of adding (§4).
+- **GC runs in status-report**, which already inspects every pane.
+
+**A pane is reapable only when it is idle on `main` with no open PR** — exactly
+the dispatch-eligibility check. Never reap a pane that is in progress, stuck,
+completed-with-open-PR, or on a feature branch.
+
+**Mechanism — LIFO-safe scale-down.** `ntm scale <session> --cc=N` reaps the
+**highest-index (newest) panes first** and is **not busy-aware**, so point it
+only at panes already confirmed idle:
+
+1. From `ntm status <session> --json`, count the Claude panes (`cc_total`) and
+   classify each (idle-on-main vs busy / feature-branch / open-PR).
+2. Walk the Claude panes from the **highest index downward** and count the
+   **contiguous run** that are idle-on-main — call it `reapable_top`. Stop at the
+   first busy pane: scale would kill it before reaching idle panes beneath it.
+3. `to_reap = max(0, min(reapable_top, cc_total - 4))`.
+4. If `to_reap > 0`, re-read those top panes to confirm they are *still* idle
+   (guard against one picking up work since step 1), then scale down:
+   ```bash
+   ntm scale <session> --cc=$((cc_total - to_reap)) --force --json
+   ```
+5. Report which panes were reaped and which idle panes were **kept** and why
+   (floor reached, or a busy pane sitting above them).
+
+If a busy pane occupies the highest index, `reapable_top` is 0 and nothing is
+reaped that cycle — idle panes lower in the stack are left alone rather than risk
+killing the busy one. They get reclaimed on a later cycle once the top frees up.

@@ -44,7 +44,10 @@ A pane is eligible when **all** of the following are true:
 If a candidate is idle but on a feature branch, skip it and report why (e.g. "pane 2 skipped: on branch `task-505` with open PR").
 
 If **no panes are eligible** — all busy, on feature branches, or only a `user`
-shell — **add a fresh worker** instead of stopping. Do not interrupt active work:
+shell — **add a fresh worker** instead of stopping. Do not interrupt active work.
+First check the **ceiling**: if the session already has **6** Claude panes (the
+cap) and none are eligible, every worker is genuinely busy — report and stop (or
+wait and re-check); do not add a seventh. Otherwise add one:
 
 ```bash
 ntm add $SESSION --cc=1 --json

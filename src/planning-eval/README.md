@@ -26,16 +26,20 @@ automated quality scoring, full `CLAUDE_CONFIG_DIR` isolation.
 
 | File | Role |
 |------|------|
-| `driver.py` | NTM conversation primitives: spawn, send, race-free turn-wait, reply scrape. The proven core. |
-| `build.sh` | Compile one arm: `git worktree` at an immutable SHA, overlay the arm's skills into `.claude/skills/`, amend for clean history. |
-| `run.py` | Orchestrate one arm end to end; writes `runs/<id>/result.json` + `artifacts/`. |
+| `driver.py` | NTM conversation primitives: spawn (self-cleans on failure), send, race-free turn-wait, reply scrape, trust-gate auto-accept. The proven core. |
+| `build.sh` | Compile one arm: `git worktree` at an immutable SHA, **fully swap** `.claude/skills/` for the arm's set (clean boundary), amend for clean history; target git hooks disabled. |
+| `metrics.py` | Aggregate real velocity from autoetl/auto-search: tokens, messages, tool-time across the run's parent session **and its subagents** (fan-out cost included). |
+| `run.py` | CLI: `run` / `list` / `clean`. Guaranteed teardown, transcript capture, metrics. |
 | `fixtures/*.json` | A fixture (target repo, start SHA, opening prompt) + arm + hand-scripted `human_turns` + limits. |
-| `runs/` | Per-run output (gitignored-worthy): metrics + captured task docs. |
 
-## Run
+## CLI
 
 ```bash
-uv run --no-project python src/planning-eval/run.py src/planning-eval/fixtures/<fixture>.json
+P=src/planning-eval/run.py
+uv run --no-project python $P run   src/planning-eval/fixtures/<fixture>.json   # replay one arm
+uv run --no-project python $P run   <fixture> --no-metrics                      # skip slow ingest
+uv run --no-project python $P list                                             # table of runs
+uv run --no-project python $P clean [--keep-runs]                              # kill sessions + rm worktrees
 ```
 
 All arm work happens **outside this repo and out of git**, under a tmp workspace
@@ -43,10 +47,12 @@ All arm work happens **outside this repo and out of git**, under a tmp workspace
 
 - `…/ws/<session>/` — the agent's worktree (NTM's `projects_base` is pointed here via
   `NTM_PROJECTS_BASE`, so spawned agents land in the workspace, never in `/home/vscode/src`).
-- `…/runs/<session>/` — captured artifacts + `result.json` metrics.
+- `…/runs/<session>/` — `result.json` (metadata + per-turn timings + aggregated `velocity`),
+  `transcript.txt` (full per-turn sent/reply/raw pane), `artifacts/` (only the run's git diff).
 
-Worktrees are left in place for inspection after the run. The driver auto-accepts Claude
-Code's one-time "trust this folder?" gate that appears for fresh worktree paths.
+Worktrees are left in place for inspection; `clean` removes them. The driver auto-accepts
+Claude Code's one-time "trust this folder?" gate for fresh worktree paths, and spawns with
+`--no-recovery` (NTM's "continue where you left off" injection would otherwise hijack turn 1).
 
 ## Authoring a real fixture
 
@@ -59,9 +65,14 @@ Code's one-time "trust this folder?" gate that appears for fresh worktree paths.
 
 ## Known rough edges (hacked v1)
 
-- Reply scrape is heuristic (`●` TUI lines, diffed vs the pre-send pane). Hardening deferred.
-- Turn completion is the scripted-turn count, not semantic "plan done" detection.
+- Reply scrape is heuristic (`●` TUI lines, diffed vs the pre-send pane). Good enough for
+  metrics/transcripts; a judge should read `transcript.txt`, not trust the scrape.
+- Turn completion is the scripted-turn count, not semantic "plan done" detection — the
+  fixture's `human_turns` must drive the gated pipeline (`/new-solution`, `/new-plan`).
 - No config-dir isolation: the agent uses the operator's auth; the **skill overlay** is the
   only arm boundary so far.
-- Eval runs should later push to an `eval/*` branch so autoetl excludes them from the real
-  session corpus (auto-eval §9); not wired yet.
+- Eval sessions ARE ingested by autoetl (that's how `velocity` is computed) — so they also
+  land in the real session corpus. Push runs to an `eval/*` branch for exclusion (auto-eval
+  §9) once that matters; not wired yet.
+- Metrics filter sessions by exact worktree cwd; a subagent that records a slightly different
+  cwd could be missed (undercount). Verify `velocity.session_count` looks right per run.
