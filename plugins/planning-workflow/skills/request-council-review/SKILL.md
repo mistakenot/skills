@@ -60,10 +60,15 @@ Your entire job is to OUTPUT findings. Do not insert comments into the docs.
 Output ONLY the findings block below and nothing after it. For each real issue,
 emit one object. Use the codebase as evidence — back every finding with a fact.
 
+The "file" field MUST be the path relative to the REPOSITORY ROOT, with the full
+directory prefix — e.g. "docs/tasks/$TASK_NAME/solution.md", never just
+"solution.md". Use this same form for every finding so the coordinator can match
+files across reviewers without guessing.
+
 ===COUNCIL-FINDINGS-START===
 [
   {
-    "file": "<repo-relative path, e.g. solution.md or plan.html>",
+    "file": "<path relative to the repository root, with full directory prefix, e.g. docs/tasks/$TASK_NAME/solution.md or docs/tasks/$TASK_NAME/plan.html>",
     "location": "<for .md: the line number the issue sits on, as a string; for .html: the id/anchor attribute of the element it discusses>",
     "priority": "P1|P2|P3",
     "title": "<short issue title>",
@@ -141,7 +146,7 @@ Read each agent's array. If an agent's file is missing the sentinels, open its `
 
 ### Step 4: De-duplicate and Merge
 
-Pool all findings from all three reviewers. Two findings are **the same issue** when they target the same `file` and the same (or adjacent) `location` AND describe the same underlying concern — even if the wording differs. Merge each cluster into ONE thread:
+Pool all findings from all three reviewers. Every reviewer reports `file` as a repository-root-relative path, so identical files match directly — if one comes back as a bare basename, treat it as the same file once you confirm the path. Two findings are **the same issue** when they target the same `file` and the same (or adjacent) `location` AND describe the same underlying concern — even if the wording differs. Merge each cluster into ONE thread:
 
 - **priority**: take the highest any reviewer assigned (P1 > P2 > P3).
 - **title**: the clearest of the titles.

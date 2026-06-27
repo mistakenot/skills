@@ -1,0 +1,31 @@
+{
+  "id": "008-commit-session-link",
+  "_provenance": {
+    "target_task": "auto-stack docs/tasks/008-commit-session-link",
+    "docs_add_commit": "add7c621",
+    "planning_thread": [
+      "7fd1242b-faa5-4f6a-9d3d-4e94a04e7e00 (05-26 14:40) — /new-task origin",
+      "a5c7f4c0-c0ba-43c8-a6a0-3713f6c17f62 (05-26 18:33) — new-task→solution→plan + refinements"
+    ],
+    "note": "human_turns hand-authored from the genuine human messages in the thread (boilerplate/teammate/execution noise filtered). The original session built markdown docs with auto-stack's older workflow; here we replay the same intent against our v2 skills."
+  },
+  "fixture": {
+    "target_repo": "/home/vscode/src/auto-stack",
+    "start_sha": "0ea36adc43943dea77a2d6b66fad161d4558ced4",
+    "prompt": "Create a new task. We want to extract the session id from a message in auto-etl using a fallback mechanism: if the trailer is present use that, otherwise try to extract it from the commit messages, as previously discussed. Create the requirements, and also explain why this is useful."
+  },
+  "arm": {
+    "id": "v2",
+    "skills_dir": "skills"
+  },
+  "human_turns": [
+    "Add to the requirements: auto-config, in its project init command, will have a sub-function for setting up git hooks. It adds a git pre-commit hook to generate the right trailers if one doesn't already exist; if a hook already exists, it errors out with a clear message.",
+    "In the final output, how will the session id be intermixed into the git data?",
+    "Looks good — go with your recommended answers on anything still open and continue."
+  ],
+  "limits": {
+    "max_turns": 14,
+    "wall_clock_s": 2400,
+    "per_turn_timeout_s": 900
+  }
+}

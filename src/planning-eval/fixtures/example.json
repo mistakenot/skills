@@ -1,0 +1,22 @@
+{
+  "id": "example-smoke",
+  "_comment": "Thinnest-spine fixture: 1 fixture, 1 arm, hand-scripted human. Replace target_repo/start_sha/prompt with a real auto-stack task to do an actual replay. human_turns are sent in order after the opening prompt; an empty conversation ends when the list is exhausted or a limit trips.",
+  "fixture": {
+    "target_repo": "/home/vscode/src/auto-stack",
+    "start_sha": "REPLACE_WITH_IMMUTABLE_SHA",
+    "prompt": "Create a new task: <one-line feature description as the original operator gave it>."
+  },
+  "arm": {
+    "id": "v2",
+    "skills_dir": "skills"
+  },
+  "human_turns": [
+    "go with your recommended answers",
+    "looks good, continue"
+  ],
+  "limits": {
+    "max_turns": 12,
+    "wall_clock_s": 1800,
+    "per_turn_timeout_s": 600
+  }
+}

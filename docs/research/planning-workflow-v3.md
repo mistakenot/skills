@@ -1,5 +1,5 @@
 ---
-hash: "f87541a0"
+hash: "d90bb97a"
 id: "planworkflow-v3"
 read_when: "redesigning the planning workflow (new-task/new-solution/new-plan) for cross-stage context handoff, or reviewing the v3 problem analysis from the 11-run trace"
 summary: "Working notes for a v3 planning-workflow redesign: problems found in the current new-task/new-solution/new-plan pipeline (no cross-stage context handoff, duplicate file reads) and proposed directions."
@@ -139,3 +139,183 @@ REVIEW: The `validate --strict` example does not match the current Fission-AI/Op
 
 - **The literal Antigravity async-comment UI.** Not feasible in a CLI harness. Take the policy,
   drop the mechanism.
+
+## Solution steps
+
+[Ignore what is above if it contradicts this below, above is research gathering...]
+
+Before:
+
+**Legend:** 🛑 = human hard-stop gate · 🔀 = subagent fan-out · ▸ = action
+
+0. ▸ User describes feature/fix
+1. **`/new-task`**
+   1. ▸ Scan skills + read project docs
+   2. ▸ Create `plan.html` + Requirements tab
+   3. ▸ Resolve Open Questions
+   4. 🛑 **GATE — Hard-stop:** review Requirements
+2. **`/new-solution`**
+   1. *Stage 1 — Context gathering*
+      1. 🔀 Fan-out: **CB1 Code** + **CB2 Docs** (2 parallel subagents)
+      2. ▸ Write `context.md`
+      3. ▸ Impact analysis
+   2. *Stage 2 — Verification*
+      1. ▸ Write Verification tab
+      2. 🛑 **GATE — Hard-stop 1:** review Verification
+   3. *Stage 3 — Solution*
+      1. 🔀 Fan-out: 1 subagent per approach (parallel; ambiguous tasks only)
+      2. ▸ Write Solution tab
+      3. ▸ Validate assumptions
+      4. 🛑 **GATE — Hard-stop 2:** review Solution
+3. **`/new-plan`**
+   1. *Phase 1 — Enrich context*
+      1. 🔀 Fan-out: **CB3 History** (1 subagent)
+      2. ▸ Impact analysis + merge into `context.md`
+   2. *Phase 2 — Plan*
+      1. ▸ Design phases + write Plan tab
+   3. *Phase 3 — Traceability*
+      1. ▸ Backfill `pd-ac` traceability
+      2. 🛑 **GATE — Hard-stop 3:** review Plan — planning complete
+4. ▸ Handoff → `/commit-task` → `/execute-task`
+
+Four human hard-stops across three skills; three subagent fan-outs, none reusing the
+others' raw reports. `context.md` is the only cross-stage carrier.
+
+After (proposed — stage one):
+
+Scope: the two no-risk velocity wins only — **batch the fan-outs** (kill serial
+stragglers) and **preserve raw reports** (stop re-exploring). Gates stay human for now;
+calibrated auto-proceed is deferred to stage two because it needs the external verifier
+and telemetry in place first (see ranked items #3/#5/#7). Changes marked ✦.
+
+**Legend:** 🛑 = human hard-stop gate · 🔀 = subagent fan-out · ▸ = action · ✦ = changed
+
+0. ▸ User describes feature/fix
+1. **`/new-task`** *(unchanged)*
+   1. ▸ Scan skills + read project docs
+   2. ▸ Create `plan.html` + Requirements tab
+   3. ▸ Resolve Open Questions
+   4. 🛑 **GATE — Hard-stop:** review Requirements
+2. **`/new-solution`**
+   1. *Stage 1 — Context gathering*
+      1. ✦ ▸ **Fan-out sizing rule:** N explorers = independent dimensions, scaled by
+         (uncertainty × blast radius); 0 for straightforward tasks; cap the batch
+      2. ✦ 🔀 **Single batched fan-out** — fire all explorers (CB Code/Docs/…) in *one*
+         parallel round, no 15–20-min stragglers
+      3. ✦ ▸ Persist **raw reports** to `reports/` (not just the distilled `context.md`)
+      4. ▸ Write `context.md` (distilled index over the raw reports)
+      5. ▸ Impact analysis
+   2. *Stage 2 — Verification*
+      1. ▸ Write Verification tab
+      2. 🛑 **GATE — Hard-stop 1:** review Verification
+   3. *Stage 3 — Solution*
+      1. ✦ 🔀 Single batched fan-out: 1 subagent per approach (ambiguous tasks only);
+         reuses Stage-1 raw reports instead of re-exploring
+      2. ▸ Write Solution tab
+      3. ▸ Validate assumptions
+      4. 🛑 **GATE — Hard-stop 2:** review Solution
+3. **`/new-plan`**
+   1. *Phase 1 — Enrich context*
+      1. ✦ ▸ Read existing **raw reports** + `context.md` first; CB3 History fills only
+         the git-history gap (no re-exploration of code/docs already covered)
+      2. ▸ Impact analysis + merge into `context.md`
+   2. *Phase 2 — Plan*
+      1. ▸ Design phases + write Plan tab
+   3. *Phase 3 — Traceability*
+      1. ▸ Backfill `pd-ac` traceability
+      2. 🛑 **GATE — Hard-stop 3:** review Plan — planning complete
+4. ▸ Handoff → `/commit-task` → `/execute-task`
+
+Net effect: same four gates (autonomy unchanged in stage one), but fan-outs collapse to
+one parallel round each and downstream stages consume prior raw reports instead of
+re-reading the codebase 4–6×. Velocity win is wall-clock (no stragglers) + fewer
+redundant explores; risk is ~zero since no gate is removed.
+
+After (proposed — overlap model):
+
+The bigger swing. Core insight: **overlap machine work with human think-time.** Today
+the agent stops dead while the user answers questions (hours of wall-clock). Instead, the
+moment the questions are posed, the agent keeps working — light context scan now, deep
+fan-out as soon as answers land — and collapses the four gates to **one** final review.
+The human stays in the loop by *answering questions*, not by gatekeeping each stage.
+
+Operating rules:
+
+- **Questions are the steering wheel.** Agents write open questions into the Requirements
+  tab as `pd-question` elements, each with a `recommendedAnswer` (the agent's lean).
+- **No hanging.** The user reads all questions in one pass and answers what they care
+  about. **Unanswered = "agent, do what you think is best"** → proceed on the
+  `recommendedAnswer`. We never block waiting for a specific answer.
+- **Stages auto-advance.** No explicit `/new-solution` or `/new-plan` invocation — once a
+  stage's exit condition is met, the next begins automatically.
+- **One gate, at the end.** The user reviews the finished Plan. If they're unhappy, or an
+  answer invalidates part of the solution/plan, we **rerun only the affected parts** (see
+  Phase B), not the whole pipeline.
+
+**Legend:** 🛑 = the single human gate · ⟳ = auto-advance (no prompt) · ‖ = runs in
+parallel · 🔀 = subagent fan-out · ▸ = action · ✦ = key change vs. today
+
+1. **`/new-task`** — pose questions, work while the user thinks
+   1. ▸ Scan skills + project docs
+   2. ‖ ✦ **In parallel:**
+      - ▸ Write `plan.html` + Requirements tab; open questions as `pd-question` +
+        `recommendedAnswer`
+      - 🔀 ✦ **Light context gather** (concurrent with the user reading questions): scan
+        files/code, build a high-level "where to look" map → `context.md`
+   3. ⟳ ✦ **Exit when** every question is answered *or* left blank (blank → use the
+      `recommendedAnswer`). No `/new-solution` step — advance automatically.
+2. **`/new-solution`** *(auto-triggered)* — deep fan-out, draft solution
+   1. 🔀 ✦ Team of agents fan out **using the light map + the answers** (consume Stage 1's
+      reports — don't re-explore)
+   2. ▸ Agents may append new `pd-question`s with `recommendedAnswer`, but ✦ **do not
+      wait** — proceed on the leans
+   3. ▸ Draft Verification + Solution tabs
+   4. ⟳ ✦ Auto-advance to plan (no gate here)
+3. **`/new-plan`** *(auto-triggered)* — write the plan
+   1. ▸ Design phases + write Plan tab; backfill `pd-ac` traceability
+   2. 🛑 ✦ **THE GATE (only one):** user reviews the finished Plan
+4. **On the gate:** ✦ if happy → handoff to `/commit-task` → `/execute-task`. If unhappy,
+   or a late/changed answer invalidates part of the work → ⟳ **rerun only the affected
+   parts** and re-present.
+
+Build order:
+
+- **Core — overlap + auto-advance (cheap, almost all of the value).** Parallelize the
+  light scan with question-answering; auto-advance on the "all questions answered-or-blank"
+  signal; one final gate; lean on `pd-question`/`recommendedAnswer` for the no-hang
+  behavior. No dependency graph required — this is the whole model in practice.
+- **Later, if needed — partial rerun.** When a late answer or gate edit invalidates part of
+  the work, rerun only the affected parts. Start coarse (rerun the affected stage). In
+  practice plans rarely get rewritten — first instinct is usually right — so this is a
+  nice-to-have, not a prerequisite. Build on the `pd-ac` traceability skeleton if/when it
+  earns its keep.
+
+Why the single gate is fine: plans rarely get rewritten in practice, and the human still
+steers continuously by answering questions, so a bad early assumption usually surfaces in
+the answers — not at the end. The rare full-rewrite is cheap enough to absorb without
+building dependency tracking up front.
+
+Refinement — run solution + plan in the background, keep the main agent interactive:
+
+This completes the overlap insight. Don't just overlap machine work with question-answering
+time — overlap it with the user's **entire ongoing thought stream**. The agent the user
+talks to stays interactive; the heavy solution + plan work runs in **background agents**.
+The user keeps posting answers, ideas, and corrections while those agents work, and nobody
+blocks. (This is the "comment-don't-block" pattern: the main agent is the doc you keep
+commenting on; the background agents are the workers.)
+
+- **Main agent = thin interactive orchestrator.** Stays responsive; routes the user's new
+  messages into a steering buffer; spawns and monitors the background solution/plan work;
+  fires reconciliation when it completes.
+- **Background = `/new-solution` + `/new-plan`.** Run as background agents on the current
+  answers/assumptions. They never wait on the user.
+- **Deferred reconciliation, not mid-flight interruption.** Let background phases finish;
+  collect the user's deltas during the run; at the end, **rerun only the phases whose
+  inputs a late message changed.** Each phase records which answers/assumptions it consumed
+  so the orchestrator can tell what a new message dirties (kept broad for now).
+- **Why this is cheap:** wasted background compute when the user changes their mind costs
+  tokens, not wall-clock — and the user is never blocked. Net velocity is the full
+  solution+plan time folded under the user's think-time.
+
+So the single gate becomes: present the finished Plan **plus** any phases the orchestrator
+re-ran to absorb late input. Same one human checkpoint; the rest is background.

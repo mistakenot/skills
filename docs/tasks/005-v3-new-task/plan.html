@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>005: v3-new-task</title>
+  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.9.0/pd-components/dist/pd.min.js" defer></script>
+</head>
+<body>
+  <!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
+  <pd-doc title="005: v3-new-task" status="draft" pr="pending" generated="2026-06-27" next-prompt="/new-solution 005">
+    <script type="application/json" id="pd-meta">
+    {
+      "id": "005",
+      "name": "v3-new-task",
+      "status": "planning",
+      "created": "2026-06-27"
+    }
+    </script>
+
+    <pd-tab name="Requirements">
+
+      <pd-section id="problem" title="Problem">
+        <md><script type="text/plain">
+The current planning workflow (`new-task → new-solution → new-plan`) makes the user
+wait at **four sequential human gates** and **re-explores the codebase each stage**.
+Wall-clock to a finished plan is dominated by human-gate latency (the agent stops dead
+while the user thinks) plus redundant exploration (the same files read 4–6×).
+
+We want a v3 entry point — working name **`v3-new-task`** — that implements the *overlap
+model* from `docs/research/planning-workflow-v3.md`: overlap machine work with the user's
+think-time, auto-advance between stages, run the heavy stages in the background while the
+main agent stays interactive, and stop at a **single** gate.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="goals" title="Goals">
+        <md><script type="text/plain">
+- **One overlap-model entry point** (`v3-new-task`) implementing the design in
+  `docs/research/planning-workflow-v3.md` ("After — overlap model" + background refinement).
+- **Stage-1 parallelism** — write the Requirements tab and pose questions *concurrently*
+  with a lightweight context-gather that builds a high-level "where to look" map → `context.md`.
+- **Questions as the steering wheel** — pose decisions as `pd-question`s, each with a
+  recommended lean. **Unanswered = "agent, do what you think is best"** → proceed on the
+  lean. Never block waiting on a specific answer.
+- **Auto-advance** through the solution and plan stages — no explicit per-stage command.
+- **Background heavy stages** — solution + plan run as background agents while the main
+  agent stays interactive and buffers the user's ongoing answers/ideas/corrections.
+- **Single human gate** — the user reviews the finished Plan; that is the only hard-stop.
+- **Deferred, coarse reconciliation** — if late user input invalidates a stage, rerun that
+  whole stage (stage-level, not section-level) and re-present.
+- **Coexist with v2** — the existing `new-task`/`new-solution`/`new-plan` skills keep working
+  unchanged; v3 is added alongside for trialing.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="out-of-scope" title="Out of Scope">
+        <md><script type="text/plain">
+- **Fine-grained partial rerun / dependency graph** (question → section → phase). v1 does
+  coarse, stage-level rerun only.
+- **Persistent repo-level index / cross-task caching** (ranked idea #1) — a separate effort.
+- **Calibrated blast-radius gates and on-the-loop telemetry** (ranked #3/#7).
+- **Replacing or deleting the v2 skills.**
+- **The efficiency-only "stage one" batching proposal** — superseded here by the overlap model
+  (its batched-fan-out and raw-report-handoff ideas are folded in, not pursued separately).
+        </script></md>
+      </pd-section>
+
+      <pd-section id="open-questions" title="Open Questions">
+        <md><script type="text/plain">
+Load-bearing decisions I can't resolve from the design doc or repo conventions alone. Each
+carries a recommended lean — leave a question blank to accept the lean (per the v3 rule:
+unanswered = proceed on the recommendation).
+        </script></md>
+
+        <pd-question id="Q-1" status="open" priority="p1" for="charlie"
+                     title="One orchestrator skill, or a v3-* family of commands?">
+          The overlap model collapses the explicit `/new-solution` and `/new-plan` commands into
+          auto-advancing stages. Should v3 be a **single orchestrator skill** (`v3-new-task`) that
+          internally drives all stages and spawns background subagents — reusing the v2
+          solution/plan logic as *subagent instructions* rather than user-invoked commands — or a
+          **family** of `v3-*` skills that hand off to each other?
+          <br><br>
+          <strong>Recommended:</strong> single orchestrator skill `v3-new-task`. It owns the
+          interactive loop, the steering buffer, and background dispatch; the solution/plan work
+          becomes subagent prompts. A family re-introduces the per-stage command seams the model
+          is trying to remove.
+        </pd-question>
+
+        <pd-question id="Q-2" status="open" priority="p1" for="charlie"
+                     title="How aggressively do we overlap — start background work on leans, or wait for first answers?">
+          Maximum overlap means: pose the questions and **immediately** start the background
+          solution/plan work on the *recommended* answers, reconciling as real answers arrive.
+          The cautious alternative is to wait for the user's first batch of answers before
+          dispatching the heavy stages.
+          <br><br>
+          <strong>Recommended:</strong> start immediately on the recommended answers (max overlap)
+          and reconcile. This is the whole point of the model — fold the entire solution+plan time
+          under the user's think-time. Wasted work on a changed answer costs tokens, not wall-clock.
+        </pd-question>
+
+        <pd-question id="Q-3" status="open" priority="p1" for="charlie"
+                     title="Harness target — Claude-Code-first, or portable from day one?">
+          Background-agent orchestration with an interactive main loop that buffers messages is
+          **harness-specific**. The repo's design principle says skills must be multi-agent
+          compatible (Claude Code, Codex, Opencode), but not all agents expose background execution
+          + a resumable interactive loop.
+          <br><br>
+          <strong>Recommended:</strong> target **Claude Code first** for the full background-orchestration
+          version, but specify a **synchronous fallback** (auto-advance through the stages in the
+          foreground, no background dispatch) so the skill still degrades gracefully on agents
+          without background execution. Portability of the *foreground* overlap behavior; background
+          dispatch as a Claude-Code enhancement.
+        </pd-question>
+      </pd-section>
+
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>
