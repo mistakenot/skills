@@ -1,5 +1,7 @@
 **auto skill** — Author and lint reusable agent skills. Run `auto skill quickstart` to learn more.
 
+When working on `main`, don't worry too much about keeping the history perfectly clean; prioritise velocity on `main`.
+
 <!-- autodoc: start -->
 ## Documentation Index
 
