@@ -13,6 +13,7 @@ Create `docs/epics/epic-$ID-$NAME.html` — a high-level plan that sets the dire
 
 An epic works at a different altitude than a task. Hold the line on it:
 - **Direction and constraints, not construction.** State the user-facing outcome, the seams, and the guard rails. Leave *how* to the task planners — never list files, code, or intra-task steps.
+- **Break the work into vertical slices, walking-skeleton first.** Task 1 runs a thin path through every layer end to end for an early verification signal; later tasks thicken it. Never decompose layer-by-layer with integration deferred to the end.
 - State your assumptions explicitly. An epic has more latent direction than any single task — surface it and ask rather than guess.
 - If the request has multiple interpretations of scope or sequencing, present them and let the user pick.
 - Push back if the initiative isn't really epic-sized (one deployable change → it's a task, use `/new-task`), or if it's so large it should be several epics.

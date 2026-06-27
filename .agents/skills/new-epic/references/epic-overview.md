@@ -9,7 +9,7 @@ This is the `epic.html` produced by `new-epic`, one altitude above the task-leve
 - **Set direction from the user's point of view.** What does success look like from the seat of the person using the thing? That, not the architecture, is the headline.
 - **State the seams.** The load-bearing interfaces/contracts that let tasks proceed independently. A task planner can do anything behind a seam as long as they honor it.
 - **State the guard rails.** The functional and non-functional requirements every task inherits — the invariants the initiative must preserve.
-- **Break the work into deployable, sequenced tasks.** Each task is independently deployable (it won't break existing functionality once complete and pushed — it may sit behind a feature gate), and each builds on the ones before it.
+- **Break the work into deployable, sequenced tasks — as vertical slices.** Each task is independently deployable (it won't break existing functionality once complete and pushed — it may sit behind a feature gate), and each builds on the ones before it. Slice by thin end-to-end capability, not by layer: the first task is a walking skeleton that runs through every layer and yields an early end-to-end verification signal; later tasks thicken it. Decomposing layer-by-layer (all backend, then all frontend, integrate last) defers integration risk to the end — don't.
 
 ## Altitude — the one rule that matters
 

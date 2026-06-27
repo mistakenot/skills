@@ -64,9 +64,13 @@ Heuristics the architect embeds in the prescription so implementing agents can f
 
 ## Minimum viable instance vs full rigor
 
-**Minimum viable (20 minutes):** write tests for the 3-5 most critical functions — the ones where a bug would cause the most damage. Use the simplest assertion style. Run locally. This already pays rent by catching regressions in the hot path.
+Choose the rung that matches the four axes; do not prescribe a full suite when a smaller evidence artifact would catch the likely failure mode.
 
-**Full rigor:** systematic coverage of the public API surface, boundary values, and error paths. Mutation-tested to verify detection power. Integrated into CI with failure blocking merge. Coverage metrics tracked (as a floor, not a target — mutation score is the real quality signal).
+**Light / minimum viable (20 minutes):** write tests for the 3-5 most critical functions -- the ones where a bug would cause the most damage. Use the simplest assertion style. Run locally. This already pays rent by catching regressions in the hot path.
+
+**Standard:** cover changed public functions plus their boundary and error paths. Add shared boundary-value lists for partitioned domains, wire the tests into the existing local verification command, and record runner output as evidence. This is the default rung for normal product work.
+
+**Full rigor:** systematic coverage of the public API surface, boundary values, and error paths. Mutation-tested to verify detection power. Integrated into CI with failure blocking merge. Coverage metrics tracked (as a floor, not a target -- mutation score is the real quality signal).
 
 ## Harness changes
 

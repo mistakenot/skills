@@ -66,7 +66,11 @@ Heuristics the architect embeds so implementing agents can find what to test:
 
 ## Minimum viable instance vs full rigor
 
-**Minimum viable (20 minutes):** a render-without-crash test plus prop→DOM assertions for the 2-3 components carrying the most display logic (the ones where a wrong render most misleads the user). Runs in the existing Vitest process with a one-line `environment: 'happy-dom'` config change.
+Choose the rung that matches the four axes; component testing can start as a fast display-logic check and only become a broad render contract when the UI surface justifies it.
+
+**Light / minimum viable (20 minutes):** a render-without-crash test plus prop-to-DOM assertions for the 2-3 components carrying the most display logic (the ones where a wrong render most misleads the user). Runs in the existing Vitest process with a one-line `environment: 'happy-dom'` config change.
+
+**Standard:** cover changed and high-risk components with semantic queries, conditional branches, formatting boundaries, and key interactions via `user-event`. Fold these tests into the normal local verification command and record the runner output. This is the default rung for product UI work.
 
 **Full rigor:** every component has render, prop-mapping, conditional-branch, and formatting-boundary tests; forms have controlled-input and submit-payload tests; interactions are exercised via `user-event`; queries are uniformly semantic; the suite is wired into `make verify` and CI with a kill-test proving detection power.
 

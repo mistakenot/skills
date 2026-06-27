@@ -42,6 +42,12 @@ The decomposition into tasks. This is the bridge to `new-task`. For each task:
 - It advances a named **Vision outcome** or **guard rail** — say which.
 - Give a short statement of intent and, once planned, a link to its task doc and current status. Do **not** list files or implementation steps — that is the task planner's remit.
 
+**Slice vertically, not horizontally.** Decompose by thin end-to-end capability, not by layer. Resist the default of "build the whole backend, then the whole frontend, then wire them up" — that hides all the integration risk until the end. Instead:
+
+- **Task 1 is a walking skeleton**: the thinnest possible path that touches *every* layer and seam in the architecture and runs end to end, even if it delivers only a sliver of one journey (one hard-coded case, one happy path). Its job is to get all the layers talking and stand up a basic end-to-end verification signal early.
+- **Each later task thickens the skeleton** — adds a journey, a branch, an edge case — on top of a system that already runs end to end. Every task should move a real Vision journey from `todo` toward `done`, never just "finish layer X."
+- A task that delivers no user-visible end-to-end behavior on its own (a lone data layer, a lone UI with stubs) is a horizontal slice — fold it into the vertical task it serves.
+
 Use **`pd-task`** — one per task, with `id`, `title`, `status`, `depends-on` (other task ids), `delivers` (journey/cli ids), `honors` (guard-rail ids), the `deployable` flag (and `gated` if behind a feature flag), and `href` to its task doc once planned. Body is the one-line intent. Then drop a **`pd-breakdown`** at the top of the section — it derives the dependency DAG (the deployable staircase) from the cards. Keep the ordering legible; that staircase is the point.
 
 ## 5. Decisions — the strategic bets
@@ -52,5 +58,6 @@ The calls that shape the whole initiative — recorded as **authored decision re
 
 - **Altitude**: no files, no code, no intra-task phases anywhere in the doc.
 - Every breakdown task must be independently deployable and ordered.
+- **Vertical slices, walking skeleton first.** Task 1 stands up an end-to-end path through all layers; later tasks add capability on top. Never decompose layer-by-layer with integration deferred to the end.
 - Prefer the specific component per element; improvise within the altitude where there's a gap; never force a task-level component.
 - Keep each tab scannable — lead with the visual, collapse detail behind summaries.

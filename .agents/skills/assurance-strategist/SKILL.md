@@ -20,6 +20,12 @@ Every assurance strategy is shaped by four orthogonal axes. Diagnose these befor
 3. **Longevity** (per project) — how long will this code live? Drives harness durability: ad-hoc, versioned playbook, or CI-institutionalized.
 4. **Accountability** (per project) — who must be convinced? Drives evidence formality: transcript, CI dashboard, or conformance suite.
 
+## Graded prescriptions
+
+Techniques are not all-or-nothing. For every technique you prescribe, choose the lightest rung that creates useful self-verification evidence for the diagnosed axes, then state the upgrade trigger. The technique cards' "Minimum viable instance vs full rigor" sections define the ladder: use the minimum viable version for spikes and low-accountability surfaces, a standard middle version for normal product work, and full rigor only when criticality, longevity, or accountability justify the harness cost.
+
+Every generated testing strategy must say which rung was chosen for each prescribed technique, why that rung is sufficient, what evidence it produces, and what condition would make the project graduate to the next rung.
+
 ## Technique index
 
 | Technique | What it catches | Oracle | Archetypes | Crit | Volatility | Link |

@@ -61,6 +61,12 @@
       "source": "./plugins/domain-modelling",
       "description": "Build and maintain a project's ubiquitous language: a DDD glossary of canonical domain terms, kept in sync with the code.",
       "category": "development"
+    },
+    {
+      "name": "grill-me",
+      "source": "./plugins/grill-me",
+      "description": "Relentlessly interrogate a plan, design, or decision to surface assumptions and edge cases, recording the outcomes as numbered ADRs.",
+      "category": "development"
     }
   ]
 }

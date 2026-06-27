@@ -539,6 +539,7 @@ _CLI_TEMPLATE = r'''#!/usr/bin/env bash
 #   sk ls                List available packages
 #   sk add <package>     Install a package's skills ('all' for everything)
 #   sk update            Update all installed skills
+#   sk prune <glob>      Remove installed skills + lock entries (renamed/stale)
 #
 # Install:
 #   curl -fsSL __SELF_URL__ -o ~/.local/bin/sk && chmod +x ~/.local/bin/sk
@@ -622,6 +623,8 @@ Usage:
   sk add <package>...    Install one or more packages ('all' for everything)
   sk update [args...]   Update all installed skills (default: project scope;
                         pass -g for global, -p for project, or skill names)
+  sk prune <glob>...    Remove installed skills + their skills-lock.json entries
+                        (for renamed/removed skills). Dry-run; --apply to execute
   sk help               Show this help
 
 Each "package" is a bundle of related skills. Run 'sk ls' to see them.
@@ -942,4 +945,15 @@ if __name__ == "__main__":
         keywords=["domain-modelling", "ddd", "ubiquitous-language", "glossary", "terminology"],
     )
 
-    compile([planning, ideation, maintenance, exploration, rich_docs, reflection, assurance, research, domain_modelling])
+    grill = module("grill-me",
+        skill("grill-me", refs=[
+            ref("grilling-method.md"),
+            ref("grilling-log-format.md"),
+            ref("adr-format.md"),
+        ]),
+        description="Relentlessly interrogate a plan, design, or decision to surface assumptions and edge cases, recording the outcomes as numbered ADRs.",
+        category="development",
+        keywords=["grilling", "interrogation", "design-review", "adr", "decisions"],
+    )
+
+    compile([planning, ideation, maintenance, exploration, rich_docs, reflection, assurance, research, domain_modelling, grill])

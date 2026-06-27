@@ -29,6 +29,7 @@ Read plan.html and context.md, enrich context with git history, write the Plan t
 
 4. **Design execution phases** -- using the Requirements, Verification, and Solution tabs plus context.md:
    - Break the solution into atomic phases (each phase = one subagent during execution)
+   - **Slice vertically, walking-skeleton first.** Make Phase 1 a thin end-to-end path through every layer the task touches, with one end-to-end check passing — even if it only covers a single case. Later phases add behavior on top of a system that already runs. Do NOT slice by layer (all of layer A, then all of layer B, integrate last); that defers integration risk and gives no verification signal until the end.
    - Define the execution DAG -- which phases depend on which
    - List concrete steps within each phase
    - Every step must have an explicit verify check

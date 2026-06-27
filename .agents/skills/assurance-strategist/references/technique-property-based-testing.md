@@ -57,6 +57,7 @@ The architect must decide:
 - **Determinism policy:** PBT is randomized, so decide where randomness is allowed. Recommended: local runs use a fresh random seed each time (broader exploration as the suite is re-run during development); CI pins a fixed seed (a failure is reproducible from the logs alone, and a green CI means green for that seed). Maintain a regression seed set — every seed that ever produced a failure is added to a checked-in list and replayed on every run, so a fixed bug never silently regresses. State which mode each environment uses in the testing strategy doc.
 - **Seed management:** PBT frameworks produce a seed on failure for reproducibility. The harness must capture and store the seed — a failure without a seed is not reproducible. Seeds for failed runs are recorded in evidence artifacts and added to the regression seed set. CI failure logs must include the seed.
 - **Shrinking configuration:** default shrinking is almost always correct. Only disable if shrinking is prohibitively slow (rare, and usually indicates the test setup is too expensive — fix the setup, not the shrinking).
+- **Stateful depth:** choose the cheapest stateful rung that gives useful evidence. Options are: stateless properties only; trace-linked model checks that compare a model's expected operation trail to structured logs emitted by the real system; or a full stateful/model-based conformance harness that applies each generated command to both the model and the system under test.
 
 ## Derivation guidance
 
@@ -68,23 +69,28 @@ Heuristics the architect embeds in the prescription so implementing agents can f
 4. **Commutativity / associativity / other algebraic laws:** if the function combines inputs, test whether order matters when it should not (`merge(a, b) == merge(b, a)`) or that grouping is irrelevant (`combine(combine(a, b), c) == combine(a, combine(b, c))`).
 5. **Oracle comparison (test oracle):** when a simple but slow reference implementation exists alongside an optimized one, generate random inputs and assert both produce the same output. This is differential testing powered by PBT generators. Works for: optimized algorithms vs brute-force, new implementation vs legacy, compiled vs interpreted paths.
 6. **Hard to prove, easy to verify:** some functions produce outputs that are hard to compute but easy to check. Example: a solver finds `x` such that `f(x) == target` — generate random targets, run the solver, verify `f(result) == target`. The checker is simpler than the solver.
-7. **Stateful / model-based:** for stateful APIs, define a simplified model (e.g., a Python dict standing in for a database), generate random sequences of operations, apply them to both the real implementation and the model, and assert the states match after each step. This is the advanced form; prescribe only at C3+ for stateful subsystems.
+7. **Trace-linked model checks:** for smaller stateful systems, define a simplified model that emits an expected domain trail, then make the real system emit structured domain logs with stable correlation tags such as `scenario_id`, `command_id`, `model_step`, `entity_id`, and `event_type`. The test compares the expected trail to the real logs: every expected step appears, key fields match, forbidden events are absent, and order or partial-order constraints hold. This gives agents a debuggable bridge from model to executing code without building a full conformance harness. Logs must be domain facts, not test-only "step passed" markers.
+8. **Stateful / model-based conformance:** for high-value stateful APIs, define a simplified model (e.g., a Python dict standing in for a database), generate random sequences of operations, apply each command to both the real implementation and the model through a command adapter, project the real state into the model's comparable shape, and assert the states match after each step. This is the advanced form; prescribe only at C3+ for stateful subsystems when the lighter trace-linked rung is insufficient.
 
 ## Minimum viable instance vs full rigor
 
-**Minimum viable (30 minutes):** identify the 2–3 most obvious round-trip or invariant-preservation properties in the codebase. Write one property test per property using the framework's built-in generators. Run locally. This already catches boundary bugs that unit tests miss and proves the PBT infrastructure works. The time is dominated by *finding the properties*, not writing the tests.
+Choose the rung that matches the four axes; PBT can start as a small generator-backed invariant check and only graduate to model-based conformance when the system deserves that cost.
 
-**Full rigor:** systematic property inventory across the public API surface using all applicable derivation heuristics. Custom generators for domain types. Stateful/model-based testing for stateful APIs. Seed management integrated into CI evidence. Mutation-tested to verify detection power — a PBT suite with low mutation score means the properties are too weak (vacuous or tautological). Number-of-examples tuned per criticality tier.
+**Light / minimum viable (30 minutes):** identify the 2-3 most obvious round-trip or invariant-preservation properties in the codebase. Write one property test per property using the framework's built-in generators. Run locally. This already catches boundary bugs that unit tests miss and proves the PBT infrastructure works. The time is dominated by *finding the properties*, not writing the tests.
+
+**Standard:** add custom generators for the main domain types and cover the changed or high-risk API surface. For one important stateful workflow, use trace-linked model checks: the model produces an expected operation trail, the system under test emits structured domain logs with correlation tags, and the test produces a divergence report when expected and actual trails differ. Seed capture is required; CI integration is recommended when the suite is stable.
+
+**Full rigor:** systematic property inventory across the public API surface using all applicable derivation heuristics. Custom generators for all domain types. Full stateful/model-based conformance for stateful APIs, with command adapters, real-state projection, deterministic setup/teardown, seed management integrated into CI evidence, and mutation-tested detection power. Number-of-examples tuned per criticality tier.
 
 ## Harness changes
 
 | Component | Delta |
 |---|---|
-| `docs/testing.md` | Add a "Property-Based Testing" section: property inventory, generator conventions (built-in vs custom), derivation heuristics for this project, seed-management convention, number-of-examples defaults |
+| `docs/testing.md` | Add a "Property-Based Testing" section: chosen rung, property inventory, generator conventions (built-in vs custom), derivation heuristics for this project, seed-management convention, number-of-examples defaults, and trace-log schema if using the stateful middle rung |
 | `make verify` | Property tests are a *style* of test, not a separate layer — by default they live alongside unit tests and run under the existing `verify-unit` subtarget (most PBT libraries are just decorators/wrappers the unit runner already discovers). Add a dedicated `verify-properties` subtarget only when the property inventory is large enough to warrant running or reporting it separately (e.g., it dominates suite runtime). Either way, it must be composed into the top-level `make verify`. |
 | `AGENTS.md` / `CLAUDE.md` | Add line: "Changes to [scoped modules] require property tests — see docs/testing.md for property derivation heuristics and generator conventions" |
 | CI workflow | `make verify` already runs in CI; no additional wiring needed if `verify-properties` is composed into it |
-| Evidence conventions | On failure: seed, shrunk counterexample, and property name captured in `.evidence/` or CI log. On success: property count and example count in test runner output |
+| Evidence conventions | On failure: seed, shrunk counterexample, property name, and any trace divergence captured in `.evidence/` or CI log. On success: property count, example count, and trace-check scenario count in test runner output |
 
 ## How to get to a walking skeleton
 
@@ -107,6 +113,7 @@ The architect writes these into the generated artifacts so implementing agents c
 - [ ] Custom generators exist for domain types with validity constraints; generators produce only valid inputs.
 - [ ] Every property test uses shrinking (framework default; do not disable).
 - [ ] Failed runs record the seed and shrunk counterexample in the evidence output; the seed is added to the regression seed set.
+- [ ] If trace-linked model checks are prescribed, logs use stable domain correlation tags and every expected model step is matched against a real system log event or reported as a structured divergence.
 - [ ] `make verify` (including whichever subtarget owns the property tests) passes locally and in CI.
 - [ ] **Kill test:** introduce a deliberate bug (e.g., off-by-one in a boundary, swap encode/decode order, break idempotence by mutating state). At least one existing property must fail. Record the mutation, the property that caught it, and the shrunk counterexample as evidence.
 
