@@ -1,5 +1,6 @@
 .tmp
 skills-lock.json
+docs/reflection/retrievals.ndjson.lock
 .ntm
 node_modules/
 planning-doc-workspace/

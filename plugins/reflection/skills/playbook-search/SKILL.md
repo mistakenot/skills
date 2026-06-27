@@ -141,7 +141,12 @@ python3 "$CLAUDE_SKILL_DIR/scripts/reflect.py" gen-id   # -> search_id
    rule IDs to the coordinator. Candidate rules examined during sharding are
    **not** retrievals.
 3. **Fetch selected rules.** Read `value` and `why` only for the finally selected
-   IDs and return a compact `(id, value, why)` list to the parent.
+   IDs and return a compact `(id, value, why)` list to the parent:
+   `yq '.rules[] | select(.id == "<id>") | {"id": .id, "value": .value, "why": .why}' docs/reflection/rules.yaml`
+   Use explicit `"key": .field` pairs. The bare-shorthand `{value, why}` is jq
+   syntax and **fails** on mikefarah yq (`lexer: invalid input text`); the comma
+   form `.value, .why` is also wrong — `,` is a top-level union, so `.why`
+   evaluates against the document root and silently returns `null`.
 
 If nothing matches, return an **explicit empty result** so the parent can
 distinguish "no relevant guidance" from search failure.

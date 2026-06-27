@@ -1,5 +1,6 @@
 ---
 hash: "6cf2c620"
+id: "7530f21a"
 read_when: "researching autonomous planning techniques or reducing gatekeeping in an AI agent planning workflow"
 summary: "Recency-biased 2026 research refresh on autonomous planning for AI software factories: spec-driven development, human-on-the-loop oversight, autonomy levels, and the comment-don't-block artifact-review pattern."
 title: "Autonomous Planning for Software Factories — 2026 Update"
