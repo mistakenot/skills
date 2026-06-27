@@ -38,6 +38,19 @@ os.environ["NTM_PROJECTS_BASE"] = str(WS_PROJECTS)
 sys.path.insert(0, str(HERE))
 from driver import Session  # noqa: E402
 
+# Prepended to the opening prompt. The agent is driven by an automated harness, so it must
+# not pop interactive selectors (AskUserQuestion) — those can't be answered through the
+# text channel and stall the run in UNKNOWN. Applied equally to every arm, so the v2-vs-v3
+# comparison stays fair; it just forces the "autonomous" path both workflows already define.
+HARNESS_PREAMBLE = (
+    "[EVAL HARNESS] You are driven programmatically by an evaluation harness, not a live "
+    "human at a terminal. Do NOT use interactive question tools or menus (AskUserQuestion) — "
+    "they cannot be answered and will stall you. When a decision is needed, proceed on your "
+    "best judgment and record genuinely load-bearing open decisions as pd-questions with a "
+    "recommendedAnswer (the workflow's autonomous mode). If you must ask, ask in plain text "
+    "and keep going; operator replies arrive as ordinary chat messages. Task follows:\n\n"
+)
+
 
 def _run_id(fixture_id: str, arm_id: str) -> str:
     return f"peval-{fixture_id}-{arm_id}-{int(time.time())}"
@@ -64,17 +77,32 @@ def build_worktree(cfg: dict, session: str) -> Path:
 
 
 def capture_artifacts(worktree: Path, run_dir: Path) -> list[str]:
-    """Copy any task docs the agent produced into the run dir."""
+    """Copy only what THIS run produced — the worktree's git diff vs the start commit.
+
+    The start commit (with arm skills amended in) is the baseline, so `git status` surfaces
+    exactly the agent's new/modified files — not the pre-existing task docs in the checkout.
+    """
     dest = run_dir / "artifacts"
+    out = subprocess.run(
+        ["git", "-c", "core.hooksPath=/dev/null", "-C", str(worktree),
+         "status", "--porcelain", "--untracked-files=all"],
+        capture_output=True, text=True,
+    )
     captured: list[str] = []
-    tasks = worktree / "docs" / "tasks"
-    if tasks.is_dir():
-        shutil.copytree(tasks, dest / "tasks", dirs_exist_ok=True)
-        captured = [str(p.relative_to(worktree)) for p in tasks.rglob("*") if p.is_file()]
+    for line in out.stdout.splitlines():
+        rel = line[3:].strip()
+        if not rel:
+            continue
+        src = worktree / rel
+        if src.is_file():
+            (dest / rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dest / rel)
+            captured.append(rel)
     return captured
 
 
 def main(fixture_path: str) -> None:
+    sys.stdout.reconfigure(line_buffering=True)  # stream progress even when redirected
     cfg = json.loads(Path(fixture_path).read_text())
     fixture_id = cfg["id"]
     arm_id = cfg["arm"]["id"]
@@ -97,7 +125,7 @@ def main(fixture_path: str) -> None:
     agent = Session.spawn(session)
     print("[run] agent ready")
     try:
-        queue = [cfg["fixture"]["prompt"], *cfg.get("human_turns", [])]
+        queue = [HARNESS_PREAMBLE + cfg["fixture"]["prompt"], *cfg.get("human_turns", [])]
         for i, msg in enumerate(queue):
             if i >= max_turns or time.monotonic() > deadline:
                 print(f"[run] limit reached at turn {i}")

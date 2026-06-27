@@ -80,7 +80,49 @@ alone (this is verified behaviour):**
 A pane whose `.command` is `bash`/a shell is **not** a running agent regardless
 of `.type` — never delegate there.
 
-## 4. Send text to an agent
+## 4. Spin up a new worker when none are available
+
+When `ntm status` shows **no eligible pane** — every agent is busy, on a feature
+branch with a task in flight, or the session only has a `user` shell — add a
+fresh Claude Code pane instead of giving up:
+
+```bash
+ntm add <session> --cc=1 --json
+```
+
+Then bring it online before sending (verified flow):
+
+1. **Re-discover the pane index from `ntm status` — do not trust `ntm add`'s
+   output.** The `new_panes[].index` field in `ntm add --json` is unreliable: it
+   reported `0` while the real new pane was index `1`. Re-query and pick the
+   newly-added Claude pane (the `.command == "claude"` pane that wasn't there
+   before — in practice the highest-index `claude` pane):
+
+   ```bash
+   ntm status <session> --json
+   ```
+
+2. **Wait until it is ready for input.** `.command` flips to `claude` within
+   ~2s, but the TUI is not ready yet. Block on idle:
+
+   ```bash
+   ntm --robot-wait=<session> --wait-until=idle --timeout=60s
+   ```
+
+   It returns when the agent reports `state: WAITING` (ready). If `robot-wait`
+   is unavailable, read the pane and confirm the `❯` input prompt is showing:
+
+   ```bash
+   ntm copy <session>:<index> --last 20 --quiet --output /dev/stdout
+   ```
+
+3. Proceed with `/clear` + send as normal, targeting the new pane explicitly
+   with `--pane=<index>` (not `--smart`).
+
+Add **one** worker per dispatch — never spawn repeatedly in a loop. If `ntm add`
+fails, report the error and stop.
+
+## 5. Send text to an agent
 
 **By pane index — works for every agent type (the universal path):**
 
@@ -129,7 +171,7 @@ with `ack.confirmations[].latency_ms`. This works for **all three** agents,
 including OpenCode (targeted by pane). Use it when you need to confirm the
 message actually landed rather than fire-and-forget.
 
-## 5. Send `/clear` and other slash commands / skills
+## 6. Send `/clear` and other slash commands / skills
 
 A slash command is just text the TUI interprets: send the literal `/command`
 string with `ntm send` and the agent handles it. This is how the delegate-task
@@ -147,7 +189,7 @@ All three accept `/clear`, but the effect and the surrounding quirks differ:
 | **Codex**       | Starts a **new** conversation; prints prior token usage and a `codex resume <id>` line. | `/skills` to list, `/model` to switch; send `/<cmd>` as text. |
 | **OpenCode**    | Returns to the "Ask anything…" splash; context dropped.       | Sent as text; an interactive palette also exists (`ctrl+p`), but for automation send the literal command. |
 
-## 6. Readiness and gotchas
+## 7. Readiness and gotchas
 
 - **Confirm an agent is actually live before the first send.** Codex can show a
   blocking launch interstitial — e.g. an *"Update available… 1. Update now / 2.
@@ -174,7 +216,7 @@ All three accept `/clear`, but the effect and the surrounding quirks differ:
   --quiet --output /dev/stdout` dumps the last N lines so you can see exactly
   what state the agent is in.
 
-## 7. Headless CLI delegation (Claude, Codex, Grok)
+## 8. Headless CLI delegation (Claude, Codex, Grok)
 
 When you need a second agent to review task docs without an interactive tmux
 pane, invoke the matching CLI headlessly from bash. All three follow the same

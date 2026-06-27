@@ -76,6 +76,7 @@ class Session:
                 "--no-user",
                 "--no-cass-context",
                 "--no-hooks",
+                "--no-recovery",  # else NTM injects a "continue where you left off" prompt
             ],
             timeout=180,
         )

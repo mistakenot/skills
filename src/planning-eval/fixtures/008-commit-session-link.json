@@ -12,16 +12,18 @@
   "fixture": {
     "target_repo": "/home/vscode/src/auto-stack",
     "start_sha": "0ea36adc43943dea77a2d6b66fad161d4558ced4",
-    "prompt": "Create a new task. We want to extract the session id from a message in auto-etl using a fallback mechanism: if the trailer is present use that, otherwise try to extract it from the commit messages, as previously discussed. Create the requirements, and also explain why this is useful."
+    "prompt": "/new-task we want to extract the session id from a message in auto-etl using a fallback mechanism: if the trailer is present use that, otherwise try to extract it from the commit messages, as previously discussed. Create the requirements, and also explain why this is useful."
   },
   "arm": {
     "id": "v2",
     "skills_dir": "skills"
   },
   "human_turns": [
-    "Add to the requirements: auto-config, in its project init command, will have a sub-function for setting up git hooks. It adds a git pre-commit hook to generate the right trailers if one doesn't already exist; if a hook already exists, it errors out with a clear message.",
-    "In the final output, how will the session id be intermixed into the git data?",
-    "Looks good — go with your recommended answers on anything still open and continue."
+    "Add to the requirements: auto-config, in its project init command, will have a sub-function for setting up git hooks. It adds a git pre-commit hook to generate the right trailers if one doesn't already exist; if a hook already exists, it errors out with a clear message. For anything still open, go with your recommended answer.",
+    "/new-solution",
+    "In the final output, how will the session id be intermixed into the git data? For any open questions, go with your recommendations.",
+    "/new-plan",
+    "Looks good — that completes planning."
   ],
   "limits": {
     "max_turns": 14,
