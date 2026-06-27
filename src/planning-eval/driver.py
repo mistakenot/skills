@@ -1,4 +1,4 @@
-"""NTM conversation driver for the planning-eval harness.
+"""NTM conversation driver for the planning-eval harness.  (Usage guide: see README.md)
 
 Encapsulates the proven loop (spike S3/S4): spawn an agent in a tmux pane, send a
 message, wait for the *turn* to complete (race-free: confirm GENERATING before trusting

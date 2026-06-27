@@ -1,4 +1,4 @@
-"""Aggregate real velocity metrics for a run from autoetl / auto-search.
+"""Aggregate real velocity metrics for a run from autoetl / auto-search.  (See README.md)
 
 A run's worktree path is unique (`…/ws/<session>`), so every Claude session recorded
 against that workspace — the parent planning session AND its spawned subagents (context

@@ -1,6 +1,6 @@
 {
   "id": "example-smoke",
-  "_comment": "Thinnest-spine fixture: 1 fixture, 1 arm, hand-scripted human. Replace target_repo/start_sha/prompt with a real auto-stack task to do an actual replay. human_turns are sent in order after the opening prompt; an empty conversation ends when the list is exhausted or a limit trips.",
+  "_comment": "TEMPLATE fixture — copy and edit. Full annotated schema + how to mine a real task's start_sha/prompt/human_turns from auto-stack sessions is in ../README.md ('Authoring a fixture'). See 008-commit-session-link.json for a worked real example, and CANDIDATES.md for vetted tasks. human_turns are sent in order after the opening prompt; drive gated workflows yourself with /new-solution, /new-plan turns.",
   "fixture": {
     "target_repo": "/home/vscode/src/auto-stack",
     "start_sha": "REPLACE_WITH_IMMUTABLE_SHA",

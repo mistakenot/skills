@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# build.sh — compile one eval arm into a runnable worktree (planning-eval, hacked v1).
+# build.sh — compile one eval arm into a runnable worktree (planning-eval).  See README.md.
 #
 # Borrows auto-eval v1's `build` step (worktree at an immutable start SHA, clean history),
 # but the "setup" is fixed: overlay the arm's planning skills into the worktree so the
