@@ -55,6 +55,12 @@
       "source": "./plugins/research",
       "description": "External-research skills: track open-source repos and mine their updates into a ranked backlog of ideas to borrow.",
       "category": "productivity"
+    },
+    {
+      "name": "domain-modelling",
+      "source": "./plugins/domain-modelling",
+      "description": "Build and maintain a project's ubiquitous language: a DDD glossary of canonical domain terms, kept in sync with the code.",
+      "category": "development"
     }
   ]
 }

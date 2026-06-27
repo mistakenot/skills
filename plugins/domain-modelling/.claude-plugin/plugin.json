@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "domain-modelling",
+  "description": "Build and maintain a project's ubiquitous language: a DDD glossary of canonical domain terms, kept in sync with the code.",
+  "author": {
+    "name": "Charlie",
+    "email": "github.5ef725@todevnull.work"
+  },
+  "homepage": "https://github.com/mistakenot/skills",
+  "repository": "https://github.com/mistakenot/skills",
+  "license": "MIT",
+  "keywords": [
+    "domain-modelling",
+    "ddd",
+    "ubiquitous-language",
+    "glossary",
+    "terminology"
+  ]
+}

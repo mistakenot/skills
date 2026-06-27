@@ -927,4 +927,19 @@ if __name__ == "__main__":
         keywords=["research", "inspiration", "open-source", "competitive-analysis"],
     )
 
-    compile([planning, ideation, maintenance, exploration, rich_docs, reflection, assurance, research])
+    domain_modelling = module("domain-modelling",
+        skill("domain-modelling", refs=[
+            ref("language-format.md"),
+            ref("example-glossary.md"),
+            ref("multi-context.md"),
+            ref("interview-question-bank.md"),
+            ref("ci-enforcement.md"),
+        ], assets=[
+            asset("src/domain-modelling/scripts/glossary.py", "scripts/glossary.py"),
+        ]),
+        description="Build and maintain a project's ubiquitous language: a DDD glossary of canonical domain terms, kept in sync with the code.",
+        category="development",
+        keywords=["domain-modelling", "ddd", "ubiquitous-language", "glossary", "terminology"],
+    )
+
+    compile([planning, ideation, maintenance, exploration, rich_docs, reflection, assurance, research, domain_modelling])

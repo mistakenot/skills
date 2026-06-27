@@ -1,0 +1,26 @@
+{
+  "skill_name": "domain-modelling",
+  "evals": [
+    {
+      "id": 0,
+      "name": "init-from-scratch",
+      "prompt": "We don't have any shared glossary for this project and people keep using different words for the same thing. Can you set up a ubiquitous language / domain glossary for this repo so all of us (and the agents) use the same terms?",
+      "expected_output": "Creates docs/concepts/UBIQUITOUS_LANGUAGE.md with the correct header + term format, and adds an @docs/concepts/UBIQUITOUS_LANGUAGE.md link to the root CLAUDE.md. Does not try to fully populate every term (defers that to interview).",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "interview-build-glossary",
+      "prompt": "I want to properly build out our domain model. Interview me about the domain and capture our ubiquitous language so it's actually written down.",
+      "expected_output": "Re-reads (or creates) the glossary, researches the repo (code, commits, planning/task docs) to surface candidate terms AND naming conflicts, asks grounded decision-forcing questions, and writes well-formatted entries (term + tight definition + _Avoid_ list) into docs/concepts/UBIQUITOUS_LANGUAGE.md.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "active-discipline-drift",
+      "prompt": "Quick gut check on my next feature before I write it up: I want to add a new command to the planning bundle that lints every tool before we ship it. Does that fit how this project is structured?",
+      "expected_output": "Answers the structural question AND flags that 'command', 'bundle', and 'tool' are _Avoid_ terms in the existing glossary, proposing the canonical 'Skill', 'Module', 'Skill' respectively. Communicates using the canonical vocabulary.",
+      "files": []
+    }
+  ]
+}
