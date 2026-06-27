@@ -16,6 +16,7 @@ operator's auth to run; skill-overlay is the arm boundary for now).
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -24,7 +25,15 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent.parent  # .../skills
-PROJECTS_BASE = Path("/home/vscode/src")
+
+# All arm work happens OUTSIDE this repo and out of its git tree: agent worktrees and run
+# outputs live under a tmp workspace. `ws/` is NTM's projects_base (so spawned agents land
+# there), `runs/` holds captured artifacts + metrics.
+WORKSPACE = Path(os.environ.get("PLANNING_EVAL_WORKSPACE", "/tmp/planning-eval"))
+WS_PROJECTS = WORKSPACE / "ws"
+RUNS_DIR = WORKSPACE / "runs"
+# Make NTM derive every spawned agent's cwd from our workspace, not /home/vscode/src.
+os.environ["NTM_PROJECTS_BASE"] = str(WS_PROJECTS)
 
 sys.path.insert(0, str(HERE))
 from driver import Session  # noqa: E402
@@ -71,7 +80,8 @@ def main(fixture_path: str) -> None:
     arm_id = cfg["arm"]["id"]
     limits = cfg.get("limits", {})
     session = _run_id(fixture_id, arm_id)
-    run_dir = HERE / "runs" / session
+    WS_PROJECTS.mkdir(parents=True, exist_ok=True)
+    run_dir = RUNS_DIR / session
     run_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"[run] {session}")

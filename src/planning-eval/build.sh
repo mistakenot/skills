@@ -26,19 +26,33 @@ if [ -e "$WORKTREE" ]; then
   echo "ERROR: worktree path already exists: $WORKTREE" >&2; exit 2
 fi
 
-echo "[build] worktree $WORKTREE @ ${START_SHA:0:12} from $TARGET_REPO"
-git -C "$TARGET_REPO" worktree add --detach "$WORKTREE" "$START_SHA" >/dev/null
+# Disable the target repo's git hooks for all eval git ops: a post-checkout/pre-commit hook
+# from a *different* commit than the one we check out will fail and is irrelevant to the eval.
+GIT="git -c core.hooksPath=/dev/null"
 
-echo "[build] overlay arm skills from $ARM_SKILLS_DIR -> .claude/skills/"
-mkdir -p "$WORKTREE/.claude/skills"
-cp -R "$ARM_SKILLS_DIR"/. "$WORKTREE/.claude/skills/"
+echo "[build] worktree $WORKTREE @ ${START_SHA:0:12} from $TARGET_REPO"
+$GIT -C "$TARGET_REPO" worktree add --detach "$WORKTREE" "$START_SHA" >/dev/null
+
+# Clean arm boundary: REPLACE the worktree's skills with exactly the arm's set, so the two
+# arms differ only by installed workflow (not by a mix of the target repo's own skills).
+# Project CLAUDE.md / AGENTS.md are left intact — that's shared project context, not the
+# variable under test.
+SKILLS_DIR="$WORKTREE/.claude/skills"
+if [ -e "$SKILLS_DIR" ]; then
+  echo "[build] removing target repo's existing skills ($(find "$SKILLS_DIR" -maxdepth 1 -mindepth 1 | wc -l) entries)"
+  rm -rf "$SKILLS_DIR"
+fi
+echo "[build] installing arm '$(basename "$ARM_SKILLS_DIR")' skills -> .claude/skills/"
+mkdir -p "$SKILLS_DIR"
+cp -R "$ARM_SKILLS_DIR"/. "$SKILLS_DIR/"
+echo "[build] arm skill count: $(find "$SKILLS_DIR" -maxdepth 1 -mindepth 1 -type d | wc -l)"
 
 # Clean history: squash the overlay onto the start commit so `git log` shows no eval
 # scaffolding to the agent.
-git -C "$WORKTREE" add -A >/dev/null
-git -C "$WORKTREE" -c user.name=eval -c user.email=eval@local \
+$GIT -C "$WORKTREE" add -A >/dev/null
+$GIT -C "$WORKTREE" -c user.name=eval -c user.email=eval@local \
     commit --amend --no-edit >/dev/null 2>&1 || \
-  git -C "$WORKTREE" -c user.name=eval -c user.email=eval@local \
-    commit -m "eval: overlay arm skills" >/dev/null
+  $GIT -C "$WORKTREE" -c user.name=eval -c user.email=eval@local \
+    commit -m "eval: install arm skills" >/dev/null
 
 echo "$WORKTREE"

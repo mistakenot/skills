@@ -38,8 +38,15 @@ automated quality scoring, full `CLAUDE_CONFIG_DIR` isolation.
 uv run --no-project python src/planning-eval/run.py src/planning-eval/fixtures/<fixture>.json
 ```
 
-The worktree is created at `/home/vscode/src/<session>` (NTM derives an agent's cwd from
-`projects_base/<session_name>`) and left in place for inspection after the run.
+All arm work happens **outside this repo and out of git**, under a tmp workspace
+(`$PLANNING_EVAL_WORKSPACE`, default `/tmp/planning-eval`):
+
+- `…/ws/<session>/` — the agent's worktree (NTM's `projects_base` is pointed here via
+  `NTM_PROJECTS_BASE`, so spawned agents land in the workspace, never in `/home/vscode/src`).
+- `…/runs/<session>/` — captured artifacts + `result.json` metrics.
+
+Worktrees are left in place for inspection after the run. The driver auto-accepts Claude
+Code's one-time "trust this folder?" gate that appears for fresh worktree paths.
 
 ## Authoring a real fixture
 

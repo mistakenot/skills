@@ -99,13 +99,27 @@ class Session:
         return agents[0].get("state", "UNKNOWN")
 
     def _await_ready(self, timeout_s: int = 120) -> None:
-        """Wait until the freshly-spawned agent is WAITING (ready for input)."""
+        """Wait until the freshly-spawned agent is WAITING (ready for input).
+
+        Claude Code shows a one-time "trust this folder?" gate the first time it runs in a
+        new directory (e.g. a fresh /tmp worktree). That holds the agent in UNKNOWN, never
+        WAITING, so we auto-accept it once when seen.
+        """
         deadline = time.monotonic() + timeout_s
+        trusted = False
         while time.monotonic() < deadline:
             if self._agent_state() == "WAITING":
                 return
+            if not trusted and self._trust_gate_open():
+                # Option 1 = "Yes, I trust this folder"; sending "1" selects and confirms.
+                _ntm_json(["--robot-send=" + self.name, "--msg=1"], timeout=30)
+                trusted = True
             time.sleep(1.0)
         raise NTMError(f"agent in {self.name} never reached WAITING")
+
+    def _trust_gate_open(self) -> bool:
+        pane = self._tail(lines=30).lower()
+        return "trust" in pane and "folder" in pane
 
     # ----- conversation --------------------------------------------------
 
