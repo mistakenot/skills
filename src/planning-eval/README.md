@@ -184,6 +184,22 @@ A fixture is JSON. Full annotated schema:
    boilerplate filtered out (`<local-command…>`, `<command-name>…`, "Base directory for this
    skill", `<teammate-message>` blocks). Keep the substantive asks and answers.
 
+### Two authoring methods
+
+Pinpointing a task's planning thread is the genuinely hard, manual part — and it's
+*inconsistent*: some threads are clean (008), others are fragmented across sessions,
+buried under execution/review sessions that mention the task more, or were abandoned and
+converted to research docs. Two methods, pick by what the task offers:
+
+- **Session-mined** (higher fidelity): reconstruct prompt + turns from the real planning
+  session, as above. Use when the thread is findable. Example: `008-commit-session-link.json`.
+- **Requirements-derived** (faster, reliable): when the thread is fragmented, author the
+  prompt + the load-bearing `human_turns` from the task's own `requirements.md`/`solution.md`
+  in the target repo — those *are* the planning ground truth. Pull the real steering
+  decisions (e.g. an explicit "this supersedes the duckdb plan"). Example:
+  `010-autosearch-co-change.json`. Caveat: hindsight bias — you're authoring from the
+  outcome — but the same fixture drives both arms, so the comparison stays fair.
+
 > The harness prepends a fixed preamble to the opening prompt telling the agent it's driven
 > by an automation and must not use interactive `AskUserQuestion` menus (those stall the
 > text channel). It's applied to every arm equally, so comparisons stay fair.

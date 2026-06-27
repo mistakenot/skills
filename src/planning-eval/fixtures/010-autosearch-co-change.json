@@ -1,0 +1,30 @@
+{
+  "id": "010-autosearch-co-change",
+  "_provenance": {
+    "target_task": "auto-stack docs/tasks/010-autosearch-co-change",
+    "docs_add_commit": "7d9bbda6",
+    "authoring_method": "Derived from the task's requirements.md (the planning ground truth) rather than a mined session — 010's planning thread is fragmented/hard to pinpoint (the slug-matching sessions are execution/review or a different abandoned /new-task). requirements.md captures the problem, goals, and the load-bearing decisions (lift-weighted scoring + time decay; in-process pure-Go engine superseding the duckdb-CLI plan). See README 'Authoring a fixture'.",
+    "note": "Second fixture, for the harness generality check (does authoring + run work beyond task 008)."
+  },
+  "fixture": {
+    "target_repo": "/home/vscode/src/auto-stack",
+    "start_sha": "a78aa5c3f166ae935b91622dab1034bb4419a43d",
+    "prompt": "/new-task we want a new `autosearch co-change <path>` command. auto-etl indexes git history into parquet (commits, commit_files), but auto-search has nothing that reads it. Given a file, return the other files that historically change with it — temporal coupling, a proxy for architectural coupling that import-graph analysis misses. It's an onboarding heuristic and a refactor-safety signal. Create the requirements and explain why this matters."
+  },
+  "arm": {
+    "id": "v2",
+    "skills_dir": "skills"
+  },
+  "human_turns": [
+    "For the scoring: make the primary score directional confidence weighted by lift — score = confidence(A->B) * log(1 + lift) — with a per-commit large-commit size penalty and exponential time decay (tau = 90 days). Exclude candidates with fewer than 3 co-commits, drop commits touching more than 50 files, and if the input file has fewer than 5 commits of history return a metadata-only 'insufficient history' payload. For anything else still open, go with your recommended answer.",
+    "/new-solution",
+    "Engine decision: run in-process with no external dependency — read the parquet via parquet-go and aggregate in an ephemeral in-memory pure-Go SQLite (modernc.org/sqlite), scoring in Go. auto-search must stay a self-contained pure-Go binary; this supersedes any duckdb-CLI approach. For open questions, go with your recommendations.",
+    "/new-plan",
+    "Looks good — that completes planning."
+  ],
+  "limits": {
+    "max_turns": 14,
+    "wall_clock_s": 2400,
+    "per_turn_timeout_s": 900
+  }
+}
