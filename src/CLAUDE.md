@@ -104,7 +104,10 @@ curl -fsSL https://raw.githubusercontent.com/mistakenot/skills/main/sk.sh -o ~/.
 sk ls                       # list packages (one per module)
 sk add planning-workflow    # install a package's skills ('all' for everything)
 sk update                   # update all installed skills
+sk prune 'beta-*'           # remove renamed/stale installs + lock entries (dry-run; --apply)
 ```
+
+`sk prune <glob>` reliably uninstalls renamed/removed skills (run it in any repo's root): it deletes every install copy — real dirs *and* the `.claude/skills` symlinks — plus the matching `skills-lock.json` entries, while leaving source/build outputs (`skills/`, `plugins/`, `src/`) alone. It does this in an inline `python3` block rather than via `npx skills remove`, which leaves stale lock entries behind. Dry-run by default; pass `--apply` to execute.
 
 Like `install.sh`, the package→skill mappings (and package descriptions) are baked in at compile time from the DSL, so the CLI never drifts. The difference is the self-update step: on every run the script fetches its own latest version from `CLI_SELF_URL` (raw GitHub, `main` branch, `sk.sh`) and, if it differs, overwrites itself in place and asks the user to re-run. This keeps the baked-in mappings fresh without a package manager. Self-update fails open (offline / no `curl` / non-writable → skip).
 

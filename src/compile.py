@@ -690,6 +690,65 @@ cmd_update() {
   run npx skills@latest update -y "$@"
 }
 
+# Reliably remove installed skills by name or glob: deletes every install copy
+# (real dirs AND symlinks under .agents/.claude, leaving source/build outputs
+# alone) plus the skills-lock.json entry. Does NOT use `npx skills remove`, which
+# leaves stale lock entries behind. Operates on the CWD repo. Dry-run unless
+# --apply is passed. Usage: sk prune 'beta-*' [--apply]
+cmd_prune() {
+  local apply=0 patterns=() a
+  for a in "$@"; do
+    case "$a" in
+      --apply) apply=1 ;;
+      -*) echo "sk prune: unknown flag '$a'" >&2; exit 1 ;;
+      *) patterns+=("$a") ;;
+    esac
+  done
+  if [[ ${#patterns[@]} -eq 0 ]]; then
+    echo "sk prune: missing skill name or glob (e.g. sk prune 'beta-*')" >&2
+    exit 1
+  fi
+  command -v python3 >/dev/null 2>&1 || { echo "sk prune: requires python3" >&2; exit 1; }
+  SK_PRUNE_APPLY="$apply" python3 - "${patterns[@]}" <<'PY'
+import sys, os, json, fnmatch, shutil
+from pathlib import Path
+ROOT = Path.cwd()
+LOCK = ROOT / "skills-lock.json"
+# Build outputs, source, and vendored trees — never touch these.
+EXCLUDE = ("skills/", "plugins/", "node_modules/", "src/", ".git/", ".claude/worktrees/")
+apply = os.environ.get("SK_PRUNE_APPLY") == "1"
+patterns = sys.argv[1:]
+lock = json.loads(LOCK.read_text()) if LOCK.exists() else None
+# Authoritative names: lockfile keys matching the patterns + literal names given.
+names = set()
+if lock:
+    names |= {n for n in lock.get("skills", {}) if any(fnmatch.fnmatch(n, p) for p in patterns)}
+names |= {p for p in patterns if not any(c in p for c in "*?[]")}
+if not names:
+    print("No matching skills found."); sys.exit(0)
+print(("APPLYING" if apply else "DRY RUN") + " — targeting: " + ", ".join(sorted(names)) + "\n")
+for name in sorted(names):
+    for p in ROOT.rglob(name):
+        rel = p.relative_to(ROOT).as_posix()
+        if any(rel.startswith(x) for x in EXCLUDE):
+            continue
+        if not (p.is_symlink() or p.is_dir()):
+            continue
+        print("  rm    " + rel)
+        if apply:
+            p.unlink() if (p.is_symlink() or not p.is_dir()) else shutil.rmtree(p)
+if lock is not None:
+    removed = [n for n in sorted(names) if n in lock.get("skills", {})]
+    for n in removed:
+        print("  lock- " + n)
+    if apply and removed:
+        for n in removed:
+            del lock["skills"][n]
+        LOCK.write_text(json.dumps(lock, indent=2) + "\n")
+print("\n" + ("Done." if apply else "Dry run — re-run with --apply to execute."))
+PY
+}
+
 main() {
   self_update
 
@@ -700,6 +759,7 @@ main() {
     ls|list)            cmd_ls "$@" ;;
     add|install)        cmd_add "$@" ;;
     update|upgrade)     cmd_update "$@" ;;
+    prune|clean)        cmd_prune "$@" ;;
     help|-h|--help)     usage ;;
     *)
       echo "sk: unknown command '$cmd'" >&2
