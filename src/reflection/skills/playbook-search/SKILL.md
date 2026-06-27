@@ -96,6 +96,16 @@ retrieval does **not** claim the rule was applied or helpful. If those states
 later become reliably observable, add **new** event types rather than redefining
 retrieval.
 
+## Repository setup
+
+`retrievals.ndjson` is durable telemetry — **track it in git**. Its sibling
+`retrievals.ndjson.lock` is a transient advisory `flock` file recreated on every
+write — **add it to `.gitignore`** so it never gets committed:
+
+```gitignore
+docs/reflection/retrievals.ndjson.lock
+```
+
 ## Rules
 
 - Append to `retrievals.ndjson` only (via `reflect.py append`). Never edit
