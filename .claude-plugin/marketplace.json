@@ -27,6 +27,12 @@
       "category": "productivity"
     },
     {
+      "name": "handoff",
+      "source": "./plugins/handoff",
+      "description": "Machine-local handoff stack: push and pull short text notes between agent sessions using a JSONL store.",
+      "category": "productivity"
+    },
+    {
       "name": "exploration",
       "source": "./plugins/exploration",
       "description": "De-risk ideas before building: run exploratory tech spikes that validate assumptions and stress-test approaches.",

@@ -16,10 +16,16 @@ Dispatch execution to an idle Claude Code pane in a tmux session using `ntm`.
 > Claude Code pane. To discover agents and send to **Codex** or **OpenCode**
 > panes (whose send/clear conventions differ), see
 > [references/delegating-to-agents.md](references/delegating-to-agents.md).
+>
+> **Pool model.** This skill dispatches into the **workers** pool
+> (`<project>--workers`) — worker panes run in worktrees and open PRs, separated
+> by `ntm` label from the `planners` pool that commits to `main`. See
+> [references/ntm-agent-pools.md](references/ntm-agent-pools.md).
 
 ## Input
 
-Task ID (numeric) and optionally a tmux session name (defaults to `$PROJECT--execute`).
+Task ID (numeric) and optionally a tmux session name (defaults to
+`$PROJECT--workers`, formerly `$PROJECT--execute`).
 
 ## Dispatch Workflow
 

@@ -922,9 +922,9 @@ if __name__ == "__main__":
         skill("resolve-comments",       refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
         skill("commit-task",            refs=[overview, ref("commit-conventions.md"), ref("task-status.md")]),
         skill("execute-task",           refs=[overview, ref("template-pr-body.md"), ref("worktree-conventions.md"), ref("commit-conventions.md"), ref("execute-task-full.md"), ref("task-status.md")]),
-        skill("delegate-task",          refs=[overview, ref("task-status.md"), ref("delegating-to-agents.md")]),
-        skill("delegate",               refs=[ref("delegating-to-agents.md")]),
-        skill("status-report",          refs=[overview, ref("delegating-to-agents.md")]),
+        skill("delegate-task",          refs=[overview, ref("task-status.md"), ref("delegating-to-agents.md"), ref("ntm-agent-pools.md")]),
+        skill("delegate",               refs=[ref("delegating-to-agents.md"), ref("ntm-agent-pools.md")]),
+        skill("status-report",          refs=[overview, ref("delegating-to-agents.md"), ref("ntm-agent-pools.md")]),
         skill("address-feedback",       refs=[overview]),
         skill("complete-task",          refs=[overview, ref("template-feedback.md"), ref("commit-conventions.md")]),
         skill("code-review",            refs=[overview]),
@@ -947,6 +947,15 @@ if __name__ == "__main__":
         description="Documentation maintenance: keep READMEs and docs in sync with the current state of the code.",
         category="productivity",
         keywords=["documentation", "readme"],
+    )
+
+    handoff = module("handoff",
+        skill("handoff", assets=[
+            asset("src/handoff/skills/handoff/scripts/handoff.py", "scripts/handoff.py"),
+        ]),
+        description="Machine-local handoff stack: push and pull short text notes between agent sessions using a JSONL store.",
+        category="productivity",
+        keywords=["handoff", "context", "jsonl", "agents"],
     )
 
     exploration = module("exploration",
@@ -1028,4 +1037,4 @@ if __name__ == "__main__":
         keywords=["eval", "evaluation", "benchmark", "ab-testing", "skill-quality"],
     )
 
-    compile([planning, ideation, maintenance, exploration, rich_docs, reflection, assurance, research, domain_modelling, grill, eval_engineer])
+    compile([planning, ideation, maintenance, handoff, exploration, rich_docs, reflection, assurance, research, domain_modelling, grill, eval_engineer])

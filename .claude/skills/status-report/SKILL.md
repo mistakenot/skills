@@ -15,9 +15,15 @@ Monitor all executor panes in a tmux session using `ntm` and report status.
 > Claude panes. See [references/delegating-to-agents.md](references/delegating-to-agents.md)
 > for reliable agent identification and per-agent quirks.
 
+> **Pool model.** Sessions are organised as two label-separated pools —
+> `planners` (commit to `main`) and `workers` (worktrees + PRs). This skill
+> monitors and GCs the **workers** pool (`<project>--workers`). See
+> [references/ntm-agent-pools.md](references/ntm-agent-pools.md).
+
 ## Input
 
-Optional tmux session name (defaults to `$PROJECT--execute`).
+Optional tmux session name (defaults to `$PROJECT--workers`, formerly
+`$PROJECT--execute`).
 
 ## Status Values
 

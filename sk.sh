@@ -21,13 +21,14 @@ REPO="mistakenot/skills"
 SELF_URL="${SKILLS_SELF_URL:-https://raw.githubusercontent.com/mistakenot/skills/main/sk.sh}"
 AGENTS="${SKILLS_AGENTS:-claude-code codex}"
 
-PACKAGES="planning-workflow ideation maintenance exploration rich-docs reflection assurance research domain-modelling grill-me eval-engineer"
+PACKAGES="planning-workflow ideation maintenance handoff exploration rich-docs reflection assurance research domain-modelling grill-me eval-engineer"
 
 pkg_desc() {
   case "$1" in
     planning-workflow) echo "End-to-end AI-agent task delivery: requirements, solution, plan, review, execute, and ship features through a structured plan-to-merge workflow." ;;
     ideation) echo "Structured ideation: generate high-impact feature ideas and run synthetic user-research simulations to decide what to build next." ;;
     maintenance) echo "Documentation maintenance: keep READMEs and docs in sync with the current state of the code." ;;
+    handoff) echo "Machine-local handoff stack: push and pull short text notes between agent sessions using a JSONL store." ;;
     exploration) echo "De-risk ideas before building: run exploratory tech spikes that validate assumptions and stress-test approaches." ;;
     rich-docs) echo "Author rich single-file HTML planning docs with tabs, mermaid diagrams, file-change trees, and inline comment threads." ;;
     reflection) echo "Reflection loop: mine learnings into a diary, and observe→refine→search reusable task rules." ;;
@@ -45,6 +46,7 @@ pkg_skills() {
     planning-workflow) echo "new-epic new-task new-solution new-plan review-task request-codex-review request-claude-review request-grok-review request-council-review resolve-comments commit-task execute-task delegate-task delegate status-report address-feedback complete-task code-review task-feedback-analyser" ;;
     ideation) echo "generate-10-ideas fan-out-user-simulation" ;;
     maintenance) echo "revise-readme" ;;
+    handoff) echo "handoff" ;;
     exploration) echo "tech-spike" ;;
     rich-docs) echo "planning-doc" ;;
     reflection) echo "learning-diary playbook-observe playbook-refine playbook-search" ;;

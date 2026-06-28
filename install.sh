@@ -13,7 +13,7 @@ Install skills from mistakenot/skills.
 
 Options:
   --module <name>   Install only skills from a specific module.
-                    Available modules: planning-workflow, ideation, maintenance, exploration, rich-docs, reflection, assurance, research, domain-modelling, grill-me, eval-engineer
+                    Available modules: planning-workflow, ideation, maintenance, handoff, exploration, rich-docs, reflection, assurance, research, domain-modelling, grill-me, eval-engineer
   --agent <agents>  Override target agents (default: claude-code codex).
                     Use '*' for all agents.
   -h, --help        Show this help message.
@@ -60,6 +60,9 @@ else
     maintenance)
       SKILLS="revise-readme"
       ;;
+    handoff)
+      SKILLS="handoff"
+      ;;
     exploration)
       SKILLS="tech-spike"
       ;;
@@ -86,7 +89,7 @@ else
       ;;
     *)
       echo "Unknown module: $MODULE" >&2
-      echo "Available modules: planning-workflow, ideation, maintenance, exploration, rich-docs, reflection, assurance, research, domain-modelling, grill-me, eval-engineer" >&2
+      echo "Available modules: planning-workflow, ideation, maintenance, handoff, exploration, rich-docs, reflection, assurance, research, domain-modelling, grill-me, eval-engineer" >&2
       exit 1
       ;;
   esac

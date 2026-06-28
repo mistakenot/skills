@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "handoff",
+  "description": "Machine-local handoff stack: push and pull short text notes between agent sessions using a JSONL store.",
+  "author": {
+    "name": "Charlie",
+    "email": "github.5ef725@todevnull.work"
+  },
+  "homepage": "https://github.com/mistakenot/skills",
+  "repository": "https://github.com/mistakenot/skills",
+  "license": "MIT",
+  "keywords": [
+    "handoff",
+    "context",
+    "jsonl",
+    "agents"
+  ]
+}

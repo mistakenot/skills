@@ -12,6 +12,10 @@ Send a freeform prompt to an idle coding-agent pane in a tmux session using `ntm
 >
 > For agent discovery, type identification, and send conventions, see
 > [references/delegating-to-agents.md](references/delegating-to-agents.md).
+>
+> Dispatches into the **workers** pool (`<project>--workers`). For the
+> planner/worker pool model and label rules, see
+> [references/ntm-agent-pools.md](references/ntm-agent-pools.md).
 
 ## Input
 
