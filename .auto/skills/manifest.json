@@ -10,10 +10,10 @@
       "render_version": "1"
     },
     "assurance-strategist": {
-      "template_hash": "d2edc58e69743beabfbbbdf4aa771cc8fa2aad0e1b58f748bf41f0868e023fad",
+      "template_hash": "d1a17ef6b451849809227d87fbedffefbf0990beff8b7fbe53d55afdc02ed586",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "ae7703e2cd003e989af8beeb1062eb9c3b6adbb921ca87cb638e470f546a2e42",
+      "skill_version": "1d74a812ff1700f33fd114f456cd30a4e4be3be7cbdadb9ea8714ce62836d905",
       "render_version": "1"
     },
     "borrow-from-oss": {
@@ -252,7 +252,7 @@
     "agents": {
       "managed_skills": {
         "address-feedback": "415fbd046aa37f8fad53a1db5be7f90667b3303bae48d69bba7a1d2e6249dd46",
-        "assurance-strategist": "ae7703e2cd003e989af8beeb1062eb9c3b6adbb921ca87cb638e470f546a2e42",
+        "assurance-strategist": "1d74a812ff1700f33fd114f456cd30a4e4be3be7cbdadb9ea8714ce62836d905",
         "borrow-from-oss": "3be3cfdda571aa2dd695578dabce31b918091c1743cdd8fdf9127b8d38f5a258",
         "code-review": "6e77e9a99e86e6b77b4510d00627c26bd81fb186cfe22021f11cb12781d4bc72",
         "commit-task": "9d0a5ecba9cc19669ee92558c07153a94b3f0d0eee0e8cea50c6b401782bb800",
@@ -291,7 +291,7 @@
     "claude": {
       "managed_skills": {
         "address-feedback": "415fbd046aa37f8fad53a1db5be7f90667b3303bae48d69bba7a1d2e6249dd46",
-        "assurance-strategist": "ae7703e2cd003e989af8beeb1062eb9c3b6adbb921ca87cb638e470f546a2e42",
+        "assurance-strategist": "1d74a812ff1700f33fd114f456cd30a4e4be3be7cbdadb9ea8714ce62836d905",
         "borrow-from-oss": "3be3cfdda571aa2dd695578dabce31b918091c1743cdd8fdf9127b8d38f5a258",
         "code-review": "6e77e9a99e86e6b77b4510d00627c26bd81fb186cfe22021f11cb12781d4bc72",
         "commit-task": "9d0a5ecba9cc19669ee92558c07153a94b3f0d0eee0e8cea50c6b401782bb800",
