@@ -1,5 +1,6 @@
 ---
 hash: "108ab3e0"
+id: "421100cd"
 read_when: "designing the v2-vs-v3 planning A/B, deciding trials-per-arm, or interpreting planning-eval run variance"
 summary: "Noise-floor, quality-floor, and generality validation of the planning-eval harness before building the v3 arm: three identical v2 runs show 1.5-1.8x spread driven by fan-out variance, so the A/B needs >=3 trials/arm and quality-per-token comparison."
 title: "planning-eval — baseline validation"

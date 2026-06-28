@@ -987,7 +987,7 @@ if __name__ == "__main__":
     )
 
     assurance = module("assurance",
-        skill("assurance-strategist", refs=[ref("technique-unit-testing.md"), ref("technique-property-based-testing.md"), ref("technique-react-unit-testing.md")]),
+        skill("assurance-strategist", refs=[ref("technique-unit-testing.md"), ref("technique-property-based-testing.md"), ref("technique-react-unit-testing.md"), ref("technique-model-based-testing.md")]),
         description="Design end-to-end assurance and testing strategies for autonomous agent-built software.",
         category="development",
         keywords=["testing", "assurance", "verification"],
