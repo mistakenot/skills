@@ -194,6 +194,29 @@ All three accept `/clear`, but the effect and the surrounding quirks differ:
 | **Codex**       | Starts a **new** conversation; prints prior token usage and a `codex resume <id>` line. | `/skills` to list, `/model` to switch; send `/<cmd>` as text. |
 | **OpenCode**    | Returns to the "Ask anything…" splash; context dropped.       | Sent as text; an interactive palette also exists (`ctrl+p`), but for automation send the literal command. |
 
+> **Do NOT reset a pane with in-place process restart.** It is tempting to
+> replace the cooperative `/clear` with an "imperative" restart of the agent
+> process. In this environment (verified on **ntm 1.18.2**, 2026-06-27) all three
+> restart paths are broken and **must not be used to reset a pane for reuse**:
+>
+> - `ntm --robot-smart-restart=<s> --panes=<n>` → `FAILED` with
+>   `can't find window: <n>` — it addresses the flat pane index as a tmux *window*
+>   index. `--hard-kill` fails the same way (`tmux list-panes failed`).
+> - `ntm respawn --panes=<n> --force` → kills the agent, but the relaunched
+>   `claude` **crashes back to a bash shell** (the re-run launch line reuses a
+>   `systemd-run --scope` whose name the exiting process still holds).
+> - `ntm --robot-restart-pane=<s> --panes=<n>` → reports
+>   `success / prompt_sent / process_alive:true` **even though** the agent crashed
+>   to a shell, and sends the `--restart-prompt` **into that shell** where it runs
+>   as a shell command. A silent failure that misroutes the dispatch — strictly
+>   worse than `/clear`.
+>
+> The only reliable way to get a clean-context agent is to **spawn a fresh pane**
+> ([§4](#4-spin-up-a-new-worker-when-none-are-available)) — a new `claude` with
+> empty context and its own scope (verified: a fresh pane answers `NO_CONTEXT` to
+> a prior pane's codeword). Re-verify with that codeword check if a future ntm
+> release claims to fix in-place restart.
+
 ## 7. Readiness and gotchas
 
 - **Confirm an agent is actually live before the first send.** Codex can show a
