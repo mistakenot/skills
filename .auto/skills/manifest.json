@@ -65,6 +65,13 @@
       "skill_version": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
       "render_version": "1"
     },
+    "eval-engineer": {
+      "template_hash": "15a7b792962ff0c2e0e758d2d2d6e49913f223be490b3588480ead6ab11e5075",
+      "replacements": {},
+      "file_refs": [],
+      "skill_version": "516229b4462586ed303985ab6e0a44f73316bbeeb5ccdbae1a443dcca667ec02",
+      "render_version": "1"
+    },
     "execute-task": {
       "template_hash": "9aaa122d38f8914203cd15d4021f22e82a413a5cb172ef2bb9a2d3d897a61c6f",
       "replacements": {},
@@ -246,6 +253,7 @@
         "delegate": "b3d39004265a980b69b35f9893adf8607d55af1d1d836e6ebf935c32fad33a4c",
         "delegate-task": "82a02c47f1ad5972ab35dda0d3ac57f02619b8ac9dcb3fdb5e757af649b062c7",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
+        "eval-engineer": "516229b4462586ed303985ab6e0a44f73316bbeeb5ccdbae1a443dcca667ec02",
         "execute-task": "26ebabea334f5ba2bccbb870d1b807c8504e3b329cf52e07b4bd76e997002ff2",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
         "generate-10-ideas": "86f06f47c77cc7fa813f6da24b8e219f1f82cd3cfb875b7ee89d2ca3d275af68",
@@ -283,6 +291,7 @@
         "delegate": "b3d39004265a980b69b35f9893adf8607d55af1d1d836e6ebf935c32fad33a4c",
         "delegate-task": "82a02c47f1ad5972ab35dda0d3ac57f02619b8ac9dcb3fdb5e757af649b062c7",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
+        "eval-engineer": "516229b4462586ed303985ab6e0a44f73316bbeeb5ccdbae1a443dcca667ec02",
         "execute-task": "26ebabea334f5ba2bccbb870d1b807c8504e3b329cf52e07b4bd76e997002ff2",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
         "generate-10-ideas": "86f06f47c77cc7fa813f6da24b8e219f1f82cd3cfb875b7ee89d2ca3d275af68",
