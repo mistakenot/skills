@@ -1017,4 +1017,15 @@ if __name__ == "__main__":
         keywords=["grilling", "interrogation", "design-review", "adr", "decisions"],
     )
 
-    compile([planning, ideation, maintenance, exploration, rich_docs, reflection, assurance, research, domain_modelling, grill])
+    eval_engineer = module("eval-engineer",
+        skill("eval-engineer", refs=[
+            ref("validating-the-eval.md"),
+            ref("fixtures-from-history.md"),
+            ref("harnesses.md"),
+        ]),
+        description="Build, run, validate, and manage A/B evals for skills in this repo: replay real tasks, compare skill versions on cost and quality, and validate the eval before trusting it.",
+        category="development",
+        keywords=["eval", "evaluation", "benchmark", "ab-testing", "skill-quality"],
+    )
+
+    compile([planning, ideation, maintenance, exploration, rich_docs, reflection, assurance, research, domain_modelling, grill, eval_engineer])

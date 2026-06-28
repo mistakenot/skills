@@ -67,6 +67,12 @@
       "source": "./plugins/grill-me",
       "description": "Relentlessly interrogate a plan, design, or decision to surface assumptions and edge cases, recording the outcomes as numbered ADRs.",
       "category": "development"
+    },
+    {
+      "name": "eval-engineer",
+      "source": "./plugins/eval-engineer",
+      "description": "Build, run, validate, and manage A/B evals for skills in this repo: replay real tasks, compare skill versions on cost and quality, and validate the eval before trusting it.",
+      "category": "development"
     }
   ]
 }

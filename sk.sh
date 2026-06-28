@@ -21,7 +21,7 @@ REPO="mistakenot/skills"
 SELF_URL="${SKILLS_SELF_URL:-https://raw.githubusercontent.com/mistakenot/skills/main/sk.sh}"
 AGENTS="${SKILLS_AGENTS:-claude-code codex}"
 
-PACKAGES="planning-workflow ideation maintenance exploration rich-docs reflection assurance research domain-modelling grill-me"
+PACKAGES="planning-workflow ideation maintenance exploration rich-docs reflection assurance research domain-modelling grill-me eval-engineer"
 
 pkg_desc() {
   case "$1" in
@@ -35,6 +35,7 @@ pkg_desc() {
     research) echo "External-research skills: track open-source repos and mine their updates into a ranked backlog of ideas to borrow." ;;
     domain-modelling) echo "Build and maintain a project's ubiquitous language: a DDD glossary of canonical domain terms, kept in sync with the code." ;;
     grill-me) echo "Relentlessly interrogate a plan, design, or decision to surface assumptions and edge cases, recording the outcomes as numbered ADRs." ;;
+    eval-engineer) echo "Build, run, validate, and manage A/B evals for skills in this repo: replay real tasks, compare skill versions on cost and quality, and validate the eval before trusting it." ;;
     *) return 1 ;;
   esac
 }
@@ -51,6 +52,7 @@ pkg_skills() {
     research) echo "borrow-from-oss" ;;
     domain-modelling) echo "domain-modelling" ;;
     grill-me) echo "grill-me" ;;
+    eval-engineer) echo "eval-engineer" ;;
     *) return 1 ;;
   esac
 }
