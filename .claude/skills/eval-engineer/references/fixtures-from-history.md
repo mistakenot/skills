@@ -60,11 +60,34 @@ Start with **1–2 fixtures** and prove the full loop (build → run → capture
 authoring a dozen. The first real replay is where the fiddly contamination/checkout/auth bugs
 live; find them cheap.
 
-## A note on the simulated human
+## The simulated human — match it to how predictable the skill's questions are
 
-For interactive skills, the fixture's `human_turns` stand in for the operator. Hand-authored
-turns are the practical start. They must **drive the workflow's gates themselves** if the
-skill is gated (e.g. send the next-stage command when the workflow hard-stops), and should
-forbid the agent from using interactive menus the harness can't answer — instruct it to
-proceed autonomously or ask in plain text. A later upgrade is a simulated-user *agent* that
-answers from an extracted intent corpus, but don't build that before the basic loop works.
+For interactive skills, something must answer the skill's questions. Which mechanism you need
+depends on whether you can predict the questions in advance — this is the single most
+important fixture-design choice for an interactive skill, so decide it deliberately.
+
+**Scripted turns — when the conversation shape is fixed.** If the skill follows a known
+sequence (e.g. a gated pipeline: requirements → solution → plan, each a hard-stop), a fixed
+list of `human_turns` works. The turns must **drive the gates themselves** (send the
+next-stage command when the skill hard-stops and waits) and **forbid interactive menus the
+harness can't answer** — instruct the agent to proceed autonomously or ask in plain text.
+Author the turns by mining/deriving the real operator messages. This is the cheapest option;
+use it whenever the question flow is predictable.
+
+**Simulated-user agent — when the questions are emergent.** Some skills generate questions
+*dynamically* from their own analysis — an interrogation skill that grills a design, a
+clarifier that asks whatever it finds ambiguous. A scripted list can't answer questions you
+didn't know would be asked, and a wrong-order script desynchronises immediately. Here you need
+a **responder agent** playing the operator: give it a persona and a **private knowledge brief**
+(what the operator knows — the design intent, the real constraints) and have it answer each
+round from that brief. Two rules keep it honest:
+
+- **Quarantine the answer key.** If the eval grades against ground truth (e.g. the issues that
+  *should* surface), the responder must NOT see it — only the operator's honest knowledge.
+  Otherwise it leaks answers into the arm and you measure the responder, not the skill.
+- **Same responder, both arms.** The responder (persona + brief + model) is held identical
+  across arms, so the only variable remains the skill under test.
+
+A responder agent is more work than a script, so don't reach for it reflexively — but if the
+skill's value depends on a genuine back-and-forth it couldn't otherwise be measured. The
+`fan-out-user-simulation` skill in this repo is a starting point for the responder.
