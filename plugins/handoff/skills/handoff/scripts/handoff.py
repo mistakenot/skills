@@ -91,18 +91,18 @@ def cmd_pull(args: argparse.Namespace) -> int:
         try:
             lines = _load_stack(file)
             if not lines:
-                print("handoff pull: stack is empty", file=sys.stderr)
+                print("handoff pop: stack is empty", file=sys.stderr)
                 return 1
 
             raw = lines.pop()
             try:
                 record = json.loads(raw)
             except json.JSONDecodeError as exc:
-                print(f"handoff pull: invalid JSONL record at top of stack: {exc}", file=sys.stderr)
+                print(f"handoff pop: invalid JSONL record at top of stack: {exc}", file=sys.stderr)
                 return 2
 
             if not isinstance(record, dict):
-                print("handoff pull: top JSONL record is not an object", file=sys.stderr)
+                print("handoff pop: top JSONL record is not an object", file=sys.stderr)
                 return 2
 
             file.seek(0)
@@ -137,9 +137,9 @@ def build_parser() -> argparse.ArgumentParser:
     push.add_argument("text", nargs=argparse.REMAINDER, help="note text; reads stdin when omitted")
     push.set_defaults(func=cmd_push)
 
-    pull = sub.add_parser("pull", aliases=["pop"], help="remove and print the latest note")
-    pull.add_argument("--json", action="store_true", help="print the complete JSON object")
-    pull.set_defaults(func=cmd_pull)
+    pop = sub.add_parser("pop", aliases=["pull"], help="remove and print the latest note")
+    pop.add_argument("--json", action="store_true", help="print the complete JSON object")
+    pop.set_defaults(func=cmd_pull)
 
     return parser
 

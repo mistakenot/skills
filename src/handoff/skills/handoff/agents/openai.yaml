@@ -1,4 +1,4 @@
 interface:
   display_name: "Handoff"
   short_description: "Push and pull short handoff notes through a local JSONL stack."
-  default_prompt: "Use /handoff to push a note or pull the latest handoff."
+  default_prompt: "Use /handoff push to write a handoff note and /handoff pop to read the latest one."

@@ -69,7 +69,7 @@
       "template_hash": "15a7b792962ff0c2e0e758d2d2d6e49913f223be490b3588480ead6ab11e5075",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "516229b4462586ed303985ab6e0a44f73316bbeeb5ccdbae1a443dcca667ec02",
+      "skill_version": "9b1f5dab94bbad1d771731976c6ccca9ff5029b2440b24e9b46909b1848abdc3",
       "render_version": "1"
     },
     "execute-task": {
@@ -260,7 +260,7 @@
         "delegate": "147a705fd63ac747b85d6ce9c23b1cd2e05083b0d075104810961a9d537391a2",
         "delegate-task": "31aa5c1f9e036342512d6d5657c509897cefe844b973bb610cc4a3e403830f20",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
-        "eval-engineer": "516229b4462586ed303985ab6e0a44f73316bbeeb5ccdbae1a443dcca667ec02",
+        "eval-engineer": "9b1f5dab94bbad1d771731976c6ccca9ff5029b2440b24e9b46909b1848abdc3",
         "execute-task": "26ebabea334f5ba2bccbb870d1b807c8504e3b329cf52e07b4bd76e997002ff2",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
         "generate-10-ideas": "86f06f47c77cc7fa813f6da24b8e219f1f82cd3cfb875b7ee89d2ca3d275af68",
@@ -299,7 +299,7 @@
         "delegate": "147a705fd63ac747b85d6ce9c23b1cd2e05083b0d075104810961a9d537391a2",
         "delegate-task": "31aa5c1f9e036342512d6d5657c509897cefe844b973bb610cc4a3e403830f20",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
-        "eval-engineer": "516229b4462586ed303985ab6e0a44f73316bbeeb5ccdbae1a443dcca667ec02",
+        "eval-engineer": "9b1f5dab94bbad1d771731976c6ccca9ff5029b2440b24e9b46909b1848abdc3",
         "execute-task": "26ebabea334f5ba2bccbb870d1b807c8504e3b329cf52e07b4bd76e997002ff2",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
         "generate-10-ideas": "86f06f47c77cc7fa813f6da24b8e219f1f82cd3cfb875b7ee89d2ca3d275af68",
