@@ -101,10 +101,10 @@
       "render_version": "1"
     },
     "handoff": {
-      "template_hash": "0019b5280cf999355ad02a3cf6a762de96c04e0bd24d9844f27a108ca1e7a821",
+      "template_hash": "07b25a35ac7ea16790f56c3b3fbccbf6312d1f56d2119f29b22ead438f23944d",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "b8d62ab19450d25c78bcb802efd8ef948b1a4222f9c982f644da6c5c2cd0f047",
+      "skill_version": "c738f330651061c89307aa2e559e7521718c34b6e94bf62aed5c80af4141a31d",
       "render_version": "1"
     },
     "learning-diary": {
@@ -265,7 +265,7 @@
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
         "generate-10-ideas": "86f06f47c77cc7fa813f6da24b8e219f1f82cd3cfb875b7ee89d2ca3d275af68",
         "grill-me": "a471c7e964a021b3480d4788c265fc6ec26f47043f2b1219ad8ff0f29812430e",
-        "handoff": "b8d62ab19450d25c78bcb802efd8ef948b1a4222f9c982f644da6c5c2cd0f047",
+        "handoff": "c738f330651061c89307aa2e559e7521718c34b6e94bf62aed5c80af4141a31d",
         "learning-diary": "562de1c03280fc192012f69eabf7010d156c06847b6859cbd7804031531fe6d7",
         "new-epic": "b8eec11b66fc041a293a1c391aa1248738d4e7c39fd01b157b109434a29400aa",
         "new-plan": "a969e2cede284cf9d7d83732693f8a8b272d3f891210dc1f24e5841693ad0cc6",
@@ -304,7 +304,7 @@
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
         "generate-10-ideas": "86f06f47c77cc7fa813f6da24b8e219f1f82cd3cfb875b7ee89d2ca3d275af68",
         "grill-me": "a471c7e964a021b3480d4788c265fc6ec26f47043f2b1219ad8ff0f29812430e",
-        "handoff": "b8d62ab19450d25c78bcb802efd8ef948b1a4222f9c982f644da6c5c2cd0f047",
+        "handoff": "c738f330651061c89307aa2e559e7521718c34b6e94bf62aed5c80af4141a31d",
         "learning-diary": "562de1c03280fc192012f69eabf7010d156c06847b6859cbd7804031531fe6d7",
         "new-epic": "b8eec11b66fc041a293a1c391aa1248738d4e7c39fd01b157b109434a29400aa",
         "new-plan": "a969e2cede284cf9d7d83732693f8a8b272d3f891210dc1f24e5841693ad0cc6",

@@ -1,5 +1,17 @@
 **auto skill** — Author and lint reusable agent skills. Run `auto skill quickstart` to learn more.
 
+When authoring or editing skills, use progressive disclosure: the description is
+for routing, SKILL.md is for the lean core workflow, and references/scripts/assets
+hold details loaded or executed only when needed. Keep variant-specific detail out
+of SKILL.md; link optional references from SKILL.md with clear read conditions.
+For complex composite skills, make SKILL.md a router plus high-level guide that
+lists subcommands/modes and tells agents exactly which reference file to read for
+each branch.
+Claude Code-only frontmatter fields are documented in CLAUDE.md; use them only
+when the skill intentionally targets Claude Code behavior.
+Codex-specific skill metadata belongs in `agents/openai.yaml` rather than
+`SKILL.md` frontmatter; see CLAUDE.md for the supported fields.
+
 When working on `main`, don't worry too much about keeping the history perfectly clean; prioritise velocity on `main`.
 
 <!-- autodoc: start -->

@@ -10,6 +10,45 @@ This is my public repository of useful, reusable skills. These are designed to b
 
 - Must be multi-agent compatible. (Claude Code, Codex, Opencode, etc)
 - Assume that all agents support: Agent Skills, Sub-Agents.
+- Use progressive disclosure: descriptions route, SKILL.md bodies give the lean
+  core workflow, and references/scripts/assets hold details that should be
+  loaded or executed only when the task needs them.
+
+## Progressive disclosure
+
+Skill content should load in layers:
+
+1. **Metadata** (`name` + `description`): always visible; optimized for routing.
+2. **SKILL.md body**: loaded after routing; contains the essential workflow,
+   invariants, and navigation to optional resources.
+3. **Bundled resources** (`references/`, `scripts/`, `assets/`): loaded,
+   inspected, copied, or executed only when relevant.
+
+Keep SKILL.md lean. If a skill supports multiple domains, frameworks, providers,
+or modes, put only the selection guidance in the body and move variant-specific
+details, examples, schemas, and long procedures into named references. Link each
+optional reference from SKILL.md and say exactly when to read it.
+
+### Composite skills
+
+For more complex skills, consider a composite skill structure. In a composite
+skill, the root `SKILL.md` acts as a router plus high-level documentation: it
+summarizes the workflow, lists available subcommands or modes, and tells the
+agent which reference file to read for each branch.
+
+Use this pattern when one skill covers several substantial workflows that share a
+trigger surface but would bloat the root instructions if fully documented inline.
+The root `SKILL.md` should include:
+
+- The overall workflow and invariants that apply to every branch.
+- A clear subcommand or mode list, with when to use each one.
+- A reference map, with exact read conditions for each file.
+- Shared setup, validation, and handoff rules that every branch must follow.
+
+Put the bulk of branch-specific procedure, examples, edge cases, and templates in
+`references/`. Avoid making the agent guess: every reference file should be
+discoverable from the root `SKILL.md`, and the root should say when the file is
+required versus optional.
 
 ## Writing skill descriptions
 
@@ -21,7 +60,7 @@ Every description should contain three elements in this order:
 
 1. **What**: Concrete output/action (not how it works internally)
 2. **When**: Specific trigger phrases users will actually say
-3. **Don't**: Explicit boundary preventing mis-triggers, naming the alternative skill
+3. **Don't**: Explicit boundary preventing mis-triggers, naming the alternative skill (optional)
 
 Example:
 ```
@@ -41,6 +80,127 @@ Not applicable when requirements.md doesn't exist yet.
 - **Keep descriptions under ~200 characters** at our current scale (~30 skills). As the catalog grows past 60, target ~130 characters.
 - **Explain WHY in the body, not the description.** The description is for matching, not comprehension. Put reasoning and context in SKILL.md body.
 - **Include 3-5 realistic trigger phrases** users will actually type — these are the highest-signal tokens in the description.
+
+## Claude Code frontmatter reference
+
+Claude Code supports additional `SKILL.md` frontmatter fields beyond the
+portable `name` + `description` baseline. Use these only when intentionally
+targeting Claude Code behavior; other agents may ignore them. Source:
+<https://code.claude.com/docs/en/skills#frontmatter-reference>, checked
+2026-06-30.
+
+```yaml
+---
+# Display name shown in Claude Code skill listings; command names usually come
+# from the directory/plugin path, not this field.
+name: my-skill
+
+# Primary routing text: what the skill does and when Claude should apply it.
+# Recommended by Claude Code; required by this repo's source compiler.
+description: What this skill does and when to use it.
+
+# Extra routing context appended to description; counts toward Claude Code's
+# skill-listing text cap.
+when_to_use: Use when the user asks for...
+
+# Autocomplete hint shown for manual slash invocation arguments.
+argument-hint: "[issue-number] [branch]"
+
+# Named positional args for $name substitution in the skill body; can also be a
+# space-separated string.
+arguments: [issue, branch]
+
+# true = user-only/manual invocation; prevents model auto-loading, subagent
+# preloading, and scheduled-task skill execution.
+disable-model-invocation: false
+
+# false = hide from the slash menu; useful for model-only background knowledge.
+user-invocable: true
+
+# Tools Claude may use without asking while this skill is active; accepts a
+# space/comma-separated string or YAML list.
+allowed-tools: Read Grep
+
+# Tools removed from Claude's available pool while this skill is active; clears
+# when the next user message arrives.
+disallowed-tools: AskUserQuestion
+
+# Model override for the current turn only; accepts /model values or inherit.
+model: inherit
+
+# Reasoning effort override for the current turn: low, medium, high, xhigh, max.
+effort: high
+
+# fork = run the skill in a forked subagent context.
+context: fork
+
+# Subagent type to use when context: fork is set.
+agent: Explore
+
+# Skill-scoped lifecycle hooks using the Claude Code hooks schema.
+hooks: {}
+
+# Glob patterns limiting auto-activation to matching files; accepts a comma
+# separated string or YAML list.
+paths: ["src/**"]
+
+# Shell for dynamic context injection commands in this skill: bash or powershell.
+shell: bash
+---
+```
+
+## Codex metadata reference
+
+Codex's documented `SKILL.md` frontmatter is the portable baseline: `name` and
+`description`. Codex-specific skill metadata lives in `agents/openai.yaml`, not
+in `SKILL.md` frontmatter. Source:
+<https://developers.openai.com/codex/skills>, checked 2026-06-30.
+
+```yaml
+# agents/openai.yaml
+
+interface:
+  # Human-facing skill name shown in Codex app skill lists and chips.
+  display_name: "Optional user-facing name"
+
+  # Short UI blurb for scanning skill lists.
+  short_description: "Optional user-facing description"
+
+  # Small icon path relative to the skill directory.
+  icon_small: "./assets/small-logo.svg"
+
+  # Large icon/logo path relative to the skill directory.
+  icon_large: "./assets/large-logo.png"
+
+  # Hex color used for UI accents.
+  brand_color: "#3B82F6"
+
+  # Prompt snippet inserted when invoking the skill from the UI; should mention
+  # the skill explicitly, usually as $skill-name.
+  default_prompt: "Use $my-skill to..."
+
+policy:
+  # false = Codex will not implicitly invoke the skill from the user prompt;
+  # explicit $skill invocation still works. Defaults to true.
+  allow_implicit_invocation: true
+
+dependencies:
+  tools:
+    # Dependency category. Codex currently documents MCP dependencies here.
+    - type: "mcp"
+
+      # MCP server or dependency identifier.
+      value: "openaiDeveloperDocs"
+
+      # Human-readable explanation of why the skill needs this dependency.
+      description: "OpenAI Docs MCP server"
+
+      # MCP transport type.
+      transport: "streamable_http"
+
+      # MCP server URL.
+      url: "https://developers.openai.com/mcp"
+```
 
 ## Editing skills
 

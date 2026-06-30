@@ -1,5 +1,6 @@
 ---
 hash: "0320732a"
+id: "10e0ca2b"
 read_when: "choosing or revisiting the model-based-testing / formal-methods tooling the assurance-strategist recommends, evaluating alternatives to Quint, or onboarding to this space"
 summary: "Survey of the model-based-testing and formal-spec tooling landscape (spec languages + model checkers, systematic-concurrency tools, dedicated MBT engines, in-language stateful PBT), why this repo currently leans Quint, and which tools to reach for as future directions."
 title: "MBT & Formal-Methods Tooling — Landscape and Future Directions"

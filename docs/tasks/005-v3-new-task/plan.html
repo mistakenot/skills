@@ -73,7 +73,7 @@ carries a recommended lean — leave a question blank to accept the lean (per th
 unanswered = proceed on the recommendation).
         </script></md>
 
-        <pd-question id="Q-1" status="open" priority="p1" for="charlie"
+        <pd-question id="Q-1" status="answered" priority="p1" for="charlie"
                      title="One orchestrator skill, or a v3-* family of commands?">
           The overlap model collapses the explicit `/new-solution` and `/new-plan` commands into
           auto-advancing stages. Should v3 be a **single orchestrator skill** (`v3-new-task`) that
@@ -85,9 +85,11 @@ unanswered = proceed on the recommendation).
           interactive loop, the steering buffer, and background dispatch; the solution/plan work
           becomes subagent prompts. A family re-introduces the per-stage command seams the model
           is trying to remove.
+          <pd-answer by="review">Keep it simple — single skill (`v3-new-task`), the recommended lean.</pd-answer>
+          <pd-comment by="author">Confirmed: building one orchestrator skill that drives all stages and spawns background subagents; v2 solution/plan logic becomes subagent instructions, not user-invoked commands. No v3-* family. Resolved.</pd-comment>
         </pd-question>
 
-        <pd-question id="Q-2" status="open" priority="p1" for="charlie"
+        <pd-question id="Q-2" status="answered" priority="p1" for="charlie"
                      title="How aggressively do we overlap — start background work on leans, or wait for first answers?">
           Maximum overlap means: pose the questions and **immediately** start the background
           solution/plan work on the *recommended* answers, reconciling as real answers arrive.
@@ -97,9 +99,11 @@ unanswered = proceed on the recommendation).
           <strong>Recommended:</strong> start immediately on the recommended answers (max overlap)
           and reconcile. This is the whole point of the model — fold the entire solution+plan time
           under the user's think-time. Wasted work on a changed answer costs tokens, not wall-clock.
+          <pd-answer by="review">Aggressive — most plans are accepted with minimal changes, so assume that. Start background work immediately on the recommended answers.</pd-answer>
+          <pd-comment by="author">Confirmed: max overlap. Pose questions and immediately dispatch background solution/plan on the recommended answers, reconciling as real answers arrive. The cost of a changed answer is tokens, not wall-clock — acceptable. Resolved.</pd-comment>
         </pd-question>
 
-        <pd-question id="Q-3" status="open" priority="p1" for="charlie"
+        <pd-question id="Q-3" status="answered" priority="p1" for="charlie"
                      title="Harness target — Claude-Code-first, or portable from day one?">
           Background-agent orchestration with an interactive main loop that buffers messages is
           **harness-specific**. The repo's design principle says skills must be multi-agent
@@ -111,7 +115,213 @@ unanswered = proceed on the recommendation).
           foreground, no background dispatch) so the skill still degrades gracefully on agents
           without background execution. Portability of the *foreground* overlap behavior; background
           dispatch as a Claude-Code enhancement.
+          <pd-answer by="review">Yes — target Claude Code first.</pd-answer>
+          <pd-comment by="author">Confirmed: Claude-Code-first for the full background-orchestration version, with the synchronous foreground fallback specified so the skill degrades gracefully elsewhere. Resolved.</pd-comment>
         </pd-question>
+      </pd-section>
+
+    </pd-tab>
+
+    <pd-tab name="Verification">
+
+      <pd-section id="test-strategy" title="Test Strategy">
+        <md><script type="text/plain">
+The artifact is a **skill**, not application code, so "tests" run at three layers — and the
+load-bearing one is the differential eval, not unit tests.
+
+**Layer 1 — Structural (cheap, deterministic, CI-able).** The skill compiles and installs
+cleanly:
+- `make compile` renders `src/planning-workflow/skills/v3-new-task/SKILL.md` to
+  `skills/v3-new-task/` with no template errors, all `{{ ref:X }}` / `{{ skill:X }}` resolved,
+  and rendered output **< 15,000 chars**.
+- `make lint` (`auto skill lint`) passes — valid frontmatter, description follows the
+  What→When→Don't rules in `CLAUDE.md`.
+- `make install` (or `npx skills install`) lands it as an invocable skill; v2
+  `new-task`/`new-solution`/`new-plan` still compile and install unchanged (coexistence).
+
+**Layer 2 — Behavioural (manual, one live run).** Invoke `v3-new-task` on a real feature
+request in a scratch repo and confirm it *enacts the overlap model*, not just the v2 pipeline
+re-labelled: questions posed with recommended leans; unanswered questions proceed on the lean
+without blocking; solution+plan run as background work while the main agent stays responsive
+to buffered user input; exactly one human gate (the finished Plan); a late correction reruns
+the affected stage (coarse reconciliation). Confirm the **synchronous fallback** path produces
+the same artifact with background dispatch disabled.
+
+**Layer 3 — Re-run real historical cycles and compare (the real proof).** The planning-eval
+fixtures (008/010) are mined from *real, already-shipped planning cycles*, so this layer is
+literally "re-run an old cycle and check it reaches the same conclusions faster/cheaper." Use
+the existing `src/planning-eval/` NTM-replay harness with **two reference points**:
+- **(a) v2 arm, replayed fresh** on the same fixture — the controlled noise reference that
+  holds the harness constant and isolates the workflow as the only changed variable.
+- **(b) the original shipped `plan.html`** from that historical cycle — an absolute anchor for
+  "did v3 reach materially the same conclusions a human actually accepted?"
+
+Run **≥3 trials per arm**, compare **medians/distributions** — never single runs. Two
+judgments:
+1. **Conclusion-equivalence** — a *blind, holistic LLM judge* rates whether v3's plan reaches
+   materially the same problem framing, key decisions, phase shape, and AC coverage as the
+   reference. NOT a rigid diff: two valid plans legitimately differ, and the shipped plan is
+   one noisy sample, not a gold answer key (consistent with `ADR-0001`, which dropped
+   answer-key matching for blind holistic judging on the sibling assurance eval).
+2. **Efficiency** — **tokens** is the primary axis (the validated quality-per-token win
+   condition); **wall-clock** is secondary and noisier (noise floor ~1.8× wall / 1.55× tokens,
+   driven by variable fan-out). A real win must clear the noise floor or show as a distribution
+   shift.
+
+Win condition = **reaches equivalent conclusions at lower median token cost** (ideally less
+wall-clock too). Discipline per `src/eval-engineer/`: generator ≠ verifier, arms differ by
+exactly one variable (the workflow), calibrate the noise floor before reading.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="coverage-map" title="Coverage Map">
+        <pd-mermaid><script type="text/plain">
+flowchart TD
+  subgraph L1["Layer 1 — Structural (deterministic)"]
+    A["make compile<br/>(&lt;15k chars, refs resolve)"]
+    B["make lint<br/>(auto skill lint)"]
+    C["make install<br/>(v2 still installs)"]
+  end
+  subgraph L2["Layer 2 — Behavioural (1 live run)"]
+    D["overlap model enacted:<br/>steering questions, no-block leans,<br/>background stages, single gate, reconcile"]
+    E["synchronous fallback<br/>produces same artifact"]
+  end
+  subgraph L3["Layer 3 — Re-run real historical cycles (proof)"]
+    F["planning-eval replay<br/>v3 arm vs (a) v2 arm + (b) shipped plan"]
+    G["&ge;3 trials/arm,<br/>compare medians"]
+    I["blind judge:<br/>same conclusions?"]
+    H["WIN = equivalent conclusions<br/>at lower median token cost"]
+  end
+  A --> B --> C --> D --> E --> F --> G --> I --> H
+        </script></pd-mermaid>
+      </pd-section>
+
+      <pd-section id="acceptance-criteria" title="Acceptance Criteria">
+        <md><script type="text/plain">
+Each criterion is concrete and checkable. Layer-1 cards are mechanical; Layer-2 cards are
+observed in one live run; AC-11 is the differential eval.
+        </script></md>
+
+        <pd-ac id="AC-1" title="Skill compiles and stays within budget" phases="" tests="">
+          <md><script type="text/plain">
+- **Given** the v3 skill source under `src/planning-workflow/skills/v3-new-task/`
+- **When** `make compile` runs
+- **Then** it renders `skills/v3-new-task/SKILL.md` with no errors, all `{{ ref:X }}`/`{{ skill:X }}` resolved, and rendered output < 15,000 chars.
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-2" title="Skill lints and installs; v2 untouched" phases="" tests="">
+          <md><script type="text/plain">
+- **Given** the compiled skill
+- **When** `make lint` and `make install` run
+- **Then** lint passes (valid frontmatter, What→When→Don't description) and v3 installs as an invocable skill while `new-task`/`new-solution`/`new-plan` still compile and install unchanged.
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-3" title="Stage-1 parallelism" phases="" tests="">
+          <md><script type="text/plain">
+- **Given** a fresh feature request
+- **When** `v3-new-task` starts
+- **Then** it writes the Requirements tab and poses open questions **concurrently** with a lightweight context-gather that produces `context.md` — not as separate sequential stages.
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-4" title="Questions steer; unanswered never blocks" phases="" tests="">
+          <md><script type="text/plain">
+- **Given** open `pd-question`s each carrying a `recommendedAnswer`
+- **When** the user leaves one or more unanswered
+- **Then** the workflow proceeds on the recommended lean without stalling, and answered questions override the lean.
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-5" title="Auto-advance between stages" phases="" tests="">
+          <md><script type="text/plain">
+- **Given** a stage's exit condition is met
+- **When** the workflow continues
+- **Then** the solution and plan stages trigger automatically with **no explicit per-stage command** (`/new-solution`, `/new-plan`) required from the user.
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-6" title="Background heavy stages, interactive main agent" phases="" tests="">
+          <md><script type="text/plain">
+- **Given** the solution and plan stages are running
+- **When** they execute (Claude-Code background path)
+- **Then** they run as background work while the main agent stays responsive and buffers the user's ongoing answers, ideas, and corrections.
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-7" title="Single human gate" phases="" tests="">
+          <md><script type="text/plain">
+- **Given** the full run from request to finished Plan
+- **When** the user is asked to act
+- **Then** there is exactly **one** hard-stop — review of the completed Plan tab — and no intermediate per-stage gates.
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-8" title="Deferred coarse reconciliation" phases="" tests="">
+          <md><script type="text/plain">
+- **Given** late user input that invalidates an already-running or completed stage
+- **When** the workflow reconciles
+- **Then** it reruns the **whole affected stage** (stage-level, not section-level) and re-presents, rather than blocking mid-flight or ignoring the change.
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-9" title="Synchronous fallback degrades gracefully" phases="" tests="">
+          <md><script type="text/plain">
+- **Given** an agent/harness without background execution
+- **When** `v3-new-task` runs
+- **Then** it auto-advances through the stages in the foreground (no background dispatch) and still produces a complete plan.html — same artifact, no hard error.
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-10" title="Produces a complete, lint-clean plan" phases="" tests="">
+          <md><script type="text/plain">
+- **Given** a completed `v3-new-task` run
+- **When** the resulting `plan.html` is linted
+- **Then** it has all four tabs (Requirements, Verification, Solution, Plan), is lint-clean (no open questions, no untracked/unplanned files, no dependency cycles), and is structurally equivalent to a v2-produced plan.
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-11" title="Beats the v2 arm on quality-per-token" phases="" tests="">
+          <md><script type="text/plain">
+- **Given** the `src/planning-eval/` harness with a v3 arm and a freshly-replayed v2 arm (the controlled noise reference) on fixtures 008/010
+- **When** ≥3 trials per arm are run and medians compared
+- **Then** v3 shows **equal-or-better plan completeness at lower median token cost** (quality-per-token win), with the effect clearing the ~1.8× noise floor or evident as a distribution shift — not a single-run claim.
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-12" title="Reaches the historical cycle's conclusions, more efficiently" phases="" tests="">
+          <md><script type="text/plain">
+- **Given** a fixture that replays a real, already-shipped planning cycle and that cycle's original `plan.html`
+- **When** v3 runs ≥3 trials and a *blind, holistic LLM judge* compares each result against the shipped plan
+- **Then** the judge rates v3 as reaching **materially the same conclusions** (problem framing, key decisions, phase shape, AC coverage) — not a rigid diff — at **lower median token cost** and ideally less wall-clock, with the shipped plan treated as one reference sample, not a gold answer key.
+          </script></md>
+        </pd-ac>
+      </pd-section>
+
+      <pd-section id="verification-gaps" title="Known Gaps & Risks">
+        <md><script type="text/plain">
+- **Behavioural ACs (3–9) are observed, not automated.** They're verified by inspecting one
+  live run's transcript + artifacts, which is subjective. Mitigation: the differential eval
+  (AC-11) indirectly stresses them at scale; AC-8 (reconciliation) is the hardest to trigger
+  deterministically and may need a scripted late-input fixture.
+- **AC-11/AC-12 may be inconclusive.** If v3's win is smaller than the ~1.8× noise floor, ≥3
+  trials may not resolve it; more trials or a cleaner discriminating proxy
+  (`velocity.session_count`) may be needed. A null result is a valid finding, not a failure of
+  the skill build.
+- **The shipped plan (AC-12) is a single noisy sample, not ground truth.** Identical runs of
+  the same workflow vary 3→7 subagents / 7→24 AC cards, so the historical plan is one draw from
+  a wide distribution. Mitigation: a *holistic blind judge* (per `ADR-0001`), conclusion-
+  equivalence rather than exact match, and the v2 arm (AC-11) retained as the controlled
+  comparison so we're never reasoning from the single historical artifact alone.
+- **Background orchestration is harness-specific (Q-3).** The full background path is only
+  exercised on Claude Code; the synchronous fallback (AC-9) is what other agents get, and the
+  two paths can diverge in output. We test both but only optimise the Claude-Code path.
+- **Out of scope, so untested here:** fine-grained section-level rerun, persistent repo-level
+  index, calibrated blast-radius gates, on-the-loop telemetry (all deferred per Requirements).
+- **Eval cost.** A full ≥3-trial A/B on two fixtures is many millions of tokens; budget is a
+  real constraint and may limit trials-per-arm in practice.
+        </script></md>
       </pd-section>
 
     </pd-tab>

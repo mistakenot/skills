@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>006: assurance-strategy-eval</title>
+  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.9.0/pd-components/dist/pd.min.js" defer></script>
+</head>
+<body>
+  <!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
+  <pd-doc title="006: assurance-strategy-eval" status="draft" pr="pending" generated="2026-06-28" next-prompt="/new-plan 006">
+
+    <script type="application/json" id="pd-meta">
+    {
+      "id": "006",
+      "name": "assurance-strategy-eval",
+      "status": "planning",
+      "created": "2026-06-28"
+    }
+    </script>
+
+    <pd-tab name="Requirements">
+
+      <pd-section id="problem" title="Problem">
+        <md><script type="text/plain">
+The `assurance-strategist` skill's deliverable is a **testing/assurance strategy** — a design
+document an autonomous agent must read and follow. We have no way to measure whether those
+strategies are any *good*.
+
+The existing eval ([assurance-eval-system](../../assurance-eval-system.md)) grades the *built
+test artifacts* an agent produces downstream, which (a) conflates strategy quality with
+implementation quality, (b) carries heavy run-to-run variance, and (c) rewards *more testing*
+with no penalty for over-engineering — so it is blind to **calibration**, the skill's core
+thesis (pick the lightest rung that works).
+
+We need a second, complementary eval that grades the **strategy document itself**, scored
+against a **human-curated dataset**. Full design: [assurance-strategy-eval-design](../../assurance-strategy-eval-design.md).
+        </script></md>
+      </pd-section>
+
+      <pd-section id="goals" title="Goals">
+        <md><script type="text/plain">
+Build a **strategy-only, blind-differential diagnostic eval** for `assurance-strategist`. The
+instrument was reshaped by a grilling — see [ADR-0001](../../adr/0001-strategy-eval-blind-differential-not-rubric.md)
+(it supersedes the rubric-scoring approach in the design doc).
+
+- **Blind differential, not rubric scoring.** Per scenario, generate a testing strategy WITH and
+  WITHOUT the skill (markdown, skill installed alone), anonymise both arms, and have a **blind LLM
+  judge playing a senior test architect** pick the better strategy and write — in prose — where
+  the weaker one falls down.
+- **Independence by construction.** The independent signal is the **no-skill baseline + the
+  blinding**, not a human-authored rubric. This is the point: grading against a rubric we wrote,
+  scored by an LLM we prompted, only mirrors our taste — the self-delusion the eval exists to
+  guard against.
+- **No answer keys, no decomposed dimensions.** The dataset is just the scenarios (briefs). The
+  output is a **holistic verdict + a prose weakness diagnosis**, not a 6–7 dimension scorecard.
+- **Diagnostic, run a few times.** A development aid driving a *find-a-weakness → fix → re-run*
+  loop, not a permanent CI gate. Manual effort per run is acceptable.
+- **Grades the strategy, not built code.** The arm asks the skill to produce a strategy *as a
+  single markdown document* and stop — no implementation. Single-variable isolation: the arm
+  installs `assurance-strategist` and nothing else (no planning-doc / pd-components).
+- **Hybrid scenario sourcing.** Mine real build briefs from session history via `auto search` for
+  realism/variety, **and** hand-author deliberate over-/under-engineering calibration traps
+  (scenarios where a blind judge can reward the arm that resists the temptation).
+- **Validate the instrument before trusting it.** Noise floor (≥3 blind A/B runs — does the
+  verdict hold?) **and** a **blinding-leakage check** (can the judge guess which arm is the skill
+  arm? if it reliably can, it may be rewarding house style over substance — ADR-0001's accepted
+  risk).
+- **Reuse the existing harness** (`run.sh` clean-room, `grade_report.py`) additively.
+
+**Scope:** this task delivers the **design doc's Phase 0 + Phase 1** (scaffold the
+blind-differential harness + judge, author **2 trap scenarios** — one over-, one under-engineering
+— and run the validation: noise floor + leakage check). Implementation is sequenced across the
+**Plan tab's 5 phases** (the 2nd scenario lands in plan-Phase 4; validation in plan-Phase 5) —
+"Phase 0/1" here are the design-doc milestones, not the plan's phase numbers. Scaling the dataset
+and the skill-version-A/B mode are deferred (see Out of Scope).
+        </script></md>
+      </pd-section>
+<pd-thread anchor="goals" status="resolved" priority="p2" title="Goals summary of delivered scope mismatches Plan phases">
+  <pd-comment by="review">The "Goals" text states "This task delivers Phase 0 + Phase 1: ... author **2 trap scenarios** ... and run the validation". But detailed Plan: Phase 1 authors only the first scenario (marketing-landing-page), Phase 4 authors the second (admin-bulk-delete-cli) + runs both, Phase 5 runs validate-instrument for noise/leakage. The high-level claim in Requirements is not consistent with the phase breakdown and success-criteria mapping. Update one or the other for accuracy.</pd-comment>
+  <pd-comment by="author">Fixed the Goals "Scope" line: it now says these are the *design doc's* Phase 0/1 milestones (not the Plan tab's phase numbers), and explicitly maps the 2nd scenario to plan-Phase 4 and validation to plan-Phase 5. The terminology collision is removed.</pd-comment>
+</pd-thread>
+
+      <pd-section id="out-of-scope" title="Out of Scope">
+        <md><script type="text/plain">
+- **Rubric scoring against human-authored answer keys / decomposed dimension grids** — superseded
+  by [ADR-0001](../../adr/0001-strategy-eval-blind-differential-not-rubric.md). The instrument is
+  a blind differential, so there are no per-scenario keys and no dimension scorecard.
+- **Rich-HTML / `plan.html` output** — settled non-goal. Rendering via planning-doc/pd-components
+  would make the arm test a *composition*, not the skill alone. The strategy is graded as the
+  skill's own markdown.
+- **Scaling to ~6–8 scenarios** spanning the full axis matrix (design Phase 2) — follow-up task.
+- **Version-A/B mode** (e.g. scoring the MBT-card addition vs the prior skill, design Phase 3) —
+  follow-up task. The harness should not *preclude* it, but wiring it is out of scope here.
+- **Changes to `assurance-strategist` itself** (e.g. making it natively emit a strategy doc in a
+  fixed shape) — if the eval reveals the need, that's a separate task.
+- **Replacing the existing end-to-end differential eval** — this is complementary, not a
+  replacement.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="open-questions" title="Open Questions">
+        <md><script type="text/plain">
+Assumptions we're comfortable proceeding on (revisit if they bite):
+
+- [ ] **`auto search` filtering** — the raw `new-task` query returns mostly skill internals, not
+  real briefs. Assume we extract the user *invocation* payloads (the `ARGUMENTS:` of `/new-task`
+  / feature-description prompts), dedup, drop repo-specific noise, then hand-curate the harvested
+  set down to a handful of representative briefs. We can iterate on the query without redesign.
+- [ ] **Scenario count for validation** — 2 trap scenarios (one over-, one under-engineering) is
+  the Phase-0 minimum to prove the loop and run the agreement audit; the archetype-fit scenarios
+  (e.g. the rate-limiter) come with Phase 2.
+        </script></md>
+
+        <pd-question id="Q-1" status="answered" priority="p2" for="charlie"
+                     title="Keep all 7 grader dimensions, or trim?"
+                     recommendedAnswer="Keep all 7. calibration + documentation_quality are load-bearing (they're the gap vs the current eval); the other five guard distinct failure modes a well-sized strategy can still hit.">
+          The design proposes seven dimensions: `axis_diagnosis`, `calibration`, `technique_fit`,
+          `justification`, `actionability`, `soundness`, `documentation_quality`. More dimensions =
+          more judge surface = more noise. Keep all seven, or start with a smaller core?
+          <pd-answer by="charlie">Dissolved (ADR-0001). There are no decomposed dimensions at all —
+          a holistic expert verdict + prose weakness-flagging replaces the dimension scorecard.</pd-answer>
+        </pd-question>
+
+        <pd-question id="Q-2" status="answered" priority="p2" for="charlie"
+                     title="Answer-key granularity: per-technique rung bands, or one overall calibration verdict?"
+                     recommendedAnswer="Start coarse — one overall calibration verdict per scenario plus must-include / over-engineering-trap lists. Refine to per-technique rung bands only if the judge↔human audit shows the coarse key can't discriminate.">
+          Per-technique rung *bands* (`min-acceptable .. max-appropriate` for each technique) are
+          richer but much more authoring per scenario, and over-specify what a "good" strategy must
+          look like. A single overall calibration verdict + trap lists is cheaper and less brittle.
+          Which granularity for the Phase-0 keys?
+          <pd-answer by="charlie">Moot (ADR-0001). There are no per-scenario answer keys — the
+          no-skill baseline + blind expert judge is the measuring stick, so there's no rubric
+          granularity to choose.</pd-answer>
+        </pd-question>
+
+        <pd-question id="Q-3" status="answered" priority="p3" for="charlie"
+                     title="Judge model: same as the skill arm, or a different one for independence?"
+                     recommendedAnswer="Same model family for cost, kept independent by being skill-less and reference-guided (it scores against the human answer key, not its own taste). Switch to a different model only if the agreement audit shows shared-model bias.">
+          Using a different model for the judge buys independence but adds cost/complexity. The
+          reference-guided design already anchors the judge to a human key, which mitigates
+          same-model bias. Accept same-model-but-reference-guided for Phase 0?
+          <pd-answer by="charlie">Independence is the whole design now (ADR-0001): blind A/B +
+          no-skill baseline. A blind LLM-expert is sufficient — the independence comes from the
+          blinding, not the judge's pedigree.</pd-answer>
+        </pd-question>
+      </pd-section>
+
+    </pd-tab>
+
+    <pd-tab name="Verification">
+
+      <pd-section id="test-strategy" title="Test Strategy">
+        <md><script type="text/plain">
+This task's deliverable is an **eval harness**, so "verification" means *validating the
+instrument before we trust its output* — the eval-engineer discipline applied to our own harness.
+Two things must be true and are easy to get wrong: the **arm is genuinely isolated** (the skill is
+the only variable) and the **judge is genuinely blind** (it can't see which strategy came from the
+skill). The rest is the standard validate-the-instrument ladder.
+
+Approach:
+
+- **Stub first.** A deterministic stub mode (canned strategy docs + canned judge JSON) exercises
+  the whole pipeline offline — no API cost — and is the regression harness for the plumbing.
+- **Prove the two correctness properties** (isolation, blindness) with targeted checks, because a
+  silent failure of either invalidates every number the eval produces.
+- **Then calibrate:** noise floor (≥3 same-arm runs) before any A/B is read, plus a
+  **blinding-leakage** measurement (can the judge guess the skill arm?) — ADR-0001's accepted risk.
+- **Generality:** both Phase-0 trap scenarios (one over-, one under-engineering) run end to end.
+- **Regression guard:** the existing end-to-end eval mode still behaves identically (the new mode
+  is additive).
+
+Tooling: `bash` + `claude -p` clean-room (the existing `run.sh` recipe), `uv run python` for
+report assembly, the existing stub seam. No new test framework.
+        </script></md>
+      </pd-section>
+<pd-thread anchor="test-strategy" status="resolved" priority="p3" title="shellcheck in verify is not part of current tooling">
+  <pd-comment by="review">Phase 1 exit verify requires "`shellcheck run.sh` clean". I grepped Makefile, scripts/pre-commit-checks.sh, and *.sh — no shellcheck, shfmt, or shell lint step exists (only auto-skill, compile, pytest for python, auto-doc). If shellcheck is not on PATH, the verify command as documented will not run cleanly. Either document "run shellcheck if available" or add a `make lint-shell` target / preflight note. Not blocking but will surprise implementer.</pd-comment>
+  <pd-comment by="author">Softened the Phase 1 exit verify to "`shellcheck run.sh` if available — not a repo-standard step", so it no longer implies a mandatory tool that isn't wired into the Makefile.</pd-comment>
+</pd-thread>
+
+      <pd-section id="coverage-map" title="Validation ladder">
+        <pd-mermaid caption="Validate the instrument before trusting it — each rung gates the next">
+flowchart TD
+  A[Stub-mode pipeline smoke<br/>offline, deterministic] --> B[Isolation correct?<br/>no-skill arm can't see repo skill]
+  B --> C[Judge blind?<br/>anonymised, no labels/scorecards]
+  C --> D[Noise floor<br/>3x same-arm: verdict + cost spread]
+  D --> E[Blinding-leakage<br/>judge's skill-arm guess accuracy]
+  E --> F[Generality<br/>both trap scenarios run]
+  F --> G[Trust: usable diagnosis<br/>winner + prose weaknesses]
+        </pd-mermaid>
+      </pd-section>
+
+      <pd-section id="acceptance-criteria" title="Acceptance Criteria">
+
+        <pd-ac id="AC-1" title="Stub mode runs the blind pipeline offline" phases="1" tests="src/assurance/tests/test_blind_report.py">
+          <md><script type="text/plain">
+- **Given** strategy-only mode with the agent runner stubbed (no API, no network)
+- **When** the harness runs a scenario end to end
+- **Then** it exits 0 and writes a `report.md` whose grading section is a **winner + prose
+  weaknesses** block (not a 0-3 dimension table), with zero API calls made
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-2" title="Single-variable isolation holds" phases="2" tests="">
+          <md><script type="text/plain">
+- **Given** a strategy-only run with arms in out-of-repo clean rooms
+- **When** the no-skill (baseline) and with-skill arms execute
+- **Then** `assurance-strategist` is **absent** from the baseline arm's available-skills list and
+  the baseline never invokes the skill; the arm `cwd` is an out-of-repo `mktemp` dir (the repo
+  path does not appear in the baseline transcript); the with-skill arm's transcript shows it
+  **invoked** `assurance-strategist`; and the only difference between the two clean rooms is the
+  skill directory (these are the mechanically-checkable assertions, not a claim about Claude's
+  internal discovery walk)
+          </script></md>
+        </pd-ac>
+<pd-thread anchor="AC-2" status="resolved" priority="p2" title="Transcript discovery claim exceeds current check_skill_used">
+  <pd-comment by="review">AC-2 claims: "the baseline arm's transcript shows it did **not** discover this repo's `assurance-strategist` skill or `CLAUDE.md`". I checked src/assurance/evals/run.sh:72 (check_skill_used) and sample streams e.g. run-20260617-094655/baseline/stream.jsonl: the function only greps for Skill *invocation* in withskill arm ("name":"Skill" + skill name). It does not assert absence of discovery. The init system message does list available skills (no assurance-strategist in baseline) and cwd is /tmp, and greps for repo path found 0, but this evidence is not wired into any automated check today. Phase 2 verify says "reuse the `check_skill_used` pattern" — that only covers the invocation half for with-skill, not the "no CLAUDE.md / no repo discovery" half for baseline. Either strengthen the check or qualify the AC.</pd-comment>
+  <pd-comment by="author">Did both. AC-2's "Then" now states only mechanically-checkable assertions (skill absent from baseline's available-skills list; baseline never invokes it; repo path absent from the transcript; cwd is the mktemp dir) and explicitly disclaims any claim about Claude's internal discovery walk. Phase 2's exit verify now lists three concrete greps — (a) the existing check_skill_used invocation check, plus the new (b) absence-from-available-skills and (c) repo-path-absent assertions.</pd-comment>
+</pd-thread>
+
+        <pd-ac id="AC-3" title="The judge receives only blinded input" phases="1,3" tests="src/assurance/tests/test_blind_report.py">
+          <md><script type="text/plain">
+- **Given** both arms have produced a strategy markdown doc
+- **When** the blind grader prompt is assembled
+- **Then** the **harness-added scaffolding** carries no arm-identifying material: `blind_grade.py`
+  labels the two docs only as "Strategy A" / "Strategy B" in randomised order, adds no scorecards,
+  and never injects `with-skill` / `baseline` / skill-name framing — with the A/B → arm mapping
+  stored out-of-band for un-blinding. Per D-4 (minimal anonymisation) the freeform strategy *body*
+  is NOT redacted, so an organic skill-name mention inside a doc is left intact and is caught by
+  the AC-6 leakage probe — not asserted away here
+          </script></md>
+        </pd-ac>
+<pd-thread anchor="AC-3" status="resolved" priority="p2" title="AC-3 'no literal assurance-strategist in judge input' conflicts with D-4 (no token redaction)">
+  <pd-comment by="review">AC-3 requires the assembled judge prompt to contain "**no** literal occurrence of `assurance-strategist`, `with-skill`, or `baseline`", and Phase 1 step 7 / Phase 3 assert this in `test_blind_report.py`. But D-4 ("Minimal anonymisation") explicitly chooses label-swap + order-randomise + "instruct the judge to ignore style" and **rejects token redaction**, and Known Gaps adds "a brittle redaction is itself a leakage risk". These conflict for the *doc content*: the with-skill arm's `strategy.md` is freeform agent output that may legitimately write the token (e.g. "following the assurance-strategist methodology…"). Label-swap alone cannot remove a token embedded in prose. I checked `skills/assurance-strategist/SKILL.md` — the skill does not instruct the agent to name itself in the deliverable (only the frontmatter `name:`), so organic leakage is unlikely but not precluded. The unit test will pass trivially on the canned stub docs (which omit the token) yet the property is unverified on live runs. Resolve the contradiction: either (a) scope AC-3's literal-token assertion to the **harness-added scaffolding** (labels/scorecards that `blind_grade.py` controls), not the freeform doc body; or (b) allow a single targeted skill-name redaction (cheap, substance-preserving — distinct from the format-normalisation D-4 rejects) and say so in D-4. As written, an implementer cannot satisfy both AC-3 and D-4 if a live strategy doc ever contains the token.</pd-comment>
+  <pd-comment by="author">Took option (a) — it's the one consistent with the user's D-4 decision (option (b) would re-introduce the token redaction D-4 explicitly rejected). AC-3's "Then" now scopes the no-arm-identifier assertion to the **harness-added scaffolding** that `blind_grade.py` controls (labels/order/scorecards/skill-name framing), and states that the freeform body is NOT redacted per D-4 — an organic skill-name mention is left intact and caught by the AC-6 leakage probe. Phase 1 step 7 and Phase 3's verify now assert the *scaffolding* is clean (not that the body is token-free), so the unit test is meaningful rather than trivially passing on token-free stubs.</pd-comment>
+</pd-thread>
+
+        <pd-ac id="AC-4" title="Output is a holistic diagnosis, not scores" phases="1" tests="src/assurance/tests/test_blind_report.py">
+          <md><script type="text/plain">
+- **Given** a completed blind grading
+- **When** `report.md` is assembled
+- **Then** it names the winning arm, includes the judge's **prose** weakness diagnosis of the
+  weaker strategy, and contains **no** decomposed 0-3 dimension grid and **no** per-scenario
+  answer key
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-5" title="Noise floor is measured before any A/B is trusted" phases="5" tests="">
+          <md><script type="text/plain">
+- **Given** one scenario
+- **When** the **full blind A/B run** (both arms + judge) is repeated at least 3 times
+- **Then** the harness records winner stability (does the same arm win each time?) and the cost
+  spread across the runs, and the report states the detection threshold — that a verdict that
+  flips run-to-run, or an A/B cost difference smaller than the observed spread, is noise not signal
+          </script></md>
+        </pd-ac>
+<pd-thread anchor="AC-5" status="resolved" priority="p2" title="Noise-floor unit ('one fixed arm') contradicts Goals ('blind A/B runs') — a single arm has no winner">
+  <pd-comment by="review">The noise floor is described three incompatible ways. Goals: "Noise floor (**≥3 blind A/B runs** — does the verdict hold?)". AC-5 here: "Given one scenario and **one fixed arm** / When that arm is run at least 3 times / Then the harness records **the winner**/verdict and cost spread". Plan Phase 5 step 1 + `validate-instrument.sh`: "run **a chosen arm**/scenario N times; collect **winner** + total_cost_usd per run". A blind A/B "winner" only exists when **both** arms run and the judge picks between them (see the pipeline in Approach: with-skill + no-skill → anonymise → judge). Running *one* arm N times produces N strategy docs from the same arm and **no winner** to record — so AC-5/Phase-5 as worded are not implementable. The three readings also have very different cost/meaning: (i) re-run the full two-arm pipeline + judge N times (measures end-to-end verdict + agent-generation variance — matches Goals' "blind A/B runs" and yields a real per-run winner + a real cost spread); (ii) re-run a single arm N times (no winner); (iii) generate both arms once then re-run only the judge N times (measures judge determinism; cost spread ≈ 0). Pick (i) and make AC-5, Phase 5 step 1, and `validate-instrument.sh` say "repeat the full blind A/B run N times; record winner stability + cost spread" — the current "one fixed arm" / "a chosen arm" wording will send the implementer down (ii).</pd-comment>
+  <pd-comment by="author">Picked (i), matching Goals' "≥3 blind A/B runs". Fixed all three spots: AC-5 now reads "repeat the **full blind A/B run** (both arms + judge) ≥3×; record winner stability + cost spread"; Phase 5 step 1 and the `validate-instrument.sh` file-change note both now say "repeat the full blind A/B run N times" instead of "a chosen/one arm". A per-run winner now exists, and the noise floor measures verdict stability + cost spread end-to-end.</pd-comment>
+</pd-thread>
+
+        <pd-ac id="AC-6" title="Blinding-leakage is measured" phases="3,5" tests="src/assurance/tests/test_blind_report.py">
+          <md><script type="text/plain">
+- **Given** the blind grader
+- **When** it returns a verdict
+- **Then** it also returns a guess of which strategy came from the skill, and the harness records
+  guess accuracy across runs — so a reliably-correct guess (house-style leakage, ADR-0001's
+  accepted risk) is surfaced and the corresponding win can be discounted
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-7" title="Generality across both trap scenarios" phases="4" tests="">
+          <md><script type="text/plain">
+- **Given** the two Phase-0 scenarios — one over-engineering trap, one under-engineering trap
+- **When** the harness runs each
+- **Then** both complete and produce a verdict + prose diagnosis, demonstrating the harness is not
+  tuned to a single scenario
+          </script></md>
+        </pd-ac>
+
+        <pd-ac id="AC-8" title="Existing eval mode is unchanged" phases="1,4" tests="">
+          <md><script type="text/plain">
+- **Given** the additive `EVAL_MODE` seam
+- **When** `make eval-assurance` runs in its default (current) mode
+- **Then** the existing end-to-end differential eval behaves exactly as before — same arms, same
+  mechanical checks, same dimension report (regression guard on the additive change)
+          </script></md>
+        </pd-ac>
+
+      </pd-section>
+
+      <pd-section id="verification-gaps" title="Known Gaps & Risks">
+        <md><script type="text/plain">
+- **Blinding leakage is measured, not eliminated.** AC-6 detects house-style tells; if leakage is
+  high, Phase 0 records it and the mitigation (formatting normalisation / substance-only judge
+  instruction) is follow-up work, not a blocker.
+- **Single LLM judge, no human-agreement audit in Phase 0.** Per ADR-0001 the independence comes
+  from blinding + baseline, not the judge's pedigree; a human spot-check is deferred.
+- **Two scenarios is not statistically robust** — by design. Phase 0 proves the loop; scaling to
+  ~6-8 scenarios is a deferred task.
+- **Strategy markdown is freeform.** Anonymisation must be robust to whatever structure the skill
+  emits; a brittle redaction is itself a leakage risk (covered by AC-3 + AC-6).
+- **Live-run nondeterminism and cost** are quantified by the noise floor (AC-5) but not removed.
+- **Credentials are copied into a temp config dir** (existing harness pattern); teardown must
+  remove the clean room even on crash.
+        </script></md>
+      </pd-section>
+
+    </pd-tab>
+
+    <pd-tab name="Solution">
+
+      <pd-section id="approach" title="Approach">
+        <md><script type="text/plain">
+Add a **`strategy-only` blind-differential mode** to the existing assurance eval harness
+(`src/assurance/evals/`) as an additive `EVAL_MODE` seam — the current end-to-end mode is
+untouched. Per scenario, the harness runs the two arms in the existing out-of-repo clean rooms,
+but the prompt asks for a **testing-strategy markdown document only** ("design the strategy, do
+not implement"); the arm captures that markdown and skips `checks.sh`. Both docs are anonymised
+to "Strategy A / Strategy B" in random order, and a single **blind holistic judge** picks the
+better one, writes prose weaknesses for the weaker, and emits a self-guess of which is the skill
+arm (the leakage probe). The report un-blinds the result and prints winner + prose diagnosis +
+leakage guess. A thin wrapper repeats a run to establish the noise floor.
+
+Scenarios are pure briefs under `cases/strategy/<name>/scenario.md` (no answer keys, no fixtures,
+no `checks.sh`). Phase 0 ships two hand-authored calibration traps. Independence is structural —
+the no-skill baseline + the blinding — exactly as ADR-0001 requires.
+        </script></md>
+        <pd-mermaid caption="strategy-only blind pipeline (per scenario)">
+flowchart LR
+  S[scenario.md brief] --> A[arm: with-skill<br/>strategy.md]
+  S --> B[arm: no-skill<br/>strategy.md]
+  A --> X[anonymise + randomise<br/>A/B, store mapping]
+  B --> X
+  X --> J[blind holistic judge<br/>winner + prose + skill-guess]
+  J --> U[un-blind via mapping]
+  U --> R[report.md<br/>winner, weaknesses, leakage]
+        </pd-mermaid>
+      </pd-section>
+<pd-thread anchor="approach" status="resolved" priority="p2" title="Approach omits required run.sh preflight/main-flow branches">
+  <pd-comment by="review">Approach says "additive `EVAL_MODE` seam". I inspected run.sh:29 (if ! -d CASE_DIR), :34 (if ! -f prompt.md), :213 (if checks.sh then run), :303-317 (stub post-arm workspace + checks.sh), :191 (prompt=$(cat .../prompt.md)). Strategy cases have only scenario.md (no prompt.md, no checks.sh per D-2 + file plan). For the seam to support `EVAL_MODE=strategy-only` + existing default path byte-identical, run.sh must: relax/conditionalise the prompt.md preflight, source prompt from scenario.md (or equivalent) in strategy, skip workspace/checks blocks when strategy (even in stub), write strategy.md (not rely on out.md + extract), and dispatch run_agent_arm_strategy / run_grader_blind. The phase steps list high-level "branch the orchestrator" and "add stub branches" but omit these preflight + post-arm details the implementer must derive. Risk of incomplete seam breaking AC-8 or AC-1.</pd-comment>
+  <pd-comment by="author">Phase 1 step 1 now spells out the strategy-mode preflight divergence with line refs: resolve `CASE_DIR` with `CASE=strategy/<name>`, source the prompt from `scenario.md` (no `prompt.md`), and skip the workspace + `checks.sh` blocks (`run.sh:213,303-317`) even in stub. Step 5 now says the strategy arm writes `strategy.md` directly (not `out.md`+extract). The default path staying byte-identical is called out as the AC-8 guard.</pd-comment>
+</pd-thread>
+
+      <pd-section id="file-changes" title="File Changes">
+        <pd-files>
+          <pd-file path="src/assurance/evals/run.sh" change="edit">Add `EVAL_MODE` seam (default `current`); `run_agent_arm_strategy` (strategy-only prompt, capture `strategy.md`, no `checks.sh`); `run_grader_blind` (delegates anonymise/un-blind to `blind_grade.py`, invokes the holistic judge); stub paths for the new mode</pd-file>
+          <pd-file path="src/assurance/evals/blind_grade.py" change="add">Testable core of the blind grader: anonymise A/B (seeded order + label-swap), store the A/B→arm mapping out-of-band, assemble the judge prompt from the two `strategy.md` docs, parse the judge JSON and un-blind it. Pure/stdlib so the AC-3 correctness (round-trip, no skill-name leak) is unit-testable</pd-file>
+          <pd-file path="src/assurance/evals/grade_report.py" change="edit">Branch on grader JSON shape: blind-mode report renders un-blinded winner + prose weaknesses + leakage guess (no dimension table). Reuse `extract_json_object` defensive parse</pd-file>
+          <pd-file path="src/assurance/evals/graders/holistic-judge.md" change="add">Blind A/B judge prompt → `{winner, verdict, weaknesses_a, weaknesses_b, guess_skill, guess_confidence}`; instructs the judge to score substance, not length/format/structure (minimal-anonymisation backstop)</pd-file>
+          <pd-file path="src/assurance/evals/cases/strategy/admin-bulk-delete-cli/scenario.md" change="add">Under-engineering trap: reads like a trivial internal CLI, but irreversibly bulk-deletes production data → actually C4</pd-file>
+          <pd-file path="src/assurance/evals/cases/strategy/admin-bulk-delete-cli/meta.yaml" change="add">`trap: under` + criticality/archetype tags (result slicing only — not an answer key)</pd-file>
+          <pd-file path="src/assurance/evals/cases/strategy/marketing-landing-page/scenario.md" change="add">Over-engineering trap: sounds important (customer-facing), but is low-criticality, high-volatility UI</pd-file>
+          <pd-file path="src/assurance/evals/cases/strategy/marketing-landing-page/meta.yaml" change="add">`trap: over` + tags</pd-file>
+          <pd-file path="src/assurance/tests/test_blind_report.py" change="add">Pytest for the pure-Python blind core: anonymisation round-trips (mapping un-blinds correctly), the judge input contains no arm labels or `assurance-strategist`/`baseline`/`withskill` (AC-3), and the report renders winner+prose with no dimension grid (AC-4). Net-new harness test coverage (runs under `make test`)</pd-file>
+          <pd-file path="src/assurance/evals/validate-instrument.sh" change="add">Thin wrapper: repeat the full blind A/B run (both arms + judge) on a scenario N times → noise floor (winner stability + cost spread); aggregate the judge's leakage guesses → guess accuracy. Drives AC-5 + AC-6</pd-file>
+          <pd-file path="Makefile" change="edit">Add `eval-assurance-strategy` target (wraps `EVAL_MODE=strategy-only`) and document the `EVAL_MODE` / repeat knobs</pd-file>
+          <pd-file path="docs/assurance-eval-system.md" change="edit">Document the strategy-only blind mode: how to run, the report shape, and the validation (noise floor + leakage)</pd-file>
+        </pd-files>
+      </pd-section>
+
+      <pd-section id="rejected-alternatives" title="Rejected Alternatives">
+        <md><script type="text/plain">
+- **Rubric scoring against human answer keys** (original design §§3–5) — rejected by ADR-0001: a
+  rubric we wrote, judged by an LLM we prompted, only mirrors our taste (the self-delusion we're
+  guarding against).
+- **Rich `plan.html` output** — rejected: pulls in planning-doc/pd-components, so the arm tests a
+  *composition* not the skill alone (breaks single-variable isolation).
+- **A brand-new harness** — rejected: the existing `run.sh` already nails clean-room isolation +
+  the stub seam; an additive mode reuses ~80% and keeps one entry point.
+- **Different judge model for independence** — rejected (ADR-0001): independence is structural
+  (blinding + baseline), not pedigree; revisit only if the leakage probe flags shared-model bias.
+- **Reusing `cases/<name>/prompt.md` with a strategy-only prefix** — rejected: existing cases are
+  "build an app" briefs with fixtures/checks; strategy scenarios are pure briefs, so a separate
+  `cases/strategy/` dir avoids mode-conditional fixture/checks handling.
+- **Format-normalising the docs before judging** — rejected for Phase 0: risks destroying the
+  substance under judgement and adds a varying transform; we measure leakage first (AC-6) and
+  escalate only if needed.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="decisions" title="Decisions">
+
+        <pd-decision id="D-1" title="Additive EVAL_MODE seam, not a new harness" status="accepted" by="claude"
+                     summary="Branch a new strategy-only mode off the existing run.sh rather than building a second harness.">
+          <md><script type="text/plain">
+**Alternatives:** new standalone harness; fork run.sh.
+**Why:** the existing clean-room isolation + stub seam are the hard, already-correct parts; an
+additive seam reuses them and keeps the current mode a regression guard (AC-8).
+**Consequence:** run.sh grows two mode branches; the default path must stay byte-identical in behaviour.
+          </script></md>
+        </pd-decision>
+
+        <pd-decision id="D-2" title="Strategy scenarios carry no answer keys" status="accepted" by="claude"
+                     summary="cases/strategy/<name>/ holds scenario.md (+ meta.yaml tags) only — no answer-key.md.">
+          <md><script type="text/plain">
+**Why:** ADR-0001 — the measuring stick is the no-skill baseline + blind judge, not a human key.
+meta.yaml's trap tag is for slicing results, never fed to the judge.
+**Consequence:** dataset authoring is far cheaper; the taste-laden part (keys) is gone.
+          </script></md>
+        </pd-decision>
+
+        <pd-decision id="D-3" title="The judge emits its own skill-arm guess as the leakage probe" status="accepted" by="claude"
+                     summary="Blinding leakage is measured by asking the blind judge to guess which strategy came from the skill.">
+          <md><script type="text/plain">
+**Why:** cheapest direct measurement of ADR-0001's accepted risk (AC-6); a reliably-correct guess
+means house style leaked and the win should be discounted.
+**Consequence:** the judge JSON carries `guess_skill` + `guess_confidence`; the wrapper aggregates accuracy.
+          </script></md>
+        </pd-decision>
+
+        <pd-decision id="D-4" title="Minimal anonymisation + measure (Phase 0)" status="accepted" by="charlie"
+                     summary="Label-swap + randomise order + instruct judge to ignore style; rely on the leakage probe to tell us if more is needed.">
+          <md><script type="text/plain">
+**Alternatives:** token redaction; format normalisation.
+**Why (user decision):** matches 'measure before trusting' — don't pre-build defenses against a
+threat we haven't measured. Preserves all substance the judge needs; lowest cost.
+**Consequence:** if AC-6 shows high guess accuracy, escalating to redaction/normalisation is a
+fast follow-up, not a Phase-0 blocker.
+          </script></md>
+        </pd-decision>
+
+        <pd-decision id="D-5" title="Noise-floor + leakage via a thin validate wrapper" status="accepted" by="claude"
+                     summary="A small validate-instrument.sh repeats a run N times and aggregates, rather than baking a REPEAT loop into run.sh.">
+          <md><script type="text/plain">
+**Why:** keeps run.sh single-run and focused; the validation read (spread + guess accuracy) is a
+separate concern run a few times, not every invocation.
+**Consequence:** one extra small script; run.sh stays simple.
+          </script></md>
+        </pd-decision>
+
+        <pd-decisions></pd-decisions>
+      </pd-section>
+
+    </pd-tab>
+
+    <pd-tab name="Plan">
+
+      <pd-section id="summary" title="Summary">
+        <md><script type="text/plain">
+Build the strategy-only blind-differential mode as an additive seam, walking-skeleton first: a
+stub-mode end-to-end pipeline (Phase 1) through every layer, then thicken with the live strategy
+arm (Phase 2), the live blind judge (Phase 3), the second scenario + docs (Phase 4), and the
+instrument-validation wrapper (Phase 5).
+        </script></md>
+      </pd-section>
+
+      <pd-section id="execution-sequence" title="Execution Sequence">
+        <pd-dag caption="Phase DAG (linear: each thickens a running pipeline)"></pd-dag>
+      </pd-section>
+
+      <pd-section id="phases" title="Phases">
+        <pd-stepper>
+
+          <pd-phase n="1" title="Walking skeleton: stub blind pipeline, 1 scenario" status="todo"
+                    files="src/assurance/evals/run.sh, src/assurance/evals/blind_grade.py, src/assurance/evals/grade_report.py, src/assurance/evals/graders/holistic-judge.md, src/assurance/evals/cases/strategy/marketing-landing-page/scenario.md, src/assurance/evals/cases/strategy/marketing-landing-page/meta.yaml, src/assurance/tests/test_blind_report.py">
+            <md><script type="text/plain">
+Thinnest end-to-end path through every layer, in **stub mode** (no API). This is the walking
+skeleton — all later phases thicken a pipeline that already runs green.
+
+Steps:
+1. Add `EVAL_MODE` (default `current`) to `run.sh`; branch the orchestrator so `strategy-only`
+   dispatches `run_agent_arm_strategy` / `run_grader_blind` and the default path stays
+   byte-identical. **The strategy-mode preflight must diverge from the current one** (`run.sh:24,29,34`):
+   resolve `CASE_DIR="$SCRIPT_DIR/cases/$CASE"` with `CASE=strategy/<name>` (so the dir is
+   `cases/strategy/<name>`), source the prompt from **`scenario.md`** (strategy cases have no
+   `prompt.md`), and **skip the workspace + `checks.sh` blocks** (`run.sh:213,303-317`) — even in
+   stub. **Verify:** `make eval-assurance AGENT_RUNNER=stub` (default mode) still green (AC-8).
+2. Author one scenario: `cases/strategy/marketing-landing-page/{scenario.md,meta.yaml}` (over-engineering trap). **Verify:** files parse; meta.yaml has `trap: over`.
+3. Write `graders/holistic-judge.md` — blind A/B prompt, JSON shape `{winner, verdict, weaknesses_a, weaknesses_b, guess_skill, guess_confidence}`.
+4. Write `blind_grade.py` (pure/stdlib): `anonymise(a_md, b_md, seed) -> (judge_input, mapping)` and `unblind(judge_json, mapping) -> result`. **Verify:** unit-callable.
+5. Add stub branches: `run_agent_arm_strategy` (writes a canned `strategy.md` per arm directly — not `out.md`+extract), `run_grader_blind` (canned judge JSON) wired through `blind_grade.py`.
+6. Extend `grade_report.py`: when grader JSON has `winner`, render the blind-mode report (winner + prose weaknesses + leakage guess) — no dimension table.
+7. Write `test_blind_report.py`: anonymise round-trips; the **harness-added framing** `blind_grade.py` injects carries no arm labels / scorecards / skill-name (the freeform doc *body* is NOT asserted token-free — that's D-4 + AC-6's job); report has winner+prose, no dim grid.
+**Verify (exit):** `make eval-assurance EVAL_MODE=strategy-only AGENT_RUNNER=stub CASE=strategy/marketing-landing-page` exits 0, `report.md` shows winner+prose (no dim table), zero network; `make test` green (and `shellcheck run.sh` if available — not a repo-standard step). **Commit.**
+            </script></md>
+          </pd-phase>
+
+          <pd-phase n="2" title="Live strategy arm + isolation proof" status="todo" depends-on="1"
+                    files="src/assurance/evals/run.sh">
+            <md><script type="text/plain">
+Replace the stub arm with a real `claude -p` arm that produces a strategy doc only. Grader stays
+stubbed so this phase isolates the arm change.
+
+Steps:
+1. Implement `run_agent_arm_strategy` (live): prompt = `scenario.md` + "design a testing strategy
+   as a single markdown document; do NOT implement; then stop"; with-skill arm appends the
+   skill-invocation line; run in the existing out-of-repo clean room (reuse `run.sh:157-222`
+   recipe); capture the strategy markdown from `.result` into `strategy.md`; skip `checks.sh`.
+2. Keep `run_grader_blind` on its stub path.
+**Verify (exit):** a live run on `strategy/marketing-landing-page` writes two non-empty
+`strategy.md`. Isolation is asserted by three concrete checks (the existing `check_skill_used`
+only covers the first): (a) the with-skill arm's `stream.jsonl` shows the `assurance-strategist`
+Skill invocation and the baseline's does **not** (`check_skill_used` pattern); (b) the baseline
+arm's init system message available-skills list does **not** contain `assurance-strategist`
+(grep → 0); (c) the arm `cwd` is the out-of-repo `mktemp` dir — grep the baseline transcript for
+the repo path (`/home/vscode/src/skills`) → 0 hits. Only the skill dir differs. **Commit.**
+            </script></md>
+          </pd-phase>
+
+          <pd-phase n="3" title="Live blind judge + leakage probe" status="todo" depends-on="2"
+                    files="src/assurance/evals/run.sh, src/assurance/evals/blind_grade.py, src/assurance/evals/grade_report.py, src/assurance/evals/graders/holistic-judge.md, src/assurance/tests/test_blind_report.py">
+            <md><script type="text/plain">
+Swap the stub grader for the live blind judge.
+
+Steps:
+1. Implement `run_grader_blind` (live): `blind_grade.py` assembles the anonymised judge prompt
+   from the two `strategy.md`; invoke a skill-less `claude -p` (pinned model) as the judge; parse
+   `{winner, verdict, weaknesses_a, weaknesses_b, guess_skill, guess_confidence}`; un-blind via the
+   stored mapping.
+2. Harden `graders/holistic-judge.md`: instruct the judge to **score substance, not
+   length/format/structure** (minimal-anonymisation backstop, D-4); require the guess fields.
+3. `grade_report.py`: render the leakage line — the judge's skill-arm guess vs the truth.
+4. Extend `test_blind_report.py`: `unblind` maps winner+guess back to the right arm; garbled/missing
+   judge JSON degrades to a "parse failed" row (reuse `extract_json_object`).
+**Verify (exit):** a live run yields a report with un-blinded winner + prose + leakage guess; the
+assembled judge prompt's **harness scaffolding** is asserted (test) to add no arm labels /
+scorecards / skill-name framing (AC-3 — organic body tokens are left to the AC-6 leakage probe);
+`make test` green. **Commit.**
+            </script></md>
+          </pd-phase>
+
+          <pd-phase n="4" title="Second scenario, regression guard, Makefile + docs" status="todo" depends-on="3"
+                    files="src/assurance/evals/cases/strategy/admin-bulk-delete-cli/scenario.md, src/assurance/evals/cases/strategy/admin-bulk-delete-cli/meta.yaml, Makefile, docs/assurance-eval-system.md">
+            <md><script type="text/plain">
+Steps:
+1. Author the second scenario: `cases/strategy/admin-bulk-delete-cli/{scenario.md,meta.yaml}`
+   (under-engineering trap — trivial-sounding CLI that irreversibly deletes prod data → C4; `trap: under`).
+2. Run strategy-only mode on **both** scenarios → each produces a verdict + prose diagnosis (generality).
+3. `Makefile`: add `eval-assurance-strategy` target (wraps `EVAL_MODE=strategy-only`) and document
+   the knob. **Align the model default everywhere to `claude-sonnet-4-6`** — the code at
+   `run.sh:19` is already correct, but fix the stale `claude-sonnet-4-20250514` in the
+   `run.sh:8` header comment, `grade_report.py:151`, `src/assurance/evals/README.md:27`, and
+   `docs/assurance-eval-system.md:48`.
+4. `docs/assurance-eval-system.md`: document the strategy-only blind mode (how to run, report shape, validation).
+**Verify (exit):** both scenarios run end-to-end; `make eval-assurance AGENT_RUNNER=stub` (default mode)
+still produces the unchanged dimension report (AC-8 regression); docs render. **Commit.**
+            </script></md>
+          </pd-phase>
+
+          <pd-phase n="5" title="Validate the instrument (noise floor + leakage)" status="todo" depends-on="4"
+                    files="src/assurance/evals/validate-instrument.sh">
+            <md><script type="text/plain">
+The capstone: prove the instrument before trusting it.
+
+Steps:
+1. Write `validate-instrument.sh`: repeat the **full blind A/B run** (both arms + judge) on a
+   scenario N times (default 3); record the winner per run + `total_cost_usd`; compute winner
+   stability + cost spread (the noise floor); aggregate the judge's `guess_skill` vs truth →
+   leakage accuracy.
+2. Run it (≥3 runs on one scenario); record the noise floor + leakage accuracy into a `results/` note.
+3. Interpret: if leakage guess accuracy is high, record it as the trigger to escalate anonymisation
+   (follow-up per D-4) — not a blocker.
+**Verify (exit):** the wrapper prints a spread + accuracy summary; the noise-floor number is recorded
+so any future A/B delta can be read against it. **Commit.**
+            </script></md>
+          </pd-phase>
+
+        </pd-stepper>
+      </pd-section>
+<pd-thread anchor="phases" status="resolved" priority="p1" title="Phase 1 verify command will fail: wrong CASE path">
+  <pd-comment by="review">I checked the stated verify: `make eval-assurance EVAL_MODE=strategy-only AGENT_RUNNER=stub CASE=marketing-landing-page`. Current run.sh:24 `CASE_DIR="$SCRIPT_DIR/cases/$CASE"`, preflight:29 checks -d and :34 checks prompt.md. But file-changes + phase steps author under `cases/strategy/marketing-landing-page/{scenario.md,meta.yaml}` (no prompt.md). The command as written will hit "case directory not found" (or prompt.md). Context and solution consistently use `cases/strategy/&lt;name&gt;/`. The plan must either (a) use CASE=strategy/marketing-landing-page (and update harness preflight for scenario.md + no prompt.md when EVAL_MODE=strategy-only), (b) change where files are placed, or (c) special-case CASE lookup inside strategy mode. This breaks the explicit "Verify (exit)" for Phase 1.</pd-comment>
+  <pd-comment by="author">Took option (a). Phase 1's exit verify now uses `CASE=strategy/marketing-landing-page` (which resolves correctly via `CASE_DIR="$SCRIPT_DIR/cases/$CASE"`), and step 1 adds the matching preflight change: source from `scenario.md`, skip the `prompt.md`/`checks.sh` preflight in strategy mode. The P1 blocker is closed.</pd-comment>
+</pd-thread>
+
+      <pd-section id="success-criteria" title="Success Criteria">
+        <md><script type="text/plain">
+- **Phase 1** → AC-1 (stub pipeline), AC-4 (report shape), AC-3 (anonymisation, unit-tested), AC-8 (default-mode regression checked).
+- **Phase 2** → AC-2 (single-variable isolation).
+- **Phase 3** → AC-3 (full, judge-input blinded), AC-6 (per-run leakage guess).
+- **Phase 4** → AC-7 (generality across both traps), AC-8 (regression guard re-confirmed).
+- **Phase 5** → AC-5 (noise floor), AC-6 (aggregate leakage accuracy).
+
+Done = AC-1 … AC-8 all satisfied and the noise floor is recorded so the eval's numbers are trustable.
+        </script></md>
+      </pd-section>
+<pd-thread anchor="success-criteria" status="resolved" priority="p3" title="Model default alignment should also fix run.sh comment">
+  <pd-comment by="review">Phase 4 step 3: "Align the default model to `claude-sonnet-4-6` and fix the stale `claude-sonnet-4-20250514` refs (README + `grade_report.py:151`)". I verified: run.sh:19 code is already `claude-sonnet-4-6`, but the env comment at run.sh:8 still says "default: claude-sonnet-4-20250514". Also docs/assurance-eval-system.md:48 and src/assurance/evals/README.md:27 list the old default. The "docs-update step" should include run.sh header comment (and the two READMEs) for consistency.</pd-comment>
+  <pd-comment by="author">Phase 4 step 3 now enumerates all four stale locations to fix — `run.sh:8` header comment, `grade_report.py:151`, `src/assurance/evals/README.md:27`, and `docs/assurance-eval-system.md:48` — noting the `run.sh:19` code is already correct.</pd-comment>
+</pd-thread>
+
+    </pd-tab>
+
+  </pd-doc>
+</body>
+</html>
