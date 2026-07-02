@@ -107,6 +107,72 @@ def test_freeform_body_is_not_redacted():
 
 
 # ---------------------------------------------------------------------------
+# Leakage probe: unblind maps guess_skill back to the real arm (AC-6)
+# ---------------------------------------------------------------------------
+
+
+def test_unblind_maps_guess_to_real_arm_independent_of_winner():
+    """The leakage guess un-blinds to the right arm even when it disagrees with
+    the winner — a judge can pick the baseline as better yet still guess the
+    withskill arm is the skill arm (a leak worth flagging)."""
+    _, mapping = blind_grade.anonymise(_BASELINE_MD, _WITHSKILL_MD, seed=3)
+    baseline_label = "A" if mapping["A"] == "baseline" else "B"
+    skill_label = "A" if mapping["A"] == "withskill" else "B"
+    judge_json = {
+        "winner": baseline_label,  # judge prefers baseline's strategy
+        "verdict": "baseline won on calibration",
+        "weaknesses_a": "wa",
+        "weaknesses_b": "wb",
+        "guess_skill": skill_label,  # but still fingerprints the skill arm
+        "guess_confidence": "high",
+    }
+    result = blind_grade.unblind(judge_json, mapping)
+    assert result["winner"] == "baseline"
+    assert result["guess_skill"] == "withskill"
+    assert result["guess_correct"] is True
+
+
+# ---------------------------------------------------------------------------
+# Graceful degradation: garbled / missing judge JSON → "parse failed" row
+# ---------------------------------------------------------------------------
+
+
+def test_garbled_judge_json_unblinds_to_parse_failed_marker():
+    """A garbled judge verdict (no extractable JSON object) degrades to a
+    parse-failed marker instead of raising — reusing extract_json_object."""
+    garbled = "The judge rambled and never emitted a JSON object at all."
+    assert blind_grade.extract_json_object(garbled) is None
+
+    _, mapping = blind_grade.anonymise(_BASELINE_MD, _WITHSKILL_MD, seed=0)
+    result = blind_grade.unblind(blind_grade.extract_json_object(garbled), mapping)
+    assert result["blind_parse_failed"] is True
+    assert result["winner"] is None
+
+
+def test_missing_winner_key_unblinds_to_parse_failed_marker():
+    """A JSON object that parses but lacks a winner also degrades gracefully."""
+    _, mapping = blind_grade.anonymise(_BASELINE_MD, _WITHSKILL_MD, seed=0)
+    result = blind_grade.unblind({"verdict": "no winner field"}, mapping)
+    assert result["blind_parse_failed"] is True
+
+
+def test_blind_report_renders_parse_failed_row(tmp_path):
+    """The report renderer shows a 'parse failed' row with the raw judge text."""
+    grader_data = {
+        "blind_parse_failed": True,
+        "winner": None,
+        "mapping": {"A": "baseline", "B": "withskill"},
+        "raw_judge": "not json at all",
+    }
+    report = grade_report.render_blind_report(tmp_path, grader_data, case="strategy/x")
+    assert "parse failed" in report.lower()
+    assert "not json at all" in report
+    # No fabricated winner or dimension grid on a failed parse.
+    assert "**Winner**: withskill" not in report
+    assert "Dimension" not in report
+
+
+# ---------------------------------------------------------------------------
 # Report shape: winner + prose, no dimension grid (AC-1 / AC-4)
 # ---------------------------------------------------------------------------
 

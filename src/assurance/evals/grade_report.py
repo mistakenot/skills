@@ -122,13 +122,7 @@ def render_blind_report(run_dir: Path, grader_data: dict, case: str = "") -> str
     model = os.environ.get("MODEL", "claude-sonnet-4-20250514")
     skill_version = get_skill_version()
 
-    winner = grader_data.get("winner", "?")
-    loser = grader_data.get("loser", "?")
-    guess = grader_data.get("guess_skill", "?")
-    guess_conf = grader_data.get("guess_confidence", "?")
-    guess_correct = grader_data.get("guess_correct")
-
-    lines = [
+    header = [
         "# Eval Report (strategy-only, blind A/B)",
         "",
         f"- **Case**: {case or run_dir.name}",
@@ -136,6 +130,36 @@ def render_blind_report(run_dir: Path, grader_data: dict, case: str = "") -> str
         f"- **Skill version**: {skill_version}",
         f"- **Timestamp**: {timestamp}",
         "",
+    ]
+
+    # Graceful degradation: the blind judge returned no parseable JSON. Show a
+    # "parse failed" row with the raw judge text instead of crashing the run.
+    if grader_data.get("blind_parse_failed"):
+        lines = header + [
+            "## Verdict",
+            "",
+            "**grader: parse failed** — the blind judge returned no parseable JSON verdict.",
+            "",
+            "Raw judge output:",
+            "",
+            "```",
+            (grader_data.get("raw_judge") or "(empty)").strip() or "(empty)",
+            "```",
+            "",
+            "## Human verdict",
+            "",
+            "<!-- Write your assessment here after reviewing the run artifacts. -->",
+            "",
+        ]
+        return "\n".join(lines)
+
+    winner = grader_data.get("winner", "?")
+    loser = grader_data.get("loser", "?")
+    guess = grader_data.get("guess_skill", "?")
+    guess_conf = grader_data.get("guess_confidence", "?")
+    guess_correct = grader_data.get("guess_correct")
+
+    lines = header + [
         "## Verdict",
         "",
         f"- **Winner**: {winner}",

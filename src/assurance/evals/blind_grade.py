@@ -107,13 +107,20 @@ def anonymise(baseline_md: str, withskill_md: str, seed: int = 0) -> tuple[str, 
     return judge_input, mapping
 
 
-def unblind(judge_json: dict, mapping: dict) -> dict:
+def unblind(judge_json: dict | None, mapping: dict) -> dict:
     """Map the judge's A/B verdict back to real arm names.
 
     Produces a self-contained result the report renderer can consume without
     knowing the blinding: winner/loser arms, verdict + prose weakness of the
     weaker arm, and the un-blinded leakage guess (with correctness).
+
+    Degrades gracefully: a missing/garbled judge verdict (None, or a dict with
+    no `winner`) yields a `blind_parse_failed` marker the report renders as a
+    "parse failed" row rather than crashing the pipeline.
     """
+    if not judge_json or "winner" not in judge_json:
+        return {"blind_parse_failed": True, "winner": None, "mapping": mapping}
+
     winner_label = judge_json.get("winner")
     winner_arm = mapping.get(winner_label)
     loser_arm = _other_arm(mapping, winner_arm)
@@ -163,11 +170,14 @@ def _cmd_anonymise(args: argparse.Namespace) -> None:
 def _cmd_unblind(args: argparse.Namespace) -> None:
     raw = Path(args.judge).read_text()
     judge_json = extract_json_object(raw)
-    if judge_json is None:
-        print(f"Error: could not parse judge JSON from {args.judge}", file=sys.stderr)
-        sys.exit(1)
     mapping = json.loads(Path(args.mapping).read_text())
+    # unblind degrades a None/garbled verdict to a parse-failed marker; keep the
+    # raw judge text alongside it so the report can show what the judge emitted
+    # instead of aborting the run (a live judge call must never crash grading).
     result = unblind(judge_json, mapping)
+    if judge_json is None:
+        result["raw_judge"] = raw.strip()
+        print(f"Warning: could not parse judge JSON from {args.judge}", file=sys.stderr)
     Path(args.out).write_text(json.dumps(result, indent=2) + "\n")
 
 

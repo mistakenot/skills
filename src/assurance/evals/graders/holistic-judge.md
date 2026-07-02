@@ -7,10 +7,14 @@ judgement for *this specific project*, and to diagnose the weaker one.
 
 ## How to judge
 
-Judge **substance, not presentation.** Ignore length, formatting, headings,
-polish, and house style — a longer or more elaborately structured document is
-not automatically better. Reward the strategy that is best *calibrated to the
-actual risk of the project*:
+Judge **substance, not presentation.** Score only the quality of the testing
+judgement. Explicitly ignore length, format, structure, headings, section
+counts, formatting, polish, and house style — a longer, more elaborately
+structured, or more heavily sectioned document is **not** automatically better,
+and a terser one is not automatically worse. If the two strategies reach the
+same testing decisions, they are equally good regardless of how they are laid
+out. Reward the strategy that is best *calibrated to the actual risk of the
+project*:
 
 - Does it identify what genuinely costs something if it breaks, and concentrate
   effort there?

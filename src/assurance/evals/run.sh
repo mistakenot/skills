@@ -509,8 +509,74 @@ JUDGEEOF
 }
 
 run_grader_blind_live() {
-  echo "Error: live blind judge is not implemented until Phase 3" >&2
-  exit 1
+  local results_dir="$1"
+
+  echo "  [live] Anonymising arms for the blind judge"
+  # Blind the two arms: seeded A/B order + label-swap, mapping stored out-of-band.
+  # Same seed as the stub path so a run is reproducible; blind_grade.py adds only
+  # neutral "Strategy A"/"Strategy B" labels — no arm identity, no scorecards.
+  uv run --no-dev python "$SCRIPT_DIR/blind_grade.py" anonymise \
+    --baseline "$results_dir/baseline/strategy.md" \
+    --withskill "$results_dir/withskill/strategy.md" \
+    --seed 42 \
+    --out-input "$results_dir/judge_input.txt" \
+    --out-mapping "$results_dir/mapping.json"
+
+  # Assemble the judge prompt: the holistic-judge preamble, the neutral project
+  # brief (identical for both arms — safe to show), then the anonymised
+  # Strategy A / Strategy B. Nothing here names an arm or embeds a scorecard.
+  local judge_prompt
+  judge_prompt="$(cat "$SCRIPT_DIR/graders/holistic-judge.md")
+
+---
+
+## Project brief
+
+$(cat "$CASE_DIR/scenario.md")
+
+---
+
+$(cat "$results_dir/judge_input.txt")"
+
+  # Skill-less clean room, OUTSIDE the repo tree: claude walks up from cwd and
+  # would re-discover this repo's skills + CLAUDE.md if cwd were inside it (see
+  # docs/headless-claude-cli-evals.md). The judge gets NO skills installed — in
+  # particular not assurance-strategist, so it cannot recognise its own house
+  # style. $BASE is torn down at the end of this function; the fallible claude
+  # call is guarded with || true and unblind exits 0 even on a garbled verdict,
+  # so a judge failure still reaches the teardown rather than aborting the run.
+  local BASE
+  BASE=$(mktemp -d)
+  local CFG="$BASE/config"
+  local WS="$BASE/ws"
+  mkdir -p "$CFG" "$WS"
+  cp "$HOME/.claude/.credentials.json" "$CFG/.credentials.json"
+
+  echo "  [live] Running blind judge (skill-less clean room: $WS)"
+  ( cd "$WS" && CLAUDE_CONFIG_DIR="$CFG" claude -p "$judge_prompt" \
+      --output-format json \
+      --strict-mcp-config \
+      --permission-mode bypassPermissions \
+      --model "$MODEL" \
+      < /dev/null > "$results_dir/judge_envelope.json" 2> "$results_dir/judge-err.txt" ) || true
+
+  # Record the clean-room skills listing so isolation can be inspected out-of-band.
+  ( ls -1 "$CFG/skills" 2>/dev/null || true ) > "$results_dir/judge-cleanroom-skills.txt"
+
+  # Unwrap the claude -p envelope to the judge's raw JSON text. Empty on any
+  # failure — unblind then degrades to a "parse failed" row (reuses the defensive
+  # extract_json_object path) rather than aborting the run.
+  jq -r '.result // ""' "$results_dir/judge_envelope.json" > "$results_dir/judge_raw.json" 2>/dev/null || true
+
+  # Un-blind: map the A/B verdict (winner + skill guess) back to real arm names.
+  # unblind exits 0 even on garbled/missing judge JSON.
+  uv run --no-dev python "$SCRIPT_DIR/blind_grade.py" unblind \
+    --judge "$results_dir/judge_raw.json" \
+    --mapping "$results_dir/mapping.json" \
+    --out "$results_dir/grader.json"
+
+  # Teardown the out-of-repo clean room (verdict already un-blinded into $results_dir).
+  rm -rf "$BASE"
 }
 
 # ── Main flow ────────────────────────────────────────────────────────────────
