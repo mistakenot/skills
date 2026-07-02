@@ -7,18 +7,27 @@
 # Environment variables:
 #   MODEL          - model to pin (default: claude-sonnet-4-20250514)
 #   AGENT_RUNNER   - "stub" for deterministic/offline mode (default: live)
-#   CASE           - case directory name (default: calculator-cli)
+#   CASE           - case directory name (default: calculator-cli, or
+#                    strategy/marketing-landing-page in strategy-only mode)
+#   EVAL_MODE      - "current" (default) two-arm dimension eval, or
+#                    "strategy-only" blind-differential strategy-quality eval
 #
 # Usage:
 #   make eval-assurance                       # live mode
 #   make eval-assurance AGENT_RUNNER=stub     # stub mode (no API calls)
+#   make eval-assurance EVAL_MODE=strategy-only CASE=strategy/<name>
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 MODEL="${MODEL:-claude-sonnet-4-6}"
 AGENT_RUNNER="${AGENT_RUNNER:-live}"
-CASE="${CASE:-calculator-cli}"
+EVAL_MODE="${EVAL_MODE:-current}"
+if [ "$EVAL_MODE" = "strategy-only" ]; then
+  CASE="${CASE:-strategy/marketing-landing-page}"
+else
+  CASE="${CASE:-calculator-cli}"
+fi
 RUN_ID="run-$(date +%Y%m%d-%H%M%S)"
 RESULTS_DIR="$SCRIPT_DIR/results/$RUN_ID"
 CASE_DIR="$SCRIPT_DIR/cases/$CASE"
@@ -31,7 +40,13 @@ if [ ! -d "$CASE_DIR" ]; then
   exit 1
 fi
 
-if [ ! -f "$CASE_DIR/prompt.md" ]; then
+if [ "$EVAL_MODE" = "strategy-only" ]; then
+  # Strategy cases carry a scenario.md brief and no prompt.md / checks.sh.
+  if [ ! -f "$CASE_DIR/scenario.md" ]; then
+    echo "Error: scenario.md not found in $CASE_DIR" >&2
+    exit 1
+  fi
+elif [ ! -f "$CASE_DIR/prompt.md" ]; then
   echo "Error: prompt.md not found in $CASE_DIR" >&2
   exit 1
 fi
@@ -294,43 +309,212 @@ $(cat "$results_dir/withskill/scorecard.json" 2>/dev/null || echo "(not availabl
       < /dev/null > "$results_dir/grader.json" 2> "$results_dir/grader-err.txt" ) || true
 }
 
+# ── Strategy-only mode (blind differential) ──────────────────────────────────
+#
+# Each arm produces a testing-strategy markdown document (strategy.md) and stops
+# — no workspace, no implementation, no checks.sh. The grader is a blind A/B
+# judge that never sees arm labels or scorecards (see blind_grade.py).
+
+run_agent_arm_strategy() {
+  local arm="$1"       # "baseline" or "withskill"
+  local out_dir="$2"   # where to write strategy.md
+
+  if [ "$AGENT_RUNNER" = "stub" ]; then
+    run_agent_arm_strategy_stub "$arm" "$out_dir"
+  else
+    run_agent_arm_strategy_live "$arm" "$out_dir"
+  fi
+}
+
+run_agent_arm_strategy_stub() {
+  local arm="$1"
+  local out_dir="$2"
+
+  echo "  [stub] Writing canned strategy.md for $arm"
+
+  # Two plausibly-different strategy docs so a "winner" is meaningful. The
+  # with-skill arm is deliberately more calibrated (it right-sizes testing to a
+  # low-criticality marketing page) than the baseline.
+  if [ "$arm" = "withskill" ]; then
+    cat > "$out_dir/strategy.md" <<'STRATEOF'
+# Testing strategy: marketing landing page
+
+## Risk read
+This is a low-criticality, high-volatility marketing surface. The copy, layout,
+and imagery will change weekly. Heavy test infrastructure here would rot faster
+than it catches bugs, so the strategy is deliberately light and focused on the
+few things that actually cost money if they break.
+
+## What to test
+- **Signup / CTA path** — one end-to-end smoke test that the primary call to
+  action submits and the lead is captured. This is the only revenue-bearing flow.
+- **Build + link check** — a static check that the page builds and has no broken
+  internal links or missing assets.
+- **Accessibility smoke** — an automated axe pass on the rendered page.
+
+## What to deliberately NOT test
+- Pixel-level layout and copy: these change constantly; assert them and the
+  suite becomes a maintenance tax. Rely on a visual preview + review instead.
+- Exhaustive cross-browser matrices: cover the top two browsers, no more.
+
+## Verification
+`npm run test:e2e` runs the single CTA smoke test; `npm run build` gates broken
+links. Both run in CI on every PR.
+STRATEOF
+  else
+    cat > "$out_dir/strategy.md" <<'STRATEOF'
+# Testing plan for the landing page
+
+## Approach
+We will build a comprehensive automated test suite to guarantee quality across
+the whole page.
+
+## Coverage
+- Unit tests for every React component (Hero, Nav, Feature cards, Footer, etc.).
+- Snapshot tests for the full DOM of each section to catch any visual change.
+- End-to-end tests for every link and button on the page.
+- Cross-browser tests across Chrome, Firefox, Safari, and Edge.
+- Property-based tests over the form validation logic.
+
+## Tooling
+Jest + React Testing Library for units, Playwright for e2e across all browsers,
+and Percy for visual snapshots on every commit.
+
+## Verification
+Run `npm test` for the full suite; it must stay green before any merge.
+STRATEOF
+  fi
+}
+
+run_agent_arm_strategy_live() {
+  echo "Error: live strategy arm is not implemented until Phase 2" >&2
+  exit 1
+}
+
+run_grader_blind() {
+  local results_dir="$1"
+
+  if [ "$AGENT_RUNNER" = "stub" ]; then
+    run_grader_blind_stub "$results_dir"
+  else
+    run_grader_blind_live "$results_dir"
+  fi
+}
+
+run_grader_blind_stub() {
+  local results_dir="$1"
+
+  echo "  [stub] Anonymising arms and writing canned blind judge verdict"
+
+  # Blind the two arms: seeded A/B order + label-swap, mapping stored out-of-band.
+  uv run --no-dev python "$SCRIPT_DIR/blind_grade.py" anonymise \
+    --baseline "$results_dir/baseline/strategy.md" \
+    --withskill "$results_dir/withskill/strategy.md" \
+    --seed 42 \
+    --out-input "$results_dir/judge_input.txt" \
+    --out-mapping "$results_dir/mapping.json"
+
+  # Canned judge verdict. The stub judge "prefers" the more-calibrated strategy,
+  # which is the with-skill arm — resolve whichever blinded label it landed on so
+  # the un-blinded winner is meaningful regardless of the seeded order.
+  local skill_label
+  skill_label=$(jq -r 'to_entries[] | select(.value=="withskill") | .key' "$results_dir/mapping.json")
+  local other_label
+  other_label=$(jq -r 'to_entries[] | select(.value=="baseline") | .key' "$results_dir/mapping.json")
+
+  cat > "$results_dir/judge_raw.json" <<JUDGEEOF
+{
+  "winner": "$skill_label",
+  "verdict": "Strategy $skill_label right-sizes the effort to a low-stakes, fast-changing marketing surface: it protects the one revenue-bearing flow and consciously refuses to test volatile copy and layout. Strategy $other_label over-invests — snapshotting the full DOM and property-testing form validation on a page that will be rewritten weekly buys little and creates a large maintenance tax.",
+  "weaknesses_a": "placeholder",
+  "weaknesses_b": "placeholder",
+  "guess_skill": "$skill_label",
+  "guess_confidence": "medium"
+}
+JUDGEEOF
+
+  # Fill the label-keyed weakness prose so both labels are populated.
+  local weak_skill="Could name a concrete rollback/monitoring signal for the CTA rather than leaving post-deploy detection implicit."
+  local weak_other="Treats a throwaway marketing page like a safety-critical system: full-DOM snapshots and cross-browser matrices will rot faster than they catch real defects, and property-based tests over trivial form validation are misdirected effort."
+  local wa wb
+  if [ "$skill_label" = "A" ]; then wa="$weak_skill"; wb="$weak_other"; else wa="$weak_other"; wb="$weak_skill"; fi
+  jq --arg wa "$wa" --arg wb "$wb" '.weaknesses_a=$wa | .weaknesses_b=$wb' \
+    "$results_dir/judge_raw.json" > "$results_dir/judge_raw.json.tmp" \
+    && mv "$results_dir/judge_raw.json.tmp" "$results_dir/judge_raw.json"
+
+  # Un-blind: map the A/B verdict back to real arm names → grader.json.
+  uv run --no-dev python "$SCRIPT_DIR/blind_grade.py" unblind \
+    --judge "$results_dir/judge_raw.json" \
+    --mapping "$results_dir/mapping.json" \
+    --out "$results_dir/grader.json"
+}
+
+run_grader_blind_live() {
+  echo "Error: live blind judge is not implemented until Phase 3" >&2
+  exit 1
+}
+
 # ── Main flow ────────────────────────────────────────────────────────────────
 
-# Run both arms
-echo "── Baseline arm ──"
-run_agent_arm "baseline" "$RESULTS_DIR/baseline"
+if [ "$EVAL_MODE" = "strategy-only" ]; then
+  # Strategy-only mode: each arm emits a strategy.md, the blind judge picks a
+  # winner. No workspace, no mechanical checks.
+  echo "── Baseline arm (strategy) ──"
+  run_agent_arm_strategy "baseline" "$RESULTS_DIR/baseline"
 
-# In stub mode, run checks against the mock workspace
-if [ "$AGENT_RUNNER" = "stub" ] && [ -d "$RESULTS_DIR/baseline/workspace" ]; then
-  bash "$CASE_DIR/checks.sh" "$RESULTS_DIR/baseline/workspace" > "$RESULTS_DIR/baseline/scorecard.json"
+  echo ""
+  echo "── With-skill arm (strategy) ──"
+  run_agent_arm_strategy "withskill" "$RESULTS_DIR/withskill"
+
+  echo ""
+  echo "── Grader (blind A/B) ──"
+  run_grader_blind "$RESULTS_DIR"
+  echo ""
+
+  echo "── Report ──"
+  export MODEL CASE
+  (cd "$REPO_ROOT" && uv run --no-dev python "$SCRIPT_DIR/grade_report.py" "$RESULTS_DIR")
+
+  echo ""
+  echo "=== Done ==="
+  echo "Report:     $RESULTS_DIR/report.md"
+else
+  # Run both arms
+  echo "── Baseline arm ──"
+  run_agent_arm "baseline" "$RESULTS_DIR/baseline"
+
+  # In stub mode, run checks against the mock workspace
+  if [ "$AGENT_RUNNER" = "stub" ] && [ -d "$RESULTS_DIR/baseline/workspace" ]; then
+    bash "$CASE_DIR/checks.sh" "$RESULTS_DIR/baseline/workspace" > "$RESULTS_DIR/baseline/scorecard.json"
+  fi
+  extract_result_md "$RESULTS_DIR/baseline"
+  check_skill_used "baseline" "$RESULTS_DIR/baseline"
+
+  echo ""
+  echo "── With-skill arm ──"
+  run_agent_arm "withskill" "$RESULTS_DIR/withskill"
+
+  # In stub mode, run checks against the mock workspace
+  if [ "$AGENT_RUNNER" = "stub" ] && [ -d "$RESULTS_DIR/withskill/workspace" ]; then
+    bash "$CASE_DIR/checks.sh" "$RESULTS_DIR/withskill/workspace" > "$RESULTS_DIR/withskill/scorecard.json"
+  fi
+  extract_result_md "$RESULTS_DIR/withskill"
+  check_skill_used "withskill" "$RESULTS_DIR/withskill"
+
+  echo ""
+
+  # Run grader
+  echo "── Grader ──"
+  run_grader "$RESULTS_DIR"
+  echo ""
+
+  # Generate report
+  echo "── Report ──"
+  export MODEL CASE
+  (cd "$REPO_ROOT" && uv run --no-dev python "$SCRIPT_DIR/grade_report.py" "$RESULTS_DIR")
+
+  echo ""
+  echo "=== Done ==="
+  echo "Report:     $RESULTS_DIR/report.md"
+  echo "Workspaces: $INSPECT_DIR/baseline/ws  $INSPECT_DIR/withskill/ws"
 fi
-extract_result_md "$RESULTS_DIR/baseline"
-check_skill_used "baseline" "$RESULTS_DIR/baseline"
-
-echo ""
-echo "── With-skill arm ──"
-run_agent_arm "withskill" "$RESULTS_DIR/withskill"
-
-# In stub mode, run checks against the mock workspace
-if [ "$AGENT_RUNNER" = "stub" ] && [ -d "$RESULTS_DIR/withskill/workspace" ]; then
-  bash "$CASE_DIR/checks.sh" "$RESULTS_DIR/withskill/workspace" > "$RESULTS_DIR/withskill/scorecard.json"
-fi
-extract_result_md "$RESULTS_DIR/withskill"
-check_skill_used "withskill" "$RESULTS_DIR/withskill"
-
-echo ""
-
-# Run grader
-echo "── Grader ──"
-run_grader "$RESULTS_DIR"
-echo ""
-
-# Generate report
-echo "── Report ──"
-export MODEL CASE
-(cd "$REPO_ROOT" && uv run --no-dev python "$SCRIPT_DIR/grade_report.py" "$RESULTS_DIR")
-
-echo ""
-echo "=== Done ==="
-echo "Report:     $RESULTS_DIR/report.md"
-echo "Workspaces: $INSPECT_DIR/baseline/ws  $INSPECT_DIR/withskill/ws"

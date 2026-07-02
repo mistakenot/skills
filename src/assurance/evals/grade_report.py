@@ -111,6 +111,64 @@ def check_skill_used(stream_path: Path, skill_name: str = "assurance-strategist"
         return None
 
 
+def render_blind_report(run_dir: Path, grader_data: dict, case: str = "") -> str:
+    """Render the strategy-only blind-differential report.
+
+    A winner + prose weakness diagnosis + leakage guess — deliberately NO 0-3
+    dimension grid and NO answer key (AC-4). `grader_data` is the un-blinded
+    result from blind_grade.unblind (winner/loser are real arm names).
+    """
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    model = os.environ.get("MODEL", "claude-sonnet-4-20250514")
+    skill_version = get_skill_version()
+
+    winner = grader_data.get("winner", "?")
+    loser = grader_data.get("loser", "?")
+    guess = grader_data.get("guess_skill", "?")
+    guess_conf = grader_data.get("guess_confidence", "?")
+    guess_correct = grader_data.get("guess_correct")
+
+    lines = [
+        "# Eval Report (strategy-only, blind A/B)",
+        "",
+        f"- **Case**: {case or run_dir.name}",
+        f"- **Model**: {model}",
+        f"- **Skill version**: {skill_version}",
+        f"- **Timestamp**: {timestamp}",
+        "",
+        "## Verdict",
+        "",
+        f"- **Winner**: {winner}",
+        "",
+        grader_data.get("verdict", "") or "(no verdict prose)",
+        "",
+        f"## Weakness diagnosis — weaker arm ({loser})",
+        "",
+        grader_data.get("weaknesses_loser", "") or "(none recorded)",
+        "",
+        "## Blinding leakage",
+        "",
+    ]
+
+    if guess_correct is True:
+        verdict_tag = "**CORRECT** — house-style may have leaked; discount the win accordingly"
+    elif guess_correct is False:
+        verdict_tag = "incorrect — no obvious style leakage on this run"
+    else:
+        verdict_tag = "(guess un-scored)"
+    lines.append(
+        f"- Judge's skill-arm guess: **{guess}** (confidence: {guess_conf}) — {verdict_tag}"
+    )
+    lines.append("")
+
+    lines.append("## Human verdict")
+    lines.append("")
+    lines.append("<!-- Write your assessment here after reviewing the run artifacts. -->")
+    lines.append("")
+
+    return "\n".join(lines)
+
+
 def render_report(run_dir: Path, case: str = "") -> str:
     """Render the full report.md content from a run directory."""
     # Read arm outputs
@@ -145,6 +203,11 @@ def render_report(run_dir: Path, case: str = "") -> str:
 
         if grader_data is None:
             grader_parse_failed = True
+
+    # Strategy-only blind mode: the grader JSON is an un-blinded verdict keyed by
+    # `winner`. Render the winner + prose report (no dimension grid, AC-4).
+    if grader_data and "winner" in grader_data:
+        return render_blind_report(run_dir, grader_data, case=case)
 
     # Header
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
