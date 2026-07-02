@@ -24,7 +24,7 @@ Requires `~/.claude/.credentials.json` (Claude Code auth). Runs real `claude -p`
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MODEL` | `claude-sonnet-4-20250514` | Model to pin for all arms |
+| `MODEL` | `claude-sonnet-4-6` | Model to pin for all arms |
 | `AGENT_RUNNER` | `live` | `stub` for offline/deterministic mode |
 | `CASE` | `calculator-cli` | Case directory under `cases/` |
 

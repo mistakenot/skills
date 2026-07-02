@@ -5,7 +5,7 @@
 # then grades the difference. Produces results/<run-id>/report.md.
 #
 # Environment variables:
-#   MODEL          - model to pin (default: claude-sonnet-4-20250514)
+#   MODEL          - model to pin (default: claude-sonnet-4-6)
 #   AGENT_RUNNER   - "stub" for deterministic/offline mode (default: live)
 #   CASE           - case directory name (default: calculator-cli, or
 #                    strategy/marketing-landing-page in strategy-only mode)

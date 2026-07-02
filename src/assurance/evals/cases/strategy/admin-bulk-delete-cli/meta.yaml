@@ -1,0 +1,17 @@
+# Result-slicing tags only. NEVER fed to the judge (D-2): the judge sees the
+# anonymised strategy docs, not this file.
+title: Admin bulk-delete CLI
+trap: under           # under-engineering trap: sounds trivial, is actually safety-critical
+criticality: high     # C4 — irreversible hard-delete of production customer data, no undo
+volatility: low       # a hand-run ops helper; the delete semantics rarely change
+archetype: internal-cli
+notes: >
+  The brief is dressed down as a throwaway internal helper ("nothing fancy",
+  "just a script", "keep it simple") but it irreversibly hard-deletes production
+  customer accounts and every associated record with no undo, run against the
+  live database with full delete permissions. The temptation is to under-test an
+  "internal tool". A calibrated strategy treats it as high-criticality: exhaustive
+  tests on the filter/selection logic (deleting the wrong rows is the catastrophe),
+  the dry-run vs execute boundary, confirmation/guardrails, blast-radius limits,
+  and cascade correctness — verified against a disposable copy of prod-shaped data,
+  never the real database.

@@ -119,7 +119,7 @@ def render_blind_report(run_dir: Path, grader_data: dict, case: str = "") -> str
     result from blind_grade.unblind (winner/loser are real arm names).
     """
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    model = os.environ.get("MODEL", "claude-sonnet-4-20250514")
+    model = os.environ.get("MODEL", "claude-sonnet-4-6")
     skill_version = get_skill_version()
 
     header = [
@@ -235,7 +235,7 @@ def render_report(run_dir: Path, case: str = "") -> str:
 
     # Header
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    model = os.environ.get("MODEL", "claude-sonnet-4-20250514")
+    model = os.environ.get("MODEL", "claude-sonnet-4-6")
     skill_version = get_skill_version()
 
     lines = [

@@ -1,4 +1,4 @@
-.PHONY: compile lint check install pd-components pd-dev pd-test test test-review-stdin eval-assurance release
+.PHONY: compile lint check install pd-components pd-dev pd-test test test-review-stdin eval-assurance eval-assurance-strategy release
 
 # Compiles skill source files from ./src/ into ./skills/ output.
 # Run after editing any skill source in ./src/.
@@ -57,3 +57,12 @@ test-review-stdin: compile
 # Run after compiling to produce a with-vs-without comparison report.
 eval-assurance: compile
 	bash src/assurance/evals/run.sh
+
+# Runs the strategy-only blind-differential eval (EVAL_MODE=strategy-only): each
+# arm writes a testing-strategy doc and a blind judge picks a winner (winner +
+# prose diagnosis + leakage line, no dimension grid). Honours CASE / AGENT_RUNNER
+# / MODEL. Examples:
+#   make eval-assurance-strategy AGENT_RUNNER=stub
+#   make eval-assurance-strategy CASE=strategy/admin-bulk-delete-cli
+eval-assurance-strategy: compile
+	EVAL_MODE=strategy-only bash src/assurance/evals/run.sh
