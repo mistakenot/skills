@@ -23,6 +23,11 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 MODEL="${MODEL:-claude-sonnet-4-6}"
 AGENT_RUNNER="${AGENT_RUNNER:-live}"
 EVAL_MODE="${EVAL_MODE:-current}"
+# Anonymisation seed for the blind A/B order (strategy-only mode). Default 42
+# preserves single-run reproducibility; validate-instrument.sh overrides it per
+# iteration so the A/B order varies and leakage accuracy isn't a fixed-order
+# artifact.
+SEED="${SEED:-42}"
 if [ "$EVAL_MODE" = "strategy-only" ]; then
   CASE="${CASE:-strategy/marketing-landing-page}"
 else
@@ -469,7 +474,7 @@ run_grader_blind_stub() {
   uv run --no-dev python "$SCRIPT_DIR/blind_grade.py" anonymise \
     --baseline "$results_dir/baseline/strategy.md" \
     --withskill "$results_dir/withskill/strategy.md" \
-    --seed 42 \
+    --seed "$SEED" \
     --out-input "$results_dir/judge_input.txt" \
     --out-mapping "$results_dir/mapping.json"
 
@@ -518,7 +523,7 @@ run_grader_blind_live() {
   uv run --no-dev python "$SCRIPT_DIR/blind_grade.py" anonymise \
     --baseline "$results_dir/baseline/strategy.md" \
     --withskill "$results_dir/withskill/strategy.md" \
-    --seed 42 \
+    --seed "$SEED" \
     --out-input "$results_dir/judge_input.txt" \
     --out-mapping "$results_dir/mapping.json"
 
