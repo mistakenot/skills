@@ -387,8 +387,67 @@ STRATEOF
 }
 
 run_agent_arm_strategy_live() {
-  echo "Error: live strategy arm is not implemented until Phase 2" >&2
-  exit 1
+  local arm="$1"       # "baseline" or "withskill"
+  local out_dir="$2"   # where to write strategy.md
+
+  # Clean room must live OUTSIDE the repo tree: claude walks up from cwd and
+  # re-discovers this repo's skills + CLAUDE.md if cwd is inside it (see
+  # docs/headless-claude-cli-evals.md). $BASE is torn down at the end of this
+  # function; every artifact we need is copied into $out_dir (the results dir)
+  # first, and the intervening commands are individually guarded (|| true) so
+  # nothing exits before teardown.
+  local BASE
+  BASE=$(mktemp -d)
+  local CFG="$BASE/config"
+  local WS="$BASE/ws"
+  mkdir -p "$CFG" "$WS"
+
+  # Copy credentials
+  cp "$HOME/.claude/.credentials.json" "$CFG/.credentials.json"
+
+  # With-skill arm: drop the compiled skill into the config dir. This single dir
+  # is the ONLY difference between the two clean rooms (single-variable isolation).
+  if [ "$arm" = "withskill" ]; then
+    mkdir -p "$CFG/skills"
+    cp -r "$SKILL_DIR" "$CFG/skills/assurance-strategist"
+    echo "  [live] Skill installed at $CFG/skills/assurance-strategist/"
+  fi
+
+  echo "  [live] Running $arm arm (strategy) (workspace: $WS)"
+
+  # Build the prompt from the scenario brief plus a strategy-only instruction:
+  # produce a single markdown strategy doc and stop — no implementation.
+  local prompt
+  prompt="$(cat "$CASE_DIR/scenario.md")"$'\n\n'"Design a testing/assurance strategy for this project as a single markdown document. Do NOT implement anything — output only the strategy document. Then stop."
+
+  # The with-skill arm is instructed to invoke the skill. This eval judges the
+  # quality of the skill's guidance, not the model's organic routing to it — the
+  # baseline arm has no such skill and proceeds with its default approach.
+  if [ "$arm" = "withskill" ]; then
+    prompt="$prompt"$'\n\n'"Before you begin, invoke the assurance-strategist skill (run /assurance-strategist) and follow its guidance throughout this task."
+  fi
+
+  ( cd "$WS" && CLAUDE_CONFIG_DIR="$CFG" claude -p "$prompt" \
+      --output-format stream-json \
+      --verbose \
+      --strict-mcp-config \
+      --permission-mode bypassPermissions \
+      --model "$MODEL" \
+      < /dev/null > "$out_dir/stream.jsonl" 2> "$out_dir/err.txt" ) || true
+
+  # Extract the final result envelope (same shape as --output-format json)
+  grep '"type":"result"' "$out_dir/stream.jsonl" | tail -1 > "$out_dir/out.json" 2>/dev/null || true
+
+  # Write the strategy markdown straight from .result. No checks.sh, no scorecard.
+  jq -r '.result // ""' "$out_dir/out.json" > "$out_dir/strategy.md" 2>/dev/null || true
+
+  # Record the clean-room skills listing so isolation can be inspected out-of-band.
+  ( ls -1 "$CFG/skills" 2>/dev/null || true ) > "$out_dir/cleanroom-skills.txt"
+
+  # Teardown the out-of-repo clean room (artifacts already preserved in $out_dir).
+  rm -rf "$BASE"
+
+  echo "  [live] $arm arm complete (strategy.md: $out_dir/strategy.md)"
 }
 
 run_grader_blind() {
