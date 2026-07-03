@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "rich-docs",
-  "description": "Author rich single-file HTML planning docs with tabs, mermaid diagrams, file-change trees, and inline comment threads.",
+  "description": "Author rich single-file HTML docs \u2014 designs, plans, proposals, reports \u2014 with tabs, mermaid diagrams, code, file trees, and inline comment threads.",
   "author": {
     "name": "Charlie",
     "email": "github.5ef725@todevnull.work"
@@ -10,8 +10,9 @@
   "repository": "https://github.com/mistakenot/skills",
   "license": "MIT",
   "keywords": [
-    "planning",
     "documentation",
-    "html"
+    "html",
+    "planning",
+    "design-doc"
   ]
 }

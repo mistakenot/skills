@@ -25,7 +25,7 @@ An epic works at a different altitude than a task. Hold the line on it:
 3. **Determine epic ID** -- scan `docs/epics/` for existing `epic-*.html` files. Assign the next 3-digit sequential ID (the highest existing number + 1; e.g. if `epic-004-*.html` exists, next is `005`). If `docs/epics/` doesn't exist or has no epic files, start at `001`.
 4. **Derive epic name** -- create a short kebab-case name from the initiative (e.g. `partner-api-program`).
 5. **Create epics folder** -- `mkdir -p docs/epics` (the epics directory itself; epics are single files, not per-epic folders).
-6. **Create the epic file** -- load the `/{{ skill:rich-docs/planning-doc }}` skill and follow its process to create `docs/epics/epic-$ID-$NAME.html`. It will fetch `llms.txt` for the current component reference and version pin. Set the document title to `$ID: $NAME`, status to `draft`, and include `pd-meta` with id, name, `kind: "epic"`, status `planning`, and created date.
+6. **Create the epic file** -- load the `/{{ skill:rich-docs/rich-doc }}` skill and follow its process to create `docs/epics/epic-$ID-$NAME.html`. It will fetch `llms.txt` for the current component reference and version pin. Set the document title to `$ID: $NAME`, status to `draft`, and include `pd-meta` with id, name, `kind: "epic"`, status `planning`, and created date.
 7. **Populate the tabs** -- author the epic's tabs. Lead with the user-facing final shape; keep every tab at epic altitude.
 
    See [references/epic-tabs.md](references/epic-tabs.md) for what each tab focuses on and which component to reach for per element.

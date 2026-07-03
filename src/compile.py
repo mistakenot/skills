@@ -966,12 +966,12 @@ if __name__ == "__main__":
     )
 
     rich_docs = module("rich-docs",
-        skill("planning-doc", assets=[
+        skill("rich-doc", assets=[
             asset("pd-components/dist/pd-lint.mjs", "scripts/pd-lint.mjs"),
         ]),
-        description="Author rich single-file HTML planning docs with tabs, mermaid diagrams, file-change trees, and inline comment threads.",
+        description="Author rich single-file HTML docs — designs, plans, proposals, reports — with tabs, mermaid diagrams, code, file trees, and inline comment threads.",
         category="productivity",
-        keywords=["planning", "documentation", "html"],
+        keywords=["documentation", "html", "planning", "design-doc"],
     )
 
     reflect_overview = ref("reflection-overview.md")

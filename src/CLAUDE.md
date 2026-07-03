@@ -50,7 +50,7 @@ SKILL.md files support two directives:
 
   **Resolution rules:**
   - Bare name (e.g. `{{ skill:new-solution }}`) — resolves if the skill exists in exactly one module. If the name exists in multiple modules, the compiler errors and requires the qualified form.
-  - Qualified name (e.g. `{{ skill:rich-docs/planning-doc }}`) — resolves in the named module. Errors if the module or skill is not found.
+  - Qualified name (e.g. `{{ skill:rich-docs/rich-doc }}`) — resolves in the named module. Errors if the module or skill is not found.
 
   **Validation:** The compiler validates all `{{ skill:X }}` references in Phase 1 (before writing any output). Unknown skills, unknown modules, and ambiguous bare names all produce errors.
 

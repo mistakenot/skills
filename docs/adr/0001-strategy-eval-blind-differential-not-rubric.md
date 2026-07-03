@@ -1,5 +1,6 @@
 ---
 hash: "9af33f44"
+id: "8e58737e"
 read_when: "revisiting how the assurance strategy-quality eval (task 006) scores strategies, or why answer keys and dimension rubrics were dropped"
 summary: "Decision to grade assurance-strategist via a blind with/without-skill differential judged by a holistic blind LLM expert — dropping human answer keys and decomposed dimension rubrics — because independence (baseline + blinding) is the only escape from self-delusion about the skill's quality."
 title: "ADR-0001: Strategy eval — blind differential, not rubric scoring"

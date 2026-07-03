@@ -1,5 +1,6 @@
 ---
 hash: "54460864"
+id: "ca5b8763"
 read_when: "picking up a past grilling session, or checking what was decided (and why) under interrogation"
 summary: "Append-only log of grill-me pressure-testing sessions: each round's questions, the answers given, and the decisions/ADRs they produced."
 title: "Grilling log"

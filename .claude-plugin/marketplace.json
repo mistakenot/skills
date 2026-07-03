@@ -41,7 +41,7 @@
     {
       "name": "rich-docs",
       "source": "./plugins/rich-docs",
-      "description": "Author rich single-file HTML planning docs with tabs, mermaid diagrams, file-change trees, and inline comment threads.",
+      "description": "Author rich single-file HTML docs \u2014 designs, plans, proposals, reports \u2014 with tabs, mermaid diagrams, code, file trees, and inline comment threads.",
       "category": "productivity"
     },
     {

@@ -30,7 +30,7 @@ pkg_desc() {
     maintenance) echo "Documentation maintenance: keep READMEs and docs in sync with the current state of the code." ;;
     handoff) echo "Machine-local handoff stack: push and pull short text notes between agent sessions using a JSONL store." ;;
     exploration) echo "De-risk ideas before building: run exploratory tech spikes that validate assumptions and stress-test approaches." ;;
-    rich-docs) echo "Author rich single-file HTML planning docs with tabs, mermaid diagrams, file-change trees, and inline comment threads." ;;
+    rich-docs) echo "Author rich single-file HTML docs — designs, plans, proposals, reports — with tabs, mermaid diagrams, code, file trees, and inline comment threads." ;;
     reflection) echo "Reflection loop: mine learnings into a diary, and observe→refine→search reusable task rules." ;;
     assurance) echo "Design end-to-end assurance and testing strategies for autonomous agent-built software." ;;
     research) echo "External-research skills: track open-source repos and mine their updates into a ranked backlog of ideas to borrow." ;;
@@ -48,7 +48,7 @@ pkg_skills() {
     maintenance) echo "revise-readme" ;;
     handoff) echo "handoff" ;;
     exploration) echo "tech-spike" ;;
-    rich-docs) echo "planning-doc" ;;
+    rich-docs) echo "rich-doc" ;;
     reflection) echo "learning-diary playbook-observe playbook-refine playbook-search" ;;
     assurance) echo "assurance-strategist" ;;
     research) echo "borrow-from-oss" ;;

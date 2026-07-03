@@ -2,7 +2,7 @@
 
 The tabs of `epic.html`, in order. One skill (`new-epic`) authors them all. Each tab stays at epic altitude (see [epic-overview.md](epic-overview.md)): direction and constraints, never files, code, or intra-task phases.
 
-For each element below, the **component to prefer** is named. Use the exact tag and attributes from the `llms.txt` that `planning-doc` fetched; if that version doesn't carry it, improvise within the altitude (a diagram, a grouped list, a card) and note nothing is lost — the experience still reads. Never substitute a task-level component (file tree, phase stepper, code outline, code snippet).
+For each element below, the **component to prefer** is named. Use the exact tag and attributes from the `llms.txt` that `rich-doc` fetched; if that version doesn't carry it, improvise within the altitude (a diagram, a grouped list, a card) and note nothing is lost — the experience still reads. Never substitute a task-level component (file tree, phase stepper, code outline, code snippet).
 
 **The epic components share one id-keyed graph.** Give each journey/transcript an `id`; give each guard rail an `id`; then a task names what it `delivers` (journey/cli ids) and `honors` (guard-rail ids). That wiring is what makes the derived views work — `pd-outcome` flags any guard rail no task honors or journey no task delivers, and selecting a guard rail lights up every task bound by it. Author the ids deliberately.
 

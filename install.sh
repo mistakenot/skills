@@ -67,7 +67,7 @@ else
       SKILLS="tech-spike"
       ;;
     rich-docs)
-      SKILLS="planning-doc"
+      SKILLS="rich-doc"
       ;;
     reflection)
       SKILLS="learning-diary,playbook-observe,playbook-refine,playbook-search"

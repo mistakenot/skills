@@ -259,7 +259,7 @@ then compare two axes:
 - **Velocity** — `total_wall_ms`, `velocity.total_tokens`, `total_messages`, `turn_count`.
   v2's 008 baseline: **787s wall, 17.3M tokens, 6 turns, 3 sessions**.
 - **Quality** — read each `artifacts/…/plan.html`; lint it
-  (`node .claude/skills/planning-doc/scripts/pd-lint.mjs <plan.html>`); eyeball completeness
+  (`node .claude/skills/rich-doc/scripts/pd-lint.mjs <plan.html>`); eyeball completeness
   (tabs, `pd-ac` coverage, phase DAG). Automated judging is a deferred next step.
 
 Run **multiple trials per arm** — planning is non-deterministic, so single runs are noisy.

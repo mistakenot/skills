@@ -81,7 +81,7 @@ Only comment on actual problems, genuine ambiguities, or missing information. Do
 Match the comment syntax to the file you are editing -- see the **Comment Format** section below. In both layouts threads are **append-only**: never edit or delete an existing comment.
 
 - **Markdown docs**: insert the comment block directly below the content it addresses, with a blank line above and below.
-- **HTML docs**: insert a `<pd-thread>` directly after the anchored element, with its `anchor` set to that element's `id` (or a `<pd-file>`'s `path`), inside the relevant tab. This keeps the doc compatible with the planning-doc workflow, which renders threads in place and surfaces resolved ones in `<pd-decisions>`.
+- **HTML docs**: insert a `<pd-thread>` directly after the anchored element, with its `anchor` set to that element's `id` (or a `<pd-file>`'s `path`), inside the relevant tab. This keeps the doc compatible with the rich-doc workflow, which renders threads in place and surfaces resolved ones in `<pd-decisions>`.
 
 **If no issues are found:** insert a single clean-review comment so the calling agent can distinguish a successful clean review from a failed review that produced no output.
 
