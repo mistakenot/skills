@@ -121,8 +121,10 @@ Then bring it online before sending (verified flow):
    ntm copy <session>:<index> --last 20 --quiet --output /dev/stdout
    ```
 
-3. Proceed with `/clear` + send as normal, targeting the new pane explicitly
-   with `--pane=<index>` (not `--smart`).
+3. A fresh pane starts at zero context, so it needs **no reset** — do not
+   `/clear` or restart it. Just `ntm send` the task directly, targeting the new
+   pane explicitly with `--pane=<index>` (not `--smart`). See [§6](#6-resetting-a-pane-for-reuse--imperative-restart-never-clear)
+   for why reset is only for *reused* panes.
 
 Add **one** worker per dispatch — never spawn repeatedly in a loop. If `ntm add`
 fails, report the error and stop.
@@ -176,17 +178,49 @@ with `ack.confirmations[].latency_ms`. This works for **all three** agents,
 including OpenCode (targeted by pane). Use it when you need to confirm the
 message actually landed rather than fire-and-forget.
 
-## 6. Send `/clear` and other slash commands / skills
+## 6. Getting a clean pane — spawn fresh, **never `/clear` or in-place restart**
 
-A slash command is just text the TUI interprets: send the literal `/command`
-string with `ntm send` and the agent handles it. This is how the delegate-task
-flow sends `/clear`, `/execute-task <id>`, `/rename`, etc.
+A new task must run in a pane with **clean context**. Two tempting ways to reset
+an *existing* pane both fail; only spawning a fresh pane is reliable.
 
-```bash
-ntm send <session> --pane=<index> '/clear'
-```
+**1. `/clear` — never.** `/clear` is a *cooperative* command: the TUI queues it
+behind whatever the agent is doing and runs it later. Send it to a pane you
+misread as idle and it does not reject or no-op — it silently queues and
+detonates mid-task. This is what wiped task 047. Its return value can't tell you
+whether it actually ran.
 
-All three accept `/clear`, but the effect and the surrounding quirks differ:
+**2. In-place process restart — broken here, do not use.**
+`--robot-smart-restart`, the `respawn` subcommand, and `--robot-restart-pane`
+all kill the agent and re-run its launch command in the same pane. Verified on
+**ntm 1.18.2** (2026-06-27) with a single-Claude throwaway session:
+
+- `--robot-smart-restart --panes=N` → `FAILED`, `can't find window: N` — it
+  treats the flat pane index as a tmux *window* index (addressing bug). `--hard-kill`
+  fails too (`tmux list-panes failed`).
+- `respawn --force` / `--robot-restart-pane` → the relaunched `claude` starts,
+  then **crashes back to a bash shell** within seconds (the re-run launch line
+  reuses a `systemd-run --scope` whose name the exiting process still holds).
+- Worse, `--robot-restart-pane` reports `success / prompt_sent / process_alive:true`
+  **anyway** and sends the dispatch prompt **into the bash shell**, where it runs
+  as a shell command. A silent-fail that misroutes the task is *strictly worse*
+  than `/clear`.
+
+**3. Spawn a fresh pane (`ntm add`) — the only reliable reset.** A newly added
+pane is clean by construction: a brand-new `claude` with empty context and its
+own systemd scope (so it survives). Verified: a fresh pane answers `NO_CONTEXT`
+to a prior pane's codeword. **Dispatch always targets a freshly-spawned pane —
+existing panes are never context-reset in place.** §4 is the spawn procedure;
+once a dispatched pane finishes its task its context is dirty, so it is *reaped*
+by GC (§9), not reused. There is no reset step: a fresh pane needs none, so after
+spawning you simply `ntm send` the task.
+
+> If a future ntm release fixes in-place restart (clean relaunch that survives
+> and only sends the prompt once the agent is back up), it can replace the
+> spawn-fresh step — but re-verify the codeword/NO_CONTEXT check first.
+
+**`/clear` reference (interactive use only).** When a human is driving a pane and
+wants an in-place reset, the per-agent `/clear` semantics still differ — but do
+not use these in automated delegation:
 
 | Agent           | `/clear` behaviour                                            | Slash commands / skills                                   |
 | --------------- | ------------------------------------------------------------- | --------------------------------------------------------- |

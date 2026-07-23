@@ -1,5 +1,5 @@
 ---
-hash: "19803038"
+hash: "8fc9a192"
 id: "d56138fd"
 read_when: "designing or extending the assurance-strategist skill, or looking up the technique catalog and composition frames behind it"
 summary: "Research diary for the assurance-strategist skill: breadth-first catalog of testing/assurance techniques, composition frames for combining them, and open design questions."
@@ -652,3 +652,66 @@ Across two live runs with the fixed probes, the agent produced different strateg
 Both outputs are defensible from the card's criteria — the prompt gives no criticality signal and the domain is genuinely ambiguous (trivial utility vs function-with-expressible-invariants). The variance is not a skill failure; it reflects that the calculator prompt under-constrains the axis diagnosis.
 
 **Conclusion:** the calculator-cli case is good for sanity-checking harness mechanics but is a poor stability target for PBT prescription. To measure whether the skill reliably routes agents to PBT, the prompt must either (a) supply explicit criticality context, or (b) use a domain that unambiguously implies C3+ without being told — a codec, parser, CRDT merge function, or similar. A purpose-built `algorithmic-core` case is the right next addition to the eval case library (matches the initial case list in the eval harness design entry above).
+
+## 2026-07-15 — Mining FrankenGraphDB; the oracle ladder and two new cards
+
+Source: Dicklesworthstone's `frankengraphdb` — its [design doc](https://github.com/Dicklesworthstone/frankengraphdb/blob/main/COMPREHENSIVE_PLAN_FOR_THE_DESIGN_OF_FRANKENGRAPHDB.md) (§4 data model + verification strategy) and its [`AGENTS.md`](https://github.com/Dicklesworthstone/frankengraphdb/blob/main/AGENTS.md). The design doc is aspirational (not shipped), but its verification *philosophy* is unusually rich; `AGENTS.md` is the operational half — literally how autonomous agents prove their work — which is dead-center this skill's domain.
+
+### What the two docs contribute
+
+The thesis worth stealing: **correctness is compositional design, not post-hoc testing** — "every query result becomes an auditable, replayable artifact." That lines up with our self-verification invariant and pushes several ideas further.
+
+**Things that validate/extend what we already have:**
+
+- **Evidence artifacts → standardized replayable "certificates."** The docs emit plan certificates, decision cards, merge-coherence certificates, MTTDL certificates — every adaptive decision produces a *replayable* artifact (`certificate + seq + seed ⇒ byte-identical re-execution`, FG-INV-19). Our evidence language is looser. Learning: give the skill a first-class evidence-artifact vocabulary (inputs, seed, decision path, verdict) so agent evidence is replayable, not just a transcript.
+- **Determinism-first as an enabling substrate.** Byte-identical results + seed-replayable runs are what make chaos/shrinking/audit work at all. Plus: **any adaptive/nondeterministic component must ship a pinned deterministic fallback** ("no adaptive controller ships without its conservative deterministic fallback"), and nondeterminism is opt-in and declared in the plan certificate. Extends our PBT determinism-policy decision to a cross-cutting principle.
+- **Graded formal methods — keep the proven core tiny.** "Three lines get the Lean treatment"; TLA+ only for the commit protocol. Exactly our C4 rung, with the right discipline: prove 2–3 core invariants, test everything else.
+- **Verification as a fail-closed gate.** `fgdb doctor` rejects any config whose computed MTTDL is below target; `cargo test` exit 0 is mandatory before handoff; `scripts/check.sh` = fmt → check → clippy `-D warnings` → test. Sharpens "the verification floor is never zero" into a mechanical, non-negotiable gate.
+- **Defense-in-depth = prescribe a stack.** Their assurance is nested layers (formal core + statistical monitoring + deterministic replay + fault injection), reinforcing our graded philosophy but suggesting the *output shape* for high-criticality subsystems is a layered stack, not one card.
+
+**Two structural ideas we don't have:**
+
+- **The Verification Ladder as a project-level ordered output.** We grade per-technique; `AGENTS.md` ships one whole-project ladder, ordered cheapest→strongest and budget-allocated (simulation → reference oracle → consistency oracles → differential/conformance → storage/metamorphic → fault torture → formal → fuzzing). Notable inversion: **deterministic simulation is the *cheapest* rung, not the most expensive.** Candidate: emit a per-project ladder alongside per-subsystem picks.
+- **Invariant Registry as a standard asset.** `invariants.toml`: every load-bearing invariant gets a stable ID (FG-INV-01…20) *mapped to its enforcement mechanism* (Lean lane / TLA+ / runtime oracle / property test / CI gate), with the hard rule **"no subsystem ships against an unenforced invariant"** and exit gates that can't pass while a dependent invariant lacks a live checker. This is the concrete operationalization of invariant-first thinking, and the single highest-value borrow. Candidate: prescribe an invariant registry as a first-class skill output.
+
+### Card-gap analysis (the actionable output)
+
+All four current cards (unit, react-unit, property-based, model-based) are build-time; the docs lean heavily on techniques we lack. Ranked gaps:
+
+1. **Reference-oracle differential testing** — a deliberately-simple twin (or external suite/competitor/legacy build) run on the same inputs, asserting identical outputs. Solves the *oracle problem* for the stateless-but-complex code (parsers, codecs, compilers, query planners, numeric kernels) that falls through the gap between our exact-oracle unit card and our stateful MBT card. **Built this session.**
+2. **Metamorphic testing** — asserts relations between related runs when *no* oracle exists at all. The last-resort technique for the no-ground-truth situation autonomous agents live in. **Built this session.**
+3. **Fault injection / chaos / systematic concurrency (DPOR)** — lineage-driven fault injection, delta-debugging of failing *schedules*, DPOR interleaving exploration, crash-point matrices, partition storms. Real gap for anything distributed/concurrent; dovetails with the e2e-harness idea in `src/assurance/CLAUDE.md`. **Still open.**
+4. **Runtime / continuous statistical verification** — e-processes, test supermartingales, conformal prediction, Bayesian changepoint; continuous monitoring with valid inference under optional stopping. All our cards are build-time; this is a distinct runtime-assurance surface. **Still open.**
+5. **Fuzzing, incl. grammar-based & coverage-guided** — adjacent to PBT but distinct (grammar generation + coverage feedback + crash-as-oracle). Named as a pairs-with in both new cards; **still open** as its own card.
+
+Also flagged as design-time (a tier *above* testing — eliminate a fault class rather than test for it): **correct-by-construction** via capability narrowing (the rebase evaluator gets no clock/network/fs → determinism guaranteed) and CALM/monotonicity classification (coordination-free vs consensus-needing ops). Candidate workflow pre-step: "can this be made correct by construction before we decide how to test it?"
+
+### The two cards built this session
+
+Both follow the 13-key / 12-section schema and compile clean (`make compile`; card-schema tests pass; the 2 red tests are a pre-existing `pd-components/package.json` fixture bug, unrelated).
+
+**`technique-differential-testing.md`** (slug deliberately `differential-testing` — fills the previously-dangling `pairs-with: differential-testing` / `upgrade` pointers already present in the PBT and MBT cards). `oracle: differential`, `criticality-min: C2`, `upgrade-looser: property-based-testing`, `upgrade-stricter: formal-spec-model-checking`. Covers both flavors under one mechanic: home-grown reference oracle (primary) and external oracle (conformance suite / competitor / legacy / golden capture). Load-bearing content: the **correlated-fault** limitation (both impls sharing a bug passes green) drives the independence-discipline design decision and the kill-test criterion.
+
+**The differential-vs-MBT boundary** (the distinction that took the most discussion): MBT's twin is an *abstract, lossy model* predicting equivalence-class state + operation legality across *sequences*; a reference oracle is a *concrete, full-fidelity implementation* predicting the *exact answer* on a *single input*, and works on stateless/pure code where MBT has no sequences. They merge only at one point — a concrete stateful reference driven by random sequences comparing full state — where you should just use MBT's stateful rung. Both cards' boundary sections state this explicitly.
+
+**`technique-metamorphic-testing.md`** — the no-oracle counterpart. `oracle: metamorphic`, `criticality-min: C2`, `upgrade-looser: property-based-testing`, `upgrade-stricter: differential-testing` (the moment a real oracle appears, exact-output equality is strictly stronger). Framed as the *multi-execution branch of PBT* (relations span runs, not single runs), reusing PBT generators/shrinking. **Pros/cons are explicit in the card body** per request: the headline con — **catches inconsistency, not wrongness** (a uniformly self-consistently-wrong system passes every relation) — is threaded through the cons block, the do-not-prescribe list, the failure-modes table, and the kill-test criterion (which forces documenting the blind spot so a green run isn't over-trusted). The 8-pattern derivation catalog (permutation-invariance, subset-monotonicity, scaling, semantics-preserving mutation, equivalent-path, round-trip, idempotence, decomposition) is the meat, since recognizing which pattern applies *is* the technique.
+
+### The oracle ladder (how the catalog now hangs together)
+
+The two cards complete a ladder organized by *how much oracle you can muster* — the axis autonomous agents actually move along:
+
+| You have… | Technique | Guarantee |
+|---|---|---|
+| A known correct answer | unit / react-unit (`oracle: exact`) | strongest |
+| A trusted twin (simple impl / spec / competitor) | **differential** (`oracle: differential`) | strong |
+| No oracle, but known relations between inputs | **metamorphic** (`oracle: metamorphic`) | weaker, broad |
+| Only single-run invariants / "doesn't crash" | property-based / fuzzing (`oracle: relational`) | weakest, still useful |
+| Ordering/lifecycle rules across sequences | model-based (`oracle: model`) | orthogonal (sequence axis) |
+
+### Next candidates (in priority order)
+
+1. **Fault-injection / chaos / DPOR card** (gap #3) — highest remaining value; pairs with the e2e-harness future idea.
+2. **Fuzzing card** (gap #5) — named as a pairs-with in both new cards; currently a dangling concept.
+3. **Runtime statistical-verification card** (gap #4) — opens the build-time-only catalog to a runtime surface.
+4. **Invariant Registry** as a prescribed asset + SKILL.md practice (the highest-value *non-card* borrow).
+5. **Correct-by-construction pre-step** and the **project-level Verification Ladder** output shape — cross-cutting workflow changes, not cards.
