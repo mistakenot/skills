@@ -1,5 +1,5 @@
 ---
-hash: "d90bb97a"
+hash: "2238f7ec"
 id: "planworkflow-v3"
 read_when: "redesigning the planning workflow (new-task/new-solution/new-plan) for cross-stage context handoff, or reviewing the v3 problem analysis from the 11-run trace"
 summary: "Working notes for a v3 planning-workflow redesign: problems found in the current new-task/new-solution/new-plan pipeline (no cross-stage context handoff, duplicate file reads) and proposed directions."
@@ -319,3 +319,38 @@ commenting on; the background agents are the workers.)
 
 So the single gate becomes: present the finished Plan **plus** any phases the orchestrator
 re-ran to absorb late input. Same one human checkpoint; the rest is background.
+
+## Human notes
+
+- I dont read the outputs of /new-plan
+- I do care about the outputs of new-task and new-solution
+- I want the context building to be async whilst im answering questions
+
+So think new flow looks like, in psudocode
+
+---
+const requirements = userInput("/new-task [user requirements]")
+const quickDocSweep = Explore("Find relevant docs for this task in ./docs...")
+const quickCodeSweep = Explore({
+  prompt: "Explore high level architecture, file structure, symbols that might be related to this task",
+  additionalContext: [quickDocSweep]
+});
+
+const quickContext = quickDocSweep + quickCodeSweep
+
+parallel([
+  Agent({
+    prompt: "Create new task directory with a plan.html file, fill in the requirements as you understand them so far",
+    additionalContext: [quickContext]
+  }),
+  Agent({
+    prompt: "Create a set of clarifying questions for the user, insert them into the doc, notify the user as soon as you're done",
+    additionalContext: [quickContext]
+  }) // this one must be able to notify the user, even before the top agent has finished
+])
+
+---
+1. /new-task [user provides requirements]
+2. Agent does quick high level context sweep, focussed on:
+    - High level documentation (docs/concepts/, docs/meta.md, CLAUDE.md, etc)
+    - High level code sweep ()

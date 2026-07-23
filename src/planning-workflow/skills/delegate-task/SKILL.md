@@ -98,32 +98,35 @@ git log origin/main --oneline -5 -- tasks/$ID/
 
 If the task docs are not on `origin/main`, push them first or warn the user.
 
-### Step 4: Send command
+### Step 4: Reset and send command
 
-If you found an existing idle pane, use `ntm send` with `--smart` to auto-route
-to the best idle agent (least-loaded strategy); if you just added a worker in
-Step 2, target it explicitly with `--pane=$PANE` (not `--smart`):
+**Never use `/clear` to reset a reused pane** — it is a cooperative command that
+silently queues behind in-flight work and detonates later (this wiped task 047).
+Reset imperatively instead — see §6 of
+[references/delegating-to-agents.md](references/delegating-to-agents.md#6-resetting-a-pane-for-reuse--imperative-restart-never-clear).
+
+**Reused pane** (an existing pane confirmed idle on `main` with no open PR in
+Step 2): restart its process and dispatch in one imperative call — `--prompt`
+sends `/execute-task` only after the agent comes back up clean:
 
 ```bash
-ntm send $SESSION --smart --cc --json '/clear'       # existing idle pane
-ntm send $SESSION --pane=$PANE --json '/clear'       # freshly added worker
+ntm --robot-smart-restart=$SESSION --panes=$PANE --prompt='/execute-task $ID' --json
 ```
 
-Wait 5 seconds, then send the execution command and rename:
+Inspect the JSON. If the target pane shows under `summary.restarted`, it reset
+and received the command — proceed to Step 5. If it shows under
+`summary.skipped`/`waiting`, smart-restart judged the agent **busy** and did not
+touch it — **do not `--force`**; treat the pane as ineligible and **add a fresh
+worker** (Step 2's spawn path), then send to that fresh pane as below.
+
+**Freshly added pane** (from Step 2's spawn path): it starts at zero context, so
+it needs **no reset**. Send the command directly:
 
 ```bash
 ntm send $SESSION --pane=$PANE --json '/execute-task $ID'
 ```
 
-Wait 1 second:
-
-```bash
-ntm send $SESSION --pane=$PANE --json '/rename'
-```
-
-If the first `/clear` used `--smart`, note which pane index was selected from the JSON response and use `--pane=$PANE` for subsequent sends.
-
-### Step 5: Verify kickoff
+### Step 5: Verify kickoff, then rename
 
 Capture the pane output to confirm execution started:
 
@@ -131,7 +134,13 @@ Capture the pane output to confirm execution started:
 ntm copy $SESSION:$PANE --last 30 --quiet --output /dev/stdout
 ```
 
-Check that the output shows the execute-task command was received and work has begun.
+Check that the output shows the execute-task command was received and work has
+begun. **Only once kickoff is confirmed**, set the pane title — sending `/rename`
+now (rather than before kickoff) keeps it from queuing behind the dispatch:
+
+```bash
+ntm send $SESSION --pane=$PANE --json '/rename'
+```
 
 ### Step 6: Report
 

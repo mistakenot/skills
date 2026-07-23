@@ -70,18 +70,29 @@ Add **one** worker per dispatch; if `ntm add` fails, report and stop. See
 [references/delegating-to-agents.md](references/delegating-to-agents.md#4-spin-up-a-new-worker-when-none-are-available)
 for the full flow.
 
-### Step 2: Clear and send
+### Step 2: Reset and send
 
-If you found an existing idle pane, use `ntm send` with `--smart` to auto-route
-to the best idle agent; if you just added a worker, target it explicitly with
-`--pane=$PANE` (not `--smart`):
+**Never use `/clear` to reset a reused pane** — it is a cooperative command that
+silently queues behind in-flight work and detonates later (this wiped task 047).
+Reset imperatively instead — see §6 of
+[references/delegating-to-agents.md](references/delegating-to-agents.md#6-resetting-a-pane-for-reuse--imperative-restart-never-clear).
+
+**Reused pane** (an existing pane confirmed idle on `main` with no open PR in
+Step 1): restart its process and dispatch in one imperative call — `--prompt`
+sends the task only after the agent comes back up clean:
 
 ```bash
-ntm send $SESSION --smart --cc --json '/clear'       # existing idle pane
-ntm send $SESSION --pane=$PANE --json '/clear'       # freshly added worker
+ntm --robot-smart-restart=$SESSION --panes=$PANE --prompt='$PROMPT' --json
 ```
 
-Note which pane index was selected from the JSON response. Wait 5 seconds, then send the prompt:
+Inspect the JSON. If the target pane shows under `summary.restarted`, it reset
+and received the prompt — proceed to Step 3. If it shows under
+`summary.skipped`/`waiting`, smart-restart judged the agent **busy** and did not
+touch it — **do not `--force`**; treat the pane as ineligible and **add a fresh
+worker** (Step 1's spawn path), then send to that fresh pane as below.
+
+**Freshly added pane** (from Step 1's spawn path): it starts at zero context, so
+it needs **no reset**. Send the prompt directly:
 
 ```bash
 ntm send $SESSION --pane=$PANE --json '$PROMPT'

@@ -317,11 +317,131 @@ observed in one live run; AC-11 is the differential eval.
 - **Background orchestration is harness-specific (Q-3).** The full background path is only
   exercised on Claude Code; the synchronous fallback (AC-9) is what other agents get, and the
   two paths can diverge in output. We test both but only optimise the Claude-Code path.
+- **Steering-question ranking is validated by discrimination, not calibration.** Per the
+  Solution tab's ranking design, triage quality is an accuracy-rejection-curve question (AUROC-
+  style ordering), with **reconciliation events as free ground-truth labels** (a defaulted answer
+  the human later corrects = a ranking miss). This needs logged v3 runs to plot, so it's a
+  fast-follow measurement, not a v1 pass/fail — and it depends on the Q-4 scope call.
 - **Out of scope, so untested here:** fine-grained section-level rerun, persistent repo-level
   index, calibrated blast-radius gates, on-the-loop telemetry (all deferred per Requirements).
 - **Eval cost.** A full ≥3-trial A/B on two fixtures is many millions of tokens; budget is a
   real constraint and may limit trials-per-arm in practice.
         </script></md>
+      </pd-section>
+
+    </pd-tab>
+
+    <pd-tab name="Solution">
+
+      <pd-section id="architecture" title="Architecture — overlap model">
+        <md><script type="text/plain">
+One orchestrator skill owns an **interactive main loop that never blocks**. Stage 1 runs in
+parallel: it writes the Requirements tab + poses `pd-question`s (each with a recommended lean)
+*while* a lightweight context-gather builds `context.md`. The moment the leans exist, the
+orchestrator **aggressively dispatches the heavy stages as background subagents** on the
+recommended answers — it does not wait for the user. The user keeps talking; their answers,
+ideas, and corrections land in a **steering buffer**. When a late answer invalidates a stage,
+the orchestrator **reruns that whole stage** (coarse reconciliation). There is exactly **one
+human gate**: reviewing the finished Plan. On agents without background execution, the same
+stages run synchronously in the foreground (auto-advancing) — the fallback path.
+        </script></md>
+
+        <pd-mermaid><script type="text/plain">
+flowchart TD
+  U([User: feature request]) --> ORCH
+
+  subgraph FG["Main agent — interactive, never blocks"]
+    ORCH["v3-new-task orchestrator"]
+    REQ["Stage 1: Requirements tab<br/>+ pose pd-questions (recommended leans)"]
+    BUF[("Steering buffer<br/>answers · ideas · corrections")]
+    ORCH --> REQ
+  end
+
+  U -. "answers / late input (anytime)" .-> BUF
+
+  subgraph BG["Background subagents — Claude Code"]
+    CTX["Context-gather<br/>CB1 code · CB2 docs → context.md"]
+    SOL["Solution stage<br/>Verification + Solution tabs"]
+    PLAN["Plan stage<br/>Plan tab + AC traceability"]
+  end
+
+  REQ == "parallel, at once" ==> CTX
+  REQ == "dispatch on leans (don't wait)" ==> SOL
+  CTX --> SOL
+  SOL --> PLAN
+
+  BUF -. "late answer changes a stage's inputs" .-> RECON{"Reconcile:<br/>inputs changed?"}
+  RECON -- yes --> SOL
+  RECON -- no --> PLAN
+
+  PLAN --> GATE[["SINGLE GATE<br/>user reviews finished Plan"]]
+  GATE -- approve --> DONE([plan.html complete])
+  GATE -- changes --> RECON
+
+  FALL["Synchronous fallback:<br/>no background exec →<br/>run stages foreground, auto-advance"] -.-> BG
+        </script></pd-mermaid>
+      </pd-section>
+
+      <pd-section id="question-ranking" title="Steering-question selection &amp; ranking">
+        <md><script type="text/plain">
+A per-question signal does **two jobs** here, and the second is what justifies building it:
+1. **Human triage** — which questions deserve the user's limited attention (the rest proceed
+   on their leans).
+2. **Orchestrator dispatch-gating** — how aggressively to run background work on each lean. A
+   shaky lean is exactly where aggressive overlap wastes the most tokens, so gating dispatch on
+   this signal *improves* quality-per-token rather than costing it.
+
+**The trap we explicitly avoid: absolute confidence grades.** Verbalized LLM confidence is
+miscalibrated and distribution-collapses (clusters at 80–100%, round numbers), so ranking by it
+is near-useless *and* misfires on exactly the wrong items (the model is most overconfident where
+it's wrong). We do **not** attach a "73% confident" label to questions.
+
+**The out: rank, don't grade.** LLMs are far better at *discrimination* (relative ordering,
+measured by AUROC) than *calibration* (absolute grades, measured by ECE) — the two metrics come
+apart empirically, and ordering survives conditions that wreck calibration. Triage is a
+ranking-and-thresholding problem, not a calibration problem, so it lives in the favourable
+regime. Relative/comparative judgments also beat absolute ones structurally (a rater's
+generous/strict offset cancels under comparison).
+
+**Design (v1):**
+- **Source candidate questions from external signals, not self-reported doubt:** *groundedness*
+  (is the lean backed by a cited `context.md` fact/convention, or a bare model prior?) plus
+  *fan-out divergence* (where independent subagents already disagreed — free, because v3 fans
+  out anyway; the same non-determinism that is noise in the eval is signal here).
+- **Rank via one small-set comparative prompt** — "order these open questions most→least likely
+  to change the plan if the default is wrong" — not per-question high/med/low, and not full
+  pairwise.
+- **Feed the ranking to both consumers:** surface the top-k prominently for the human; per lean,
+  gate dispatch — low-rank leans dispatch immediately (full aggressive overlap), high-rank +
+  hard-to-reverse leans either hold that branch or speculatively run *both* resolutions in the
+  background so whichever the human picks is already done.
+
+**Deferred (not in v1):** sparse pairwise + Bradley-Terry/Elo aggregation, uncertainty-aware
+selection of which comparisons to run, and absolute recalibration. That machinery is for large
+item sets; for 3–8 questions per plan the single comparative-ranking prompt captures ~all the
+value at a fraction of the token cost (and quality-per-token is the win condition).
+
+**Validating the ranker (measurement, not a v1 build gate):** triage quality is a
+*discrimination* question — plot an accuracy-rejection curve (retained auto-accept accuracy vs.
+fraction routed to the human) rather than trusting any absolute cutoff. The ground-truth labels
+are free and already in the architecture: **reconciliation events are the labels** — a defaulted
+answer the human later corrects is a miss the ranker should have floated higher. The overlap
+model's own reconciliation log is the eval data for the ranker.
+        </script></md>
+
+        <pd-question id="Q-4" status="open" priority="p2" for="charlie"
+                     title="How much question-ranking machinery ships in v1?">
+          The ranking signal has real value (human triage + dispatch-gating), but the heavy
+          apparatus (sparse pairwise + Bradley-Terry aggregation + uncertainty-aware comparison
+          selection + absolute recalibration) is built for large item sets, whereas a plan has
+          only a handful of open questions.
+          <br><br>
+          <strong>Recommended:</strong> ship the <em>cheap</em> realization in v1 — external-signal
+          sourcing (groundedness + harvested fan-out divergence) + a single small-set comparative-
+          ranking prompt + per-lean dispatch gating. Defer Bradley-Terry/pairwise, uncertainty-aware
+          comparison selection, and AUROC recalibration to a fast-follow. Validate triage quality
+          via the accuracy-rejection curve using reconciliation events as labels, once v3 runs exist.
+        </pd-question>
       </pd-section>
 
     </pd-tab>
