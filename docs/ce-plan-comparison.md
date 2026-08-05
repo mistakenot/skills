@@ -1,5 +1,5 @@
 ---
-hash: "79e88fc4"
+hash: "a6758d42"
 id: "2b3e572a"
 read_when: "comparing our planning workflow to Compound Engineering, evaluating which CE features to adopt, or understanding architectural tradeoffs between single-artifact and multi-document planning approaches"
 summary: "Feature-by-feature comparison of the ce-plan (Compound Engineering) skill ecosystem with our task planning workflow: document structure, execution model, knowledge loop, and feature presence table."
@@ -118,7 +118,7 @@ CE has ~38 skills covering the full product lifecycle: `/ce-strategy`, `/ce-idea
 
 ### 15. Cross-platform portability
 
-CE skills are authored once and converted for Codex, Gemini CLI, Pi, and OpenCode via a Bun/TypeScript CLI. Platform-specific tool references use capability classes with per-platform hints. Our skills target Claude Code natively (with a Codex install target via `npx skills install`), but don't have a conversion layer for other platforms.
+CE skills are authored once and converted for Codex, Gemini CLI, Pi, and OpenCode via a Bun/TypeScript CLI. Platform-specific tool references use capability classes with per-platform hints. Our skills target Claude Code natively (with a Codex install target via `auto skill sync`), but don't have a conversion layer for other platforms.
 
 ## What We Have That CE Doesn't
 

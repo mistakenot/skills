@@ -33,35 +33,41 @@ Planning happens on `main`. Implementation happens on feature branches in isolat
 
 ## Installation
 
+Skills are installed with [`auto skill`](https://github.com/mistakenot/auto). Run it from the root of the project you want the skills available in.
+
+### First time in a project
+
+`auto` resolves output targets from project config rather than per-command flags, so initialise once:
+
+```sh
+auto skill init --project --target claude,agents -y
+```
+
 ### Install all skills (from remote)
 
 ```sh
-npx skills install mistakenot/skills -s '*' -a claude-code codex -y
+auto skill add mistakenot/skills --skill '*'
 ```
 
 ### Install a single skill (from remote)
 
 ```sh
-npx skills install mistakenot/skills -s new-task -a claude-code codex -y
+auto skill add mistakenot/skills --skill new-task
 ```
 
-This installs into `.claude/skills/` and `.agents/skills/`.
+Both render into `.claude/skills/` and `.agents/skills/`. Re-render at any time with `auto skill sync`, and pull upstream changes with `auto skill update`.
 
-### `sk` CLI (recommended)
+### Install a module (bundle of related skills)
 
-For a friendlier workflow, install the `sk` wrapper once and use it to install **packages** (bundles of related skills):
+`install.sh` wraps the same commands but understands **modules**, so you can take just the planning skills rather than all of them:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/mistakenot/skills/main/sk.sh -o ~/.local/bin/sk && chmod +x ~/.local/bin/sk
+./install.sh                              # everything
+./install.sh --module planning-workflow   # just the planning skills
+./install.sh --target claude              # .claude/skills only
 ```
 
-```sh
-sk ls                       # list packages
-sk add planning-workflow    # install a package ('all' for everything)
-sk update                   # update all installed skills
-```
-
-It wraps `npx skills@latest` and self-updates from GitHub on every run, so the package list stays current. (It's named `sk`, not `skills`, to avoid clobbering the npm `skills` binary it delegates to.)
+Run `./install.sh --help` for the module list.
 
 ## Development
 

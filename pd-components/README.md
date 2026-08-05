@@ -39,7 +39,7 @@ run on a dirty / non-`main` tree.
 - **The planning-doc skill fetches `llms.txt` from its pinned tag, not `@main`.**
   The release script recompiles the skill so its `{{ pd-version }}` pin tracks the
   new tag, then commits that alongside the release. Consumers pick up the new
-  components by reinstalling the skill (`npx skills install …`) — no `@main`
+  components by reinstalling the skill (`auto skill update`) — no `@main`
   cache to go stale, so no purge step.
 
 Existing docs stay frozen on their pinned tag by design — bump a doc's

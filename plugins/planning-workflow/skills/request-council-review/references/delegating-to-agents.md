@@ -291,8 +291,8 @@ then run `/resolve-comments` in the coordinator.
 | **Codex** | `codex exec --cd "$CWD" --sandbox workspace-write "…"` | **Requires** `< /dev/null` — blocks on open stdin with "Reading additional input from stdin…" | `--sandbox workspace-write` (writes task docs) |
 | **Grok** | `grok --cwd "$CWD" --permission-mode bypassPermissions --always-approve --single "/review-task …"` | **No redirect needed** — headless mode ignores piped stdin | `--permission-mode bypassPermissions --always-approve` |
 
-Grok discovers skills from `.agents/skills/` (same tree `npx skills install`
-writes for Codex). Ensure `review-task` is installed before delegating.
+Grok discovers skills from `.agents/skills/` (the same tree `auto skill sync`
+renders for Codex). Ensure `review-task` is installed before delegating.
 `--single` (short form `-p`) takes the prompt as its immediate value; never put
 other flags between it and the prompt.
 

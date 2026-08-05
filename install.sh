@@ -3,25 +3,26 @@
 set -euo pipefail
 
 REPO="mistakenot/skills"
-AGENTS="claude-code codex"
+TARGETS="claude,agents"
 
 usage() {
   cat <<EOF
 Usage: ./install.sh [OPTIONS]
 
-Install skills from mistakenot/skills.
+Install skills from mistakenot/skills using \`auto skill\`.
 
 Options:
-  --module <name>   Install only skills from a specific module.
-                    Available modules: planning-workflow, ideation, maintenance, handoff, exploration, rich-docs, reflection, assurance, research, domain-modelling, grill-me, eval-engineer, discovery
-  --agent <agents>  Override target agents (default: claude-code codex).
-                    Use '*' for all agents.
-  -h, --help        Show this help message.
+  --module <name>    Install only skills from a specific module.
+                     Available modules: planning-workflow, ideation, maintenance, handoff, exploration, rich-docs, reflection, assurance, research, domain-modelling, grill-me, eval-engineer, discovery
+  --target <styles>  Comma-separated output targets (default: claude,agents).
+  -h, --help         Show this help message.
 
 Examples:
   ./install.sh                              # Install all skills
   ./install.sh --module planning-workflow   # Install only planning skills
-  ./install.sh --agent claude-code          # Install all skills to claude-code only
+  ./install.sh --target claude              # Install to .claude/skills only
+
+Requires the \`auto\` CLI: https://github.com/mistakenot/auto
 EOF
   exit 0
 }
@@ -33,8 +34,8 @@ while [[ $# -gt 0 ]]; do
       MODULE="$2"
       shift 2
       ;;
-    --agent)
-      AGENTS="$2"
+    --target)
+      TARGETS="$2"
       shift 2
       ;;
     -h|--help)
@@ -47,8 +48,26 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if ! command -v auto >/dev/null 2>&1; then
+  echo "error: 'auto' not found on PATH." >&2
+  echo "Install it first: https://github.com/mistakenot/auto" >&2
+  exit 1
+fi
+
+# auto resolves output targets from project config, not per-command flags, so
+# the project must be initialised before adding anything.
+if [[ ! -f .auto/skills/skills.yaml ]]; then
+  auto skill init --project --target "$TARGETS" -y
+fi
+
+# Non-interactive shells (CI, curl | bash) can't answer the trust prompt.
+TRUST=()
+if [[ ! -t 0 ]]; then
+  TRUST=(--trust-requested)
+fi
+
 if [[ -z "$MODULE" ]]; then
-  npx skills add "$REPO" -s '*' -a $AGENTS -y
+  auto skill add "$REPO" --skill '*' "${TRUST[@]}"
 else
   case "$MODULE" in
     planning-workflow)
@@ -97,7 +116,9 @@ else
       ;;
   esac
   IFS=',' read -ra SKILL_ARRAY <<< "$SKILLS"
+  ARGS=()
   for S in "${SKILL_ARRAY[@]}"; do
-    npx skills add "$REPO" -s "$S" -a $AGENTS -y
+    ARGS+=(--skill "$S")
   done
+  auto skill add "$REPO" "${ARGS[@]}" "${TRUST[@]}"
 fi

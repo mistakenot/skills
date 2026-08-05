@@ -5,10 +5,10 @@
 compile:
 	uv run --no-dev python src/compile.py
 
-# Compiles then installs all skills into claude-code and codex agents.
+# Compiles then renders all skills into .claude/skills/ and .agents/skills/.
 # Run to publish updated skills to agents after making changes.
 install: compile
-	npx skills install ./skills -s '*' -a claude-code codex -y
+	auto skill sync --text
 
 # Builds the pd-components bundle + llms.txt consumed by the planning-doc skill.
 # Run after editing pd-components/src/. See pd-components/README.md for the release/tag flow.

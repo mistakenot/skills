@@ -51,7 +51,7 @@ fi
 
 # 5. Sync skills into agent configs and stage generated files
 step "auto skill sync"
-if auto skill sync 2>&1; then
+if auto skill sync --text 2>&1; then
   # Stage all files that sync may have generated/updated
   for path in .agents/ .claude/skills/ AGENTS.md CLAUDE.md; do
     if [ -e "$path" ]; then
