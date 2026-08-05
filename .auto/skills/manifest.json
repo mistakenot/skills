@@ -79,6 +79,13 @@
       "skill_version": "26ebabea334f5ba2bccbb870d1b807c8504e3b329cf52e07b4bd76e997002ff2",
       "render_version": "1"
     },
+    "extract-demand-from-customer-conversation": {
+      "template_hash": "232990ca1eba7bab3e1c1d4282a51176dcbcb2189f5d664fae9ccff7d066edc3",
+      "replacements": {},
+      "file_refs": [],
+      "skill_version": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
+      "render_version": "1"
+    },
     "fan-out-user-simulation": {
       "template_hash": "83b4faee6233795d896a8b8fb28a4ec16f3bdf37cfaa62591dd9c519e2b07295",
       "replacements": {},
@@ -129,10 +136,10 @@
       "render_version": "1"
     },
     "new-solution": {
-      "template_hash": "ab7704524c896a52071a705e9787b7e6054a20310c506be7faeb2ef2c65d0c77",
+      "template_hash": "6bbce3f5dc382aa775c4428080d4f3d3a3d768c49bc4f3c998e9f60ad75025df",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "ef68b5a70f4ee19f8ba64abc03b64f7b60ce39b49de8aec1a840c3b07e7be9cf",
+      "skill_version": "a18e3ba78037573f4714ecb96ce0aa84ae711b321407e13d9b67ef6c6745e234",
       "render_version": "1"
     },
     "new-task": {
@@ -226,6 +233,13 @@
       "skill_version": "0f1e8d6d5189cdbb8116deee03707f8f888aa287f315c56f072e2cc41a326975",
       "render_version": "1"
     },
+    "skill-reviewer": {
+      "template_hash": "43b5014d154ffb2a7e3ece33da37b5d466b9e233eb16d68b05b2757d42223648",
+      "replacements": {},
+      "file_refs": [],
+      "skill_version": "d0f30430f598da6e73384ff7b6304a4216899d110611ad9055e2d2d2811eb96b",
+      "render_version": "1"
+    },
     "status-report": {
       "template_hash": "302059d5066b529d520c34d29135611b46a81cc2a97c9fe25b151bce350f8a18",
       "replacements": {},
@@ -262,6 +276,7 @@
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
         "eval-engineer": "9b1f5dab94bbad1d771731976c6ccca9ff5029b2440b24e9b46909b1848abdc3",
         "execute-task": "26ebabea334f5ba2bccbb870d1b807c8504e3b329cf52e07b4bd76e997002ff2",
+        "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
         "generate-10-ideas": "86f06f47c77cc7fa813f6da24b8e219f1f82cd3cfb875b7ee89d2ca3d275af68",
         "grill-me": "a471c7e964a021b3480d4788c265fc6ec26f47043f2b1219ad8ff0f29812430e",
@@ -269,7 +284,7 @@
         "learning-diary": "562de1c03280fc192012f69eabf7010d156c06847b6859cbd7804031531fe6d7",
         "new-epic": "5b6185a0284b49046cb7aa220208dfc691c4fd22b9afa33d7b21e7ef5c9ff472",
         "new-plan": "a969e2cede284cf9d7d83732693f8a8b272d3f891210dc1f24e5841693ad0cc6",
-        "new-solution": "ef68b5a70f4ee19f8ba64abc03b64f7b60ce39b49de8aec1a840c3b07e7be9cf",
+        "new-solution": "a18e3ba78037573f4714ecb96ce0aa84ae711b321407e13d9b67ef6c6745e234",
         "new-task": "92ece825d9a2e919e3f9127d7a4f0f9ed2238ea4f0d4a413daa206e2d5a2b54e",
         "playbook-observe": "8fb0772012871ac78065a82c8f9861fb7d4c5d51b731c88421b1daf715e2590f",
         "playbook-refine": "2c322d39d5131cfd30776036dbc14aca2a87181f30d545810046918df905224e",
@@ -283,6 +298,7 @@
         "review-task": "10b7bcabfe66bc8365c3cae3b1981c8f7a6e6c64fe79f6932a0fe3d3d5cb86a1",
         "revise-readme": "99a08b493c6cc16afeb88444d915e9c52b1e394fb5f10d9a9bdb3ac0c6d3332c",
         "rich-doc": "0f1e8d6d5189cdbb8116deee03707f8f888aa287f315c56f072e2cc41a326975",
+        "skill-reviewer": "d0f30430f598da6e73384ff7b6304a4216899d110611ad9055e2d2d2811eb96b",
         "status-report": "31d2498ca0d69bc07c2a9ad8d73ff04922529d5c7c0252071db015709a517e38",
         "task-feedback-analyser": "c20d97a56c7b1d23cb9f7993d81e81804e0e86d081192bc4581ae3580ecdc206",
         "tech-spike": "1cb07d5004de3966851ed99fa8c74fc81bab28a289abf21e4bdeb72409b56182"
@@ -301,6 +317,7 @@
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
         "eval-engineer": "9b1f5dab94bbad1d771731976c6ccca9ff5029b2440b24e9b46909b1848abdc3",
         "execute-task": "26ebabea334f5ba2bccbb870d1b807c8504e3b329cf52e07b4bd76e997002ff2",
+        "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
         "generate-10-ideas": "86f06f47c77cc7fa813f6da24b8e219f1f82cd3cfb875b7ee89d2ca3d275af68",
         "grill-me": "a471c7e964a021b3480d4788c265fc6ec26f47043f2b1219ad8ff0f29812430e",
@@ -308,7 +325,7 @@
         "learning-diary": "562de1c03280fc192012f69eabf7010d156c06847b6859cbd7804031531fe6d7",
         "new-epic": "5b6185a0284b49046cb7aa220208dfc691c4fd22b9afa33d7b21e7ef5c9ff472",
         "new-plan": "a969e2cede284cf9d7d83732693f8a8b272d3f891210dc1f24e5841693ad0cc6",
-        "new-solution": "ef68b5a70f4ee19f8ba64abc03b64f7b60ce39b49de8aec1a840c3b07e7be9cf",
+        "new-solution": "a18e3ba78037573f4714ecb96ce0aa84ae711b321407e13d9b67ef6c6745e234",
         "new-task": "92ece825d9a2e919e3f9127d7a4f0f9ed2238ea4f0d4a413daa206e2d5a2b54e",
         "playbook-observe": "8fb0772012871ac78065a82c8f9861fb7d4c5d51b731c88421b1daf715e2590f",
         "playbook-refine": "2c322d39d5131cfd30776036dbc14aca2a87181f30d545810046918df905224e",
@@ -322,6 +339,7 @@
         "review-task": "10b7bcabfe66bc8365c3cae3b1981c8f7a6e6c64fe79f6932a0fe3d3d5cb86a1",
         "revise-readme": "99a08b493c6cc16afeb88444d915e9c52b1e394fb5f10d9a9bdb3ac0c6d3332c",
         "rich-doc": "0f1e8d6d5189cdbb8116deee03707f8f888aa287f315c56f072e2cc41a326975",
+        "skill-reviewer": "d0f30430f598da6e73384ff7b6304a4216899d110611ad9055e2d2d2811eb96b",
         "status-report": "31d2498ca0d69bc07c2a9ad8d73ff04922529d5c7c0252071db015709a517e38",
         "task-feedback-analyser": "c20d97a56c7b1d23cb9f7993d81e81804e0e86d081192bc4581ae3580ecdc206",
         "tech-spike": "1cb07d5004de3966851ed99fa8c74fc81bab28a289abf21e4bdeb72409b56182"

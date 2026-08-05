@@ -1037,4 +1037,11 @@ if __name__ == "__main__":
         keywords=["eval", "evaluation", "benchmark", "ab-testing", "skill-quality"],
     )
 
-    compile([planning, ideation, maintenance, handoff, exploration, rich_docs, reflection, assurance, research, domain_modelling, grill, eval_engineer])
+    discovery = module("discovery",
+        skill("extract-demand-from-customer-conversation", refs=[ref("pull-framework.md"), ref("urgency-signals.md")]),
+        description="Customer discovery: mine real customer conversations for demand signals, jobs-to-be-done, and unmet needs.",
+        category="productivity",
+        keywords=["discovery", "customer-research", "jobs-to-be-done", "demand", "product"],
+    )
+
+    compile([planning, ideation, maintenance, handoff, exploration, rich_docs, reflection, assurance, research, domain_modelling, grill, eval_engineer, discovery])

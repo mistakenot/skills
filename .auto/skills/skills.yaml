@@ -1,0 +1,9 @@
+auto_update: true
+targets:
+    - claude
+    - agents
+commit_targets: true
+trusted_hosts: []
+shared:
+    version: latest
+skills: {}

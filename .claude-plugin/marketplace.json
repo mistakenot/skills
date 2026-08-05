@@ -79,6 +79,12 @@
       "source": "./plugins/eval-engineer",
       "description": "Build, run, validate, and manage A/B evals for skills in this repo: replay real tasks, compare skill versions on cost and quality, and validate the eval before trusting it.",
       "category": "development"
+    },
+    {
+      "name": "discovery",
+      "source": "./plugins/discovery",
+      "description": "Customer discovery: mine real customer conversations for demand signals, jobs-to-be-done, and unmet needs.",
+      "category": "productivity"
     }
   ]
 }

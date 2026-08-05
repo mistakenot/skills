@@ -50,17 +50,17 @@ Read approved requirements, gather codebase context, write `context.md`, then ad
 
    See [references/tab-verification.md](references/tab-verification.md) for the tab structure and rules.
 
-8. **Hard-stop (gate 1)** -- present the Verification tab to the user. Tell them: "Review the Verification tab. When ready, confirm to proceed to Solution design."
+   Do not stop after the Verification tab -- continue straight through to the Solution tab.
 
 ### Stage 3: Solution Tab
 
-9. **Assess complexity** (informed by context):
+8. **Assess complexity** (informed by context):
    - **Straightforward** (one obvious approach): go directly to step 10.
    - **Ambiguous** (multiple viable approaches): go to step 9.
-10. **Explore options** -- spawn parallel subagents, one per candidate approach. Each subagent investigates feasibility using the gathered context. Collect results. Present a comparison table with pros/cons for each option. Wait for the user to pick.
-11. **Write Solution tab** -- design the solution and insert `<pd-tab name="Solution">` into plan.html after the Verification tab.
+9. **Explore options** -- spawn parallel subagents, one per candidate approach. Each subagent investigates feasibility using the gathered context. Collect results. Present a comparison table with pros/cons for each option. Wait for the user to pick.
+10. **Write Solution tab** -- design the solution and insert `<pd-tab name="Solution">` into plan.html after the Verification tab.
 
     See [references/tab-solution.md](references/tab-solution.md) for the tab structure and rules.
 
-12. **Validate assumptions** -- review every design decision and identify any that were NOT clearly dictated by (a) the requirements or (b) pre-established patterns in the repository. **When interactive**, surface uncertain decisions with the user (use `AskUserQuestion` tool) and update plan.html with their answers. **When running autonomously** (told not to ask, or no user available), record each load-bearing uncertain decision as a `<pd-question>` with a `recommendedAnswer` rather than silently committing to it — it gates the doc so the executor can't build on an unvalidated assumption, while the human can rubber-stamp your lean in one click. Reserve prose notes for assumptions you're comfortable proceeding on.
-13. **Hard-stop (gate 2)** -- present the completed Solution tab to the user. Do NOT proceed to the plan stage. Tell them: "Review the Solution tab. When ready, run `/{{ skill:new-plan }}` to continue."
+11. **Validate assumptions** -- review every design decision and identify any that were NOT clearly dictated by (a) the requirements or (b) pre-established patterns in the repository. **When interactive**, surface uncertain decisions with the user (use `AskUserQuestion` tool) and update plan.html with their answers. **When running autonomously** (told not to ask, or no user available), record each load-bearing uncertain decision as a `<pd-question>` with a `recommendedAnswer` rather than silently committing to it — it gates the doc so the executor can't build on an unvalidated assumption, while the human can rubber-stamp your lean in one click. Reserve prose notes for assumptions you're comfortable proceeding on.
+12. **Hard-stop** -- present the completed Verification and Solution tabs to the user. Do NOT proceed to the plan stage. Tell them: "Review the Verification and Solution tabs. When ready, run `/{{ skill:new-plan }}` to continue."
