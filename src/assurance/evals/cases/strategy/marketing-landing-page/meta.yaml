@@ -1,0 +1,14 @@
+# Result-slicing tags only. NEVER fed to the judge (D-2): the judge sees the
+# anonymised strategy docs, not this file.
+title: Marketing landing page
+trap: over            # over-engineering trap: sounds high-stakes, is actually low-criticality
+criticality: low      # marketing UI; a bug costs a re-deploy, not money or safety
+volatility: high      # copy/imagery/layout churn weekly
+archetype: marketing-ui
+notes: >
+  The brief is dressed up as important and customer-facing (main domain, launch,
+  company-wide sharing) but is a fast-changing, low-consequence marketing page.
+  Heavy test infrastructure (full-DOM snapshots, cross-browser matrices,
+  property-based tests over trivial form validation) is over-engineering here.
+  A calibrated strategy protects the one revenue-bearing flow (the demo CTA lead
+  capture) and consciously declines to test volatile copy/layout.

@@ -1,5 +1,5 @@
 ---
-hash: "e5d84480"
+hash: "b2d1e267"
 id: "7ceb6cc2"
 read_when: "running evals, adding new eval cases, or understanding how the with-skill vs without-skill comparison works"
 summary: "Two-arm differential eval harness for the assurance-strategist skill: architecture, how to run (stub vs live), mechanical checks (T1/T2), grader dimensions, how to add new cases and dimensions."
@@ -45,7 +45,7 @@ Requires `~/.claude/.credentials.json`. Makes ~3 API calls (baseline arm, withsk
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MODEL` | `claude-sonnet-4-20250514` | Model for all arms |
+| `MODEL` | `claude-sonnet-4-6` | Model for all arms |
 | `AGENT_RUNNER` | `live` | `stub` for offline mode |
 | `CASE` | `calculator-cli` | Case directory name under `cases/` |
 
@@ -88,6 +88,60 @@ A third `claude -p` call (no skill) scores both arms on four dimensions (0-3 sca
 | `evidence` | Did the agent verify its own work? |
 
 The rubric lives at `src/assurance/evals/graders/strategy-rubric.md`. `grade_report.py` parses the grader's JSON defensively (strips code fences, extracts first balanced `{...}` block, degrades to "parse failed" row on failure).
+
+## Strategy-only blind mode
+
+The default mode above judges *implementations* on a 0-3 dimension grid. The
+strategy-only mode judges *strategies* instead: each arm produces a testing
+strategy as a single markdown document (no implementation, no workspace, no
+`checks.sh`), and a blind judge picks the better one. It is an additive seam on
+the same harness, selected with `EVAL_MODE=strategy-only`; the default
+(`current`) mode is untouched.
+
+### How to run
+
+```bash
+make eval-assurance-strategy AGENT_RUNNER=stub          # offline smoke test
+make eval-assurance-strategy                            # live, default scenario
+make eval-assurance-strategy CASE=strategy/admin-bulk-delete-cli
+```
+
+`eval-assurance-strategy` is a thin wrapper that sets `EVAL_MODE=strategy-only`;
+you can also invoke the base target directly with `make eval-assurance
+EVAL_MODE=strategy-only`. It honours the same `AGENT_RUNNER`, `CASE`, and `MODEL`
+knobs. In strategy mode `CASE` defaults to `strategy/marketing-landing-page`, and
+cases live under `cases/strategy/<name>/` with a `scenario.md` brief (plus an
+optional `meta.yaml` of result-slicing tags) — no `prompt.md`, no `checks.sh`.
+
+### Report shape
+
+Unlike the dimension grid, the strategy-only report is a holistic diagnosis:
+
+- **Winner** — the un-blinded arm the judge preferred (`baseline` or `withskill`).
+- **Prose weaknesses** — the judge's free-text critique of each strategy. No 0-3
+  scores, no per-dimension table, no answer key.
+- **Leakage line** — the judge's guess at which anonymised strategy came from the
+  skill arm, plus whether the guess was correct.
+
+The judge runs in a skill-less clean room and is fed only the neutral project
+brief plus the two strategies relabelled "Strategy A"/"Strategy B" (a seeded
+order + label swap, mapping stored out-of-band in `mapping.json`). It never sees
+arm labels, scorecards, or `meta.yaml` trap tags. `grade_report.py` switches to
+this report when the grader JSON carries a `winner` key, and degrades to a "parse
+failed" row if the judge returns no parseable verdict.
+
+### Validation
+
+Because the verdict is a single holistic judgement rather than mechanical scores,
+the mode is validated two ways before its numbers are trusted:
+
+- **Noise floor** — repeat the full blind A/B run on one scenario ≥3 times and
+  record how stable the winner is (and the `total_cost_usd` spread). A future
+  A/B delta only means something if it clears this noise.
+- **Blinding leakage** — aggregate the judge's skill-arm guess vs the truth. If
+  the judge reliably identifies the skill arm, it may be rewarding house style
+  rather than substance; that is the trigger to escalate anonymisation, not a
+  blocker.
 
 ## Adding a new eval case
 

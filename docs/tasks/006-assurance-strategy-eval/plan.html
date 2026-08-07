@@ -8,7 +8,7 @@
 </head>
 <body>
   <!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
-  <pd-doc title="006: assurance-strategy-eval" status="pending" pr="pending" generated="2026-06-28" next-prompt="/execute-task 006">
+  <pd-doc title="006: assurance-strategy-eval" status="complete" pr="https://github.com/mistakenot/skills/pull/7" generated="2026-06-28" next-prompt="/execute-task 006">
 
     <script type="application/json" id="pd-meta">
     {
@@ -453,7 +453,7 @@ instrument-validation wrapper (Phase 5).
       <pd-section id="phases" title="Phases">
         <pd-stepper>
 
-          <pd-phase n="1" title="Walking skeleton: stub blind pipeline, 1 scenario" status="todo"
+          <pd-phase n="1" title="Walking skeleton: stub blind pipeline, 1 scenario" status="done"
                     files="src/assurance/evals/run.sh, src/assurance/evals/blind_grade.py, src/assurance/evals/grade_report.py, src/assurance/evals/graders/holistic-judge.md, src/assurance/evals/cases/strategy/marketing-landing-page/scenario.md, src/assurance/evals/cases/strategy/marketing-landing-page/meta.yaml, src/assurance/tests/test_blind_report.py">
             <md><script type="text/plain">
 Thinnest end-to-end path through every layer, in **stub mode** (no API). This is the walking
@@ -477,7 +477,7 @@ Steps:
             </script></md>
           </pd-phase>
 
-          <pd-phase n="2" title="Live strategy arm + isolation proof" status="todo" depends-on="1"
+          <pd-phase n="2" title="Live strategy arm + isolation proof" status="done" depends-on="1"
                     files="src/assurance/evals/run.sh">
             <md><script type="text/plain">
 Replace the stub arm with a real `claude -p` arm that produces a strategy doc only. Grader stays
@@ -499,7 +499,7 @@ the repo path (`/home/vscode/src/skills`) → 0 hits. Only the skill dir differs
             </script></md>
           </pd-phase>
 
-          <pd-phase n="3" title="Live blind judge + leakage probe" status="todo" depends-on="2"
+          <pd-phase n="3" title="Live blind judge + leakage probe" status="done" depends-on="2"
                     files="src/assurance/evals/run.sh, src/assurance/evals/blind_grade.py, src/assurance/evals/grade_report.py, src/assurance/evals/graders/holistic-judge.md, src/assurance/tests/test_blind_report.py">
             <md><script type="text/plain">
 Swap the stub grader for the live blind judge.
@@ -521,7 +521,7 @@ scorecards / skill-name framing (AC-3 — organic body tokens are left to the AC
             </script></md>
           </pd-phase>
 
-          <pd-phase n="4" title="Second scenario, regression guard, Makefile + docs" status="todo" depends-on="3"
+          <pd-phase n="4" title="Second scenario, regression guard, Makefile + docs" status="done" depends-on="3"
                     files="src/assurance/evals/cases/strategy/admin-bulk-delete-cli/scenario.md, src/assurance/evals/cases/strategy/admin-bulk-delete-cli/meta.yaml, Makefile, docs/assurance-eval-system.md">
             <md><script type="text/plain">
 Steps:
@@ -539,7 +539,7 @@ still produces the unchanged dimension report (AC-8 regression); docs render. **
             </script></md>
           </pd-phase>
 
-          <pd-phase n="5" title="Validate the instrument (noise floor + leakage)" status="todo" depends-on="4"
+          <pd-phase n="5" title="Validate the instrument (noise floor + leakage)" status="done" depends-on="4"
                     files="src/assurance/evals/validate-instrument.sh">
             <md><script type="text/plain">
 The capstone: prove the instrument before trusting it.
