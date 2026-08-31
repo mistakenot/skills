@@ -1,29 +1,34 @@
 ---
 name: status-report
-description: "Monitors all executor panes in a tmux session, reports the status of running, completed, stuck, or idle tasks, and garbage-collects surplus idle panes. Use when 'status report', 'check executors', 'executor status', 'how are tasks going', 'reap idle panes', or when monitoring background task progress."
+description: "Monitors all executor panes in a background session, reports the status of running, completed, stuck, or idle tasks, and garbage-collects surplus idle panes. Use when 'status report', 'check executors', 'executor status', 'how are tasks going', 'reap idle panes', or when monitoring background task progress."
 ---
 
 # Executor Status Check
 
-Monitor all executor panes in a tmux session using `ntm` and report status.
+Monitor all executor panes in a background session and report status.
+
+> Read `references/ntm/list-workers.md`
+> first, before anything else below. If that directory does not exist, stop
+> and report that the `runner` value is invalid — valid values are `ntm` and
+> `herdr`.
 
 > Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 > **Mixed agent types.** Panes may run Claude Code, Codex, or OpenCode, whose
-> identification and `/clear` behaviour differ — and `.type` is unreliable for
-> OpenCode (resolve by `.command`). The `ntm grep … --cc` in Step 2 only covers
-> Claude panes. See [references/delegating-to-agents.md](references/delegating-to-agents.md)
-> for reliable agent identification and per-agent quirks.
+> identification and `/clear` behaviour differ. See
+> [references/agent-conventions.md](references/agent-conventions.md) for
+> reliable agent identification and per-agent quirks.
 
-> **Pool model.** Sessions are organised as two label-separated pools —
+> **Pool model.** Panes are organised as two role-separated pools —
 > `planners` (commit to `main`) and `workers` (worktrees + PRs). This skill
-> monitors and GCs the **workers** pool (`<project>--workers`). See
-> [references/ntm-agent-pools.md](references/ntm-agent-pools.md).
+> monitors and GCs the **workers** pool. See
+> [references/worker-pools.md](references/worker-pools.md).
 
 ## Input
 
-Optional tmux session name (defaults to `$PROJECT--workers`, formerly
-`$PROJECT--execute`).
+Optional session/pool name (defaults to the project's worker pool — resolve
+the concrete name with `references/ntm/label-worker.md`, since the
+convention differs per runner).
 
 ## Status Values
 
@@ -36,27 +41,20 @@ Optional tmux session name (defaults to `$PROJECT--workers`, formerly
 
 ### Step 1: Get structured pane metadata
 
-```bash
-ntm status $SESSION --json
-```
-
-Parse the JSON. Each pane entry includes `index`, `title`, `type`, `command`, `context_tokens`, `context_limit`, `context_percent`, and `context_model`. Use `context_percent` to detect context exhaustion (95%+ = stuck). The `title` field often contains the task name.
+See `references/ntm/list-workers.md`.
+Each pane's metadata includes context usage — use it to detect context
+exhaustion (95%+ = stuck).
 
 ### Step 2: Scan for status markers across all panes
 
-```bash
-ntm grep '(execute-task|phase|Phase|PR |error|stuck|permission|Task complete)' $SESSION --cc -i
-```
-
-This searches all Claude panes at once. Match lines reveal task IDs, phase progress, errors, and completion markers without capturing each pane individually.
+See `references/ntm/scan-output.md` to search all Claude panes at
+once. Matches reveal task IDs, phase progress, errors, and completion
+markers without capturing each pane individually.
 
 ### Step 3: Capture detail for ambiguous panes
 
-For any pane whose status is unclear from the grep results, capture more output:
-
-```bash
-ntm copy $SESSION:$PANE --last 50 --quiet --output /dev/stdout
-```
+For any pane whose status is unclear from the scan results, capture more
+output — see `references/ntm/read-output.md`.
 
 ### Step 4: Extract per-pane status
 
@@ -68,7 +66,7 @@ For each pane, determine:
 - **Suggested next step**:
   - completed + PR open -> `/address-feedback`
   - feedback resolved -> `/complete-task`
-  - PR merged -> `/clear`
+  - PR merged -> reap it (Step 6)
   - stuck -> describe the blocker
 
 ### Step 5: Present results
@@ -84,26 +82,23 @@ For each pane, determine:
 ### Step 6: Reclaim idle panes (garbage collection)
 
 After reporting, shrink the pool back toward the warm **floor of 4** so idle
-Claude panes (each a full `claude` process with ~7.8 GB `MemoryMax`) don't
-accumulate after a burst of tasks.
+Claude panes (each a full `claude` process carrying several GB of memory)
+don't accumulate after a burst of tasks.
 
 Reap **only** panes that are **idle on `main` with no open PR** — never
-in-progress, stuck, completed-with-PR, or feature-branch panes. Because
-`ntm scale` reaps the **highest-index pane first and is not busy-aware**, only
-scale down by the contiguous run of idle panes at the **top** of the index
-range:
+in-progress, stuck, completed-with-PR, or feature-branch panes. The reap
+mechanism (see `references/ntm/reap-worker.md`) reaps the
+**highest-index pane first and is not busy-aware**, so only scale down by
+the contiguous run of idle panes at the **top** of the index range:
 
 - `cc_total` = number of Claude panes.
 - `reapable_top` = idle-on-main panes counting **down from the highest index**,
   stopping at the first busy pane.
 - `to_reap = max(0, min(reapable_top, cc_total - 4))`.
 
-Re-confirm those top panes are still idle immediately before scaling, then:
-
-```bash
-ntm scale $SESSION --cc=$(( cc_total - to_reap )) --force --json
-```
+Re-confirm those top panes are still idle immediately before scaling, then
+reap them — see `references/ntm/reap-worker.md`.
 
 Report which panes were reaped and which idle panes were **kept** and why (floor
 reached, or a busy pane sitting above them — that case reaps nothing this cycle).
-Full policy: [references/delegating-to-agents.md](references/delegating-to-agents.md#9-reclaiming-panes-garbage-collection).
+Full policy: [references/worker-pools.md](references/worker-pools.md).

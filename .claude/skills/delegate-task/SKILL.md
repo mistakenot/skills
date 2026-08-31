@@ -1,11 +1,16 @@
 ---
 name: delegate-task
-description: "Dispatches task execution to an idle Claude Code pane in a tmux session, freeing the current session for other work. Use when 'delegate task', 'send to executor', or when the user wants to hand off a task to a background pane."
+description: "Dispatches task execution to an idle Claude Code pane in a background session, freeing the current session for other work. Use when 'delegate task', 'send to executor', or when the user wants to hand off a task to a background pane."
 ---
 
 # Delegate Task
 
-Dispatch execution to an idle Claude Code pane in a tmux session using `ntm`.
+Dispatch execution to an idle Claude Code pane in a background session.
+
+> Read `references/ntm/list-workers.md`
+> first, before anything else below. If that directory does not exist, stop
+> and report that the `runner` value is invalid — valid values are `ntm` and
+> `herdr`.
 
 > Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
@@ -15,17 +20,19 @@ Dispatch execution to an idle Claude Code pane in a tmux session using `ntm`.
 > **Targeting non-Claude agents.** This skill dispatches `/execute-task` to a
 > Claude Code pane. To discover agents and send to **Codex** or **OpenCode**
 > panes (whose send/clear conventions differ), see
-> [references/delegating-to-agents.md](references/delegating-to-agents.md).
+> [references/agent-conventions.md](references/agent-conventions.md).
 >
-> **Pool model.** This skill dispatches into the **workers** pool
-> (`<project>--workers`) — worker panes run in worktrees and open PRs, separated
-> by `ntm` label from the `planners` pool that commits to `main`. See
-> [references/ntm-agent-pools.md](references/ntm-agent-pools.md).
+> **Pool model.** This skill dispatches into the **workers** pool — worker
+> panes run in worktrees and open PRs, separated by role label from the
+> `planners` pool that commits to `main`. See
+> [references/worker-pools.md](references/worker-pools.md).
 
 ## Input
 
-Task ID (numeric) and optionally a tmux session name (defaults to
-`$PROJECT--workers`, formerly `$PROJECT--execute`).
+Task ID (numeric) and optionally a session/pool name (defaults to the
+project's worker pool — resolve the concrete name with
+`references/ntm/label-worker.md`, since the convention differs
+per runner).
 
 ## Dispatch Workflow
 
@@ -44,15 +51,8 @@ This also satisfies the "task docs pushed" requirement below.
 
 ### Step 2: Find an eligible pane
 
-```bash
-ntm status $SESSION --json
-```
-
-Parse the JSON output to get the list of panes. Then inspect each candidate pane:
-
-```bash
-ntm copy $SESSION:$PANE --last 20 --quiet --output /dev/stdout
-```
+Enumerate panes with `references/ntm/list-workers.md`,
+then inspect each candidate's recent output with `references/ntm/read-output.md`.
 
 A pane is eligible when **all** of the following are true:
 
@@ -62,29 +62,15 @@ A pane is eligible when **all** of the following are true:
 
 If a candidate is idle but on a feature branch, skip it and report why (e.g. "pane 2 skipped: on branch `task-505` with open PR").
 
-If **no panes are eligible** — all busy, on feature branches, or only a `user`
-shell — **add a fresh worker** instead of stopping. Do not interrupt active work.
-First check the **ceiling**: if the session already has **6** Claude panes (the
-cap) and none are eligible, every worker is genuinely busy — report and stop (or
-wait and re-check); do not add a seventh. Otherwise add one:
-
-```bash
-ntm add $SESSION --cc=1 --json
-```
-
-Then re-query `ntm status $SESSION --json` to find the new pane's index (the
-`add` output's `new_panes[].index` is unreliable — pick the highest-index
-`claude` pane), and wait until it is ready for input:
-
-```bash
-ntm --robot-wait=$SESSION --wait-until=idle --timeout=60s
-```
-
-It returns when the agent reports `state: WAITING`. Set `$PANE` to the new pane.
-A freshly added pane starts on `main`, so it is always eligible. Add **one**
-worker per dispatch; if `ntm add` fails, report and stop. See
-[references/delegating-to-agents.md](references/delegating-to-agents.md#4-spin-up-a-new-worker-when-none-are-available)
-for the full flow.
+If **no panes are eligible** — all busy, on feature branches, or only a plain
+shell — **add a fresh worker** instead of stopping. Do not interrupt active
+work. First check the **ceiling**: if the pool already has **6** Claude
+panes (the cap) and none are eligible, every worker is genuinely busy —
+report and stop (or wait and re-check); do not add a seventh. Otherwise add
+one and wait until it is ready for input — see `references/ntm/spawn-worker.md` and `references/ntm/wait-for-ready.md`.
+Set `$PANE` to the new pane. A freshly added pane starts on `main`, so it is
+always eligible. Add **one** worker per dispatch; if spawning fails, report
+and stop.
 
 > **Warning:** A pane sitting in another task's worktree has a stale checkout. If dispatched there, the executor may read outdated task docs before creating its own worktree. Always ensure the target pane is on `main`.
 
@@ -102,56 +88,27 @@ If the task docs are not on `origin/main`, push them first or warn the user.
 
 **Never use `/clear` to reset a reused pane** — it is a cooperative command that
 silently queues behind in-flight work and detonates later (this wiped task 047).
-Reset imperatively instead — see §6 of
-[references/delegating-to-agents.md](references/delegating-to-agents.md#6-resetting-a-pane-for-reuse--imperative-restart-never-clear).
+Reset imperatively instead — see `references/ntm/reset-worker.md`.
 
 **Reused pane** (an existing pane confirmed idle on `main` with no open PR in
-Step 2): restart its process and dispatch in one imperative call — `--prompt`
-sends `/execute-task` only after the agent comes back up clean:
-
-```bash
-ntm --robot-smart-restart=$SESSION --panes=$PANE --prompt='/execute-task $ID' --json
-```
-
-Inspect the JSON. If the target pane shows under `summary.restarted`, it reset
-and received the command — proceed to Step 5. If it shows under
-`summary.skipped`/`waiting`, smart-restart judged the agent **busy** and did not
-touch it — **do not `--force`**; treat the pane as ineligible and **add a fresh
-worker** (Step 2's spawn path), then send to that fresh pane as below.
+Step 2): reset it and dispatch `/execute-task $ID` in one step — see `references/ntm/reset-worker.md`.
+If the reset instead reports the pane as busy, **do not force it** — treat
+the pane as ineligible and **add a fresh worker** (Step 2's spawn path),
+then send to that fresh pane as below.
 
 **Freshly added pane** (from Step 2's spawn path): it starts at zero context, so
-it needs **no reset**. Send the command directly:
-
-```bash
-ntm send $SESSION --pane=$PANE --json '/execute-task $ID'
-```
+it needs **no reset**. Send the command directly — see `references/ntm/send-prompt.md`.
 
 ### Step 5: Verify kickoff, then rename
 
-Capture the pane output to confirm execution started:
-
-```bash
-ntm copy $SESSION:$PANE --last 30 --quiet --output /dev/stdout
-```
-
-Check that the output shows the execute-task command was received and work has
-begun. **Only once kickoff is confirmed**, set the pane title — sending `/rename`
-now (rather than before kickoff) keeps it from queuing behind the dispatch:
-
-```bash
-ntm send $SESSION --pane=$PANE --json '/rename'
-```
+Capture the pane output to confirm execution started — see `references/ntm/read-output.md`.
+Check that the output shows the execute-task command was received and work
+has begun. **Only once kickoff is confirmed**, set the pane title — sending
+`/rename` now (rather than before kickoff) keeps it from queuing behind the
+dispatch — see `references/ntm/send-prompt.md`.
 
 ### Step 6: Report
 
 Output which pane was selected, confirmation that the command was sent, and what the pane is currently doing.
 
-Tell the user how to check on progress later:
-
-```
-To read recent output from this session:
-  ntm copy $SESSION:$PANE --last 50
-  ntm copy $SESSION:$PANE --code        # extract just code blocks
-  ntm grep 'error\|warning' $SESSION    # search across all panes
-  ntm watch $SESSION --pane=$PANE       # stream output live
-```
+Tell the user how to check on progress later — see `references/ntm/read-output.md` and `references/ntm/scan-output.md`.

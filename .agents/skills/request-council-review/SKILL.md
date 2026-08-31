@@ -7,7 +7,7 @@ description: "Runs a parallel council review of task planning docs via Claude, C
 
 Run a **panel of three independent reviewers** — Claude Code, Codex, and Grok — over the task planning docs in parallel. Unlike the single-agent review skills, the reviewers **never touch the docs**: each one reads the docs and codebase, gathers findings (with file + line/anchor), and hands them back to this coordinator. The coordinator de-duplicates across all three, appends one merged comment thread per real issue (markdown **and** HTML supported), then resolves them.
 
-> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline. For the underlying headless-CLI handoff details, see [references/delegating-to-agents.md](references/delegating-to-agents.md).
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline. For the underlying headless-CLI handoff details, see [references/headless-delegation.md](references/headless-delegation.md).
 
 ## Input
 
@@ -122,7 +122,7 @@ wait $GROK_PID;   GROK_EXIT=$?
 echo "exits: claude=$CLAUDE_EXIT codex=$CODEX_EXIT grok=$GROK_EXIT"
 ```
 
-**Handoff notes** (full detail in [references/delegating-to-agents.md](references/delegating-to-agents.md)):
+**Handoff notes** (full detail in [references/headless-delegation.md](references/headless-delegation.md)):
 - **Claude**: `--permission-mode plan` keeps it read-only (planner cannot write). `< /dev/null` is required or print mode stalls ~3s waiting for stdin.
 - **Codex**: `--sandbox read-only` blocks all writes. `-o` writes the final message to the findings file. `< /dev/null` is required or `codex exec` blocks reading stdin forever in a background launch.
 - **Grok**: no stdin redirect needed. `--single` takes the prompt as its immediate value — never place other flags between `--single` and the prompt.

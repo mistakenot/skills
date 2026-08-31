@@ -5,8 +5,13 @@ discover, send to, and clear **all three** coding-agent CLIs in this
 environment. It sets up a throwaway session with one of each, runs a Ping/Pong
 on every agent, clears them, and tears everything down.
 
-Companion reference: [../refs/delegating-to-agents.md](../refs/delegating-to-agents.md)
-(compiled into the delegate-task skill as `references/delegating-to-agents.md`).
+Companion references: the per-operation ntm guides in [../refs/ntm/](../refs/ntm/)
+(compiled into the delegate-family skills as `references/ntm/<operation>.md`), and
+[../refs/agent-conventions.md](../refs/agent-conventions.md) for the per-CLI send
+and clear semantics this procedure exercises.
+
+> This procedure covers the **ntm** runner only. The herdr equivalent has not
+> been written; see [../refs/herdr/](../refs/herdr/) for its command surface.
 
 **Pass criteria:** each of the three agents returns `Pong` to a Ping, and each
 returns to a clean prompt after `/clear`. Tear down only after this is

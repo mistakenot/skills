@@ -1,5 +1,5 @@
 ---
-hash: "75a70efc"
+hash: "13d65bdb"
 id: "herdr-vs-ntm"
 read_when: "evaluating or migrating the delegate/delegate-task/status-report worker-management skills from ntm/tmux to herdr; or needing the verified herdr 0.7.1 command surface, status mechanism, worktree behaviour, enforcement design, and gotchas"
 summary: "Evaluation + live spike of herdr (terminal agent multiplexer) as a herdr-only replacement for ntm/tmux in the delegate-* worker skills: verified command surface, push-based status, worktree interaction, a tool-agnostic git-hook enforcement design, the ephemeral-worker redesign, an ntm feature-parity table, and gotchas."
@@ -17,9 +17,14 @@ replacement for **ntm/tmux** in our worker-management skills — `delegate`,
 **Decision so far:** spike-first (done, green), targeting **herdr-only** (no
 ntm dual-support). The redesign is a net simplification. Not yet built.
 
-Related: the current ntm-based model lives in the delegate skills' refs
-(`delegating-to-agents.md`, `ntm-agent-pools.md`). The known-broken ntm restart
-paths are the memory note `ntm-inplace-restart-broken`.
+Related: the delegate skills now support **both** runners, selected by a
+`customize.runner` variable (`ntm` | `herdr`) that picks between per-operation
+guides in `src/planning-workflow/refs/ntm/` and `refs/herdr/`. Those replaced the
+old monolithic `delegating-to-agents.md`, `herdr.md` and `ntm-agent-pools.md`
+refs; runner-neutral policy lives in `refs/worker-pools.md` and
+`refs/agent-conventions.md`. The known-broken ntm restart paths are the memory
+note `ntm-inplace-restart-broken` — note herdr has no in-place reset either, so
+both runners converge on spawn-fresh.
 
 ## Why look past ntm
 
