@@ -1,59 +1,122 @@
 # Per-agent CLI conventions
 
-How Claude Code, Codex, and OpenCode each behave **in themselves** — process
-identity, how they accept text and slash commands, and their differing
-`/clear` semantics. This holds regardless of which runner (multiplexer) is
-driving the pane. Runner-specific commands, flags, and JSON fields are a
-different concern and live in `references/<runner>/` instead — see
-[references/worker-pools.md](references/worker-pools.md) and the delegate
-skills for how the `runner` variable selects that directory.
+How Claude Code and Codex behave **in themselves** — permission modes, process
+identity, startup interstitials, and reset semantics. This holds regardless of
+what is driving the pane. The herdr commands that drive them live in
+`references/herdr/`.
 
-For headless (no-pane) CLI delegation — running a review CLI in print mode
-from bash and exiting, which is also how Grok is driven — see
+For headless (no-pane) delegation — running a CLI in print mode from bash and
+exiting, which is also how Grok is driven — see
 [references/headless-delegation.md](references/headless-delegation.md).
+
+## Permission modes — the thing that most often goes wrong
+
+Every one of these CLIs defaults to an **interactive, ask-a-human** mode. A
+background worker has no human, so it stalls on its first tool call while
+reporting a perfectly healthy status.
+
+| Agent | Launch argv for unattended work | Status line shows |
+| ----- | ------------------------------- | ----------------- |
+| **Claude Code** | `claude --dangerously-skip-permissions` | `⏵⏵ bypass permissions on` |
+| **Codex** | `codex --dangerously-bypass-approvals-and-sandbox` | `permissions: YOLO mode` — **only on newer builds**; see below |
+| **OpenCode** | consult its own CLI; not verified here | — |
+
+Verified live on Claude Code 2.1.251: a bare `claude` starts in
+**`⏸ manual mode on`**, and `shift+tab` cycles only between manual, accept-edits
+and plan — it **cannot** reach bypass, because bypass is gated on the launch
+flag. A mis-launched worker is therefore unrecoverable and must be relaunched,
+not repaired.
+
+`claude --permission-mode bypassPermissions` reaches the same state without the
+`--dangerously-` spelling and needs no extra opt-in flag; either works.
+
+These flags disable the agent's own guard rails, which is the point for an
+isolated worktree worker doing reviewable work behind a PR. Do not use them for
+an agent operating directly on a primary checkout.
+
+**The status line is not a reliable mode check.** Codex prints its
+`permissions:` row only on newer builds — verified live, v0.143.0 shows it and
+v0.115.0 omits the row entirely while running in exactly the same bypass mode.
+Claude Code's mode text also truncates in narrow panes. Verify from the launched
+process's argv instead, and do it after launch rather than trusting the command
+line you *meant* to run — `references/herdr/verify-worker.md`.
+
+Watch for **more than one build on PATH**: this machine has both an nvm-managed
+`codex` and one in `~/.local/bin`, at different versions, and the pane's shell
+PATH decides which `agent start --kind codex` actually launches.
 
 ## Process identity
 
-Each CLI runs as a distinct process, which is the most reliable way to tell
-them apart regardless of runner:
-
-| Agent | Process name |
-| ----- | ------------- |
+| Agent | Foreground process |
+| ----- | ------------------ |
 | Claude Code | `claude` |
+| Codex | `node` launcher **plus** a native `codex` binary — both appear, both carry the flags |
 | OpenCode | `opencode` |
-| Codex | `node` — Codex runs under Node, so `node` is its tell |
 
-A pane whose live process is a plain shell (`bash`, etc.) is not a running
-agent, whatever a runner's own status label claims — never delegate there.
+A pane whose live process is a plain shell (`bash`, `zsh`) is not a running
+agent, whatever any status label claims — never dispatch there. Because Codex's
+launcher is `node`, match on the **command line** rather than the process name.
 
-## Text, slash commands, and `/clear` semantics
+## Startup interstitials
 
-Slash commands are not a special protocol — every agent treats them as
-literal text typed into its prompt. What `/clear` does differs per agent:
+A freshly launched agent may sit at a blocking prompt instead of accepting
+input. herdr 0.8.2 detects this and returns `agent_not_ready` from
+`agent start` rather than letting you prompt into the dialog.
 
-| Agent | `/clear` behaviour | Slash commands / skills |
-| ----- | ------------------- | ------------------------ |
-| **Claude Code** | Resets context in place; returns to the welcome/empty prompt. | `/clear`, `/<skill>`, `/rename`, any slash command — sent as literal text. |
-| **Codex** | Starts a **new** conversation; prints prior token usage and a `codex resume <id>` line. | `/skills` to list, `/model` to switch; send `/<cmd>` as text. |
-| **OpenCode** | Returns to the "Ask anything…" splash; context dropped. | Sent as text; an interactive palette also exists (`ctrl+p`), but for automation send the literal command. |
+Seen live:
 
-> This table describes each CLI's own in-place `/clear`, for interactive
-> human use. **Automated dispatch never relies on it** — `/clear` is
-> cooperative: sent to a pane you misread as idle, it doesn't reject or
-> no-op, it silently queues behind in-flight work and detonates later. The
-> delegate skills always obtain a clean pane a different way (never `/clear`,
-> never an in-place restart) — see `references/{{ .runner }}/reset-worker.md`
-> and `references/{{ .runner }}/spawn-worker.md`.
+| Prompt | Agent | Default option | Correct answer |
+| ------ | ----- | -------------- | -------------- |
+| *"Is this a project you trust?"* | Claude Code | **No, exit** | `down`, `enter` |
+| *"Do you trust the contents of this directory?"* | Codex | Yes, continue | `1`, `enter` |
+| *"Update available… 1. Update now"* | Codex | **Update now** | `3`, `enter` (skip until next version) |
+| *"Hooks need review"* | Codex | Review hooks | `2`, `enter` (trust all) |
 
-## Launch interstitials
+**Never answer an interstitial with a bare `enter`.** The defaults are not
+uniformly safe: Codex's update prompt defaults to *Update now*, which runs
+`npm install` and drops the pane back to a shell, swallowing whatever you sent.
+Read the pane, then send the specific key.
 
-Confirm an agent is actually live before the first send. Codex in particular
-can show a blocking launch interstitial on a fresh process — e.g. an
-*"Update available… 1. Update now / 2. Skip"* prompt, or (first run) a *"Do
-you trust this directory?"* prompt. An unattended `Enter` sent as part of
-prompt delivery will select the default option (typically "Update now"),
-which runs `npm install` and drops the pane back to a shell, swallowing the
-message. Before delegating, verify the pane's live process is the agent (not
-a shell) and read the pane; if an interstitial is showing, dismiss it with
-the **non-default** choice rather than a bare `Enter`. Keeping the agent CLIs
-updated avoids the update prompt entirely.
+Each of these is remembered once answered, so they mostly bite on a machine's
+first worker. Claude Code does **not** re-prompt for trust inside a git worktree
+of a repo it has already trusted, so the worktree dispatch pattern rarely trips
+it. Keeping the CLIs updated avoids the update prompt entirely.
+
+## Slash commands
+
+Slash commands are not a protocol — every agent treats them as literal text
+typed at its prompt. Send the command **with its argument in one string**
+(`/execute-task 042`): a bare `/name` leaves the autocomplete menu open, where
+Enter picks a menu entry instead of submitting. With an argument attached the
+menu is already closed. Verified live on Claude Code.
+
+## `/clear` and reset semantics
+
+| Agent | What `/clear` does |
+| ----- | ------------------ |
+| Claude Code | Resets context in place; returns to the empty prompt. |
+| Codex | Starts a new conversation; prints prior token usage and a `codex resume <id>` line. |
+| OpenCode | Returns to the splash; context dropped. |
+
+> That table is for **interactive human use only**. Automated dispatch never
+> relies on `/clear`: it is cooperative, so sent to a pane you have misread as
+> idle it does not reject or no-op — it queues behind the in-flight turn and
+> wipes the session later. This destroyed a real task's work (task 047). The
+> delegate skills always get a clean agent by spawning a new one — see
+> `references/herdr/reset-worker.md` and
+> `references/herdr/spawn-worker.md`.
+
+## Passing the first prompt as an argument
+
+Both Claude Code and Codex accept an optional initial prompt as a positional
+argument:
+
+```bash
+claude --dangerously-skip-permissions "/execute-task 042"
+codex --dangerously-bypass-approvals-and-sandbox "/execute-task 042"
+```
+
+The agent starts, runs that prompt, and stays interactive. Verified live for
+both. This is the most reliable way to deliver a kickoff, because it avoids
+terminal input delivery entirely — see `references/herdr/spawn-worker.md`
+Pattern B.

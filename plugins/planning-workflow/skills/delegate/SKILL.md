@@ -1,90 +1,110 @@
 ---
 name: delegate
-description: "Sends a freeform prompt to an idle agent pane in a background session, without requiring task planning docs. Use when 'delegate this', 'send this to an executor', 'run this in background', or when the user wants to hand off ad-hoc work. Not for planned tasks with docs (use delegate-task instead)."
-customize:
-  runner:
-    default: "ntm"
-    enum: [ntm, herdr]
-    description: "Agent runner: 'ntm' or 'herdr'. Selects the references/<runner>/ command guides."
+description: "Hands a freeform prompt to a fresh background coding-agent worker (herdr). Use when 'delegate this', 'send to an executor', 'run this in background'. Not for planned tasks with docs (use delegate-task)."
 ---
 
 # Delegate
 
-Send a freeform prompt to an idle coding-agent pane in a background session,
+Hand a freeform prompt to a background coding agent running under **herdr**,
 without requiring task planning documents.
 
-> Read `references/{{ .runner }}/list-workers.md`
-> first, before anything else below. If that directory does not exist, stop
-> and report that the `runner` value is invalid — valid values are `ntm` and
-> `herdr`.
+> Read `references/herdr/spawn-worker.md` before dispatching. Its permission
+> section is not optional reading: a worker launched without the right flags
+> comes up asking a human for approval on every tool call and silently stalls.
 
 > For delegating **planned tasks** with requirements/solution/plan docs, use
 > [/delegate-task](../delegate-task/SKILL.md) instead.
 >
-> For agent discovery, type identification, and send conventions, see
+> Dispatches into the **workers** pool. For the planner/worker model, see
+> [references/worker-pools.md](references/worker-pools.md). For how each agent
+> CLI behaves in itself, see
 > [references/agent-conventions.md](references/agent-conventions.md).
->
-> Dispatches into the **workers** pool. For the planner/worker pool model and
-> label rules, see [references/worker-pools.md](references/worker-pools.md).
+
+## Prerequisites
+
+herdr **0.8.2 or newer** (`herdr --version`), with the integration installed for
+the agent you are targeting (`herdr integration status`). Earlier versions lack
+`agent start --kind`, `agent prompt`, and blocked-startup detection; stop and
+tell the user to upgrade rather than falling back to raw keystrokes.
 
 ## Input
 
-A prompt describing the work to delegate, and optionally:
-- A session/pool name (defaults to the project's worker pool — resolve the
-  concrete name with `references/{{ .runner }}/label-worker.md`, since the
-  convention differs per runner)
-- A target agent type preference (Claude Code, Codex, OpenCode)
+A prompt describing the work, and optionally:
+
+- A target agent: **Claude Code** (default) or **Codex**.
+- A repo, if the prompt is not about the current one.
 
 If no prompt is given, ask the user what they'd like to delegate.
 
-## Delegation Workflow
+## Dispatch workflow
 
-### Step 1: Find an eligible pane
+### Step 1: Survey existing workers
 
-Enumerate panes with `references/{{ .runner }}/list-workers.md`,
-then inspect each candidate's recent output with `references/{{ .runner }}/read-output.md`.
+Enumerate with `references/herdr/list-workers.md`, filtered to the repo in
+question. You are looking for whether a fresh worker is warranted, and for work
+already in flight that the user may not want duplicated.
 
-A pane is eligible when **all** of the following are true:
+Report anything already running on this repo before spawning — if a worker is
+mid-task on the same area, say so and let the user decide.
 
-1. **Not busy** — the pane output shows a prompt waiting for input, not an active task in progress.
-2. **On `main`** — the pane's status line or prompt shows `(main)`, not a feature/worktree branch. A pane on a feature branch almost always means a prior task is in flight (open PR, awaiting review/merge). **Never target a pane that is not on `main`**, even if it appears idle — an open/unmerged PR or feature branch disqualifies it.
-3. **No open PR** — there is no evidence of an unmerged PR from a prior task.
+### Step 2: Spawn a fresh worker
 
-If a candidate is idle but on a feature branch, skip it and report why (e.g. "pane 2 skipped: on branch `task-505` with open PR").
+**Always spawn a fresh worker. Never reuse an existing one.** An agent that has
+already run a task carries that task's context, and there is no way to clear it
+in place — `/clear` is cooperative and detonates mid-task, and permission mode
+is fixed at launch. See `references/herdr/reset-worker.md` for why this is a
+hard rule rather than a preference.
 
-If **no panes are eligible** — all busy, on feature branches, or only a plain
-shell — **add a fresh worker** instead of stopping. Do not interrupt active
-work. First check the **ceiling**: if the pool already has **6** Claude
-panes (the cap) and none are eligible, every worker is genuinely busy —
-report and stop (or wait and re-check); do not add a seventh. Otherwise add
-one and wait until it is ready for input — see `references/{{ .runner }}/spawn-worker.md` and `references/{{ .runner }}/wait-for-ready.md`.
-Set `$PANE` to the new pane. Add **one** worker per dispatch; if spawning
-fails, report and stop.
+Create the worker per `references/herdr/spawn-worker.md`. For ad-hoc work that
+does not need branch isolation, a workspace with the repo as its cwd is enough;
+for anything that will edit files, use the worktree pattern so the work is
+isolated and reviewable.
 
-### Step 2: Reset and send
+**Launch flags are mandatory:**
 
-**Never use `/clear` to reset a reused pane** — it is a cooperative command that
-silently queues behind in-flight work and detonates later (this wiped task 047).
-Reset imperatively instead — see `references/{{ .runner }}/reset-worker.md`.
+| Agent | Launch argv |
+| ----- | ----------- |
+| Claude Code | `claude --dangerously-skip-permissions` |
+| Codex | `codex --dangerously-bypass-approvals-and-sandbox` |
 
-**Reused pane** (an existing pane confirmed idle on `main` with no open PR in
-Step 1): reset it and dispatch the prompt in one step — see `references/{{ .runner }}/reset-worker.md`.
-If the reset instead reports the pane as busy, **do not force it** — treat
-the pane as ineligible and **add a fresh worker** (Step 1's spawn path),
-then send to that fresh pane as below.
+Prefer **Pattern B** — pass the user's prompt as the final argv to
+`agent start`, so the worker is created and dispatched in one call with no
+separate text-delivery step.
 
-**Freshly added pane** (from Step 1's spawn path): it starts at zero context, so
-it needs **no reset**. Send the prompt directly — see `references/{{ .runner }}/send-prompt.md`.
+If `agent start` returns `agent_not_ready`, the agent hit a startup
+interstitial. Do not retry blindly — read the pane, answer the dialog
+deliberately with `agent send-keys` (never a bare `enter`), and wait for it to
+settle. Full procedure in `references/herdr/spawn-worker.md`.
 
-**Prompt construction:** Send the user's prompt as-is. Do not wrap it in a slash command or add preamble. If the prompt references files or paths, ensure they are absolute paths (the executor pane may have a different working directory).
+**Prompt construction:** send the user's prompt as-is. Do not wrap it in a slash
+command or add preamble. Convert any file or directory references to **absolute
+paths** — the worker's working directory is a worktree, not yours.
 
-### Step 3: Verify kickoff
+### Step 3: Verify the worker is fit
 
-Capture the pane output to confirm the prompt was received — see `references/{{ .runner }}/read-output.md`.
-Check that the output shows the agent received the prompt and work has begun.
+Before considering the dispatch done, run the health check in
+`references/herdr/verify-worker.md`:
 
-### Step 4: Report
+- The pane is running the agent, not a shell.
+- Its argv carries the permission flag. A bare `claude` or `codex` means manual
+  approval mode — **reap it and spawn again**; it cannot be repaired in place.
+- Its cwd is where you intended.
 
-Output which pane was selected, confirmation that the prompt was sent, and what the pane is currently doing.
+### Step 4: Confirm kickoff
 
-Tell the user how to check on progress later — see `references/{{ .runner }}/read-output.md` and `references/{{ .runner }}/scan-output.md`.
+Confirm the agent actually took the prompt rather than assuming it did — watch
+for the transition into `working` per `references/herdr/wait-for-ready.md`.
+
+When dispatching a *second* prompt to a worker already running (rather than via
+Pattern B), use `agent prompt` and handle `agent_blocked` and
+`agent_prompt_stalled` as described in `references/herdr/send-prompt.md`.
+
+### Step 5: Report
+
+State the worker's **name**, its workspace/pane, its branch or cwd, the agent
+kind, confirmation that the permission flags verified, and what it is doing now.
+
+Tell the user how to check on it later — `references/herdr/read-output.md` for
+one worker, `references/herdr/scan-output.md` for the fleet — and how to reap it
+when done (`references/herdr/reap-worker.md`), noting that removing the worktree
+is a separate step from closing the workspace.

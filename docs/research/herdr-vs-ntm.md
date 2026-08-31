@@ -1,5 +1,5 @@
 ---
-hash: "13d65bdb"
+hash: "5bfdddc6"
 id: "herdr-vs-ntm"
 read_when: "evaluating or migrating the delegate/delegate-task/status-report worker-management skills from ntm/tmux to herdr; or needing the verified herdr 0.7.1 command surface, status mechanism, worktree behaviour, enforcement design, and gotchas"
 summary: "Evaluation + live spike of herdr (terminal agent multiplexer) as a herdr-only replacement for ntm/tmux in the delegate-* worker skills: verified command surface, push-based status, worktree interaction, a tool-agnostic git-hook enforcement design, the ephemeral-worker redesign, an ntm feature-parity table, and gotchas."
@@ -295,3 +295,136 @@ Everything below was run live and cleaned up; the user's live session (workspace
   `status-report` (and their refs) to herdr-only, plus whether the
   planners/workers **pool** vocabulary survives or is replaced by
   primary-checkout-vs-worktree.
+
+---
+
+## Migration executed — verified findings (herdr 0.7.1 and 0.8.2, 2026-08-31)
+
+The delegate family (`delegate`, `delegate-task`, `status-report`) is now
+**herdr-only**: `refs/ntm/` is deleted, the `customize.runner` variable and the
+compiler's runner machinery are gone, and `refs/herdr/` is rewritten against
+**0.8.2** with a new tenth operation, `verify-worker`. Everything below was run
+live — 0.7.1 against the user's session, 0.8.2 against an isolated
+`--session spike082` server on a downloaded binary.
+
+### Permission mode is the dominant failure mode
+
+Bare `claude` starts in **`⏸ manual mode on`** (Claude Code 2.1.251) and stalls
+on its first tool call. `shift+tab` cycles manual/accept-edits/plan but **cannot
+reach bypass** — bypass is gated on the launch flag, so a mis-launched worker is
+unrecoverable and must be relaunched.
+
+| Agent | Launch argv | Mode |
+| --- | --- | --- |
+| Claude Code | `claude --dangerously-skip-permissions` | `⏵⏵ bypass permissions on` |
+| Claude Code | `claude --permission-mode bypassPermissions` | same; no extra opt-in needed |
+| Codex | `codex --dangerously-bypass-approvals-and-sandbox` | `permissions: YOLO mode` |
+
+**`herdr pane process-info --pane <id>` returns the exact argv**, making this
+checkable without scraping a status line. That is the mechanism behind the new
+`verify-worker.md`, and it also distinguishes a plain shell (`/bin/bash`) from
+an agent. Codex reports **two** foreground processes (a `node` launcher and the
+native binary), both carrying the flags — so match on `cmdline`, never on
+process name.
+
+### 0.8.2 removes the fragile parts of the 0.7.1 recipe
+
+- `agent start <name> --kind KIND --pane ID [-- <args>]` **blocks until the
+  agent is genuinely ready** (`interactive_ready: true`) — the 0.7.1
+  registration race is gone. It requires an existing available shell pane and
+  never creates layout.
+- On a startup interstitial it returns `agent_not_ready` instead of letting you
+  prompt into a dialog.
+- `agent prompt <target> <text> --wait` handles bracketed paste plus a delayed
+  Enter, and refuses to send into a recognised dialog (`agent_blocked`).
+- New error `agent_prompt_stalled` when no state change is observed in 5s;
+  observed live right after a preceding prompt settled, with the text
+  **undelivered**. Retrying once succeeded.
+- `herdr wait` is gone; it is `pane wait-output` and `agent wait` now.
+
+**The 0.7.1 send dance was genuinely broken for Codex:** `pane send-text`
+followed immediately by `pane send-keys Enter` left the prompt unsubmitted in
+Codex's input box. Claude Code accepted the identical sequence, so the bug is
+invisible until you switch agents. A 1s pause fixed it — which is exactly what
+`agent prompt` encapsulates.
+
+### `idle` vs `done` — the hang
+
+`idle` requires the tab to have been **seen in the focused UI**, and CLI reads
+do not mark it seen. A CLI-driven worker therefore settles at **`done`**.
+`agent wait --until idle` timed out against an agent demonstrably at its prompt;
+bare `agent wait` returned instantly. Never pass `--until idle`.
+
+### Launching with the kickoff prompt as argv
+
+Both CLIs accept an initial prompt as a positional argument, so
+`agent start ... -- --dangerously-skip-permissions "/execute-task NNN"` creates
+**and** dispatches a worker in one call. Verified for both agents. This removes
+the text-delivery step entirely and is now the preferred dispatch path.
+
+### Corrections to the claims above the line
+
+- **`workspace close` does NOT reap the git worktree.** Verified twice: the pane
+  went away, the worktree directory and branch remained, and `git branch -D`
+  refused with `used by worktree at ...`. Conversely
+  `worktree remove --workspace <id>` removes the worktree *and* closes the
+  workspace, so a following `workspace close` returns `workspace_not_found` —
+  which is success. Teardown order is worktree first, always.
+- **`agent read` no longer returns JSON.** On 0.7.1 it wrapped output at
+  `.result.read.text`; on 0.8.2 it prints raw text like `pane read`. Any
+  `| jq -r .result.read.text` pipeline silently yields nothing after upgrading.
+
+### `resume_agents_on_restore` strips the permission flags (the "often" in the bug report)
+
+Confirmed on the live 0.8.2 session immediately after the upgrade restarted the
+server. `[session] resume_agents_on_restore` defaults to **true**, and the
+relaunch it performs is `claude --resume <session-uuid>` — **the original argv,
+permission flag included, is not preserved.** All 17 live agents came back as
+`claude --resume <uuid>` with no flag, sitting in `auto mode`; before the
+restart the same panes were `claude --dangerously-skip-permissions <prompt>`.
+
+This is a second, independent cause of the reported symptom, and the one that
+explains its recurrence: a fleet launched entirely correctly still drifts into
+approval-gated modes after any upgrade, crash, or reboot. `herdr status`
+reporting `restart_needed: no` says nothing about restarts that already
+happened.
+
+Remedy is a relaunch into the same conversation rather than a reap, since the
+session id is recoverable from the resumed command line:
+`claude --dangerously-skip-permissions --resume <uuid>`. `verify-worker.md`
+therefore says to re-run the argv check after any server restart, not only at
+spawn time.
+
+### Other gotchas worth keeping
+
+- **Never start the herdr server from inside a coding-agent session.** Panes it
+  creates inherit that session's environment; observed `CLAUDE_CODE_CHILD_SESSION`
+  leaking in, disabling transcript saving and changing the launched agent's
+  default permission mode.
+- **`send-keys` uses herdr key names** (`ctrl+u`, `shift+tab`, `down`, `enter`).
+  tmux notation (`C-u`) is **silently ignored** — a "clear the input box" step
+  written that way does nothing and the next text appends to what was there.
+- **`pane wait-output` matches your own echoed prompt.** Waiting for `PONG`
+  after sending "reply with PONG" matched the input line. Match on something
+  only the agent's output can contain, or wait on status.
+- **Startup interstitials must not be answered with a bare `enter`.** Codex's
+  update prompt defaults to *Update now*, which runs `npm install` and drops the
+  pane to a shell. Claude Code's folder-trust prompt defaults to *No, exit*.
+  Codex additionally shows a directory-trust prompt and a "Hooks need review"
+  prompt (triggered by herdr's own agent-state hook). Claude Code does **not**
+  re-prompt for trust inside a worktree of an already-trusted repo.
+- **Narrow panes wrap agent output badly.** Prefer a tab or workspace per worker
+  over stacking splits into one tab.
+
+### Answers to the old open questions
+
+- Slash-command kickoff is confirmed — send the command *with* its argument in
+  one string; a bare `/name` leaves the autocomplete menu open, where Enter
+  selects a menu entry instead of submitting.
+- Cross-pane scan stays a caller-side loop, but most of what `status-report`
+  needed is available as structured fields (`agent_status`,
+  `terminal_title_stripped`, `cwd`), so the O(N) read loop is now the fallback.
+- Enforcement uses the repo-shipped worktree-detection hook; pool vocabulary
+  survives as **planner = primary checkout, worker = linked worktree**, and the
+  warm pool is gone — workers are ephemeral, one per task.
+- Per-pane context-token % is still unavailable from herdr.

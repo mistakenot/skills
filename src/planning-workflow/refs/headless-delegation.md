@@ -2,9 +2,9 @@
 
 How to delegate to Claude Code, Codex, or Grok **without a pane** — invoking
 the CLI in print/headless mode directly from bash, capturing its output, and
-exiting. Nothing here depends on a pane, a multiplexer, or a runner: this is
-plain process invocation, so it applies the same way regardless of `ntm`,
-`herdr`, or any future runner.
+exiting. Nothing here depends on a pane or a multiplexer: this is plain
+process invocation, so it applies the same way whether or not `herdr` is
+involved.
 
 Used by the `request-claude-review`, `request-codex-review`,
 `request-grok-review`, and `request-council-review` skills — each invokes its

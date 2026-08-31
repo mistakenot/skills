@@ -50,20 +50,18 @@ class Module:
 def ref(filename: str) -> Ref:
     return Ref(filename=filename)
 
-def runner_refs(*ops: str) -> list[Ref]:
-    """The named operation guides, for every runner. Omit `ops` for all of them.
+def herdr_refs(*ops: str) -> list[Ref]:
+    """The named herdr operation guides. Omit `ops` for all of them.
 
-    Both runners always ship: the value is chosen at install time, so the
-    compiler cannot know which directory the consumer will pick. Skills should
-    name only the operations they actually use — shipping a monitoring skill a
-    spawn guide it never reads is the progressive-disclosure leak this whole
-    decomposition exists to fix.
+    Skills should name only the operations they actually use — shipping a
+    monitoring skill a spawn guide it never reads is the progressive-disclosure
+    leak this whole decomposition exists to fix.
     """
-    selected = list(ops) or RUNNER_OPS
-    unknown = [op for op in selected if op not in RUNNER_OPS]
+    selected = list(ops) or HERDR_OPS
+    unknown = [op for op in selected if op not in HERDR_OPS]
     if unknown:
-        raise ValueError(f"unknown runner op(s) {unknown}; valid ops: {RUNNER_OPS}")
-    return [ref(f"{runner}/{op}.md") for runner in RUNNERS for op in selected]
+        raise ValueError(f"unknown herdr op(s) {unknown}; valid ops: {HERDR_OPS}")
+    return [ref(f"herdr/{op}.md") for op in selected]
 
 def asset(src: str, dst: str) -> Asset:
     return Asset(src=src, dst=dst)
@@ -85,9 +83,7 @@ def module(name: str, *skills: Skill, description: str = "", category: str = "",
 REF_PATTERN = re.compile(r"^\{\{\s*ref:(.+?)\s*\}\}$", re.MULTILINE)
 # Also matches markdown links to references/ (e.g. [references/foo.md](references/foo.md))
 REF_LINK_PATTERN = re.compile(r"\[references/(.+?)\]\(references/", re.MULTILINE)
-# Inline-code references (e.g. `references/{{ .runner }}/spawn-worker.md`).
-# Runner-templated paths MUST use this form: `auto skill lint` splits markdown
-# links on the space inside {{ .runner }} and reports broken_local_link.
+# Inline-code references (e.g. `references/herdr/spawn-worker.md`).
 REF_CODE_PATTERN = re.compile(r"`references/([^`]+?\.md)`")
 # Inline directive: {{ skill:<name> }} or {{ skill:<module>/<name> }}
 SKILL_REF_PATTERN = re.compile(r"\{\{\s*skill:(.+?)\s*\}\}")
@@ -96,53 +92,30 @@ PD_VERSION_PATTERN = re.compile(r"\{\{\s*pd-version\s*\}\}")
 MAX_OUTPUT_CHARS = 15_000
 
 # ---------------------------------------------------------------------------
-# Runner-selectable references
+# herdr operation guides
 #
-# Delegation skills drive a background agent runner. The runner-agnostic policy
-# lives in the SKILL.md body; the runner-specific command grammar lives in
-# refs/<runner>/<operation>.md. `auto skill sync` substitutes {{ .runner }} at
-# install time (a `customize:` var), so this compiler must ship every runner's
-# directory and leave the placeholder untouched.
+# The delegation skills drive background coding agents through herdr. The
+# policy that does not depend on herdr's command grammar (eligibility rules,
+# pool roles, what to dispatch) lives in the SKILL.md body; the command grammar
+# itself lives in refs/herdr/<operation>.md.
 #
-# The filename set is the interface contract between the bodies and the runner
-# guides: every runner directory must implement all of RUNNER_OPS, or a body
-# step silently loses its mechanism on one runner.
+# The filename set is the interface contract between the bodies and the guides:
+# a body step that names an operation with no guide silently loses its
+# mechanism, and a guide no body names is content nobody can reach.
 # ---------------------------------------------------------------------------
 
-RUNNERS = ["ntm", "herdr"]
-RUNNER_OPS = [
+HERDR_OPS = [
     "list-workers",
     "read-output",
     "scan-output",
     "spawn-worker",
+    "verify-worker",
     "wait-for-ready",
     "send-prompt",
     "reset-worker",
     "reap-worker",
     "label-worker",
 ]
-# Matches the install-time customize placeholder, e.g. references/{{ .runner }}/spawn-worker.md
-RUNNER_VAR_PATTERN = re.compile(r"\{\{\s*\.runner\s*\}\}")
-
-
-def _parse_customize_enum(text: str, var: str) -> list[str] | None:
-    """Return the declared `enum:` list for a customize var, or None if absent.
-
-    Deliberately narrow: matches an inline flow-sequence (`enum: [a, b]`) inside
-    the named var's block. `_parse_frontmatter` only reads top-level keys, and
-    pulling in a YAML parser for one field is not worth the dependency.
-    """
-    m = re.search(
-        rf"^\s+{re.escape(var)}:\s*$(.*?)(?=^\s{{0,2}}\S|\Z)",
-        text,
-        re.MULTILINE | re.DOTALL,
-    )
-    if not m:
-        return None
-    enum_m = re.search(r"^\s+enum:\s*\[(.*?)\]\s*$", m.group(1), re.MULTILINE)
-    if not enum_m:
-        return None
-    return [v.strip().strip('"').strip("'") for v in enum_m.group(1).split(",") if v.strip()]
 
 
 def _read_pd_version(src_dir: str) -> str:
@@ -328,41 +301,13 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
                 if not fm.get("description"):
                     errors.append(f"{tag} Missing 'description' in frontmatter")
 
-            # A body that selects a runner must declare the matching enum, or
-            # install-time validation would accept a value this build cannot serve.
-            if RUNNER_VAR_PATTERN.search(template):
-                declared_enum = _parse_customize_enum(template, "runner")
-                if declared_enum is None:
-                    errors.append(
-                        f"{tag} Template uses {{{{ .runner }}}} but declares no "
-                        f"customize.runner enum; add `enum: [{', '.join(RUNNERS)}]`"
-                    )
-                elif sorted(declared_enum) != sorted(RUNNERS):
-                    errors.append(
-                        f"{tag} customize.runner enum {declared_enum} does not match the "
-                        f"runner directories present ({RUNNERS})"
-                    )
-
             # Cross-check template tags vs DSL declarations
             used_refs = set(m.strip() for m in REF_PATTERN.findall(template))
             used_refs |= set(m.strip() for m in REF_LINK_PATTERN.findall(template))
             used_refs |= set(m.strip() for m in REF_CODE_PATTERN.findall(template))
 
-            def _expand_runners(refs: set[str]) -> set[str]:
-                """{{ .runner }} resolves at install time, so one body reference
-                must be satisfied by *every* runner directory."""
-                out = set()
-                for u in refs:
-                    if RUNNER_VAR_PATTERN.search(u):
-                        out |= {RUNNER_VAR_PATTERN.sub(r, u) for r in RUNNERS}
-                    else:
-                        out.add(u)
-                return out
-
-            used_refs = _expand_runners(used_refs)
-
             # A ref may point at another ref (e.g. worker-pools.md sends the
-            # reader to <runner>/label-worker.md). That is real usage, so it must
+            # reader to herdr/label-worker.md). That is real usage, so it must
             # suppress the orphan warning — but it must NOT force a declaration,
             # since refs also mention docs belonging to other skills entirely.
             # Hence two sets: the template drives errors, reachability drives warnings.
@@ -373,7 +318,7 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
                     continue
                 with open(ref_path) as f:
                     ref_body = f.read()
-                reachable_refs |= _expand_runners(
+                reachable_refs |= (
                     set(m.strip() for m in REF_LINK_PATTERN.findall(ref_body))
                     | set(m.strip() for m in REF_CODE_PATTERN.findall(ref_body))
                 )
@@ -390,22 +335,19 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
             for tag_name in declared_refs - reachable_refs:
                 warnings.append(f"{tag} Ref '{tag_name}' declared but never used in template")
 
-        # Runner directories are an interface, not a folder: the filename set is
-        # what a body is allowed to assume exists after {{ .runner }} resolves.
-        # A file missing from one runner silently drops that step's mechanism;
-        # an extra file is content no body can reach.
-        for runner in RUNNERS:
-            runner_dir = os.path.join(refs_dir, runner)
-            if not os.path.isdir(runner_dir):
-                continue
-            present = {f for f in os.listdir(runner_dir) if f.endswith(".md")}
-            expected = {f"{op}.md" for op in RUNNER_OPS}
+        # refs/herdr/ is an interface, not a folder: the filename set is what a
+        # body is allowed to assume exists. A missing file silently drops that
+        # step's mechanism; an extra file is content no body can reach.
+        herdr_dir = os.path.join(refs_dir, "herdr")
+        if os.path.isdir(herdr_dir):
+            present = {f for f in os.listdir(herdr_dir) if f.endswith(".md")}
+            expected = {f"{op}.md" for op in HERDR_OPS}
             for missing in sorted(expected - present):
-                errors.append(f"[{mod.name}] refs/{runner}/ is missing required operation '{missing}'")
+                errors.append(f"[{mod.name}] refs/herdr/ is missing required operation '{missing}'")
             for extra in sorted(present - expected):
                 errors.append(
-                    f"[{mod.name}] refs/{runner}/{extra} is not in the runner operation set; "
-                    f"add it to RUNNER_OPS (and to every other runner) or remove it"
+                    f"[{mod.name}] refs/herdr/{extra} is not in the herdr operation set; "
+                    f"add it to HERDR_OPS or remove it"
                 )
 
     # Build global skill lookup: skill_name -> [module_names]
@@ -516,7 +458,7 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
 
             # references/ is generated output: clear it so a ref that is no
             # longer declared cannot linger. Skills now declare per-skill subsets
-            # (see runner_refs), so dropping a ref is routine rather than rare,
+            # (see herdr_refs), so dropping a ref is routine rather than rare,
             # and a stale copy would ship content the body never points at.
             refs_out = os.path.join(skill_out, "references")
             if os.path.isdir(refs_out):
@@ -802,17 +744,20 @@ if __name__ == "__main__":
         skill("resolve-comments",       refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
         skill("commit-task",            refs=[overview, ref("commit-conventions.md"), ref("task-status.md")]),
         skill("execute-task",           refs=[overview, ref("template-pr-body.md"), ref("worktree-conventions.md"), ref("commit-conventions.md"), ref("execute-task-full.md"), ref("task-status.md")]),
-        # Runner ops per skill: dispatchers find/spawn/send; the monitor reads and reaps.
-        # label-worker is reached transitively, via worker-pools.md.
+        # herdr ops per skill: dispatchers find/spawn/verify/send; the monitor
+        # reads, verifies and reaps. label-worker is reached transitively, via
+        # worker-pools.md.
         skill("delegate-task",          refs=[overview, ref("task-status.md"), ref("agent-conventions.md"), ref("worker-pools.md"),
-                                              *runner_refs("list-workers", "read-output", "scan-output", "spawn-worker",
-                                                           "wait-for-ready", "send-prompt", "reset-worker", "label-worker")]),
+                                              *herdr_refs("list-workers", "read-output", "scan-output", "spawn-worker",
+                                                          "verify-worker", "wait-for-ready", "send-prompt",
+                                                          "reset-worker", "label-worker")]),
         skill("delegate",               refs=[ref("agent-conventions.md"), ref("worker-pools.md"),
-                                              *runner_refs("list-workers", "read-output", "scan-output", "spawn-worker",
-                                                           "wait-for-ready", "send-prompt", "reset-worker", "label-worker")]),
+                                              *herdr_refs("list-workers", "read-output", "scan-output", "spawn-worker",
+                                                          "verify-worker", "wait-for-ready", "send-prompt",
+                                                          "reset-worker", "reap-worker", "label-worker")]),
         skill("status-report",          refs=[overview, ref("agent-conventions.md"), ref("worker-pools.md"),
-                                              *runner_refs("list-workers", "read-output", "scan-output", "reap-worker",
-                                                           "label-worker")]),
+                                              *herdr_refs("list-workers", "read-output", "scan-output", "verify-worker",
+                                                          "reap-worker", "reset-worker", "label-worker")]),
         skill("address-feedback",       refs=[overview]),
         skill("complete-task",          refs=[overview, ref("template-feedback.md"), ref("commit-conventions.md")]),
         skill("code-review",            refs=[overview]),

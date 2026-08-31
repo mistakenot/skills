@@ -1,114 +1,132 @@
 ---
 name: delegate-task
-description: "Dispatches task execution to an idle Claude Code pane in a background session, freeing the current session for other work. Use when 'delegate task', 'send to executor', or when the user wants to hand off a task to a background pane."
+description: "Dispatches /execute-task for a planned task to a fresh background worker (herdr), freeing this session. Use when 'delegate task', 'send to executor', 'hand off this task'."
 ---
 
 # Delegate Task
 
-Dispatch execution to an idle Claude Code pane in a background session.
+Dispatch `/execute-task` for a planned task to a fresh background worker.
 
-> Read `references/ntm/list-workers.md`
-> first, before anything else below. If that directory does not exist, stop
-> and report that the `runner` value is invalid — valid values are `ntm` and
-> `herdr`.
+> Read `references/herdr/spawn-worker.md` before dispatching. Its permission
+> section is not optional reading: a worker launched without the right flags
+> comes up asking a human for approval on every tool call and silently stalls.
 
-> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
-
-> **Ad-hoc work without task docs?** Use [/delegate](../delegate/SKILL.md) instead —
-> it sends a freeform prompt to an idle pane without requiring planning documents.
-
-> **Targeting non-Claude agents.** This skill dispatches `/execute-task` to a
-> Claude Code pane. To discover agents and send to **Codex** or **OpenCode**
-> panes (whose send/clear conventions differ), see
-> [references/agent-conventions.md](references/agent-conventions.md).
+> Part of the task planning workflow. See
+> [references/workflow-overview.md](references/workflow-overview.md) for the
+> full pipeline.
 >
-> **Pool model.** This skill dispatches into the **workers** pool — worker
-> panes run in worktrees and open PRs, separated by role label from the
-> `planners` pool that commits to `main`. See
-> [references/worker-pools.md](references/worker-pools.md).
+> **Ad-hoc work without task docs?** Use
+> [/delegate](../delegate/SKILL.md) instead.
+>
+> **Pool model.** Dispatches into the **workers** pool — workers run in
+> worktrees and open PRs, distinct from planners which commit to `main`. See
+> [references/worker-pools.md](references/worker-pools.md). For per-agent CLI
+> behaviour, see
+> [references/agent-conventions.md](references/agent-conventions.md).
+
+## Prerequisites
+
+herdr **0.8.2 or newer** (`herdr --version`), with the integration installed for
+the target agent (`herdr integration status`). Earlier versions lack
+`agent start --kind`, `agent prompt`, and blocked-startup detection; stop and
+tell the user to upgrade rather than falling back to raw keystrokes.
 
 ## Input
 
-Task ID (numeric) and optionally a session/pool name (defaults to the
-project's worker pool — resolve the concrete name with
-`references/ntm/label-worker.md`, since the convention differs
-per runner).
+Task ID (numeric), and optionally the agent to target — **Claude Code**
+(default) or **Codex**.
 
-## Dispatch Workflow
+## Dispatch workflow
 
 ### Step 1: Advance status to executing
 
-Before finding a worker, mark the task as executing so the worker's fresh
-worktree (created from `origin/main`) sees the right stage. See
-[references/task-status.md](references/task-status.md): set `status="executing"`
-on `<pd-doc>` in `plan.html`, then commit and push:
+Mark the task executing **before** creating the worker, so the worker's fresh
+worktree (branched from `origin/main`) sees the right stage. Per
+[references/task-status.md](references/task-status.md), set `status="executing"`
+on `<pd-doc>` in `plan.html`, then:
 
 ```bash
 git commit -am "docs($ID): status executing" && git push origin main
 ```
 
-This also satisfies the "task docs pushed" requirement below.
+### Step 2: Confirm the task docs are on `origin/main`
 
-### Step 2: Find an eligible pane
-
-Enumerate panes with `references/ntm/list-workers.md`,
-then inspect each candidate's recent output with `references/ntm/read-output.md`.
-
-A pane is eligible when **all** of the following are true:
-
-1. **Not busy** — the pane output shows a prompt waiting for input, not an active task in progress.
-2. **On `main`** — the pane's status line or prompt shows `(main)`, not a feature/worktree branch. A pane on a feature branch almost always means a prior task is in flight (open PR, awaiting review/merge). **Never target a pane that is not on `main`**, even if it appears idle — an open/unmerged PR or feature branch disqualifies it.
-3. **No open PR** — there is no evidence of an unmerged PR from a prior task.
-
-If a candidate is idle but on a feature branch, skip it and report why (e.g. "pane 2 skipped: on branch `task-505` with open PR").
-
-If **no panes are eligible** — all busy, on feature branches, or only a plain
-shell — **add a fresh worker** instead of stopping. Do not interrupt active
-work. First check the **ceiling**: if the pool already has **6** Claude
-panes (the cap) and none are eligible, every worker is genuinely busy —
-report and stop (or wait and re-check); do not add a seventh. Otherwise add
-one and wait until it is ready for input — see `references/ntm/spawn-worker.md` and `references/ntm/wait-for-ready.md`.
-Set `$PANE` to the new pane. A freshly added pane starts on `main`, so it is
-always eligible. Add **one** worker per dispatch; if spawning fails, report
-and stop.
-
-> **Warning:** A pane sitting in another task's worktree has a stale checkout. If dispatched there, the executor may read outdated task docs before creating its own worktree. Always ensure the target pane is on `main`.
-
-### Step 3: Ensure task docs are pushed
-
-Before dispatching, verify that the task's planning docs have been pushed to `origin/main`. The executor will create a fresh worktree from `origin/main` and needs access to the docs.
+The worker branches from `origin/main` and reads the docs from there.
 
 ```bash
 git log origin/main --oneline -5 -- tasks/$ID/
 ```
 
-If the task docs are not on `origin/main`, push them first or warn the user.
+If the docs are not on `origin/main`, push them first or stop and tell the user.
+Step 1's push normally satisfies this.
 
-### Step 4: Reset and send command
+### Step 3: Check for an existing worker on this task
 
-**Never use `/clear` to reset a reused pane** — it is a cooperative command that
-silently queues behind in-flight work and detonates later (this wiped task 047).
-Reset imperatively instead — see `references/ntm/reset-worker.md`.
+Enumerate with `references/herdr/list-workers.md`. If a worker is already on a
+`task/$ID` branch, **do not dispatch a second one** — report what it is doing
+and stop. Two workers on one task means two PRs and a merge conflict.
 
-**Reused pane** (an existing pane confirmed idle on `main` with no open PR in
-Step 2): reset it and dispatch `/execute-task $ID` in one step — see `references/ntm/reset-worker.md`.
-If the reset instead reports the pane as busy, **do not force it** — treat
-the pane as ineligible and **add a fresh worker** (Step 2's spawn path),
-then send to that fresh pane as below.
+### Step 4: Spawn a fresh worker
 
-**Freshly added pane** (from Step 2's spawn path): it starts at zero context, so
-it needs **no reset**. Send the command directly — see `references/ntm/send-prompt.md`.
+**Always spawn fresh. Never reuse an existing worker.** A worker that has run a
+task carries its context, and there is no in-place reset: `/clear` is
+cooperative and detonates mid-task, and permission mode is fixed at launch. See
+`references/herdr/reset-worker.md`.
 
-### Step 5: Verify kickoff, then rename
+Use the **worktree pattern** in `references/herdr/spawn-worker.md` — a task
+worker must never run in the primary checkout:
 
-Capture the pane output to confirm execution started — see `references/ntm/read-output.md`.
-Check that the output shows the execute-task command was received and work
-has begun. **Only once kickoff is confirmed**, set the pane title — sending
-`/rename` now (rather than before kickoff) keeps it from queuing behind the
-dispatch — see `references/ntm/send-prompt.md`.
+```bash
+herdr worktree create --cwd <repo> --branch task/$ID --base origin/main \
+  --label task-$ID --no-focus
+```
 
-### Step 6: Report
+Then launch the agent into the pane it returns, with the mandatory flags:
 
-Output which pane was selected, confirmation that the command was sent, and what the pane is currently doing.
+| Agent | Launch argv |
+| ----- | ----------- |
+| Claude Code | `claude --dangerously-skip-permissions` |
+| Codex | `codex --dangerously-bypass-approvals-and-sandbox` |
 
-Tell the user how to check on progress later — see `references/ntm/read-output.md` and `references/ntm/scan-output.md`.
+Prefer **Pattern B** — pass `/execute-task $ID` as the final argv to
+`agent start`, creating and dispatching the worker in one call. Name the agent
+`task-$ID` so every later command can address it by name
+(`references/herdr/label-worker.md`).
+
+If `agent start` returns `agent_not_ready`, the agent hit a startup
+interstitial. Read the pane, answer it deliberately with `agent send-keys`
+(never a bare `enter`), and wait for it to settle — see
+`references/herdr/spawn-worker.md`.
+
+Spawn **one** worker per dispatch. If spawning fails, report and stop.
+
+### Step 5: Verify the worker is fit
+
+Run the health check in `references/herdr/verify-worker.md` before reporting
+success:
+
+- The pane runs the agent, not a shell.
+- Its argv carries the permission flag. A bare `claude` or `codex` means manual
+  approval mode — **reap and respawn**; it cannot be repaired in place.
+- Its cwd is the **worktree** (`git-dir != git-common-dir`), not the primary
+  checkout.
+
+### Step 6: Confirm kickoff
+
+Confirm `/execute-task $ID` was actually accepted rather than assuming it —
+watch for the transition into `working` per
+`references/herdr/wait-for-ready.md`. If it never reaches `working`, the prompt
+did not land; see `references/herdr/send-prompt.md`.
+
+Only **after** kickoff is confirmed, apply any display labels
+(`references/herdr/label-worker.md`) — doing it earlier just queues behind the
+dispatch.
+
+### Step 7: Report
+
+State the worker's name, workspace/pane, branch, worktree path, agent kind,
+confirmation that the permission flags verified, and what it is doing now.
+
+Tell the user how to follow progress — `references/herdr/read-output.md` and
+`references/herdr/scan-output.md` — and that
+[/status-report](../status-report/SKILL.md) covers the whole fleet.

@@ -1,56 +1,78 @@
 # Sending a prompt to a worker (herdr)
 
-Drive an agent by typing text into its pane.
+Deliver text to a running agent and confirm it was actually accepted.
+
+## Use `agent prompt` — not raw keystrokes
 
 ```bash
-herdr pane send-text <pane> "<text>"     # writes LITERAL text, no Enter
-herdr pane send-keys <pane> Enter        # send a key
-herdr agent send <target> "<text>"       # literal text to an agent (no Enter)
-herdr pane run  <pane> "<command>"       # command text + Enter (for a shell)
+herdr agent prompt <target> "<text>" [--wait] [--timeout MS]
 ```
 
-## To drive a TUI agent: `send-text` then a separate `send-keys Enter`
-
-`send-text` and `agent send` **deliberately omit the newline**. To actually
-submit a prompt to a TUI coding agent (claude/codex/opencode/…), you must
-issue **two separate calls**:
+`agent prompt` sends the text honouring the pane's live bracketed-paste mode,
+then sends an encoded Enter **after a short delay**. That delay is not
+decoration: sending text and Enter back-to-back is genuinely unreliable, and
+`agent prompt` is the only supported way to get it right.
 
 ```bash
-herdr pane send-text <pane> "<prompt text>"
-herdr pane send-keys <pane> Enter
+herdr agent prompt task-042 "/execute-task 042" --wait --timeout 600000
 ```
 
-A single `send-text` call leaves the text sitting in the input box, unsent.
+`--wait` blocks until the agent reaches its first settled state. Do not pass
+`--until` alongside it — the defaults are already correct (see
+`references/herdr/wait-for-ready.md`, and note that **`--until idle` will hang**
+for a CLI-driven worker).
 
-## `pane run` is for shells, not TUI agents
+Multi-line prompts work: embedded newlines land as soft newlines in the input
+box and do **not** submit early. Verified live on both Claude Code and Codex.
 
-`herdr pane run <pane> "<command>"` types command text **and** appends Enter
-in one call — but it's meant for a plain shell pane (e.g. running a command in
-a freshly-created worktree pane before the agent is launched, per
-`spawn-worker.md` Pattern A). Do not use `pane run` to prompt a running TUI
-agent; use the `send-text` + `send-keys Enter` pair instead.
+Slash commands are ordinary text — `herdr agent prompt task-042 "/execute-task
+042"` is all there is to it; there is no separate slash-command primitive. Send
+the command with its argument in one string: a bare `/name` leaves the agent's
+autocomplete menu open, where Enter selects a menu entry instead of submitting.
 
-## Slash commands are just text
+## Error codes you must handle
 
-Slash commands are sent the same way as any other prompt:
+**`agent_blocked`** — the agent is sitting at an approval or question dialog.
+`agent prompt` refuses to send **before writing any input**, which is exactly
+what you want: blind input into a dialog answers the dialog. Read the pane
+(`references/herdr/read-output.md`) to see what it is asking, then answer
+deliberately with `agent send-keys`, or escalate to the user.
+
+**`agent_prompt_stalled`** — the prompt produced no observed state change within
+5s:
+
+```json
+{"error":{"code":"agent_prompt_stalled","message":"agent prompt produced no observed state change within 5000 ms; status is done and state_change_seq remained 5"}}
+```
+
+Observed live immediately after a preceding prompt settled; the text was **not**
+delivered. Read the pane to confirm nothing landed, then retry once — the retry
+succeeded in testing. If a second attempt also stalls, treat the worker as
+unhealthy and reap it rather than sending a third time.
+
+## Why not `pane send-text` + `send-keys Enter`
+
+That pair is the manual equivalent and it is **fragile**. Verified live on
+herdr 0.7.1: sending Codex a prompt with `pane send-text` followed immediately
+by `pane send-keys Enter` left the text sitting unsubmitted in the input box —
+the Enter was swallowed. Claude Code accepted the same sequence, so the bug is
+invisible until you switch agents. A one-second pause fixed it. `agent prompt`
+encapsulates exactly this, so use it and skip the class of bug entirely.
+
+Reach for the raw pane surface only when you deliberately need keystrokes rather
+than a prompt:
 
 ```bash
-herdr pane send-text <pane> "/execute-task NNN"
-herdr pane send-keys <pane> Enter
+herdr agent send-keys <target> <key> [key ...]   # e.g. esc, enter, ctrl+c, down, shift+tab
+herdr pane run <pane_id> "<command>"             # shell command + Enter, for a shell pane
 ```
 
-This is the same text+Enter path as a normal prompt — there's no special
-slash-command primitive.
+`agent send-keys` validates every key before writing any bytes. Key names are
+herdr's own (`ctrl+u`, `shift+tab`, `down`, `enter`, `esc`) — **tmux syntax like
+`C-u` is silently ignored**, verified live, so a "clear the input box" step
+written in tmux notation does nothing and the next text appends to whatever was
+already there.
 
-## Gotcha — confirm the input actually lands
-
-Read the pane first if unsure whether an interstitial (a confirmation dialog,
-a permission prompt, an in-progress turn) is swallowing your input instead of
-receiving it as a new prompt. See `read-output.md`.
-
-## `pane send-text` vs `agent send`
-
-Both write literal text with no trailing newline. `pane send-text` targets a
-pane id; `agent send` targets an agent (pane id, unique name, or detected
-label). Functionally interchangeable for a pane that hosts a recognized
-agent — pick whichever target form you already have on hand.
+`pane run` types a command **and** Enter atomically, but it is for shell panes
+(for example running a setup command in a fresh worktree pane before the agent
+launches). Never use it to prompt a running TUI agent.
