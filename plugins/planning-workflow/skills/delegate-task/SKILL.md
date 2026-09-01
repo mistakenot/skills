@@ -88,10 +88,28 @@ Then launch the agent into the pane it returns, with the mandatory flags:
 | Claude Code | `claude --dangerously-skip-permissions` |
 | Codex | `codex --dangerously-bypass-approvals-and-sandbox` |
 
-Prefer **Pattern B** — pass `/execute-task $ID` as the final argv to
-`agent start`, creating and dispatching the worker in one call. Name the agent
-`task-$ID` so every later command can address it by name
-(`references/herdr/label-worker.md`).
+**Do not use Pattern B here.** `/execute-task` runs for many minutes to hours,
+and `agent start` blocks until an argv prompt's work finishes — it would hold
+this session for the whole task (the opposite of delegating) and then fail with
+a `timeout` error, leaving a live worker whose name never bound.
+
+Use **Pattern A**: start the agent with the flags, name it `task-$ID` so every
+later command can address it by name (`references/herdr/label-worker.md`), then
+dispatch with `agent prompt` and **no** `--wait`:
+
+```bash
+herdr agent start task-$ID --kind claude --pane "$PANE" --timeout 90000 \
+  -- --dangerously-skip-permissions
+herdr agent prompt task-$ID "/execute-task $ID"
+```
+
+Omitting `--wait` is deliberate — it returns immediately instead of blocking
+until the task completes.
+
+If `agent start` nonetheless returns a `timeout` error, do **not** respawn: the
+worker is probably alive and working with its name unbound, and a second worker
+on one task means two PRs. Recover the handle per
+`references/herdr/spawn-worker.md`.
 
 If `agent start` returns `agent_not_ready`, the agent hit a startup
 interstitial. Read the pane, answer it deliberately with `agent send-keys`
@@ -115,8 +133,15 @@ success:
 
 Confirm `/execute-task $ID` was actually accepted rather than assuming it —
 watch for the transition into `working` per
-`references/herdr/wait-for-ready.md`. If it never reaches `working`, the prompt
-did not land; see `references/herdr/send-prompt.md`.
+`references/herdr/wait-for-ready.md`:
+
+```bash
+herdr agent wait task-$ID --until working --timeout 20000
+```
+
+If it never reaches `working`, the prompt did not land; see
+`references/herdr/send-prompt.md` for `agent_blocked` and
+`agent_prompt_stalled`.
 
 Only **after** kickoff is confirmed, apply any display labels
 (`references/herdr/label-worker.md`) — doing it earlier just queues behind the

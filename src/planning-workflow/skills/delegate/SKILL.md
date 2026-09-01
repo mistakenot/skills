@@ -67,9 +67,18 @@ isolated and reviewable.
 | Claude Code | `claude --dangerously-skip-permissions` |
 | Codex | `codex --dangerously-bypass-approvals-and-sandbox` |
 
-Prefer **Pattern B** — pass the user's prompt as the final argv to
-`agent start`, so the worker is created and dispatched in one call with no
-separate text-delivery step.
+**Choose the dispatch pattern by how long the work will take:**
+
+- **Short, self-contained prompt** — Pattern B: pass it as the final argv to
+  `agent start`, creating and dispatching in one call. Note `agent start` then
+  **blocks until that work finishes**.
+- **Anything longer** (the usual case for delegated work) — Pattern A: start
+  the agent, then send the prompt with `agent prompt` **without** `--wait`.
+  This returns immediately, which is the point of delegating.
+
+If `agent start` returns a `timeout` error, the worker is probably alive and
+working — the name just never bound. Do not respawn; recover the handle per
+`references/herdr/spawn-worker.md`.
 
 If `agent start` returns `agent_not_ready`, the agent hit a startup
 interstitial. Do not retry blindly — read the pane, answer the dialog
@@ -77,8 +86,12 @@ deliberately with `agent send-keys` (never a bare `enter`), and wait for it to
 settle. Full procedure in `references/herdr/spawn-worker.md`.
 
 **Prompt construction:** send the user's prompt as-is. Do not wrap it in a slash
-command or add preamble. Convert any file or directory references to **absolute
-paths** — the worker's working directory is a worktree, not yours.
+command or add preamble.
+
+Leave **repo-relative paths relative** — they resolve inside the worker's
+worktree, which is what you want. Absolutising them to the primary checkout
+would point the worker at your tree and break the worktree isolation the pool
+model depends on. Only absolutise paths that live *outside* the repo.
 
 ### Step 3: Verify the worker is fit
 
@@ -92,12 +105,15 @@ Before considering the dispatch done, run the health check in
 
 ### Step 4: Confirm kickoff
 
-Confirm the agent actually took the prompt rather than assuming it did — watch
-for the transition into `working` per `references/herdr/wait-for-ready.md`.
+Confirm the agent actually took the prompt rather than assuming it did.
 
-When dispatching a *second* prompt to a worker already running (rather than via
-Pattern B), use `agent prompt` and handle `agent_blocked` and
-`agent_prompt_stalled` as described in `references/herdr/send-prompt.md`.
+- **Pattern A** — watch for the transition into `working` per
+  `references/herdr/wait-for-ready.md`. Handle `agent_blocked` and
+  `agent_prompt_stalled` as described in `references/herdr/send-prompt.md`.
+- **Pattern B** — `agent start` already blocked through the work, so there is no
+  `working` transition left to observe. Confirm by reading the output instead
+  (`references/herdr/read-output.md`), and for a worker that edited files, by
+  checking `git -C <worktree> status --short`.
 
 ### Step 5: Report
 

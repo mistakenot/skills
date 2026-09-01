@@ -59,25 +59,49 @@ worktree ↔ one workspace ↔ one agent.
 is a **plain shell** — there is no `--agent`/`--run` flag on `worktree create`,
 so launching the agent is always a deliberate second step.
 
-## Pattern B — launch with the kickoff prompt as argv (fewest moving parts)
+## Pattern B — launch with the kickoff prompt as argv (short tasks only)
 
-Both CLIs take an optional initial prompt as a positional argument, so a
-worker can be created *and* dispatched in a single `agent start`:
+Both CLIs take an optional initial prompt as a positional argument, so a worker
+can be created *and* dispatched in a single `agent start`:
 
 ```bash
-herdr agent start task-NNN --kind claude --pane "$PANE" --timeout 90000 \
-  -- --dangerously-skip-permissions "/execute-task NNN"
-
-herdr agent start task-NNN --kind codex --pane "$PANE" --timeout 90000 \
-  -- --dangerously-bypass-approvals-and-sandbox "/execute-task NNN"
+herdr agent start note-fix --kind claude --pane "$PANE" --timeout 90000 \
+  -- --dangerously-skip-permissions "Fix the typo in README.md"
 ```
 
-Verified working for **both** agents. This is the most robust dispatch path
-available: there is no separate text-delivery step, so none of the input-
-delivery failure modes in `references/herdr/send-prompt.md` can occur. Prefer it
-whenever the kickoff prompt is known at spawn time. Use
-`references/herdr/send-prompt.md` for every *subsequent* prompt to the same
-worker.
+**`agent start` blocks until the dispatched work finishes.** It returns when the
+agent is ready for *interactive* input, and an agent chewing through an argv
+prompt is not — verified live: a worker given a 50-second task returned from
+`agent start` after 61s, not immediately.
+
+That makes Pattern B **wrong for any long-running dispatch**. It blocks the
+caller for the whole task (defeating the point of delegating), and if the task
+outlives `--timeout` you get:
+
+```json
+{"error":{"code":"timeout","message":"timed out waiting for agent startup"}}
+```
+
+**This error does not mean the worker failed.** Verified live: the agent stays
+alive, keeps its permission flags, keeps working, and completes normally — but
+**its name is never bound** (`agent get <name>` returns `agent_not_found`,
+`name` is `null`), so the handle you intended is gone. Do **not** treat the
+timeout as a spawn failure and respawn: that leaves two workers on one task.
+Recover instead:
+
+```bash
+herdr pane process-info --pane "$PANE"    # confirm the agent is alive and flagged
+herdr agent get "$PANE"                   # address by pane id; status will be `working`
+herdr agent rename "$PANE" <name>         # rebind the handle
+```
+
+Use Pattern B only when the prompt is short enough to finish inside the timeout
+and you are content to block. For anything longer — `/execute-task`, a real
+feature, anything you are delegating precisely so you can walk away — use
+**Pattern A**, then dispatch with `agent prompt` **without** `--wait` and
+confirm the transition to `working` (`references/herdr/send-prompt.md`,
+`references/herdr/wait-for-ready.md`). That returns immediately and keeps the
+name bound.
 
 ## `agent start` semantics
 
@@ -101,6 +125,8 @@ herdr agent start <name> --kind KIND --pane ID [--timeout MS] [-- <agent-args...
   `agent_status` plus `interactive_ready: true`. There is no registration race
   to poll around — a successful return means you can prompt immediately.
   Startup defaults to a 30s timeout; raise it with `--timeout` on slow machines.
+  Note that "ready" means ready for *interactive* input, so if you passed an
+  argv prompt this call blocks until that prompt's work is done — see Pattern B.
 
 ### Handling `agent_not_ready`
 
