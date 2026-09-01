@@ -1,5 +1,5 @@
 ---
-hash: "5bfdddc6"
+hash: "9f5e0e05"
 id: "herdr-vs-ntm"
 read_when: "evaluating or migrating the delegate/delegate-task/status-report worker-management skills from ntm/tmux to herdr; or needing the verified herdr 0.7.1 command surface, status mechanism, worktree behaviour, enforcement design, and gotchas"
 summary: "Evaluation + live spike of herdr (terminal agent multiplexer) as a herdr-only replacement for ntm/tmux in the delegate-* worker skills: verified command surface, push-based status, worktree interaction, a tool-agnostic git-hook enforcement design, the ephemeral-worker redesign, an ntm feature-parity table, and gotchas."
@@ -428,3 +428,25 @@ spawn time.
   survives as **planner = primary checkout, worker = linked worktree**, and the
   warm pool is gone — workers are ephemeral, one per task.
 - Per-pane context-token % is still unavailable from herdr.
+
+## Verifying a worker
+
+One command is ground truth — it returns the live foreground process's exact
+argv, so it beats scraping a cosmetic, version-dependent status line:
+
+```bash
+herdr pane process-info --pane "$PANE" \
+  | jq -r '.result.process_info.foreground_processes[].cmdline'
+```
+
+Match on `cmdline`, never on process name (Codex reports two foreground
+processes, both carrying the flags). A worker ends up **without** permission
+flags in exactly two ways:
+
+1. **Mis-launched** — `claude` / `codex` started bare. Unrecoverable in place
+   (`shift+tab` cannot reach bypass); reap and respawn.
+2. **Downgraded by a server restart** — `resume_agents_on_restore` relaunches as
+   `claude --resume <uuid>`, dropping the original argv. Relaunch into the same
+   conversation: `claude --dangerously-skip-permissions --resume <uuid>`.
+
+So re-run the check after any server restart, not only at spawn time.
