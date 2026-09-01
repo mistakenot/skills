@@ -45,17 +45,17 @@
       "render_version": "1"
     },
     "delegate": {
-      "template_hash": "c793e4611384a656bf872e917f5a7efdd8e42b69b52cd8e6d43b83bba0f423c3",
+      "template_hash": "567f85372a1432898922167d62755bfe525c0f5c01b48a217ee6b0d55f58855d",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "ef04553379962f51af764ff5123c80d86eda8b02547a559e132cb8764cf8fb08",
+      "skill_version": "f344a4c6134c4dd479858241bc59ca7d02d6f7a81c706d1ff6583dce3178acf9",
       "render_version": "1"
     },
     "delegate-task": {
-      "template_hash": "83b695223a3c10e135fa7c31e174a6c1211ece47b55191f4aa2c7b1adda4468f",
+      "template_hash": "a0d29215d47964eef3f636da4652fbbf78b7b803a97f4822f98ef9b0cc1b6936",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "2bd3bf7c24369f0fc5ab35c2f9e80862112225e105fdef085993045828a4a8cb",
+      "skill_version": "80cba667740c373e62bed07f6a0ed0ba81b8d6c4d1c9d47aeca3c0111c3c609c",
       "render_version": "1"
     },
     "domain-modelling": {
@@ -271,8 +271,8 @@
         "code-review": "6e77e9a99e86e6b77b4510d00627c26bd81fb186cfe22021f11cb12781d4bc72",
         "commit-task": "9d0a5ecba9cc19669ee92558c07153a94b3f0d0eee0e8cea50c6b401782bb800",
         "complete-task": "a4d21dc22ddb56b2cab315f692feb3f8aea8cb1a05b09ec1f90f7851f1036ec3",
-        "delegate": "ef04553379962f51af764ff5123c80d86eda8b02547a559e132cb8764cf8fb08",
-        "delegate-task": "2bd3bf7c24369f0fc5ab35c2f9e80862112225e105fdef085993045828a4a8cb",
+        "delegate": "f344a4c6134c4dd479858241bc59ca7d02d6f7a81c706d1ff6583dce3178acf9",
+        "delegate-task": "80cba667740c373e62bed07f6a0ed0ba81b8d6c4d1c9d47aeca3c0111c3c609c",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
         "eval-engineer": "9b1f5dab94bbad1d771731976c6ccca9ff5029b2440b24e9b46909b1848abdc3",
         "execute-task": "8202e31510c5798a6ca5645baff3c154c705e359f4fd1170df466e9ad4f750ff",
@@ -312,8 +312,8 @@
         "code-review": "6e77e9a99e86e6b77b4510d00627c26bd81fb186cfe22021f11cb12781d4bc72",
         "commit-task": "9d0a5ecba9cc19669ee92558c07153a94b3f0d0eee0e8cea50c6b401782bb800",
         "complete-task": "a4d21dc22ddb56b2cab315f692feb3f8aea8cb1a05b09ec1f90f7851f1036ec3",
-        "delegate": "ef04553379962f51af764ff5123c80d86eda8b02547a559e132cb8764cf8fb08",
-        "delegate-task": "2bd3bf7c24369f0fc5ab35c2f9e80862112225e105fdef085993045828a4a8cb",
+        "delegate": "f344a4c6134c4dd479858241bc59ca7d02d6f7a81c706d1ff6583dce3178acf9",
+        "delegate-task": "80cba667740c373e62bed07f6a0ed0ba81b8d6c4d1c9d47aeca3c0111c3c609c",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
         "eval-engineer": "9b1f5dab94bbad1d771731976c6ccca9ff5029b2440b24e9b46909b1848abdc3",
         "execute-task": "8202e31510c5798a6ca5645baff3c154c705e359f4fd1170df466e9ad4f750ff",
