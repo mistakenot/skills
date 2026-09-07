@@ -733,9 +733,15 @@ if __name__ == "__main__":
 
     planning = module("planning-workflow",
         skill("new-epic",               refs=[overview, ref("epic-overview.md"), ref("epic-tabs.md")]),
-        skill("new-task",               refs=[overview, ref("tab-requirements.md")]),
-        skill("new-solution",           refs=[overview, ref("tab-verification.md"), ref("tab-solution.md"), ref("template-context.md")]),
-        skill("new-plan",               refs=[overview, ref("tab-plan.md")]),
+        skill("new-task",               refs=[overview, ref("stage-requirements.md"), ref("tab-requirements.md")]),
+        skill("new-solution",           refs=[overview, ref("stage-solution.md"), ref("tab-verification.md"), ref("tab-solution.md"), ref("template-context.md")]),
+        skill("new-plan",               refs=[overview, ref("stage-plan.md"), ref("tab-plan.md")]),
+        # runs all three stages unattended: links the same stage refs rather than
+        # inlining them, so each is read only when that stage begins.
+        skill("new-task-quick",         refs=[overview,
+                                              ref("stage-requirements.md"), ref("stage-solution.md"), ref("stage-plan.md"),
+                                              ref("tab-requirements.md"), ref("tab-verification.md"),
+                                              ref("tab-solution.md"), ref("tab-plan.md"), ref("template-context.md")]),
         skill("review-task",            refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
         skill("request-codex-review",   refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
         skill("request-claude-review",  refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
