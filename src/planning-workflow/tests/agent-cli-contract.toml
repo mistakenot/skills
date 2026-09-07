@@ -1,0 +1,169 @@
+# Agent CLI contract — every flag our skills and harnesses pass to an agent CLI.
+#
+# Checked by test_agent_cli_contract.py against the *installed* CLIs:
+#   1. `<cmd> --help` must advertise every flag (and enum value) listed here.
+#   2. Every agent invocation in the skill sources may only use flags listed here.
+#   3. Every flag listed here must be used by at least one skill source
+#      (keeps this file an honest picture of the dependency surface).
+#
+# When a CLI release renames or drops a flag, test 1 fails; fix the skill refs
+# AND this file. When a skill starts using a new flag, test 2 fails; add the
+# flag here and confirm test 1 passes against the installed release.
+#
+# `verified_version` is the newest release these flags were confirmed against.
+# Bump it after a green run on a newer install; the version test fails if the
+# installed CLI is *older* than this (an old install proves nothing).
+
+# ---------------------------------------------------------------------------
+[agent.claude]
+verified_version = "2.1.263"
+# Headless unattended run — opt-in via AGENT_CLI_LIVE=1, bills tokens.
+live_smoke = ["claude", "-p", "--dangerously-skip-permissions", "reply with exactly: PONG"]
+live_expect = "PONG"
+
+[[agent.claude.command]]
+path = ""
+flags = [
+  "-p",                              # print/headless mode (request-*-review, evals)
+  "--add-dir",                       # grant the target repo to a headless reviewer
+  "--dangerously-skip-permissions",  # unattended worker launch flag
+  "--permission-mode",               # bypassPermissions (worker) / plan (read-only reviewer)
+  "--resume",                        # reattach a worker to its session
+  "--output-format",                 # evals harnesses: json / stream-json
+  "--verbose",                       # required alongside stream-json
+  "--strict-mcp-config",             # clean-room isolation in evals
+  "--model",                         # pin the model in evals
+]
+[agent.claude.command.values]
+"--permission-mode" = ["bypassPermissions", "plan"]
+"--output-format" = ["json", "stream-json"]
+
+# ---------------------------------------------------------------------------
+[agent.codex]
+verified_version = "0.151.0"
+live_smoke = ["codex", "exec", "--sandbox", "read-only", "reply with exactly: PONG"]
+live_expect = "PONG"
+
+[[agent.codex.command]]
+path = ""
+flags = [
+  "--dangerously-bypass-approvals-and-sandbox",  # unattended worker launch flag
+]
+
+[[agent.codex.command]]
+path = "exec"
+flags = [
+  "--cd",       # working root for a headless reviewer
+  "--sandbox",  # workspace-write (edits docs) / read-only (council reviewer)
+  "-o",         # --output-last-message: capture the final message to a file
+]
+[agent.codex.command.values]
+"--sandbox" = ["read-only", "workspace-write"]
+
+# ---------------------------------------------------------------------------
+[agent.grok]
+verified_version = "0.2.60"
+live_smoke = ["grok", "--permission-mode", "bypassPermissions", "--always-approve", "--single", "reply with exactly: PONG"]
+live_expect = "PONG"
+
+[[agent.grok.command]]
+path = ""
+flags = [
+  "--cwd",              # working directory for a headless reviewer
+  "--permission-mode",  # bypassPermissions for unattended runs
+  "--always-approve",   # auto-approve every tool call
+  "--single",           # single-turn headless prompt (long form of -p)
+  "-p",                 # short form of --single
+]
+[agent.grok.command.values]
+"--permission-mode" = ["bypassPermissions"]
+
+# ---------------------------------------------------------------------------
+[agent.herdr]
+verified_version = "0.8.2"
+
+[[agent.herdr.command]]
+path = ""
+flags = ["--session", "--version"]
+
+[[agent.herdr.command]]
+path = "agent start"
+flags = ["--kind", "--pane", "--timeout"]
+[agent.herdr.command.values]
+"--kind" = ["claude", "codex"]
+
+[[agent.herdr.command]]
+path = "agent prompt"
+flags = ["--wait", "--timeout"]
+
+[[agent.herdr.command]]
+path = "agent wait"
+flags = ["--until", "--timeout"]
+[agent.herdr.command.values]
+"--until" = ["idle", "working", "blocked", "done"]
+
+[[agent.herdr.command]]
+path = "agent read"
+flags = ["--source", "--lines", "--format"]
+[agent.herdr.command.values]
+"--source" = ["visible", "recent", "recent-unwrapped", "detection"]
+"--format" = ["text", "ansi"]
+
+[[agent.herdr.command]]
+path = "agent rename"
+flags = ["--clear"]
+
+[[agent.herdr.command]]
+path = "pane process-info"
+flags = ["--pane"]
+
+[[agent.herdr.command]]
+path = "pane read"
+flags = ["--source", "--lines", "--format"]
+[agent.herdr.command.values]
+"--source" = ["visible", "recent", "recent-unwrapped"]
+"--format" = ["text", "ansi"]
+
+[[agent.herdr.command]]
+path = "pane wait-output"
+flags = ["--match", "--regex", "--source", "--lines", "--timeout"]
+[agent.herdr.command.values]
+"--source" = ["visible", "recent", "recent-unwrapped"]
+
+[[agent.herdr.command]]
+path = "pane split"
+flags = ["--current", "--direction", "--cwd", "--no-focus"]
+[agent.herdr.command.values]
+"--direction" = ["right", "down"]
+
+[[agent.herdr.command]]
+path = "pane list"
+flags = ["--workspace"]
+
+[[agent.herdr.command]]
+path = "pane rename"
+flags = ["--clear"]
+
+[[agent.herdr.command]]
+path = "tab create"
+flags = ["--workspace", "--cwd", "--label", "--no-focus"]
+
+[[agent.herdr.command]]
+path = "tab list"
+flags = ["--workspace"]
+
+[[agent.herdr.command]]
+path = "workspace create"
+flags = ["--cwd", "--label", "--env", "--no-focus"]
+
+[[agent.herdr.command]]
+path = "worktree create"
+flags = ["--cwd", "--branch", "--base", "--label", "--no-focus"]
+
+[[agent.herdr.command]]
+path = "worktree list"
+flags = ["--cwd", "--workspace"]
+
+[[agent.herdr.command]]
+path = "worktree remove"
+flags = ["--workspace", "--force"]

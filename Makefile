@@ -1,4 +1,4 @@
-.PHONY: compile lint check install pd-components pd-dev pd-test test test-review-stdin eval-assurance release
+.PHONY: compile lint check install pd-components pd-dev pd-test test test-agent-cli-live test-review-stdin eval-assurance evals release
 
 # Compiles skill source files from ./src/ into ./skills/ output.
 # Run after editing any skill source in ./src/.
@@ -41,10 +41,16 @@ lint:
 # Run before pushing to ensure everything is valid.
 check: compile lint
 
-# Runs pytest for assurance module tests.
-# Run to validate compiler extensions and card schema.
+# Runs pytest: assurance compiler tests, evals harness tests, and the agent CLI
+# contract (flags the delegate/review skills pass to claude/codex/grok/herdr,
+# checked against the installed CLIs' --help). Needs all four CLIs on PATH.
 test:
-	uv run pytest src/assurance/tests/
+	uv run pytest src/assurance/tests/ src/evals/tests/ src/planning-workflow/tests/
+
+# Live smoke for the agent CLI contract: runs the canonical headless invocation
+# of claude, codex and grok and expects a PONG. Bills tokens; needs auth.
+test-agent-cli-live:
+	AGENT_CLI_LIVE=1 uv run pytest src/planning-workflow/tests/ -k live -v
 
 # Verifies request-codex-review / request-claude-review / request-grok-review
 # don't hang on stdin when launched as background reviews. Needs codex + claude
@@ -57,3 +63,10 @@ test-review-stdin: compile
 # Run after compiling to produce a with-vs-without comparison report.
 eval-assurance: compile
 	bash src/assurance/evals/run.sh
+
+# Runs the evals harness — one prompt, one arm, in an isolated clean room.
+# Bills real tokens. The run recompiles skills/ itself (a stale tree would
+# silently evaluate the last-compiled version); results accumulate under src/evals/runs/.
+# Usage: make evals ARGS='run --skill rich-doc --arm WORKTREE --prompt "..."'
+evals:
+	PYTHONPATH=src uv run --no-dev python -m evals $(ARGS)
