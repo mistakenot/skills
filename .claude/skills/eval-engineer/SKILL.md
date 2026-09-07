@@ -120,3 +120,11 @@ real cost). `src/planning-eval/run.py` is a working model of all of this.
 - **Contaminated checkout.** If the finished work (the plan, the implementation) is present at
   the start SHA, the agent can copy it. Start strictly *before* the task existed.
 - **Polluting the repo.** Arm work belongs in a tmp workspace, out of git.
+- **A stub that is too kind.** A negative control is only as good as the fidelity of the
+  world it runs against. If the control only ever runs against your own mock, it proves your
+  mock agrees with your parser — nothing more. Mocks are lenient in the direction of the
+  author's assumptions, so the failure shapes a stub declines to model (errors, refusals,
+  partial results, calls that are made and rejected) are exactly the ones nothing will catch.
+  Anchor every negative control to a **recorded transcript from the real system**, committed
+  as a fixture, and make the stub emit the ugly shapes. Then mutate: revert the check and
+  confirm a test fails. A check that is trusted and wrong is worse than no check.
