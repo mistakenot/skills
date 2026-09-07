@@ -179,8 +179,14 @@ def _skill_named(block: dict) -> str | None:
     return None
 
 
-def _matches(named: str, skill: str) -> bool:
-    """`rich-doc`, `plugin:rich-doc` and `/rich-doc` all name the same skill."""
+def names_skill(named: str, skill: str) -> bool:
+    """`rich-doc`, `plugin:rich-doc` and `/rich-doc` all name the same skill.
+
+    Public because the report has to answer the same question of a *failed*
+    call: "was the call that errored a call for our skill?" is what separates
+    "asked and was refused" from "never asked", and the two must not be
+    distinguished by two different string rules.
+    """
     tail = named.lstrip("/").rsplit(":", 1)[-1]
     return tail == skill
 
@@ -284,7 +290,7 @@ def parse_stream(stream_path: Path, skill: str, trial: int = 1) -> CellInvocatio
             if errors.get(block.get("id"), False):
                 if named not in failed_calls:
                     failed_calls.append(named)
-            elif _matches(named, skill):
+            elif names_skill(named, skill):
                 loaded = True
         elif name == "Read":
             path = args.get("file_path")

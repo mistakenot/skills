@@ -23,6 +23,7 @@ import json
 import re
 from pathlib import Path
 
+from . import arms as arms_mod
 from . import invocation as invocation_mod
 from . import manifest as manifest_mod
 from . import runners
@@ -56,9 +57,7 @@ NOT_INVOKED_HEADING = "# ⚠️ SKILL NOT INVOKED"
 # the outputs differ by, it is not the skill. Said plainly and first, because the
 # alternative is a reader comparing two baselines and theorising about the gap.
 NOT_INVOKED_INSTRUCTED = (
-    "The prompt explicitly asked for this skill and the transcript shows no "
-    "`Skill` call for it. **This run is not a comparison** — every arm below ran "
-    "without the skill, so any difference between them is sampling noise. Check "
+    "The prompt explicitly asked for this skill and did not get it. Check "
     "`invocation.json` and the arm's installed `skill/` snapshot before reading "
     "anything else."
 )
@@ -69,6 +68,26 @@ NOT_INVOKED_ORGANIC = (
     "measurement rather than a fault: the description did not route. The output "
     "below is a no-skill run and must be read as one."
 )
+
+# Only ever printed when *no* arm ran the skill. Split out of the instructed
+# sentence, which used to assert it unconditionally and so said "every arm ran
+# without the skill" on runs where one arm plainly had not (`skills-7k7.15`).
+NOT_A_COMPARISON = (
+    "**This run is not a comparison** — no arm below ran the skill, so any "
+    "difference between them is sampling noise."
+)
+
+# The baseline is *supposed* to be silent. Said once, in the banner, only when
+# the banner was already going to fire for some other arm; on a healthy run the
+# fact lives in the comparison table instead, where it is not an alarm.
+BASELINE_MISS_NOTE = (
+    "(Arms that install nothing are expected not to run the skill; they are not "
+    "counted above.)"
+)
+
+# How the table and the invocation detail say "did not invoke, and that is the
+# design". Kept apart from `**NO**`, which means something is wrong.
+BASELINE_NOT_INVOKED = "no — expected (nothing installed)"
 
 REBUILT_NOTE = (
     "regenerated from the run directory; agent exit read back from each "
@@ -238,6 +257,9 @@ class Column:
     outputs: list[OutputFile]
     final_message: Path | None
     skill_dir: Path | None
+    # `none` / `worktree` / `ref` off the arm's own manifest, or None when it
+    # could not be read. See `_arm_kinds`.
+    kind: str | None = None
 
 
 def _cell_invocations(
@@ -248,12 +270,48 @@ def _cell_invocations(
     }
 
 
+def _arm_kinds(cells: list[tuple[str, int | None, Path]]) -> dict[str, str | None]:
+    """Arm name -> what that arm installed, read off `<arm>/manifest.json`.
+
+    This is the answer to "was the skill installed for this arm", and it is the
+    signal the not-invoked alarm turns on. Two rejected alternatives, because
+    picking the wrong one is how this check breaks in each direction:
+
+      * **`registered`** (membership of `init.skills`) is `false` for an arm
+        that was installed and failed to load — the single loudest case there
+        is, and silencing it would be the same bug over again.
+      * **the cell's `skill/` snapshot** is evidence rather than intent: absent
+        for `none` by design, but *also* absent when an install silently
+        produced nothing, which must alarm and would not.
+
+    `kind` comes from the arm resolver, before anything ran, so it says what the
+    run *meant* to install. A manifest that cannot be read leaves the kind
+    `None`, which every caller here treats as "assume installed" — an unknown
+    arm alarms rather than passing quietly.
+    """
+    kinds: dict[str, str | None] = {}
+    for arm, _exit_code, cell_dir in cells:
+        if arm in kinds:
+            continue
+        data = manifest_mod.read_json(cell_dir.parent / arms_mod.MANIFEST_NAME) or {}
+        kind = data.get("kind")
+        kinds[arm] = kind if isinstance(kind, str) else None
+    return kinds
+
+
+def _is_baseline(kind: str | None) -> bool:
+    """An arm that installed nothing. Its silence is the design, not a fault."""
+    return kind == arms_mod.KIND_NONE
+
+
 def _columns(
     run_dir: Path,
     cells: list[tuple[str, int | None, Path]],
     records: list[invocation_mod.ArmInvocation],
+    kinds: dict[str, str | None] | None = None,
 ) -> list[Column]:
     by_cell = _cell_invocations(records)
+    kinds = kinds if kinds is not None else _arm_kinds(cells)
     seen: dict[str, int] = {}
     columns: list[Column] = []
     for arm, exit_code, cell_dir in cells:
@@ -273,6 +331,7 @@ def _columns(
                 outputs=workspace_outputs(cell_dir, run_dir),
                 final_message=out_md if out_md.is_file() else None,
                 skill_dir=skill_dir if skill_dir.is_dir() else None,
+                kind=kinds.get(arm),
             )
         )
     # The trial number only earns column-header space when there is more than
@@ -305,9 +364,14 @@ def _comparison_lines(columns: list[Column]) -> list[str]:
         return heading + ["*(no cells)*", ""]
 
     def invoked(column: Column) -> str:
+        # `**NO**` is reserved for a miss that invalidates something. An arm
+        # that installed nothing was never going to invoke, and dressing that
+        # up as a failure is what taught readers to ignore the row.
         if column.invocation is None:
             return "not analysed"
-        return "yes" if column.invocation.invoked else "**NO**"
+        if column.invocation.invoked:
+            return "yes"
+        return BASELINE_NOT_INVOKED if _is_baseline(column.kind) else "**NO**"
 
     def registered(column: Column) -> str:
         if column.invocation is None:
@@ -458,18 +522,67 @@ def _excerpt_lines(columns: list[Column]) -> list[str]:
 # --- the per-arm invocation detail ------------------------------------------
 
 
-def _invocation_lines(records: list[invocation_mod.ArmInvocation]) -> list[str]:
+def _miss_note(record: invocation_mod.ArmInvocation) -> str:
+    """*How* an arm missed: never asked, or asked and was refused.
+
+    "No `Skill` call" and "a `Skill` call that came back
+    `<tool_use_error>Unknown skill: …</tool_use_error>`" are different findings —
+    the second says the agent tried and the install is what failed. The banner
+    used to assert the first in both cases.
+    """
+    failed = [
+        named
+        for cell in record.cells
+        for named in cell.failed_skill_calls
+        if invocation_mod.names_skill(named, record.skill)
+    ]
+    if failed:
+        return f"a `Skill` call for `{record.skill}` came back an error"
+    called = [
+        named
+        for cell in record.cells
+        for named in cell.skill_calls
+        if invocation_mod.names_skill(named, record.skill)
+    ]
+    if called:
+        # The call neither errored nor counted, which leaves one explanation:
+        # `init.skills` did not list the skill, so nothing it returned can mean
+        # the skill loaded (`invocation.parse_stream`'s one-way veto).
+        return (
+            f"a `Skill` call for `{record.skill}` was made, but the skill was "
+            f"not registered in `init.skills`"
+        )
+    if any(cell.skill_calls for cell in record.cells):
+        return "it called other skills, but never this one"
+    return f"no `Skill` call for `{record.skill}` at all"
+
+
+def _invocation_lines(
+    records: list[invocation_mod.ArmInvocation],
+    kinds: dict[str, str | None] | None = None,
+) -> list[str]:
     """The per-arm invocation detail: what it opened, what it shelled out to."""
+    kinds = kinds or {}
     lines = ["## Invocation detail", ""]
     for record in records:
-        verdict = "invoked" if record.invoked else "**NOT INVOKED**"
+        if record.invoked:
+            verdict = "invoked"
+        elif _is_baseline(kinds.get(record.arm)):
+            verdict = "baseline, not invoked (nothing installed)"
+        else:
+            verdict = "**NOT INVOKED**"
         lines.append(f"### {record.arm} — {verdict} (`--invoke {record.invoke_mode}`)")
         lines.append("")
         for cell in record.cells:
             registered = "yes" if cell.registered else "no"
+            # A refused call is named here too: "asked and was told the skill
+            # does not exist" is the fact that explains an empty read list.
+            refused = (
+                f"; refused: {cell.failed_skill_calls}" if cell.failed_skill_calls else ""
+            )
             lines.append(
                 f"- trial {cell.trial}: "
-                f"skill calls {cell.skill_calls or '[]'}; "
+                f"skill calls {cell.skill_calls or '[]'}{refused}; "
                 f"registered in `init.skills`: {registered}"
             )
             if cell.reads:
@@ -540,10 +653,19 @@ def write_report(
     looking at, not for reducing to a number.
 
     `invocations` (one record per arm, from `invocation.analyse_arm`) drives the
-    loudest thing in the file. An arm whose skill never fired puts
-    `SKILL NOT INVOKED` above everything — above the title's own content, above
-    the prompt, above the outputs — because a reader who scrolls past it will
-    spend the next hour explaining a difference that is not there.
+    loudest thing in the file. An arm that *had the skill installed* and did not
+    run it puts `SKILL NOT INVOKED` above everything — above the title's own
+    content, above the prompt, above the outputs — because a reader who scrolls
+    past it will spend the next hour explaining a difference that is not there.
+
+    The alarm is scoped to arms that could have invoked. A `none` arm is
+    supposed to be silent — that is what a baseline is — so its miss is stated
+    in the comparison table as an ordinary fact and never banner-flagged. The
+    one exception is a run where *no* arm invoked: there is nothing to compare
+    then, whatever each arm installed, and the banner says so. Firing on every
+    correct with/without run is not a lesser failure than never firing; it
+    teaches the reader to skip the banner, and the next genuine miss goes
+    unread (`skills-7k7.15`).
 
     Below that the file is arranged for the reading it exists to support: the
     comparison table first, the excerpts next, and the paths last. `exit_code`
@@ -551,24 +673,40 @@ def write_report(
     not on disk; the table says "—" rather than guessing a zero.
     """
     records = invocations or []
+    kinds = _arm_kinds(cells)
     missed = [r for r in records if not r.invoked]
-    columns = _columns(run_dir, cells, records)
+    # A `none` arm not invoking is what a baseline *is*. Alarming on it fired
+    # the banner on every correct with/without run, and a detector that always
+    # fires is exactly as useless as one that never does (`skills-7k7.15`).
+    installed_missed = [r for r in missed if not _is_baseline(kinds.get(r.arm))]
+    nothing_invoked = bool(records) and not any(r.invoked for r in records)
+    # Either an arm that had the skill did not run it, or no arm ran it at all —
+    # the second covers a run whose every arm is a baseline, where there is
+    # still nothing to compare.
+    alarming = missed if nothing_invoked else installed_missed
+    columns = _columns(run_dir, cells, records, kinds)
 
     lines: list[str] = []
-    if missed:
+    if alarming:
+        headline = (
+            f"No arm ran `{skill}`:"
+            if nothing_invoked
+            else f"Arms that had `{skill}` installed but did not run it:"
+        )
+        lines += [NOT_INVOKED_HEADING, "", headline, ""]
+        lines += [f"- `{r.arm}` — {_miss_note(r)}" for r in alarming]
         lines += [
-            NOT_INVOKED_HEADING,
-            "",
-            f"Arms with no `Skill` call for `{skill}`: "
-            + ", ".join(f"`{r.arm}`" for r in missed),
             "",
             NOT_INVOKED_ORGANIC
             if invoke_mode == invocation_mod.ORGANIC
             else NOT_INVOKED_INSTRUCTED,
             "",
-            "---",
-            "",
         ]
+        if nothing_invoked:
+            lines += [NOT_A_COMPARISON, ""]
+        elif len(alarming) < len(missed):
+            lines += [BASELINE_MISS_NOTE, ""]
+        lines += ["---", ""]
 
     lines += [f"# eval run `{run_id}`", ""]
     if runner == runners.STUB:
@@ -592,7 +730,7 @@ def write_report(
     lines += _excerpt_lines(columns)
     lines += ["## Prompt", "", "```", prompt, "```", ""]
     if records:
-        lines += _invocation_lines(records)
+        lines += _invocation_lines(records, kinds)
     lines += _files_lines(columns)
 
     path = run_dir / REPORT_NAME

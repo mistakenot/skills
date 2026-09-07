@@ -10,7 +10,7 @@ import json
 
 import pytest
 
-from evals import invocation, manifest, paths, report, runners
+from evals import arms, invocation, manifest, paths, report, runners
 
 MARKDOWN = """# Design: a thing
 
@@ -238,6 +238,136 @@ def test_empty_workspace_says_so_rather_than_inventing_a_file(tmp_path):
         prompt="p", cells=[("WORKTREE", 0, cell_dir)],
     ).read_text()
     assert "no file at `ws/` root" in text
+
+
+# --- the not-invoked alarm --------------------------------------------------
+#
+# Both directions, always. A banner that fires on every healthy run and a banner
+# that never fires are the same failure with opposite signs: each teaches the
+# reader that the row carries no information (`skills-7k7.11`, `skills-7k7.15`).
+
+
+def _arm_manifest(run_dir, arm, kind):
+    """The per-arm record the report reads `kind` out of."""
+    arm_dir = run_dir / arm
+    arm_dir.mkdir(parents=True, exist_ok=True)
+    (arm_dir / arms.MANIFEST_NAME).write_text(
+        json.dumps({"run_id": run_dir.name, "arm": arm, "kind": kind, "skill": "demo"})
+    )
+
+
+def _missed(arm, *, failed=(), calls=()):
+    """An arm record whose single trial did not invoke."""
+    return invocation.ArmInvocation(
+        arm=arm,
+        skill="demo",
+        invoke_mode=invocation.INSTRUCTED,
+        invoked=False,
+        cells=[
+            invocation.CellInvocation(
+                trial=1,
+                invoked=False,
+                registered=False,
+                skill_calls=list(calls) or list(failed),
+                failed_skill_calls=list(failed),
+            )
+        ],
+    )
+
+
+def _three_arm_report(tmp_path, worktree_record):
+    """`none` (silent baseline), `WORKTREE` (installed), `main` (installed, ran it)."""
+    run_dir = tmp_path / "runs" / "run-a"
+    cells = []
+    for arm, kind, skill_present in (
+        ("none", arms.KIND_NONE, False),
+        ("WORKTREE", arms.KIND_WORKTREE, True),
+        ("main", arms.KIND_REF, True),
+    ):
+        cells.append(
+            (arm, 0, _cell(run_dir, arm, output=MARKDOWN, name="d.md", skill=skill_present))
+        )
+        _arm_manifest(run_dir, arm, kind)
+    return report.write_report(
+        run_dir=run_dir, run_id="run-a", skill="demo", arm="none, WORKTREE, main",
+        model="m", prompt="p", cells=cells,
+        invocations=[
+            _missed("none", failed=["demo"]),
+            worktree_record,
+            _record("main", invoked=True),
+        ],
+    ).read_text()
+
+
+def test_a_silent_baseline_alone_raises_no_alarm(tmp_path):
+    """The false alarm this fix is for: a textbook healthy with/without run.
+
+    `none` did not invoke because `none` installs nothing. Every other arm did.
+    Nothing here is compromised, so nothing may shout.
+    """
+    text = _three_arm_report(tmp_path, _record("WORKTREE", invoked=True))
+    assert report.NOT_INVOKED_HEADING not in text
+    assert "This run is not a comparison" not in text
+    # Stated, not shouted: the reader still learns the baseline stayed silent.
+    assert report.BASELINE_NOT_INVOKED in text
+    assert "**NO**" not in text
+
+
+def test_an_installed_arm_that_stayed_silent_still_shouts(tmp_path):
+    """The direction the fix must not break: a real miss, with a healthy arm beside it.
+
+    `WORKTREE` had the skill installed and did not run it. That invalidates the
+    `WORKTREE` column even though `main` ran fine, so the banner fires — and
+    names `WORKTREE` only, because `none` did exactly what a baseline does.
+    """
+    text = _three_arm_report(tmp_path, _missed("WORKTREE"))
+    assert text.startswith(report.NOT_INVOKED_HEADING)
+    banner = text.split("---")[0]
+    assert "`WORKTREE` — no `Skill` call for `demo` at all" in banner
+    assert "- `none`" not in banner, "the baseline is not blamed for being a baseline"
+    assert report.BASELINE_MISS_NOTE in banner
+    # `main` ran the skill, so the run *is* a comparison — the old banner said
+    # otherwise unconditionally.
+    assert "This run is not a comparison" not in text
+
+
+def test_the_banner_separates_a_refused_call_from_no_call_at_all(tmp_path):
+    """"Never asked" and "asked and was refused" are different findings.
+
+    The second says the agent tried and the *install* is what failed; reporting
+    it as "the transcript shows no `Skill` call" sends the reader looking for
+    the wrong thing.
+    """
+    text = _three_arm_report(tmp_path, _missed("WORKTREE", failed=["demo"]))
+    assert "`WORKTREE` — a `Skill` call for `demo` came back an error" in text
+    assert "no `Skill` call for `demo` at all" not in text
+
+
+def test_the_banner_names_an_unregistered_call_as_its_own_failure(tmp_path):
+    """A call that neither errored nor loaded: the skill was not in `init.skills`.
+
+    Reporting that as "no `Skill` call" points the reader at the agent when the
+    install is what to look at.
+    """
+    text = _three_arm_report(tmp_path, _missed("WORKTREE", calls=["demo"]))
+    assert "was made, but the skill was not registered in `init.skills`" in text
+
+
+def test_an_arm_with_no_manifest_is_assumed_installed_and_alarms(tmp_path):
+    """Unknown provenance fails loud.
+
+    `kind` is unreadable for a run whose manifest was lost. Treating that as a
+    baseline would silence the alarm on exactly the runs we know least about, so
+    an unknown arm is assumed to have had the skill.
+    """
+    run_dir = tmp_path / "runs" / "run-a"
+    cell_dir = _cell(run_dir, "WORKTREE", output=MARKDOWN, name="d.md")
+    text = report.write_report(
+        run_dir=run_dir, run_id="run-a", skill="demo", arm="WORKTREE", model="m",
+        prompt="p", cells=[("WORKTREE", 0, cell_dir)],
+        invocations=[_missed("WORKTREE")],
+    ).read_text()
+    assert text.startswith(report.NOT_INVOKED_HEADING)
 
 
 # --- trials -----------------------------------------------------------------

@@ -377,22 +377,60 @@ def test_cli_reports_invoked_with_a_nonempty_read_list(compiled, tmp_path):
     assert written["cells"][0]["reads"] == ["SKILL.md"]
 
 
-def test_cli_both_arms_at_once_names_only_the_silent_one(compiled, tmp_path):
+def test_cli_healthy_two_arm_run_raises_no_alarm(compiled, tmp_path):
     """The real shape of an A/B: the baseline is *meant* to be silent.
 
-    So the banner has to name which arm missed, not merely that one did — a
-    `none` arm reporting NOT INVOKED is the design working, and only the skill
-    arm missing invalidates the comparison.
+    `none` installs nothing, so it cannot invoke; alarming on that fired the
+    banner on every correct with/without run, and a reader who sees the red
+    banner on every healthy run stops reading it (`skills-7k7.15`). The fact
+    still has to be *stated* — just as a table row, not as an alarm.
     """
     code = cli.main(
         ["run", "--skill", "demo", "--arm", arms.NONE, "--arm", arms.WORKTREE,
          "--prompt", "p", "--runner", runners.STUB]
     )
     assert code == 0
-    text, _ = _report(tmp_path)
-    assert text.startswith(report.NOT_INVOKED_HEADING)
-    assert f"`{arms.NONE}`" in text.split("---")[0]
-    assert f"`{arms.WORKTREE}`" not in text.split("---")[0]
+    text, run_dir = _report(tmp_path)
+
+    assert json.loads(
+        (run_dir / arms.NONE / invocation.INVOCATION_NAME).read_text()
+    )["invoked"] is False, "fixture: the baseline must genuinely not have invoked"
+    assert json.loads(
+        (run_dir / arms.WORKTREE / invocation.INVOCATION_NAME).read_text()
+    )["invoked"] is True, "fixture: the skill arm must genuinely have invoked"
+
+    assert report.NOT_INVOKED_HEADING not in text
+    assert "This run is not a comparison" not in text
+    assert report.BASELINE_NOT_INVOKED in text, "the baseline's silence is still on the page"
+
+
+def test_cli_alarm_still_fires_when_an_installed_arm_stays_silent(compiled, tmp_path):
+    """The other direction, or the fix is just a banner that never fires.
+
+    Same healthy run, with the skill arm's verdict flipped to a miss and the
+    report regenerated over it: the arm *had* the skill installed and did not
+    run it, so nothing anywhere ran the skill. That is the failure the banner
+    exists for, and it must still shout.
+    """
+    assert cli.main(
+        ["run", "--skill", "demo", "--arm", arms.NONE, "--arm", arms.WORKTREE,
+         "--prompt", "p", "--runner", runners.STUB]
+    ) == 0
+    run_dir = next((tmp_path / "runs").iterdir())
+
+    record_path = run_dir / arms.WORKTREE / invocation.INVOCATION_NAME
+    record = json.loads(record_path.read_text())
+    record["invoked"] = False
+    record["cells"][0]["invoked"] = False
+    record["cells"][0]["skill_calls"] = []
+    record_path.write_text(json.dumps(record, indent=2))
+
+    text = report.rebuild(run_dir).read_text()
+    assert text.startswith(report.NOT_INVOKED_HEADING), "the alarm must be the first thing read"
+    banner = text.split("---")[0]
+    assert f"`{arms.WORKTREE}` — no `Skill` call" in banner
+    # Nothing ran the skill anywhere, so there is genuinely nothing to compare.
+    assert "This run is not a comparison" in banner
 
 
 def test_cli_instructed_mode_puts_the_skill_in_the_sent_prompt(compiled, tmp_path):

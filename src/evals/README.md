@@ -138,8 +138,18 @@ other failure here announces itself; this one does not.
 whether a `Skill` call named *this* skill **and came back without an error**,
 every `Read` path that resolved inside the skill, and every `Bash` command.
 Ground truth from the transcript, never a self-report. An arm counts as invoked
-only if **every** trial invoked. A miss puts `SKILL NOT INVOKED` above everything
-else in `REPORT.md`.
+only if **every** trial invoked.
+
+A miss puts `SKILL NOT INVOKED` above everything else in `REPORT.md` — but only
+a miss that means something. An arm that installed nothing (`none`) was never
+going to invoke, so its silence is stated in the comparison table
+(`no — expected (nothing installed)`) rather than alarmed on; the banner is for
+an arm that *had* the skill and did not run it, or for a run where no arm ran it
+at all. The arm's `kind` (from its own `manifest.json`) is what decides which,
+and an arm whose manifest cannot be read is assumed installed so an unknown run
+alarms rather than passing quietly. Firing on every healthy with/without run
+would be the same failure as never firing, with the sign flipped: both teach the
+reader to skip the line.
 
 A `Skill` tool_use is a *request*, not an outcome: when the skill is not
 installed the CLI emits the call anyway and the result comes back

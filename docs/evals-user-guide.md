@@ -1,5 +1,5 @@
 ---
-hash: "61709c72"
+hash: "310f3274"
 id: "b86e61ee"
 read_when: "actually running an eval — setting one up, authoring a scenario, reading a result, iterating on a skill against it, or working out why a run failed"
 summary: "Task-oriented user guide for the src/evals/ harness: your first run, the three jobs it does, writing a scenario, reading a result in the right order, the edit-run-read loop, budgeting, troubleshooting the real failure modes, and how learnings get back into the skills."
@@ -151,10 +151,13 @@ it, stop — nothing below is a comparison, and any difference you see is sampli
 noise. This is the one automated check the harness makes, because it is the
 failure that lies to you.
 
-> ⚠️ **Currently unreliable in one direction** (`skills-7k7.15`, open): the
-> banner also fires on *healthy* with/without runs, because a `none` arm not
-> invoking the skill is expected. Read the `skill invoked` row of the table
-> rather than the banner until that is fixed.
+The `SKILL NOT INVOKED` banner fires only when the run is actually compromised:
+an arm that *had the skill installed* did not run it, or no arm ran it at all.
+A `none` arm not invoking is what a baseline is, so it is reported in the
+table's `skill invoked` row as `no — expected (nothing installed)` and never
+banner-flagged. The banner also says *how* the arm missed — no `Skill` call at
+all, a call that came back an error, or a call made against a skill that was
+never registered — because those three point at different things to fix.
 
 **2. The side-by-side table.** Type, size, line counts, structural counts,
 custom elements. Note the footnote about structural rows not being comparable
@@ -245,12 +248,12 @@ is six live cells, so budget accordingly before starting.
 
 ## 8. When something goes wrong
 
-**`SKILL NOT INVOKED` on a run you think is fine.** Check the table's `skill
-invoked` row per arm. A `none` arm not invoking is correct and expected — see
-the caveat in §4. If an arm *with* the skill installed did not invoke it, that
-is real: check that arm's `skill/` snapshot exists and contains `SKILL.md`, and
-that you are not using `--invoke organic` with a skill whose description does not
-route for this prompt.
+**`SKILL NOT INVOKED` on a run you think is fine.** The banner does not fire for
+a silent `none` arm, so if you are seeing it, an arm that had the skill installed
+did not run it (or nothing did). Read the arm it names and the reason it gives:
+check that arm's `skill/` snapshot exists and contains `SKILL.md`, check the
+`registered in init.skills` row, and check you are not using `--invoke organic`
+with a skill whose description does not route for this prompt.
 
 **A canary fails before anything runs.** That is the harness refusing to produce
 a contaminated result, and it costs nothing. The four canaries check: the config
