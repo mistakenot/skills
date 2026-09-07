@@ -20,3 +20,24 @@ It has three jobs:
 
 Re-record it only when the CLI's stream shape genuinely changes, and update the
 stub in the same commit — a parity failure is the signal, not the problem.
+
+## The two arms of a real `instructed` run
+
+`live-none-instructed-stream.jsonl` and `live-worktree-instructed-stream.jsonl`
+are the `none` and `WORKTREE` arms of one real run of the rich-doc scenario
+(`--invoke instructed`, 2026-09-04, run `20260904-141016-aef7180`). They are the
+ground truth for `test_failed_skill_call.py`, and they exist because the stub
+could not be trusted to produce them:
+
+* the `none` arm contains a **`Skill` call that was refused** —
+  `<tool_use_error>Unknown skill: rich-doc</tool_use_error>` — the shape the stub
+  did not model and the detector therefore read as an invocation
+  (`skills-7k7.11`);
+* the `WORKTREE` arm is the same prompt with the skill installed, and made **zero
+  `Read` calls into the skill directory**: the `Skill` tool opens `SKILL.md`
+  itself, and the only other evidence in the transcript is a `Bash` line running
+  `config/skills/rich-doc/scripts/pd-lint.mjs`.
+
+Both are kept whole rather than trimmed. A trimmed transcript is a transcript
+someone chose the contents of, which is the failure these files were added to
+prevent.

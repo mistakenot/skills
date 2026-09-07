@@ -14,6 +14,14 @@ from pathlib import Path
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 LIVE_STREAM = FIXTURES / "live-stream.jsonl"
 
+# The two arms of one real `--invoke instructed` run of the rich-doc scenario.
+# `none` contains the failed `Skill` call that the detector once read as an
+# invocation; `worktree` is the same prompt with the skill installed. They are
+# the ground truth for the invocation check — see `fixtures/README.md`.
+LIVE_NONE_STREAM = FIXTURES / "live-none-instructed-stream.jsonl"
+LIVE_WORKTREE_STREAM = FIXTURES / "live-worktree-instructed-stream.jsonl"
+LIVE_SKILL = "rich-doc"
+
 # Every file a cell leaves behind, whichever runner produced it.
 CELL_ENTRIES = {"skill", "ws", "stream.jsonl", "out.md", "err.txt"}
 

@@ -79,3 +79,36 @@ make install   # Compile + install locally into .claude/skills/ and .agents/skil
 make lint      # Lint all skills with auto skill
 make check     # Compile + lint (pre-commit check)
 ```
+
+## Evals
+
+Skill changes are easy to ship on a hunch. `src/evals/` measures them instead: it runs one task against one or more **arms** -- an arm being a version of a skill, or no skill at all -- each in an isolated clean room, and leaves a run directory you read side by side.
+
+Judgement is a human reading the two outputs. There are no graders, no LLM judges and no rubrics. The single automated check is whether the skill actually fired, because that failure is silent: if the skill never loaded, both arms are the same run and any difference between them is noise.
+
+Start with the stub lane -- offline, unbilled, about a second, and it exercises the whole harness:
+
+```sh
+make evals ARGS='run --skill rich-doc --arm none --arm WORKTREE \
+    --prompt "what is 2+2?" --runner stub'
+```
+
+Drop `--runner stub` for the real thing. Two arms against a real repo is roughly $1-2 and 7-8 minutes.
+
+The arms are the experiment; everything else is held constant:
+
+| Question | Arms |
+|---|---|
+| Does this skill do anything? | `--arm none --arm WORKTREE` |
+| Is my edit better than what's committed? | `--arm HEAD --arm WORKTREE` |
+| What does this idea even do, in isolation? | `--arm WORKTREE` alone |
+
+`WORKTREE` is your **uncommitted** working tree. That is the point: you can evaluate a change before committing it, rather than committing in order to test it.
+
+```sh
+make evals ARGS='list'              # every run, newest first
+make evals ARGS='show <run-id>'     # what it compared, and what to open
+make evals ARGS='clean --keep 5'    # prints what it would drop; --yes to do it
+```
+
+**[docs/evals-user-guide.md](docs/evals-user-guide.md)** is the user guide -- first run, writing a scenario, reading a result, budget, and troubleshooting. [docs/evals-harness.md](docs/evals-harness.md) covers when to reach for this rather than `src/planning-eval/` or `src/assurance/evals/`, and what a run cannot tell you.

@@ -415,3 +415,20 @@ def test_every_bundled_scenario_is_pinned():
     """The rule applies to what ships, not only to what a test writes."""
     for name in scenarios.available():
         scenarios.load(scenarios.SCENARIOS_DIR / name)
+
+
+def test_load_accepts_a_relative_path(monkeypatch):
+    """A relative --scenario must survive being run with cwd set elsewhere.
+
+    setup.sh is executed with cwd set to the staging dir, so an unresolved
+    relative path stops resolving there — it exited 127 during skills-7k7.7.
+    """
+    repo_root = pathlib.Path(__file__).resolve().parents[3]
+    monkeypatch.chdir(repo_root)
+
+    loaded = scenarios.load(
+        pathlib.Path("src/evals/scenarios/datasette-parquet-renderer")
+    )
+
+    assert loaded.root is not None and loaded.root.is_absolute()
+    assert loaded.setup is None or loaded.setup.is_absolute()

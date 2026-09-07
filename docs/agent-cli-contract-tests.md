@@ -1,5 +1,6 @@
 ---
 hash: "7ad92f3e"
+id: "d45ac9d9"
 read_when: "a delegate/review skill stalls or errors on a claude/codex/grok/herdr flag, after upgrading one of those CLIs, or when adding a new agent flag to a skill — how the contract tests work, how to run them, and how to update the contract"
 summary: "Contract-driven pytest suite that checks every claude/codex/grok/herdr flag the delegate and review skills pass against the installed CLIs' --help, verifies the skill sources use only contracted flags, and optionally smoke-runs the canonical headless invocations."
 title: "Agent CLI Contract Tests"

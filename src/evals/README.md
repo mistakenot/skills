@@ -13,21 +13,63 @@ you (see [The one automated check](#the-one-automated-check)).
 Named plural deliberately: `eval` is a shell builtin, so a bare `eval` on PATH
 would be shadowed.
 
-## Quick start
+## Getting started
+
+**New here? The task-oriented walkthrough is
+[docs/evals-user-guide.md](../../docs/evals-user-guide.md)** — first run, the
+three jobs, writing a scenario, reading a result, budget, and what to do when
+something breaks. This section is the short version; the rest of this file is
+reference.
+
+### 1. Run the stub lane first
+
+It exercises the whole harness — arm resolution, clean room, canaries, run
+directory, report — with a canned transcript instead of a billed agent. Free,
+about a second, and it catches every boring failure before you spend anything.
 
 ```bash
-# Offline, unbilled, ~1s — exercises the whole harness with a canned transcript.
 make evals ARGS='run --skill rich-doc --arm none --arm WORKTREE \
     --prompt "what is 2+2?" --runner stub'
+```
 
-# The real thing. Bills tokens, takes minutes.
+Open the `REPORT.md` it prints a path to. That artifact is where you will spend
+all your time.
+
+### 2. Pick your arms
+
+The arms *are* the experiment; everything else is held constant.
+
+| Question | Arms |
+|---|---|
+| Does this skill do anything? | `--arm none --arm WORKTREE` |
+| Is my edit better than what is committed? | `--arm HEAD --arm WORKTREE` |
+| What does this idea even do? | `--arm WORKTREE` alone |
+
+`WORKTREE` is your **uncommitted** working tree, which is the point: you can
+evaluate a change before committing it, rather than committing in order to test.
+
+### 3. Go live
+
+Same command without `--runner stub`. Two arms on a real repo is roughly
+**$1–2 and 7–8 minutes**.
+
+```bash
 make evals ARGS='run --skill rich-doc --arm none --arm WORKTREE \
     --scenario datasette-parquet-renderer'
+```
 
+### 4. Read it
+
+```bash
 make evals ARGS='list'
 make evals ARGS='show 20260904-124538-3ea2ee7'
 make evals ARGS='clean --keep 5 --yes'
 ```
+
+In `REPORT.md`, read in this order — **did the skill fire** (if not, stop; it is
+not a comparison), then the side-by-side table, then the excerpts, then the
+output files if you need to judge quality. The counts are observations, not
+scores: the harness never tells you which arm is better.
 
 `make evals` is `PYTHONPATH=src uv run --no-dev python -m evals`; run that
 directly if you prefer. A live run needs `~/.claude/.credentials.json` (Claude
@@ -93,10 +135,20 @@ comparing two outputs, inventing explanations for what is sampling noise. Every
 other failure here announces itself; this one does not.
 
 `invocation.py` parses `stream.jsonl` for `tool_use` blocks and records, per arm:
-whether a `Skill` call named *this* skill, every `Read` path that resolved inside
-the skill, and every `Bash` command. Ground truth from the transcript, never a
-self-report. An arm counts as invoked only if **every** trial invoked. A miss puts
-`SKILL NOT INVOKED` above everything else in `REPORT.md`.
+whether a `Skill` call named *this* skill **and came back without an error**,
+every `Read` path that resolved inside the skill, and every `Bash` command.
+Ground truth from the transcript, never a self-report. An arm counts as invoked
+only if **every** trial invoked. A miss puts `SKILL NOT INVOKED` above everything
+else in `REPORT.md`.
+
+A `Skill` tool_use is a *request*, not an outcome: when the skill is not
+installed the CLI emits the call anyway and the result comes back
+`<tool_use_error>Unknown skill: …</tool_use_error>`. Each call is paired with its
+`tool_result` by `tool_use_id`, and `registered` (membership in `init.skills`)
+corroborates in one direction — an init event that does not list the skill vetoes
+any claim that it loaded. The `Skill` tool also opens `SKILL.md` without emitting
+a `Read`, so the load itself is counted in `reads`; `skill_bash` carries the other
+real evidence, the `Bash` lines that name a path inside the skill.
 
 `--invoke` decides what the run is measuring:
 
@@ -219,6 +271,28 @@ floor" in [`docs/headless-claude-cli-evals.md`](../../docs/headless-claude-cli-e
 The stub's `STUB_BUILTIN_SKILLS` exists only so its init event looks real;
 a test rewrites that list and requires a stub run to be unaffected.
 
+**The stub was too kind — and a negative control is only as good as the world it
+runs against.** The invocation check shipped with a false positive in exactly the
+case it exists to catch: under `--invoke instructed` the `none` arm reported
+`invoked: true`, because the detector read the `Skill` tool_use and never its
+`tool_result`. It had a negative control, and the control passed — in stub mode.
+The stub modelled "skill absent" as *no `Skill` call at all* and never emitted a
+failed tool call of any kind, so the control was run against the world the
+implementer imagined rather than against the CLI, where the agent calls `Skill`
+and is refused. Two lessons, both general:
+
+- A negative control that only ever runs against your own mock proves your mock
+  agrees with your parser. Anchor it to recorded output from the real system —
+  `tests/fixtures/live-none-instructed-stream.jsonl` is that run, committed.
+- Mocks are lenient in the direction of the author's assumptions. The failure
+  modes a stub declines to model are precisely the ones nothing will catch, so
+  make the stub emit the ugly shapes: errors, refusals, partial results.
+
+A detector that is trusted and wrong is worse than no detector, which is the
+thing the check was built to prevent — so `test_failed_skill_call.py` asserts the
+failed call is *present* in the transcript before asserting the verdict, and
+reverting the fix fails eight tests.
+
 **Cache reuse cannot be proven by a marker file alone.** The scenario cache
 publishes atomically: a second fetch is assembled in a staging directory and
 discarded on `rename` if another one won, so the marker survives and a
@@ -252,6 +326,8 @@ invocation parser would never meet in production.
 
 ## Related
 
+- [`docs/evals-user-guide.md`](../../docs/evals-user-guide.md) — the user guide: first run, the three jobs, authoring a scenario, reading a result, budget, troubleshooting.
+- [`docs/evals-harness.md`](../../docs/evals-harness.md) — orientation: when to reach for this harness rather than another.
 - [`docs/headless-claude-cli-evals.md`](../../docs/headless-claude-cli-evals.md) — the isolation recipe, the CLI flags, the JSON envelope, the floor.
 - [`src/assurance/evals/`](../assurance/evals/) — the two-arm harness this cell was lifted from; adds mechanical checks and an LLM judge.
 - [`src/planning-eval/`](../planning-eval/) — the conversational, multi-turn harness. Use that when the skill needs turns; use this when one prompt determines the output.

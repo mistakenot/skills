@@ -128,7 +128,10 @@ def load(root: Path) -> Scenario:
     including the pin check — so a malformed scenario fails before an arm is
     compiled, let alone before a token is spent.
     """
-    root = Path(root)
+    # Resolve to absolute up front: setup.sh is executed with cwd set to the
+    # staging dir, so a relative scenario path would no longer resolve there
+    # (it exited 127 during skills-7k7.7).
+    root = Path(root).resolve()
     if not root.is_dir():
         known = ", ".join(available()) or "(none bundled)"
         raise ScenarioError(f"no scenario directory at {root}; bundled: {known}")

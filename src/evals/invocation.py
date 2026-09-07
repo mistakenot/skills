@@ -15,6 +15,15 @@ record, at a cost in prompt tokens. Two views of the same run genuinely disagree
 4-5 entries on the same binary ("The irreducible floor" in
 `docs/headless-claude-cli-evals.md`). The machine-emitted one is the target.
 
+**A `Skill` tool_use is a request, not an outcome.** When the skill is not
+installed the CLI still emits the call; the *result* comes back
+`<tool_use_error>Unknown skill: rich-doc</tool_use_error>`. Reading the call and
+not its reply made the `none` arm of an `instructed` run report `invoked: true` —
+a false positive in exactly the case this check exists to catch (`skills-7k7.11`).
+So every `Skill` call is paired with its `tool_result` by `tool_use_id`, and a
+call that errored is not an invocation. `registered` corroborates: an init event
+that does not list the skill vetoes any claim that it loaded.
+
 Two things this module deliberately does not do:
 
   * It never compares `init.skills` to a hard-coded list. The built-in floor
@@ -31,6 +40,7 @@ Two things this module deliberately does not do:
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -44,9 +54,29 @@ INVOKE_CHOICES = (INSTRUCTED, ORGANIC)
 INVOKE_DEFAULT = INSTRUCTED
 
 
+_INSTRUCTION = "Invoke the {skill} skill before you begin."
+_INSTRUCTION_RE = re.compile(
+    "^" + re.escape(_INSTRUCTION).replace(r"\{skill\}", r"(?P<skill>\S+)") + "$",
+    re.MULTILINE,
+)
+
+
 def instruction_for(skill: str) -> str:
     """The sentence `instructed` mode appends. Kept short and unambiguous."""
-    return f"Invoke the {skill} skill before you begin."
+    return _INSTRUCTION.format(skill=skill)
+
+
+def instructed_skill(prompt: str) -> str | None:
+    """The skill a prompt was told to invoke, or `None` under `organic`.
+
+    The inverse of `instruction_for`, built from the same template so the pair
+    cannot drift. It exists because the stub runner has to know what the agent
+    was *asked* to do, not only what was installed: the `none` arm under
+    `instructed` is told to invoke a skill that is not there, and the resulting
+    failed `Skill` call is the shape this module got wrong once already.
+    """
+    found = _INSTRUCTION_RE.findall(prompt)
+    return found[-1] if found else None
 
 
 def apply_invoke_mode(prompt: str, skill: str, mode: str = INVOKE_DEFAULT) -> str:
@@ -110,6 +140,33 @@ def _tool_uses(events: list[dict]) -> list[dict]:
     return blocks
 
 
+def _tool_errors(events: list[dict]) -> dict[str, bool]:
+    """`tool_use_id` -> did that call come back an error.
+
+    A result the CLI never emitted (a killed run, a truncated tail) is simply
+    absent from the map, which is not the same as "succeeded" — callers must
+    treat a missing id as *unknown*, never as a pass.
+    """
+    errors: dict[str, bool] = {}
+    for event in events:
+        if event.get("type") != "user":
+            continue
+        content = (event.get("message") or {}).get("content")
+        if not isinstance(content, list):
+            continue
+        for block in content:
+            if not isinstance(block, dict) or block.get("type") != "tool_result":
+                continue
+            tid = block.get("tool_use_id")
+            if not isinstance(tid, str):
+                continue
+            body = block.get("content")
+            errors[tid] = bool(block.get("is_error")) or (
+                isinstance(body, str) and "<tool_use_error>" in body
+            )
+    return errors
+
+
 def _skill_named(block: dict) -> str | None:
     """The skill a `Skill` tool_use names, whichever key the CLI used for it."""
     args = block.get("input")
@@ -143,50 +200,92 @@ def relative_to_skill(path: str, skill: str) -> str | None:
     return None
 
 
+SKILL_MD = "SKILL.md"
+
+
 @dataclass(frozen=True)
 class CellInvocation:
-    """What one cell's transcript says about the skill under test."""
+    """What one cell's transcript says about the skill under test.
+
+    `skill_calls` is every `Skill` call the agent *made*; `failed_skill_calls` is
+    the subset the CLI refused. The two are kept apart rather than collapsed
+    because "asked for a skill that is not installed" and "never asked" are
+    different findings about the arm, and a reader of `invocation.json` should be
+    able to tell them apart without the transcript.
+    """
 
     trial: int
     invoked: bool
     registered: bool
+    init_seen: bool = False
     skill_calls: list[str] = field(default_factory=list)
+    failed_skill_calls: list[str] = field(default_factory=list)
     reads: list[str] = field(default_factory=list)
     reads_outside_skill: int = 0
     bash: list[str] = field(default_factory=list)
+    skill_bash: list[str] = field(default_factory=list)
 
 
 def parse_stream(stream_path: Path, skill: str, trial: int = 1) -> CellInvocation:
     """Read one `stream.jsonl` for evidence that `skill` fired, and what it read.
 
-    `invoked` is true only when a `Skill` tool_use names *this* skill: a run that
-    loaded some other skill is not this skill's run. `registered` reads
-    `init.skills` — membership of our own skill only, never a comparison against
-    the built-in floor. A false `registered` with a false `invoked` says the arm
-    was mis-installed; a true `registered` with a false `invoked` says the agent
-    chose not to use it, which in `organic` mode is the measurement.
+    `invoked` needs a `Skill` tool_use that (a) names *this* skill — a run that
+    loaded some other skill is not this skill's run — and (b) did not come back
+    an error. `registered` reads `init.skills`: membership of our own skill only,
+    never a comparison against the built-in floor. It also corroborates, in one
+    direction only: if an init event was seen and did not list the skill, the
+    skill was not installed, so nothing in the transcript can mean it loaded. A
+    stream with no init event at all leaves registration *unknown* and vetoes
+    nothing.
+
+    A false `registered` with a false `invoked` says the arm was mis-installed
+    (or is the `none` arm, where that is the design); a true `registered` with a
+    false `invoked` says the agent chose not to use it, which in `organic` mode
+    is the measurement.
+
+    `reads` is what the cell demonstrably opened *from the skill*, and the
+    `Skill` tool's own load counts: it reads `SKILL.md` without ever emitting a
+    `Read`, so counting only `Read` blocks reported zero files for an arm that
+    genuinely ran the skill. `skill_bash` carries the other real evidence — the
+    `Bash` lines that name a path inside the skill, which is how a skill that
+    ships scripts (`pd-lint.mjs`) shows up in a transcript at all.
     """
     events = _events(stream_path)
 
+    init_seen = False
     registered = False
     for event in events:
         if event.get("type") == "system" and event.get("subtype") == "init":
+            init_seen = True
             listed = event.get("skills")
             if isinstance(listed, list):
                 registered = skill in listed
             break
 
+    errors = _tool_errors(events)
     skill_calls: list[str] = []
+    failed_calls: list[str] = []
+    loaded = False
     reads: list[str] = []
     bash: list[str] = []
+    skill_bash: list[str] = []
     outside = 0
     for block in _tool_uses(events):
         name = block.get("name")
         args = block.get("input") if isinstance(block.get("input"), dict) else {}
         if name == "Skill":
             named = _skill_named(block)
-            if named and named not in skill_calls:
+            if not named:
+                continue
+            if named not in skill_calls:
                 skill_calls.append(named)
+            # A missing result is unknown, not a failure: a run killed mid-call
+            # still called. Only a result that is present *and* an error demotes.
+            if errors.get(block.get("id"), False):
+                if named not in failed_calls:
+                    failed_calls.append(named)
+            elif _matches(named, skill):
+                loaded = True
         elif name == "Read":
             path = args.get("file_path")
             if not isinstance(path, str) or not path.strip():
@@ -200,15 +299,26 @@ def parse_stream(stream_path: Path, skill: str, trial: int = 1) -> CellInvocatio
             command = args.get("command")
             if isinstance(command, str) and command.strip():
                 bash.append(command)
+                if f"skills/{skill}/" in command:
+                    skill_bash.append(command)
+
+    invoked = loaded and not (init_seen and not registered)
+    if invoked and SKILL_MD not in reads:
+        # The Skill tool loaded it. Recording that is the difference between
+        # "read nothing" and "read the file the tool exists to open".
+        reads.insert(0, SKILL_MD)
 
     return CellInvocation(
         trial=trial,
-        invoked=any(_matches(named, skill) for named in skill_calls),
+        invoked=invoked,
         registered=registered,
+        init_seen=init_seen,
         skill_calls=skill_calls,
+        failed_skill_calls=failed_calls,
         reads=reads,
         reads_outside_skill=outside,
         bash=bash,
+        skill_bash=skill_bash,
     )
 
 

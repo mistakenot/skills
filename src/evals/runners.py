@@ -19,6 +19,15 @@ and the fast lane will start testing a layout that never ships.
 event shapes still match it. The point is that the invocation parser
 (skills-7k7.4) is exercised by real-looking `tool_use` blocks rather than by a
 simplification that would let it pass here and fail in production.
+
+**A stub is only as good as the failures it is willing to model.** This one
+originally modelled "the skill is absent" as *no `Skill` call at all*, and never
+emitted a failed tool call of any kind. The CLI does the opposite: told to invoke
+a skill that is not installed, the agent calls `Skill` anyway and the call comes
+back `<tool_use_error>Unknown skill: …</tool_use_error>`. The invocation check's
+negative control passed against that imagined world and the real one had a false
+positive in it (`skills-7k7.11`). So the `none` arm under `instructed` now emits
+the failed call, modelled on `tests/fixtures/live-none-instructed-stream.jsonl`.
 """
 
 from __future__ import annotations
@@ -28,6 +37,8 @@ import subprocess
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
+
+from . import invocation
 
 LIVE = "live"
 STUB = "stub"
@@ -154,15 +165,26 @@ def _assistant(session: str, n: int, model: str, content: list[dict]) -> dict:
     }
 
 
-def _tool_result(session: str, n: int, tool_use_id: str, content: str, result: dict) -> dict:
+def _tool_result(
+    session: str,
+    n: int,
+    tool_use_id: str,
+    content: str,
+    result,
+    is_error: bool = False,
+) -> dict:
+    """One `tool_result`, shaped like the CLI's.
+
+    `is_error` is only *present* on a failed result — the recorded transcripts
+    omit the key entirely on success — so a parser that keys off it meets the
+    same absence here that it meets in production.
+    """
+    block = {"tool_use_id": tool_use_id, "type": "tool_result", "content": content}
+    if is_error:
+        block["is_error"] = True
     return {
         "type": "user",
-        "message": {
-            "role": "user",
-            "content": [
-                {"tool_use_id": tool_use_id, "type": "tool_result", "content": content}
-            ],
-        },
+        "message": {"role": "user", "content": [block]},
         "parent_tool_use_id": None,
         "session_id": session,
         "uuid": _uid(session, n),
@@ -257,6 +279,17 @@ def run_stub(inv: Invocation, stdout, stderr) -> int:
     filesystem side effect it narrates (`answer.md`) is actually performed — so
     the workspace copy-out is exercised and the transcript does not describe a
     workspace that never existed.
+
+    Three shapes, chosen by what was installed *and* what the prompt asked for:
+
+      * skill installed -> a `Skill` call that succeeds, then a `Read` of its
+        `SKILL.md`;
+      * nothing installed but the prompt says to invoke one (`--arm none
+        --invoke instructed`) -> a `Skill` call that comes back an error;
+      * nothing installed and nothing asked for (`organic`) -> no `Skill` call.
+
+    The middle one is the case the stub used to be silent about, and it is the
+    case the whole invocation check exists to catch.
     """
     config_dir = inv.env.get("CLAUDE_CONFIG_DIR", "")
     session = _uid(str(inv.cwd), -1)
@@ -284,7 +317,42 @@ def run_stub(inv: Invocation, stdout, stderr) -> int:
     )
 
     n = 3
-    if inv.skill_name:
+    # What the prompt *told* the agent to do, which is not the same question as
+    # what was installed. `instructed` mode against the `none` arm asks for a
+    # skill that is not there, and the agent still asks for it.
+    requested = invocation.instructed_skill(inv.prompt)
+    if not inv.skill_name and requested:
+        tid = f"toolu_stub{n:04d}"
+        events.append(
+            _assistant(session, n, inv.model, [
+                {"type": "thinking", "thinking": "Load the skill first.", "signature": "stub"},
+            ])
+        )
+        n += 1
+        events.append(
+            _assistant(session, n, inv.model, [
+                {
+                    "type": "tool_use",
+                    "id": tid,
+                    "name": "Skill",
+                    "input": {"skill": requested},
+                    "caller": {"type": "direct"},
+                }
+            ])
+        )
+        n += 1
+        # The shape the CLI really returns. Copied from the recorded `none` arm:
+        # `is_error` on the block, and a bare string in `tool_use_result`.
+        events.append(
+            _tool_result(
+                session, n, tid,
+                f"<tool_use_error>Unknown skill: {requested}</tool_use_error>",
+                f"Error: Unknown skill: {requested}",
+                is_error=True,
+            )
+        )
+        n += 1
+    elif inv.skill_name:
         tid = f"toolu_stub{n:04d}"
         events.append(
             _assistant(session, n, inv.model, [
@@ -307,8 +375,8 @@ def run_stub(inv: Invocation, stdout, stderr) -> int:
         events.append(
             _tool_result(
                 session, n, tid,
-                f"Skill {inv.skill_name} loaded.",
-                {"type": "skill", "skill": inv.skill_name},
+                f"Launching skill: {inv.skill_name}",
+                {"success": True, "commandName": inv.skill_name},
             )
         )
         n += 1
