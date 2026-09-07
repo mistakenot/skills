@@ -16,11 +16,16 @@ Plan (on main)                          Execute                    Review & Comp
 /commit-task
 ```
 
+`/new-task-quick` runs all three planning stages in one unattended pass
+instead, stopping once at the end. Same artifacts, one review.
+
 ### Conventions
 - Task folder: `docs/tasks/$ID-$NAME/` (3-digit ID, kebab-case name)
 - Branch: `task/$ID-$NAME`
 - Planning happens on `main`. Execution happens in isolated worktrees.
-- Each stage hard-stops for user review before proceeding to the next.
+- Each stage hard-stops for user review before proceeding to the next — except under
+  `new-task-quick`, which runs them unattended and stops once at the end,
+  recording decisions it could not make as gating `<pd-question>`s.
 - Artifacts: `plan.html` + `context.md` (two files total)
 
 ### pd-meta status lifecycle

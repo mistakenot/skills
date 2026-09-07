@@ -20,7 +20,7 @@ Read approved requirements, gather codebase context, write `context.md`, then ad
 
 ### Stage 1: Context Gathering
 
-1. **Find task folder** -- identify the active task from recent context, user input, or by scanning `docs/tasks/` for the latest folder. Read `plan.html` and check the Requirements tab. Verify all Open Questions are resolved -- if not, resolve them first.
+1. **Find task folder** -- identify the active task from recent context, user input, or by scanning `docs/tasks/` for the latest folder. Read `plan.html` and check the Requirements tab. **When interactive**, verify all Open Questions are resolved -- if not, resolve them first. **When running autonomously** (told not to ask, or no user available), unanswered `<pd-question>`s that carry a `recommendedAnswer` are expected — proceed on that lean rather than resolving them; the doc stays gated for the human.
 2. **Scan skills** -- check available skills for topic matches relevant to this task's domain. Load matched skills.
 3. **Gather codebase context** -- spawn 2 parallel subagents to ground the design in codebase reality:
 
@@ -57,7 +57,7 @@ Read approved requirements, gather codebase context, write `context.md`, then ad
 8. **Assess complexity** (informed by context):
    - **Straightforward** (one obvious approach): go directly to step 10.
    - **Ambiguous** (multiple viable approaches): go to step 9.
-9. **Explore options** -- spawn parallel subagents, one per candidate approach. Each subagent investigates feasibility using the gathered context. Collect results. Present a comparison table with pros/cons for each option. Wait for the user to pick.
+9. **Explore options** -- spawn parallel subagents, one per candidate approach. Each subagent investigates feasibility using the gathered context. Collect results. **When interactive**, present a comparison table with pros/cons for each option and wait for the user to pick. **When running autonomously**, pick the option the gathered evidence favours, record the rest under Rejected Alternatives in the Solution tab, and record the choice itself as a `<pd-question>` with `recommendedAnswer` set to your pick — do not stall waiting for a pick that isn't coming.
 10. **Write Solution tab** -- design the solution and insert `<pd-tab name="Solution">` into plan.html after the Verification tab.
 
     See [references/tab-solution.md](references/tab-solution.md) for the tab structure and rules.

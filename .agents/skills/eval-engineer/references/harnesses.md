@@ -46,7 +46,15 @@ Mechanics:
 For skills that take one prompt and produce one output (format a doc, extract data, generate
 a file): run the agent headless in an isolated clean room, once per arm, and diff the outputs.
 
-**References: `docs/headless-claude-cli-evals.md`** (the isolation recipe: relocated config
+**Reference implementation: `src/evals/`** (`make evals ARGS='run --skill X --arm none --arm
+WORKTREE --scenario Y'`). An arm is a parameter — `none`, `WORKTREE`, or a git ref — so
+with/without and version-A/version-B are the same mechanism; isolation canaries run on every
+cell, the transcript is parsed for whether the skill actually fired, and a `--runner stub` lane
+exercises the plumbing offline. **Read `src/evals/README.md`'s Limitations before trusting a
+result** — Claude-only parsing, the `instructed` prompt confound, N=1 by default, and the
+component-library confound each bound what a run can tell you.
+
+**Also: `docs/headless-claude-cli-evals.md`** (the isolation recipe: relocated config
 dir, auth, skill scoping, the `claude -p` flags and JSON output shape) and
 **`src/assurance/evals/`** + **`docs/assurance-eval-system.md`** (a working two-arm
 with-skill/without-skill differential harness with mechanical checks and an LLM-as-judge).

@@ -57,7 +57,7 @@ Full mechanics and reference implementations in [references/harnesses.md](refere
 | Skill shape | Harness | Reference in this repo |
 |-------------|---------|------------------------|
 | **Conversational / multi-turn** (planning workflows, interrogation) — needs a live agent you can talk to across turns | **NTM-driven replay A/B**: host the agent in tmux, drive it turn-by-turn, replay a scripted human | `src/planning-eval/` |
-| **Single-shot transform / generation** (format a doc, extract data, one-pass output) | **Headless `claude -p` two-arm**: isolated clean-room, one prompt, capture output | `docs/headless-claude-cli-evals.md`, `src/assurance/evals/` |
+| **Single-shot transform / generation** (format a doc, extract data, one-pass output) | **Headless `claude -p` two-arm**: isolated clean-room, one prompt, capture output | `src/evals/` (reference impl — read its README's limitations first), `docs/headless-claude-cli-evals.md`, `src/assurance/evals/` |
 | **Skill *triggering* / description quality** (does the right skill fire?) | **Trigger evals**: should-trigger / should-not-trigger query set | skill-creator's description optimizer |
 
 The non-negotiables, whichever you pick: **isolate the arm** (install exactly the skill

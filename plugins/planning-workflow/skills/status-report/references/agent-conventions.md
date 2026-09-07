@@ -9,6 +9,11 @@ For headless (no-pane) delegation — running a CLI in print mode from bash and
 exiting, which is also how Grok is driven — see
 [references/headless-delegation.md](references/headless-delegation.md).
 
+The launch flags below are pinned in `src/planning-workflow/tests/agent-cli-contract.toml`
+and checked against the installed CLIs by `make test`. If a worker stalls on a
+permission prompt or a CLI rejects a flag, run that first — the CLIs change
+weekly and the test names exactly which flag moved.
+
 ## Permission modes — the thing that most often goes wrong
 
 Every one of these CLIs defaults to an **interactive, ask-a-human** mode. A

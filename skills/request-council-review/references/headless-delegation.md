@@ -22,6 +22,10 @@ comments, then run `/resolve-comments` in the coordinator.
 | **Codex** | `codex exec --cd "$CWD" --sandbox workspace-write "…"` | **Requires** `< /dev/null` — blocks on open stdin with "Reading additional input from stdin…" | `--sandbox workspace-write` (writes task docs) |
 | **Grok** | `grok --cwd "$CWD" --permission-mode bypassPermissions --always-approve --single "/review-task …"` | **No redirect needed** — headless mode ignores piped stdin | `--permission-mode bypassPermissions --always-approve` |
 
+These flags are pinned in `src/planning-workflow/tests/agent-cli-contract.toml`
+and verified against the installed CLIs by `make test`; run it first when a
+headless review errors on a flag or hangs on a permission prompt.
+
 Grok discovers skills from `.agents/skills/` (the same tree `auto skill
 sync` renders for Codex). Ensure `review-task` is installed before
 delegating. `--single` (short form `-p`) takes the prompt as its immediate

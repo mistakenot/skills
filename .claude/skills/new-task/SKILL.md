@@ -1,6 +1,6 @@
 ---
 name: new-task
-description: "Creates a plan.html with Requirements tab for a new task. Use when 'create a task', 'new task', 'start a task', 'write requirements', or when a user describes a feature/fix to plan. Not applicable when executing an existing task or reviewing existing docs."
+description: "Creates a plan.html with Requirements tab for a new task. Use when 'create a task', 'new task', 'start a task', 'write requirements', or when a user describes a feature/fix to plan. Not applicable when executing an existing task, reviewing existing docs, or planning every stage unattended (use new-task-quick)."
 ---
 
 # New Task

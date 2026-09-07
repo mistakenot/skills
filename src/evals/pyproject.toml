@@ -1,0 +1,19 @@
+# The evals harness runs from the repo root against the root project:
+#
+#     PYTHONPATH=src uv run --no-dev python -m evals run ...
+#
+# (see the `evals` target in the root Makefile). This file declares the module's
+# own requirements so it is self-describing; it deliberately has no dependencies
+# beyond the standard library, and is not a packaged distribution.
+[project]
+name = "evals"
+version = "0.1.0"
+description = "Contained A/B harness for skill versions."
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.uv]
+package = false
