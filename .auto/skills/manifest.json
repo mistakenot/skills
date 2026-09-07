@@ -66,10 +66,10 @@
       "render_version": "1"
     },
     "eval-engineer": {
-      "template_hash": "a3fe0ed40aec3d0541616fa064378dc624492312e61e769616f74ed54539f7ca",
+      "template_hash": "deca8279c1ce77e4ce2eeb61e1c6c6db56876fe13256ae45d2ea662fa946258f",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "1db5ec7948a90cfd2836caab66638c0f59821b4ec5e4cb4e54390c675fd71695",
+      "skill_version": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
       "render_version": "1"
     },
     "execute-task": {
@@ -227,10 +227,10 @@
       "render_version": "1"
     },
     "revise-readme": {
-      "template_hash": "94a3290c7e56dd0a21d045f6a7963a0d274c533cc9f01fff9798a6fe81340510",
+      "template_hash": "c61cea4ba09406b0572b57cd0f0b820687a59479bf03f949fbb03cace0726448",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "99a08b493c6cc16afeb88444d915e9c52b1e394fb5f10d9a9bdb3ac0c6d3332c",
+      "skill_version": "f5c0a4c78fcf506521def5ad31e3bc3b742ca619cd1dcf7aa1f878e6c6c085de",
       "render_version": "1"
     },
     "rich-doc": {
@@ -281,7 +281,7 @@
         "delegate": "bc637dee8b5db929b0a4cbdd40f27d3da0506a89414b79b275d1564a7ffb2696",
         "delegate-task": "345bb00991767b9e9ddf5e7c383ac8a8abafe5e3923bb059a2cbb2485367a109",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
-        "eval-engineer": "1db5ec7948a90cfd2836caab66638c0f59821b4ec5e4cb4e54390c675fd71695",
+        "eval-engineer": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
         "execute-task": "c5eece43ea98077e29716df8b70d8940d40f574e700b9cc1a2bd30cedf1ddd3e",
         "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
@@ -304,7 +304,7 @@
         "request-grok-review": "b705fc1d16c559934c1577df7deea5e61517deeb1fa763fc8143cb09b88d5dad",
         "resolve-comments": "9c0effac7eb98163695ef4f47cdb525938ba3751cad34f2f51bec41d145dbae6",
         "review-task": "9482947aa19f25ad7a52079f9b4ec016d4b009933b46598cce64812e5fa81066",
-        "revise-readme": "99a08b493c6cc16afeb88444d915e9c52b1e394fb5f10d9a9bdb3ac0c6d3332c",
+        "revise-readme": "f5c0a4c78fcf506521def5ad31e3bc3b742ca619cd1dcf7aa1f878e6c6c085de",
         "rich-doc": "40bd6b48546197e07f40ceb9a1c7a9c727ba7a2dc198aba9603bc5df78cbe70d",
         "skill-reviewer": "d0f30430f598da6e73384ff7b6304a4216899d110611ad9055e2d2d2811eb96b",
         "status-report": "28d8f06e035921ce4ab84bec8cb7c8e518a0bf30b6c510cbe36650f8dcd87b78",
@@ -323,7 +323,7 @@
         "delegate": "bc637dee8b5db929b0a4cbdd40f27d3da0506a89414b79b275d1564a7ffb2696",
         "delegate-task": "345bb00991767b9e9ddf5e7c383ac8a8abafe5e3923bb059a2cbb2485367a109",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
-        "eval-engineer": "1db5ec7948a90cfd2836caab66638c0f59821b4ec5e4cb4e54390c675fd71695",
+        "eval-engineer": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
         "execute-task": "c5eece43ea98077e29716df8b70d8940d40f574e700b9cc1a2bd30cedf1ddd3e",
         "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
@@ -346,7 +346,7 @@
         "request-grok-review": "b705fc1d16c559934c1577df7deea5e61517deeb1fa763fc8143cb09b88d5dad",
         "resolve-comments": "9c0effac7eb98163695ef4f47cdb525938ba3751cad34f2f51bec41d145dbae6",
         "review-task": "9482947aa19f25ad7a52079f9b4ec016d4b009933b46598cce64812e5fa81066",
-        "revise-readme": "99a08b493c6cc16afeb88444d915e9c52b1e394fb5f10d9a9bdb3ac0c6d3332c",
+        "revise-readme": "f5c0a4c78fcf506521def5ad31e3bc3b742ca619cd1dcf7aa1f878e6c6c085de",
         "rich-doc": "40bd6b48546197e07f40ceb9a1c7a9c727ba7a2dc198aba9603bc5df78cbe70d",
         "skill-reviewer": "d0f30430f598da6e73384ff7b6304a4216899d110611ad9055e2d2d2811eb96b",
         "status-report": "28d8f06e035921ce4ab84bec8cb7c8e518a0bf30b6c510cbe36650f8dcd87b78",
