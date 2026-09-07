@@ -23,7 +23,7 @@ release:
 	bash pd-components/release.sh $(VERSION)
 
 # Starts the pd-components dev server with live reload + tailscale serve on port 8743.
-# Open http://localhost:8766 locally or the tailscale URL printed on startup.
+# Open http://localhost:9173 locally or the tailscale URL printed on startup.
 pd-dev:
 	bash pd-components/dev.sh
 
