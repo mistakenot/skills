@@ -442,3 +442,60 @@ def test_rebuild_reports_a_failed_transcript_as_a_nonzero_exit(tmp_path):
     text = report.rebuild(run_dir).read_text()
     row = next(line for line in text.splitlines() if line.startswith("| agent exit"))
     assert [c.strip() for c in row.split("|")[2:-1]] == ["1"]
+
+
+# --- outputs diffed against a scenario seed ----------------------------------
+
+
+def test_outputs_are_diffed_against_the_seed_when_one_is_given(tmp_path):
+    """An epic planner writes into `ws/<repo>/docs/epics/`; a root-only scan
+    says "no output". With the seed known, the answer is exact: new or
+    changed files anywhere in the tree, and nothing that was merely copied in."""
+    seed = tmp_path / "seed"
+    (seed / "repo" / "docs").mkdir(parents=True)
+    (seed / "repo" / "README.md").write_text("fixture\n")
+    (seed / "repo" / "docs" / "old.md").write_text("old\n")
+
+    run_dir = tmp_path / "runs" / "run-a"
+    cell_dir = _cell(run_dir, "WORKTREE")
+    ws = cell_dir / "ws"
+    (ws / "repo" / "docs").mkdir(parents=True)
+    (ws / "repo" / "README.md").write_text("fixture\n")           # untouched copy
+    (ws / "repo" / "docs" / "old.md").write_text("old, edited\n")  # changed
+    (ws / "repo" / "docs" / "epic-001.html").write_text("<pd-doc></pd-doc>\n")  # new
+    (ws / "repo" / ".cache" / "x").parent.mkdir()
+    (ws / "repo" / ".cache" / "x").write_text("ignored\n")
+
+    outputs = report.workspace_outputs(cell_dir, run_dir, seed)
+    assert {o.path.name for o in outputs} == {"old.md", "epic-001.html"}
+
+    text = report.write_report(
+        run_dir=run_dir, run_id="run-a", skill="demo", arm="WORKTREE", model="m",
+        prompt="p", cells=[("WORKTREE", 0, cell_dir)], seed=seed,
+    ).read_text()
+    assert "epic-001.html" in text
+    assert "README.md" not in text
+
+
+def test_a_seeded_run_with_no_changes_says_so_in_seed_terms(tmp_path):
+    seed = tmp_path / "seed"
+    (seed / "repo").mkdir(parents=True)
+    (seed / "repo" / "README.md").write_text("fixture\n")
+    run_dir = tmp_path / "runs" / "run-a"
+    cell_dir = _cell(run_dir, "WORKTREE")
+    (cell_dir / "ws" / "repo").mkdir(parents=True)
+    (cell_dir / "ws" / "repo" / "README.md").write_text("fixture\n")
+    text = report.write_report(
+        run_dir=run_dir, run_id="run-a", skill="demo", arm="WORKTREE", model="m",
+        prompt="p", cells=[("WORKTREE", 0, cell_dir)], seed=seed,
+    ).read_text()
+    assert "no file new or changed against the seed" in text
+
+
+def test_without_a_seed_the_root_heuristic_is_unchanged(tmp_path):
+    run_dir = tmp_path / "runs" / "run-a"
+    cell_dir = _cell(run_dir, "WORKTREE")
+    (cell_dir / "ws" / "nested").mkdir()
+    (cell_dir / "ws" / "nested" / "deep.md").write_text("x\n")
+    assert report.workspace_outputs(cell_dir, run_dir) == []
+    assert report.workspace_outputs(cell_dir, run_dir, None) == []

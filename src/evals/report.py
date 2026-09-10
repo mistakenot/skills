@@ -224,20 +224,56 @@ def _describe(path: Path, run_dir: Path) -> OutputFile:
     )
 
 
-def workspace_outputs(cell_dir: Path, run_dir: Path) -> list[OutputFile]:
-    """Files sitting at the root of a cell's `ws/`, newest first.
+# Directories never walked when diffing a workspace against its seed: agent
+# scratch and dependency trees, never a deliverable.
+_SKIP_DIRS = {"node_modules", "__pycache__", ".git"}
+# A cap on how many changed files a column names, so a run that touched a
+# whole tree does not turn the report into a file listing.
+MAX_OUTPUTS = 20
 
-    Only the root, and only files: a scenario fixture arrives as a directory
-    tree (`ws/datasette/…`), while the deliverable a prompt asks for lands
-    beside it. This is a heuristic and the report labels it as one — it says
-    "newest file at `ws/` root", not "the thing the agent wrote".
+
+def _walk(root: Path):
+    for p in sorted(root.rglob("*")):
+        if any(part in _SKIP_DIRS or part.startswith(".") for part in p.relative_to(root).parts):
+            continue
+        if p.is_file():
+            yield p
+
+
+def workspace_outputs(
+    cell_dir: Path, run_dir: Path, seed: Path | None = None
+) -> list[OutputFile]:
+    """What the agent left in `ws/`, newest first.
+
+    With a `seed` — the prepared scenario tree every cell was copied from —
+    the answer is exact: every file that is new or whose bytes differ from the
+    seed's, anywhere in the tree. An epic planner writes into
+    `ws/<repo>/docs/epics/`, and a root-only scan reports no output at all.
+
+    Without one (an inline prompt, or a run that predates seed tracking) the
+    old heuristic stands: files at the `ws/` root only, because a fixture
+    arrives as a directory tree and the deliverable lands beside it. The
+    report labels which of the two it is showing.
     """
     ws = cell_dir / "ws"
     if not ws.is_dir():
         return []
-    files = [p for p in ws.iterdir() if p.is_file() and not p.name.startswith(".")]
-    files.sort(key=lambda p: (-p.stat().st_mtime, p.name))
-    return [_describe(p, run_dir) for p in files]
+    if seed is None or not seed.is_dir():
+        files = [p for p in ws.iterdir() if p.is_file() and not p.name.startswith(".")]
+    else:
+        files = []
+        for p in _walk(ws):
+            twin = seed / p.relative_to(ws)
+            if not twin.is_file():
+                files.append(p)
+                continue
+            try:
+                if p.stat().st_size != twin.stat().st_size or p.read_bytes() != twin.read_bytes():
+                    files.append(p)
+            except OSError:
+                files.append(p)
+    files.sort(key=lambda p: (-p.stat().st_mtime, str(p)))
+    return [_describe(p, run_dir) for p in files[:MAX_OUTPUTS]]
 
 
 # --- the side-by-side table -------------------------------------------------
@@ -260,6 +296,9 @@ class Column:
     # `none` / `worktree` / `ref` off the arm's own manifest, or None when it
     # could not be read. See `_arm_kinds`.
     kind: str | None = None
+    # Whether `outputs` was diffed against a scenario seed (exact) or is the
+    # root-only heuristic; the "nothing here" wording depends on it.
+    diffed: bool = False
 
 
 def _cell_invocations(
@@ -309,8 +348,10 @@ def _columns(
     cells: list[tuple[str, int | None, Path]],
     records: list[invocation_mod.ArmInvocation],
     kinds: dict[str, str | None] | None = None,
+    seed: Path | None = None,
 ) -> list[Column]:
     by_cell = _cell_invocations(records)
+    diffed = seed is not None and seed.is_dir()
     kinds = kinds if kinds is not None else _arm_kinds(cells)
     seen: dict[str, int] = {}
     columns: list[Column] = []
@@ -328,10 +369,11 @@ def _columns(
                 run_dir=run_dir,
                 cell_dir=cell_dir,
                 invocation=by_cell.get((arm, trial)),
-                outputs=workspace_outputs(cell_dir, run_dir),
+                outputs=workspace_outputs(cell_dir, run_dir, seed),
                 final_message=out_md if out_md.is_file() else None,
                 skill_dir=skill_dir if skill_dir.is_dir() else None,
                 kind=kinds.get(arm),
+                diffed=diffed,
             )
         )
     # The trial number only earns column-header space when there is more than
@@ -383,7 +425,13 @@ def _comparison_lines(columns: list[Column]) -> list[str]:
 
     def output_name(column: Column) -> str:
         out = primary(column)
-        return f"`{out.rel}`" if out else "*(no file at `ws/` root)*"
+        if out:
+            return f"`{out.rel}`"
+        return (
+            "*(no file new or changed against the seed)*"
+            if column.diffed
+            else "*(no file at `ws/` root)*"
+        )
 
     def other_outputs(column: Column) -> str:
         rest = column.outputs[1:]
@@ -452,7 +500,7 @@ def _comparison_lines(columns: list[Column]) -> list[str]:
             )
         )
 
-    rows.append(("other files at `ws/` root", [other_outputs(c) for c in columns]))
+    rows.append(("other output files", [other_outputs(c) for c in columns]))
     rows.append(("final message (`out.md`)", [final_message(c) for c in columns]))
 
     footnotes = [
@@ -489,7 +537,8 @@ def _excerpt_lines(columns: list[Column]) -> list[str]:
     lines = [
         "## Output excerpts",
         "",
-        f"The first {EXCERPT_LINES} lines of each arm's newest `ws/` root file, "
+        f"The first {EXCERPT_LINES} lines of each arm's newest output file "
+        f"(new or changed against the scenario seed when there is one, else the `ws/` root), "
         "so the shape of the difference is visible without opening anything.",
         "",
     ]
@@ -640,6 +689,7 @@ def write_report(
     trials: int = 1,
     note: str | None = None,
     with_skills: list[str] | None = None,
+    seed: Path | None = None,
 ) -> Path:
     """Write `REPORT.md` into `run_dir`. `cells` is (arm, exit_code, cell_dir).
 
@@ -685,7 +735,7 @@ def write_report(
     # the second covers a run whose every arm is a baseline, where there is
     # still nothing to compare.
     alarming = missed if nothing_invoked else installed_missed
-    columns = _columns(run_dir, cells, records, kinds)
+    columns = _columns(run_dir, cells, records, kinds, seed)
 
     lines: list[str] = []
     if alarming:
@@ -826,4 +876,5 @@ def rebuild(run_dir: Path) -> Path:
         trials=int(data.get("trials", 1) or 1),
         note=REBUILT_NOTE,
         with_skills=[str(w) for w in data.get("with", []) or []],
+        seed=Path(data["seed"]) if data.get("seed") else None,
     )

@@ -86,6 +86,10 @@ class RunManifest:
     # Companion skills (`--with`) installed beside the skill on every arm that
     # installed it. Empty for a run without them, or one that predates them.
     with_skills: list[str] = field(default_factory=list)
+    # The prepared scenario tree every cell was seeded from, so a report can
+    # say exactly which files the agent added or changed. None for an inline
+    # prompt with no fixture.
+    seed: str | None = None
     started_at: str | None = None
     finished_at: str | None = None
     status: str = STATUS_INCOMPLETE
@@ -120,6 +124,7 @@ def write(
     trials: int = 1,
     scenario: str | None = None,
     with_skills: list[str] | None = None,
+    seed: str | None = None,
     started_at: str | None = None,
     finished_at: str | None = None,
     status: str = STATUS_INCOMPLETE,
@@ -141,6 +146,7 @@ def write(
         "trials": trials,
         "scenario": scenario,
         "with": list(with_skills or []),
+        "seed": seed,
         "prompt": prompt,
         "started_at": started_at or now(),
         "finished_at": finished_at,
@@ -210,6 +216,7 @@ def read(run_dir: Path) -> RunManifest:
         invoke=data.get("invoke"),
         trials=trials if isinstance(trials, int) and trials > 0 else 1,
         with_skills=with_skills,
+        seed=str(data["seed"]) if data.get("seed") else None,
         started_at=data.get("started_at"),
         finished_at=data.get("finished_at"),
         status=str(data.get("status") or STATUS_INCOMPLETE),

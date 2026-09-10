@@ -87,6 +87,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         trials=args.n,
         scenario=scenario.name,
         with_skills=[c.name for c in companions],
+        seed=str(workspace_seed) if workspace_seed else None,
         started_at=manifest.now(),
     )
     # Written before the first token is spent, so a run killed halfway is still
@@ -183,6 +184,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         invoke_mode=args.invoke,
         trials=args.n,
         with_skills=[c.name for c in companions],
+        seed=workspace_seed,
     )
     print(f"evals: {report_path}")
     print(f"evals: evals show {run_id}")
