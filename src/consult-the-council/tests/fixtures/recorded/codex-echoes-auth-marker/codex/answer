@@ -1,0 +1,22 @@
+Treat each CLI invocation as a versioned integration contract, not prose embedded in a skill. Your current design is already a strong foundation: the TOML inventory plus help checks, source scanning, version floors, and opt-in live smoke tests make drift visible in [`agent-cli-contract.toml`](/home/vscode/src/skills/src/planning-workflow/tests/agent-cli-contract.toml) and [`test_agent_cli_contract.py`](/home/vscode/src/skills/src/planning-workflow/tests/test_agent_cli_contract.py).
+
+I’d extend it this way:
+
+- Keep one machine-readable contract per CLI command path, covering flags, required values, stdin policy, expected output artifact, and required capability (headless, read-only, unattended, etc.).
+- Make every shell/Python invocation flow through a small adapter or canonical argv builder where feasible. Source scanning remains valuable as a backstop, especially for documentation snippets that users copy.
+- Run `--help` and parser checks on every PR, but add scheduled canary CI against freshly installed releases. That catches weekly upstream changes even when the repo itself is quiet.
+- Keep a small behavior suite for each critical mode: closed stdin must not hang; read-only must reject writes; write-capable mode must create a harmless fixture; headless mode must terminate and emit the expected result. Help output establishes syntax, not semantics.
+- Test representative combinations, not just individual flags—permission bypass and headless mode are particularly prone to interaction regressions.
+- Preserve failure output: installed version, full argv with secrets redacted, help excerpt, exit code, timeout status, and captured stderr. This turns an upstream break into a quick repair.
+- Define an upgrade response path: identify replacement from release notes/help, update the adapter/skill references and contract together, run static + live tests, then raise the verified-version floor.
+- Decide whether “latest release only” is the supported policy. If agents run across heterogeneous environments, test a compatibility matrix and explicitly document the supported range; a single `verified_version` floor alone does not promise older versions remain supported.
+
+The first things I’d want to know are:
+
+1. What is the support promise: always latest CLI, a minimum version, or multiple versions/OS distributions?
+2. Where do production agents actually run, and can scheduled CI install and exercise the same binaries with safe test credentials?
+3. Which behavior is non-negotiable for each CLI—noninteractive operation, sandbox guarantees, permission bypass, structured output, resuming—and what harmless end-to-end assertion proves it?
+4. Are invocations centralized or copied across generated docs, skills, scripts, aliases, and external templates? The scanner’s known alias limitation is the first coverage gap I’d map.
+5. Who owns reacting to a canary failure, and can a compatibility break block upgrades without blocking unrelated development?
+
+The key distinction is: use `--help` contracts to catch renamed syntax cheaply, and minimal live behavioral contracts to catch the more dangerous case where a still-valid flag silently changes meaning.

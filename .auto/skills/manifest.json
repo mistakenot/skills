@@ -44,6 +44,13 @@
       "skill_version": "f147a496cc86931b7c1645cfe00eb444d929ac2f0bfe9b2cba819a11e51d2c61",
       "render_version": "1"
     },
+    "consult-the-council": {
+      "template_hash": "0540ef2a802b1d72d5d5ed7ebb7c6248a4daa8627c42764cc5e865b67770936c",
+      "replacements": {},
+      "file_refs": [],
+      "skill_version": "aaa50e4581ab1dd9111af3fbb71ef08195d57a5b539d7d1aebf9355403f2a30d",
+      "render_version": "1"
+    },
     "delegate": {
       "template_hash": "567f85372a1432898922167d62755bfe525c0f5c01b48a217ee6b0d55f58855d",
       "replacements": {},
@@ -278,6 +285,7 @@
         "code-review": "8a5f0acab650b166ed863a1560c166c30b85d75c37c6329f03331d9ee65093dc",
         "commit-task": "fbe781387049955e6eab2a9287462d44daa5154a66ffd5b57bc358dbb085446d",
         "complete-task": "f147a496cc86931b7c1645cfe00eb444d929ac2f0bfe9b2cba819a11e51d2c61",
+        "consult-the-council": "aaa50e4581ab1dd9111af3fbb71ef08195d57a5b539d7d1aebf9355403f2a30d",
         "delegate": "bc637dee8b5db929b0a4cbdd40f27d3da0506a89414b79b275d1564a7ffb2696",
         "delegate-task": "345bb00991767b9e9ddf5e7c383ac8a8abafe5e3923bb059a2cbb2485367a109",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
@@ -320,6 +328,7 @@
         "code-review": "8a5f0acab650b166ed863a1560c166c30b85d75c37c6329f03331d9ee65093dc",
         "commit-task": "fbe781387049955e6eab2a9287462d44daa5154a66ffd5b57bc358dbb085446d",
         "complete-task": "f147a496cc86931b7c1645cfe00eb444d929ac2f0bfe9b2cba819a11e51d2c61",
+        "consult-the-council": "aaa50e4581ab1dd9111af3fbb71ef08195d57a5b539d7d1aebf9355403f2a30d",
         "delegate": "bc637dee8b5db929b0a4cbdd40f27d3da0506a89414b79b275d1564a7ffb2696",
         "delegate-task": "345bb00991767b9e9ddf5e7c383ac8a8abafe5e3923bb059a2cbb2485367a109",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",

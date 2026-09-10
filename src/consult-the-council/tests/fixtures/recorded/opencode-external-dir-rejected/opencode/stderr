@@ -1,0 +1,87 @@
+[0m
+> plan · z-ai/glm-5.3
+[0m
+[0m$ [0mls -la && ls -R src/planning-workflow 2>/dev/null | head -80
+total 76
+drwx------ 4 vscode vscode  4096 Sep 10 09:23 .
+drwx------ 4 vscode vscode  4096 Sep  7 11:26 ..
+-rw-r--r-- 1 vscode vscode 21504 Sep  7 11:26 claude-help.txt
+-rw-r--r-- 1 vscode vscode  3957 Sep  7 11:26 codex-exec-help.txt
+-rw-r--r-- 1 vscode vscode  5651 Sep  7 11:26 codex-help.txt
+drwxr-xr-x 2 vscode vscode  4096 Sep 10 09:23 council-run-1789032226
+drwxr-xr-x 2 vscode vscode  4096 Sep 10 09:14 empty
+-rw-r--r-- 1 vscode vscode  4412 Sep  7 11:26 grok-help.txt
+-rw-r--r-- 1 vscode vscode  3482 Sep  7 11:26 herdr-help.txt
+-rw-r--r-- 1 vscode vscode  6802 Sep  7 11:26 herdr-sub-help.txt
+-rw-r--r-- 1 vscode vscode   702 Sep 10 09:23 q.md
+[0m
+[0m✱ [0mGlob "**/*.toml"[90m 0 matches[0m
+[0m✱ [0mGlob "src/planning-workflow/tests/**"[90m 0 matches[0m
+[0m→ [0mRead /tmp/claude-1002/-home-vscode-src-skills/8097424e-1265-43d7-9229-83131d508b74/scratchpad/q.md
+[0m
+[0m$ [0mls council-run-1789032226 empty 2>/dev/null; find /home/vscode/src -maxdepth 4 -type d -name planning-workflow 2>/dev/null
+council-run-1789032226:
+question.md
+
+empty:
+gem.err
+gem2.err
+oc.err
+oc.json
+/home/vscode/src/skills/plugins/planning-workflow
+/home/vscode/src/skills/src/planning-workflow
+[0m
+[0m$ [0mls /home/vscode/src/skills && ls /home/vscode/src/skills/src/planning-workflow && ls -R /home/vscode/src/skills/src/planning-workflow/tests | head -60
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+LICENSE
+Makefile
+README.md
+docs
+install.sh
+internal-skills
+node_modules
+package-lock.json
+package.json
+pd-components
+planning-doc-workspace
+plugins
+pyproject.toml
+scripts
+skills
+src
+uv.lock
+refs
+skills
+tests
+/home/vscode/src/skills/src/planning-workflow/tests:
+__pycache__
+agent-cli-contract.toml
+agent_cli_contract.py
+test-agent-delegation.md
+test-background-review-stdin.sh
+test_agent_cli_contract.py
+
+/home/vscode/src/skills/src/planning-workflow/tests/__pycache__:
+agent_cli_contract.cpython-314.pyc
+test_agent_cli_contract.cpython-314-pytest-9.1.0.pyc
+[0m
+[0m$ [0mls /home/vscode/src/skills/plugins/planning-workflow 2>/dev/null | head; git -C /home/vscode/src/skills log --oneline -8 2>/dev/null
+skills
+24bc665 fix(evals): alarm only when a run is actually compromised
+fb990d7 docs: update README to match the current skill catalogue and tooling
+66936fd fix(evals): correct the invocation detector, make reports readable, add a user guide
+8acdda1 chore: install revise-readme into .claude/skills and .agents/skills
+8de241a feat(revise-readme): verify from source, install/getting-started/concepts sections, diagram and file-tree rules
+bfc79b1 test(agents): add CLI flag contract tests for claude, codex, grok and herdr
+8c27fad feat(planning): add new-task-quick skill and split stage refs out of new-task/new-solution/new-plan
+0651866 feat(evals): add contained A/B eval harness, eval-engineer refs, headless CLI re-verification
+[0m
+[93m[1m! [0mpermission requested: external_directory (/home/vscode/src/skills/src/planning-workflow/tests/*); auto-rejecting
+[0m✗ [0mRead src/planning-workflow/tests/agent-cli-contract.toml failed
+[91m[1mError: [0mThe user rejected permission to use this specific tool call.
+[93m[1m! [0mpermission requested: external_directory (/home/vscode/src/skills/src/planning-workflow/tests/*); auto-rejecting
+[0m✗ [0mRead src/planning-workflow/tests/agent_cli_contract.py failed
+[91m[1mError: [0mThe user rejected permission to use this specific tool call.
+[93m[1m! [0mpermission requested: external_directory (/home/vscode/src/skills/src/planning-workflow/tests/*); auto-rejecting

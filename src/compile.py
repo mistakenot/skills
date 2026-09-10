@@ -788,6 +788,23 @@ if __name__ == "__main__":
         keywords=["documentation", "readme"],
     )
 
+    council = module("consult-the-council",
+        skill("consult-the-council", refs=[
+            ref("strategies/blind-round.md"), ref("strategies/pre-mortem.md"),
+            ref("strategies/red-team.md"), ref("strategies/dialectic.md"),
+            ref("strategies/delphi.md"),
+            ref("members/claude.md"), ref("members/codex.md"), ref("members/gemini.md"),
+            ref("members/opencode.md"), ref("members/grok.md"),
+            ref("prompts/neutral-framing.md"), ref("prompts/templates.md"),
+            ref("synthesis.md"),
+        ], assets=[
+            asset("src/consult-the-council/scripts/council.py", "scripts/council.py"),
+        ]),
+        description="Consult a council of independent coding-agent models (claude, codex, gemini, opencode, grok) for diverse, unled opinions on a question; strategies, members and prompt framings compose like an SDK.",
+        category="productivity",
+        keywords=["council", "second-opinion", "multi-model", "diversity", "delphi"],
+    )
+
     handoff = module("handoff",
         skill("handoff", assets=[
             asset("src/handoff/skills/handoff/scripts/handoff.py", "scripts/handoff.py"),
@@ -883,4 +900,4 @@ if __name__ == "__main__":
         keywords=["discovery", "customer-research", "jobs-to-be-done", "demand", "product"],
     )
 
-    compile([planning, ideation, maintenance, handoff, exploration, rich_docs, reflection, assurance, research, domain_modelling, grill, eval_engineer, discovery])
+    compile([planning, ideation, maintenance, council, handoff, exploration, rich_docs, reflection, assurance, research, domain_modelling, grill, eval_engineer, discovery])

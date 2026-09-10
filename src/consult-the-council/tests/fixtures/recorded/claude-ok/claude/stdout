@@ -1,0 +1,35 @@
+Neither AskUserQuestion nor ExitPlanMode is loadable in this session, so the questions go in plain text below. The plan file is written at `/home/vscode/.claude/plans/context-a-repository-of-wild-wilkinson.md`; nothing else was changed.
+
+**Short answer.** The contract suite is a good detector but a weak system, because it only runs when a person runs `make test` on a machine that happens to have fresh CLIs. I would attack the problem in three layers: make the flags a single referenced value rather than sixteen copies, check them at launch time where the failure actually bites, and give the check a trigger that matches the weekly release cadence.
+
+**What is already good**
+
+- The contract is bidirectional. Sources may only use contracted flags, and every contracted flag must be used, so it neither accretes nor under-describes.
+- The version floor refuses a green run on an old install.
+- A live smoke exists and is cost-gated.
+
+**Gaps I found**
+
+- **No trigger.** There is no CI workflow, hook, or schedule. Claude Code auto-updates, so the machine drifts under the skills with nothing watching. Installed claude is already two patch versions past the contract's verified version.
+- **Flags are copied, not referenced.** The unattended flag for claude appears at sixteen source sites. A rename is a sixteen-file edit and the scanner only checks that all sixteen agree.
+- **The failure surfaces in the wrong place.** The real cost is a background worker stalling on a prompt nobody can answer. Nothing checks at launch.
+- **Presence in help is not behaviour.** A flag can survive a release with changed semantics. The PONG smoke proves liveness, not the property you rely on, such as "read-only sandbox refuses a write".
+- **Scan roots are a hand-kept list.** A new module that shells out is invisible until someone adds it.
+- **Consumers get the instructions but not the tests.** The install script and plugin marketplace ship the skills alone.
+
+**Recommended approach, highest leverage first**
+
+1. **One source of truth.** Add a compiler directive that reads the contract TOML by intent, so a ref says something like "claude unattended" and compile emits the flag. A rename becomes a one-line TOML edit plus recompile. The scanner then only has to forbid literal flags outside the TOML.
+2. **Launch-time preflight.** A small script bundled with the delegate and review skills greps the agent's help for the contracted flags before spawning, and fails with the fix instead of stalling. This ships to consumers too.
+3. **A trigger at release cadence.** A weekly scheduled run of the static layers with the latest CLIs installed, and a sub-second local hook for the help layer.
+4. **Property smokes for the load-bearing flags.** Verify the guarantee, not just a reply: unattended mode completes under closed stdin with a tool call that would otherwise prompt.
+5. **Deprecation early warning.** Snapshot help text per version and flag deprecation notices near contracted flags before they are removed.
+
+**What I would want to know first**
+
+1. Where should the check run in practice: only on your machine via `make test`, a local hook, or a scheduled job somewhere with all six CLIs installed and authed?
+2. Is the priority detecting drift early, or failing fast at worker launch so a stall never happens? That decides whether the compiler indirection or the runtime preflight leads.
+3. Are the skills used by other people or machines through install.sh or the plugin marketplace? If so, the protection has to travel with the skill, which favours the preflight script.
+4. Is it acceptable for the skill instructions to route through a wrapper script and lose the literal command text, or must the model always see the raw flags?
+5. Which flags are safety-critical enough to deserve a paid property smoke: the permission bypasses and sandbox modes, or everything?
+6. How do the CLIs get upgraded on the machine that runs the skills: auto-update, or a deliberate step you could hang a check on?

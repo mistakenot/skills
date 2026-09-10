@@ -1,15 +1,15 @@
 ---
-hash: "7ad92f3e"
+hash: "d7c34c30"
 id: "d45ac9d9"
-read_when: "a delegate/review skill stalls or errors on a claude/codex/grok/herdr flag, after upgrading one of those CLIs, or when adding a new agent flag to a skill — how the contract tests work, how to run them, and how to update the contract"
-summary: "Contract-driven pytest suite that checks every claude/codex/grok/herdr flag the delegate and review skills pass against the installed CLIs' --help, verifies the skill sources use only contracted flags, and optionally smoke-runs the canonical headless invocations."
+read_when: "a delegate/review/council skill stalls or errors on a claude/codex/gemini/opencode/grok/herdr flag, after upgrading one of those CLIs, or when adding a new agent flag to a skill — how the contract tests work, how to run them, and how to update the contract"
+summary: "Contract-driven pytest suite that checks every claude/codex/gemini/opencode/grok/herdr flag the delegate, review and council skills pass against the installed CLIs' --help, verifies the skill sources use only contracted flags, and optionally smoke-runs the canonical headless invocations."
 title: "Agent CLI Contract Tests"
 ---
 
 # Agent CLI Contract Tests
 
-The delegate and review skills shell out to `claude`, `codex`, `grok` and
-`herdr` with hardcoded flags: permission bypasses, sandbox modes, headless
+The delegate, review and council skills shell out to `claude`, `codex`,
+`gemini`, `opencode`, `grok` and `herdr` with hardcoded flags: permission bypasses, sandbox modes, headless
 print mode, pane and worktree control. Those CLIs ship weekly. When one renames
 or drops a flag, the skill text keeps reading fine while a background worker
 silently stalls on a permission prompt nobody can answer.
@@ -51,16 +51,19 @@ contract pins enum values (`--permission-mode bypassPermissions`,
 the advertised choices too. No auth, no tokens.
 
 **Layer 2: the sources agree with the contract, both ways.** A scanner walks
-`src/planning-workflow/` and `src/assurance/evals/run.sh`, finds every
-`claude|codex|grok|herdr …` invocation (joining backslash continuations,
-following `herdr agent start --kind X -- …` into the nested agent's argv), and
-extracts the flags. Two assertions:
+`src/planning-workflow/`, `src/consult-the-council/` and
+`src/assurance/evals/run.sh`, finds every `claude|codex|gemini|opencode|grok|herdr …`
+invocation (joining backslash continuations, following
+`herdr agent start --kind X -- …` into the nested agent's argv), and extracts
+the flags. Two assertions:
 
 - every flag a source uses is in the contract for that command path;
 - every flag in the contract is used by at least one source.
 
 The evals harness's `build_argv` in `src/evals/runners.py` is imported and
-checked the same way, since its argv is Python, not shell.
+checked the same way, since its argv is Python, not shell. The
+consult-the-council script's argv is checked by that module's own tests
+(`src/consult-the-council/tests/`), which load the same contract file.
 
 **Layer 3: live smoke (opt-in).** With `AGENT_CLI_LIVE=1` the canonical
 unattended invocation of each agent (`claude -p --dangerously-skip-permissions`,
@@ -81,6 +84,15 @@ stdin-hang negative control.
 
 After a green run on a newer CLI release, bump that agent's `verified_version`
 in the contract so the floor moves forward.
+
+## A false positive to recognise
+
+If layer 1 reports many flags missing at once and the advertised list stops
+partway through the alphabet, suspect truncated help output before suspecting
+the CLI. Claude Code 2.1.267 exits before draining stdout when it is a pipe
+and delivers 16KB of a 21KB help text; `run_help` therefore captures to a
+temp file, never a pipe. A genuine removal is one or two flags, with the
+rest of the list intact.
 
 ## Adding a flag or an agent
 

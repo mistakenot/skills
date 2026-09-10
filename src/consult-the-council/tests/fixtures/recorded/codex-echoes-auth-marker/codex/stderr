@@ -1,0 +1,1122 @@
+Reading additional input from stdin...
+OpenAI Codex v0.151.0
+--------
+workdir: /home/vscode/src/skills
+model: gpt-5.6-terra
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a08aa1-6484-78d3-ab22-0ca6d718c792
+--------
+user
+Context:
+A repository of reusable agent skills drives five coding-agent CLIs (claude, codex, gemini, opencode, grok) from bash with hardcoded flags for permission bypass, sandboxing and headless mode. The CLIs release weekly and flags get renamed or removed. The repo currently pins every flag it depends on in a TOML contract file and has a pytest suite that checks each flag against the installed CLI's --help output, plus a scanner that checks the skill sources use only contracted flags. See src/planning-workflow/tests/ in the working directory.
+
+Question:
+How would you approach keeping instructions that depend on fast-changing CLI flags from going stale, and what would you want to know first?
+
+warning: Codex could not find bubblewrap on PATH. Install bubblewrap with your OS package manager. See the sandbox prerequisites: https://developers.openai.com/codex/concepts/sandboxing#prerequisites. Codex will use the bundled bubblewrap in the meantime.
+hook: SessionStart
+hook: SessionStart Completed
+codex
+I’ll inspect the existing contract tests and the skills that invoke the CLIs, then frame an approach around the failure modes they already cover.
+exec
+/bin/bash -lc 'rg --files src/planning-workflow/tests src/planning-workflow 2>/dev/null | head -100' in /home/vscode/src/skills
+ succeeded in 0ms:
+src/planning-workflow/skills/new-plan/SKILL.md
+src/planning-workflow/skills/request-grok-review/SKILL.md
+src/planning-workflow/skills/new-task/SKILL.md
+src/planning-workflow/skills/new-epic/SKILL.md
+src/planning-workflow/skills/complete-task/SKILL.md
+src/planning-workflow/skills/new-task-quick/SKILL.md
+src/planning-workflow/skills/address-feedback/SKILL.md
+src/planning-workflow/tests/test-agent-delegation.md
+src/planning-workflow/refs/execute-task-full.md
+src/planning-workflow/skills/commit-task/SKILL.md
+src/planning-workflow/tests/test-background-review-stdin.sh
+src/planning-workflow/tests/agent_cli_contract.py
+src/planning-workflow/tests/agent-cli-contract.toml
+src/planning-workflow/tests/test_agent_cli_contract.py
+src/planning-workflow/tests/test-agent-delegation.md
+src/planning-workflow/tests/test-background-review-stdin.sh
+src/planning-workflow/tests/agent_cli_contract.py
+src/planning-workflow/tests/agent-cli-contract.toml
+src/planning-workflow/tests/test_agent_cli_contract.py
+src/planning-workflow/refs/tab-plan.md
+src/planning-workflow/refs/template-pr-body.md
+src/planning-workflow/refs/tab-solution.md
+src/planning-workflow/refs/epic-overview.md
+src/planning-workflow/refs/stage-requirements.md
+src/planning-workflow/refs/stage-solution.md
+src/planning-workflow/refs/review-format-html.md
+src/planning-workflow/refs/worktree-conventions.md
+src/planning-workflow/refs/tab-verification.md
+src/planning-workflow/refs/commit-conventions.md
+src/planning-workflow/refs/agent-conventions.md
+src/planning-workflow/refs/task-status.md
+src/planning-workflow/refs/template-feedback.md
+src/planning-workflow/refs/tab-requirements.md
+src/planning-workflow/refs/headless-delegation.md
+src/planning-workflow/refs/template-rule.md
+src/planning-workflow/refs/template-context.md
+src/planning-workflow/refs/worker-pools.md
+src/planning-workflow/skills/delegate-task/SKILL.md
+src/planning-workflow/skills/status-report/SKILL.md
+src/planning-workflow/skills/request-codex-review/SKILL.md
+src/planning-workflow/refs/herdr/read-output.md
+src/planning-workflow/refs/herdr/spawn-worker.md
+src/planning-workflow/refs/herdr/scan-output.md
+src/planning-workflow/refs/herdr/verify-worker.md
+src/planning-workflow/refs/herdr/list-workers.md
+src/planning-workflow/refs/herdr/reap-worker.md
+src/planning-workflow/refs/herdr/label-worker.md
+src/planning-workflow/refs/herdr/send-prompt.md
+src/planning-workflow/refs/herdr/wait-for-ready.md
+src/planning-workflow/refs/herdr/reset-worker.md
+src/planning-workflow/refs/stage-plan.md
+src/planning-workflow/refs/workflow-overview.md
+src/planning-workflow/refs/epic-tabs.md
+src/planning-workflow/refs/review-format.md
+src/planning-workflow/skills/resolve-comments/SKILL.md
+src/planning-workflow/skills/request-claude-review/SKILL.md
+src/planning-workflow/skills/new-solution/SKILL.md
+src/planning-workflow/skills/review-task/SKILL.md
+src/planning-workflow/skills/execute-task/SKILL.md
+src/planning-workflow/skills/code-review/SKILL.md
+src/planning-workflow/skills/request-council-review/SKILL.md
+src/planning-workflow/skills/delegate/SKILL.md
+src/planning-workflow/skills/task-feedback-analyser/SKILL.md
+
+exec
+/bin/bash -lc "sed -n '1,260p' src/planning-workflow/tests/agent-cli-contract.toml && sed -n '1,340p' src/planning-workflow/tests/test_agent_cli_contract.py && sed -n '1,340p' src/planning-workflow/tests/agent_cli_contract.py" in /home/vscode/src/skills
+ succeeded in 0ms:
+# Agent CLI contract — every flag our skills and harnesses pass to an agent CLI.
+#
+# Checked by test_agent_cli_contract.py against the *installed* CLIs:
+#   1. `<cmd> --help` must advertise every flag (and enum value) listed here.
+#   2. Every agent invocation in the skill sources may only use flags listed here.
+#   3. Every flag listed here must be used by at least one skill source
+#      (keeps this file an honest picture of the dependency surface).
+#
+# When a CLI release renames or drops a flag, test 1 fails; fix the skill refs
+# AND this file. When a skill starts using a new flag, test 2 fails; add the
+# flag here and confirm test 1 passes against the installed release.
+#
+# `verified_version` is the newest release these flags were confirmed against.
+# Bump it after a green run on a newer install; the version test fails if the
+# installed CLI is *older* than this (an old install proves nothing).
+
+# ---------------------------------------------------------------------------
+[agent.claude]
+verified_version = "2.1.263"
+# Headless unattended run — opt-in via AGENT_CLI_LIVE=1, bills tokens.
+live_smoke = ["claude", "-p", "--dangerously-skip-permissions", "reply with exactly: PONG"]
+live_expect = "PONG"
+
+[[agent.claude.command]]
+path = ""
+flags = [
+  "-p",                              # print/headless mode (request-*-review, evals)
+  "--add-dir",                       # grant the target repo to a headless reviewer
+  "--dangerously-skip-permissions",  # unattended worker launch flag
+  "--permission-mode",               # bypassPermissions (worker) / plan (read-only reviewer)
+  "--resume",                        # reattach a worker to its session
+  "--output-format",                 # evals harnesses: json / stream-json
+  "--verbose",                       # required alongside stream-json
+  "--strict-mcp-config",             # clean-room isolation in evals
+  "--model",                         # pin the model in evals
+]
+[agent.claude.command.values]
+"--permission-mode" = ["bypassPermissions", "plan"]
+"--output-format" = ["json", "stream-json"]
+
+# ---------------------------------------------------------------------------
+[agent.codex]
+verified_version = "0.151.0"
+live_smoke = ["codex", "exec", "--sandbox", "read-only", "reply with exactly: PONG"]
+live_expect = "PONG"
+
+[[agent.codex.command]]
+path = ""
+flags = [
+  "--dangerously-bypass-approvals-and-sandbox",  # unattended worker launch flag
+]
+
+[[agent.codex.command]]
+path = "exec"
+flags = [
+  "--cd",       # working root for a headless reviewer
+  "--sandbox",  # workspace-write (edits docs) / read-only (council reviewer)
+  "-o",         # --output-last-message: capture the final message to a file
+  "--skip-git-repo-check",  # consult-the-council: answer from an empty non-git dir
+]
+[agent.codex.command.values]
+"--sandbox" = ["read-only", "workspace-write"]
+
+# ---------------------------------------------------------------------------
+[agent.grok]
+verified_version = "0.2.60"
+live_smoke = ["grok", "--permission-mode", "bypassPermissions", "--always-approve", "--single", "reply with exactly: PONG"]
+live_expect = "PONG"
+
+[[agent.grok.command]]
+path = ""
+flags = [
+  "--cwd",              # working directory for a headless reviewer
+  "--permission-mode",  # bypassPermissions for unattended runs
+  "--always-approve",   # auto-approve every tool call
+  "--single",           # single-turn headless prompt (long form of -p)
+  "-p",                 # short form of --single
+]
+[agent.grok.command.values]
+"--permission-mode" = ["bypassPermissions", "plan"]
+
+# ---------------------------------------------------------------------------
+[agent.gemini]
+verified_version = "0.34.0"
+live_smoke = ["gemini", "-p", "reply with exactly: PONG", "--approval-mode", "plan"]
+live_expect = "PONG"
+
+[[agent.gemini.command]]
+path = ""
+flags = [
+  "-p",               # headless prompt (consult-the-council member)
+  "--approval-mode",  # plan = read-only
+]
+[agent.gemini.command.values]
+"--approval-mode" = ["plan"]
+
+# ---------------------------------------------------------------------------
+[agent.opencode]
+verified_version = "1.15.13"
+live_smoke = ["opencode", "run", "--agent", "plan", "reply with exactly: PONG"]
+live_expect = "PONG"
+
+[[agent.opencode.command]]
+path = "run"
+flags = [
+  "--agent",  # plan = the read-only agent (consult-the-council member)
+]
+
+# ---------------------------------------------------------------------------
+[agent.herdr]
+verified_version = "0.8.2"
+
+[[agent.herdr.command]]
+path = ""
+flags = ["--session", "--version"]
+
+[[agent.herdr.command]]
+path = "agent start"
+flags = ["--kind", "--pane", "--timeout"]
+[agent.herdr.command.values]
+"--kind" = ["claude", "codex"]
+
+[[agent.herdr.command]]
+path = "agent prompt"
+flags = ["--wait", "--timeout"]
+
+[[agent.herdr.command]]
+path = "agent wait"
+flags = ["--until", "--timeout"]
+[agent.herdr.command.values]
+"--until" = ["idle", "working", "blocked", "done"]
+
+[[agent.herdr.command]]
+path = "agent read"
+flags = ["--source", "--lines", "--format"]
+[agent.herdr.command.values]
+"--source" = ["visible", "recent", "recent-unwrapped", "detection"]
+"--format" = ["text", "ansi"]
+
+[[agent.herdr.command]]
+path = "agent rename"
+flags = ["--clear"]
+
+[[agent.herdr.command]]
+path = "pane process-info"
+flags = ["--pane"]
+
+[[agent.herdr.command]]
+path = "pane read"
+flags = ["--source", "--lines", "--format"]
+[agent.herdr.command.values]
+"--source" = ["visible", "recent", "recent-unwrapped"]
+"--format" = ["text", "ansi"]
+
+[[agent.herdr.command]]
+path = "pane wait-output"
+flags = ["--match", "--regex", "--source", "--lines", "--timeout"]
+[agent.herdr.command.values]
+"--source" = ["visible", "recent", "recent-unwrapped"]
+
+[[agent.herdr.command]]
+path = "pane split"
+flags = ["--current", "--direction", "--cwd", "--no-focus"]
+[agent.herdr.command.values]
+"--direction" = ["right", "down"]
+
+[[agent.herdr.command]]
+path = "pane list"
+flags = ["--workspace"]
+
+[[agent.herdr.command]]
+path = "pane rename"
+flags = ["--clear"]
+
+[[agent.herdr.command]]
+path = "tab create"
+flags = ["--workspace", "--cwd", "--label", "--no-focus"]
+
+[[agent.herdr.command]]
+path = "tab list"
+flags = ["--workspace"]
+
+[[agent.herdr.command]]
+path = "workspace create"
+flags = ["--cwd", "--label", "--env", "--no-focus"]
+
+[[agent.herdr.command]]
+path = "worktree create"
+flags = ["--cwd", "--branch", "--base", "--label", "--no-focus"]
+
+[[agent.herdr.command]]
+path = "worktree list"
+flags = ["--cwd", "--workspace"]
+
+[[agent.herdr.command]]
+path = "worktree remove"
+flags = ["--workspace", "--force"]
+"""Validate the agent CLI flags our skills depend on against the installed CLIs.
+
+Three layers, all driven by ``agent-cli-contract.toml``:
+
+1. **Help contract** — ``<cmd> --help`` of the installed ``claude``, ``codex``,
+   ``grok`` and ``herdr`` must advertise every flag and enum value the
+   contract lists. Fast, no auth, no tokens. This is the drift detector: a
+   CLI release that renames ``--dangerously-skip-permissions`` fails here.
+2. **Source contract** — every agent invocation in the skill sources uses only
+   contracted flags, and every contracted flag is used somewhere. This keeps
+   the contract and the skills from drifting apart in either direction.
+3. **Live smoke** (opt-in, ``AGENT_CLI_LIVE=1``) — runs the canonical headless
+   unattended invocation for each agent and expects a PONG. Bills tokens.
+
+Run:  uv run pytest src/planning-workflow/tests/
+      AGENT_CLI_LIVE=1 uv run pytest src/planning-workflow/tests/ -k live
+"""
+
+from __future__ import annotations
+
+import os
+import shutil
+import subprocess
+import sys
+
+import pytest
+
+from agent_cli_contract import (
+    DEFAULT_SCAN_ROOTS,
+    REPO_ROOT,
+    SRC_ROOT,
+    Command,
+    installed_version,
+    load_contract,
+    parse_help,
+    run_help,
+    scan_sources,
+    version_tuple,
+)
+
+CONTRACT = load_contract()
+COMMANDS = CONTRACT.all_commands()
+AGENT_NAMES = list(CONTRACT.agents)
+
+
+def _cmd_id(c: Command) -> str:
+    return c.key.replace(" ", "_")
+
+
+# --- fixtures ---------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def help_surfaces():
+    """``--help`` parsed once per contracted command path."""
+    surfaces = {}
+    for cmd in COMMANDS:
+        if shutil.which(cmd.agent) is None:
+            continue
+        rc, text = run_help(cmd.argv)
+        surfaces[cmd.key] = (rc, parse_help(cmd.argv, text))
+    return surfaces
+
+
+@pytest.fixture(scope="module")
+def invocations():
+    return [inv for inv in scan_sources(DEFAULT_SCAN_ROOTS) if inv.flags]
+
+
+# --- layer 0: the CLIs are installed and current ----------------------------
+
+
+@pytest.mark.parametrize("agent", AGENT_NAMES)
+def test_cli_on_path(agent):
+    assert shutil.which(agent), (
+        f"`{agent}` is not on PATH. The delegate/review skills shell out to it; "
+        f"install the latest release before trusting the skills."
+    )
+
+
+@pytest.mark.parametrize("agent", AGENT_NAMES)
+def test_installed_version_not_older_than_verified(agent):
+    if shutil.which(agent) is None:
+        pytest.fail(f"`{agent}` not on PATH")
+    want = CONTRACT.agents[agent].verified_version
+    got = installed_version(agent)
+    assert got, f"could not parse `{agent} --version` output"
+    assert version_tuple(got) >= version_tuple(want), (
+        f"installed {agent} {got} is older than the contract's verified {want}; "
+        f"a green run on an old build proves nothing — update the CLI"
+    )
+
+
+# --- layer 1: --help advertises every contracted flag and value -------------
+
+
+@pytest.mark.parametrize("cmd", COMMANDS, ids=_cmd_id)
+def test_help_runs(cmd, help_surfaces):
+    if cmd.key not in help_surfaces:
+        pytest.fail(f"`{cmd.agent}` not on PATH")
+    rc, surface = help_surfaces[cmd.key]
+    assert rc == 0, f"`{cmd.key} --help` exited {rc}:\n{surface.text[-800:]}"
+    assert surface.flags, f"`{cmd.key} --help` produced no parseable options:\n{surface.text[:800]}"
+
+
+@pytest.mark.parametrize("cmd", COMMANDS, ids=_cmd_id)
+def test_help_exposes_contract_flags(cmd, help_surfaces):
+    if cmd.key not in help_surfaces:
+        pytest.fail(f"`{cmd.agent}` not on PATH")
+    _, surface = help_surfaces[cmd.key]
+    missing = sorted(cmd.flags - surface.flags)
+    assert not missing, (
+        f"`{cmd.key}` no longer advertises {missing} in --help "
+        f"(installed {installed_version(cmd.agent)}). The skills pass these flags; "
+        f"update the refs under src/planning-workflow and the contract.\n"
+        f"Advertised: {sorted(surface.flags)}"
+    )
+
+
+def _value_cases():
+    for cmd in COMMANDS:
+        for flag, values in cmd.values.items():
+            yield pytest.param(cmd, flag, values, id=f"{_cmd_id(cmd)}[{flag}]")
+
+
+@pytest.mark.parametrize("cmd,flag,values", list(_value_cases()))
+def test_help_exposes_contract_values(cmd, flag, values, help_surfaces):
+    if cmd.key not in help_surfaces:
+        pytest.fail(f"`{cmd.agent}` not on PATH")
+    _, surface = help_surfaces[cmd.key]
+    advertised = surface.values.get(flag)
+    assert advertised, (
+        f"`{cmd.key} --help` lists no enum values for {flag} "
+        f"(expected at least {list(values)}); the help format may have changed"
+    )
+    missing = [v for v in values if v not in advertised]
+    assert not missing, (
+        f"`{cmd.key} {flag}` no longer accepts {missing}; advertised: {sorted(advertised)}"
+    )
+
+
+# --- layer 2: skill sources and the contract agree --------------------------
+
+
+def test_sources_use_only_contract_flags(invocations):
+    """A skill that starts passing an unverified flag must add it to the contract."""
+    problems = []
+    for inv in invocations:
+        cmd = CONTRACT.command(inv.agent, inv.path)
+        known = cmd.flags if cmd else frozenset()
+        for fl in inv.flags:
+            if fl not in known:
+                rel = inv.file.relative_to(REPO_ROOT)
+                where = "unknown command path" if cmd is None else "flag not in contract"
+                problems.append(f"{rel}:{inv.line}  `{inv.key} {fl}`  ({where})")
+    assert not problems, (
+        "agent invocations use flags the contract has not verified:\n  "
+        + "\n  ".join(sorted(set(problems)))
+        + "\nAdd them to src/planning-workflow/tests/agent-cli-contract.toml "
+        "(and confirm --help advertises them)."
+    )
+
+
+def test_contract_flags_are_used_somewhere(invocations):
+    """The contract should describe the real dependency surface, not accrete."""
+    used = {(inv.key, fl) for inv in invocations for fl in inv.flags}
+    used |= {("claude", fl) for fl in _evals_build_argv_flags()}
+    unused = sorted(f"{cmd.key} {fl}" for cmd in COMMANDS for fl in cmd.flags if (cmd.key, fl) not in used)
+    assert not unused, (
+        "contract lists flags no skill source uses (remove them, or the scanner "
+        "missed an invocation — run `python src/planning-workflow/tests/agent_cli_contract.py`):\n  "
+        + "\n  ".join(unused)
+    )
+
+
+def test_scanner_finds_the_known_invocations(invocations):
+    """Guard the scanner itself: the core skill invocations must be visible to it."""
+    keys = {(inv.key, fl) for inv in invocations for fl in inv.flags}
+    for expected in [
+        ("claude", "--dangerously-skip-permissions"),
+        ("claude", "-p"),
+        ("codex", "--dangerously-bypass-approvals-and-sandbox"),
+        ("codex exec", "--sandbox"),
+        ("grok", "--always-approve"),
+        ("herdr agent start", "--kind"),
+        ("herdr worktree create", "--branch"),
+    ]:
+        assert expected in keys, f"scanner no longer sees {expected} in the skill sources"
+
+
+# --- layer 2b: the evals harness's hardcoded argv ---------------------------
+
+
+def _evals_build_argv_flags() -> list[str]:
+    if str(SRC_ROOT) not in sys.path:
+        sys.path.insert(0, str(SRC_ROOT))
+    from evals.runners import build_argv  # noqa: WPS433 — repo module
+
+    argv = build_argv("prompt", "model")
+    return [a for a in argv if a.startswith("-")]
+
+
+def test_evals_build_argv_matches_contract():
+    claude = CONTRACT.command("claude", ())
+    assert claude is not None
+    flags = _evals_build_argv_flags()
+    unknown = [f for f in flags if f not in claude.flags]
+    assert not unknown, f"src/evals/runners.py build_argv uses uncontracted flags: {unknown}"
+
+    if str(SRC_ROOT) not in sys.path:
+        sys.path.insert(0, str(SRC_ROOT))
+    from evals.runners import build_argv
+
+    argv = build_argv("prompt", "model")
+    for flag in ("--permission-mode", "--output-format"):
+        value = argv[argv.index(flag) + 1]
+        assert value in claude.values[flag], f"build_argv passes {flag} {value!r}, not in contract values"
+
+
+# --- layer 3: live smoke (opt-in, bills tokens) -----------------------------
+
+LIVE = os.environ.get("AGENT_CLI_LIVE") == "1"
+
+
+@pytest.mark.parametrize("agent", [a for a in AGENT_NAMES if CONTRACT.agents[a].live_smoke])
+def test_live_headless_smoke(agent):
+    """The canonical unattended invocation runs to completion under closed stdin."""
+    if not LIVE:
+        pytest.skip("set AGENT_CLI_LIVE=1 to run live headless smoke tests (bills tokens)")
+    spec = CONTRACT.agents[agent]
+    try:
+        proc = subprocess.run(
+            spec.live_smoke,
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=REPO_ROOT,
+        )
+    except subprocess.TimeoutExpired as exc:
+        # TimeoutExpired carries raw bytes even in text mode.
+        out = "".join(
+            part.decode(errors="replace") if isinstance(part, bytes) else (part or "")
+            for part in (exc.stdout, exc.stderr)
+        )
+        if _looks_like_auth_prompt(out):
+            pytest.fail(
+                f"`{agent}` is not authenticated: headless mode fell into an interactive "
+                f"login and hung. Run `{agent} login` and retry.\n{out[-800:]}"
+            )
+        pytest.fail(f"{' '.join(spec.live_smoke)} hung for 120s with no result:\n{out[-1500:]}")
+    out = proc.stdout + proc.stderr
+    assert proc.returncode == 0, f"{' '.join(spec.live_smoke)} exited {proc.returncode}:\n{out[-1500:]}"
+    assert spec.live_expect in out, f"expected {spec.live_expect!r} in output:\n{out[-1500:]}"
+
+
+_AUTH_MARKERS = ("Waiting for authorization", "Only continue with a code you requested", "Please log in", "not logged in")
+
+
+def _looks_like_auth_prompt(text: str) -> bool:
+    return any(m in text for m in _AUTH_MARKERS)
+"""Agent CLI contract — the flags our skills depend on, checked against reality.
+
+The skills under ``src/planning-workflow`` (and the eval harnesses) drive
+``claude``, ``codex``, ``grok`` and ``herdr`` from bash with hardcoded flags:
+permission bypasses, sandbox modes, headless/print mode, pane and worktree
+control. Those CLIs change fast, and when a flag is renamed or removed the
+skill keeps "working" right up until a background worker stalls on a
+permission prompt nobody can answer.
+
+This module is the machinery behind ``test_agent_cli_contract.py``:
+
+* ``load_contract``   — reads ``agent-cli-contract.toml`` (the flags we rely on).
+* ``parse_help``      — turns ``<cmd> --help`` output into a flag/values table.
+* ``scan_sources``    — finds every ``claude|codex|grok|herdr ...`` invocation in
+                        the skill sources and extracts the flags it uses.
+
+Run ``python agent_cli_contract.py`` to print the inventory of invocations the
+scanner finds — useful when adding a new flag to the contract.
+"""
+
+from __future__ import annotations
+
+import os
+import re
+import shlex
+import subprocess
+import sys
+import tomllib
+from dataclasses import dataclass, field
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+REPO_ROOT = HERE.parents[2]
+SRC_ROOT = REPO_ROOT / "src"
+CONTRACT_PATH = HERE / "agent-cli-contract.toml"
+
+AGENTS = ("claude", "codex", "gemini", "opencode", "grok", "herdr")
+
+# --- contract ---------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class Command:
+    """One command path in the contract, e.g. ``codex exec`` or ``herdr agent start``."""
+
+    agent: str
+    path: tuple[str, ...]  # subcommand words after the agent name
+    flags: frozenset[str]
+    values: dict[str, tuple[str, ...]]  # flag -> enum values that must exist
+
+    @property
+    def argv(self) -> list[str]:
+        return [self.agent, *self.path]
+
+    @property
+    def key(self) -> str:
+        return " ".join(self.argv)
+
+
+@dataclass(frozen=True)
+class Agent:
+    name: str
+    verified_version: str
+    live_smoke: list[str] | None
+    live_expect: str | None
+    commands: dict[str, Command]  # keyed by Command.key
+
+
+@dataclass(frozen=True)
+class Contract:
+    agents: dict[str, Agent]
+
+    def command(self, agent: str, path: tuple[str, ...]) -> Command | None:
+        return self.agents[agent].commands.get(" ".join((agent, *path)))
+
+    def all_commands(self) -> list[Command]:
+        return [c for a in self.agents.values() for c in a.commands.values()]
+
+
+def load_contract(path: Path = CONTRACT_PATH) -> Contract:
+    raw = tomllib.loads(path.read_text())
+    agents: dict[str, Agent] = {}
+    for name, spec in raw["agent"].items():
+        commands: dict[str, Command] = {}
+        for entry in spec.get("command", []):
+            path_words = tuple(entry.get("path", "").split())
+            cmd = Command(
+                agent=name,
+                path=path_words,
+                flags=frozenset(entry.get("flags", [])),
+                values={k: tuple(v) for k, v in entry.get("values", {}).items()},
+            )
+            commands[cmd.key] = cmd
+        agents[name] = Agent(
+            name=name,
+            verified_version=spec["verified_version"],
+            live_smoke=spec.get("live_smoke"),
+            live_expect=spec.get("live_expect"),
+            commands=commands,
+        )
+    return Contract(agents=agents)
+
+
+# --- help parsing -----------------------------------------------------------
+
+_OPTION_LINE = re.compile(r"^\s{2,}(-{1,2}[A-Za-z])")
+_FLAG_TOKEN = re.compile(r"(?<![\w-])(-{1,2}[A-Za-z][\w-]*)")
+_CLAP_VALUES = re.compile(r"\[possible values:\s*([^\]]+)\]")
+_COMMANDER_CHOICES = re.compile(r"\(choices:\s*([^)]+)\)")
+_YARGS_CHOICES = re.compile(r"\[choices:\s*([^\]]+)\]")
+_QUOTED = re.compile(r'"([^"]+)"')
+
+
+@dataclass
+class HelpSurface:
+    """Flags and enum values advertised by one ``<cmd> --help``."""
+
+    argv: list[str]
+    text: str
+    flags: set[str] = field(default_factory=set)
+    values: dict[str, set[str]] = field(default_factory=dict)
+
+
+def parse_help(argv: list[str], text: str) -> HelpSurface:
+    """Parse commander (claude) and clap (codex/grok/herdr) style help output.
+
+    An option line is an indented line starting with ``-x`` or ``--long``. The
+    option group is the text before the first run of two+ spaces (or the
+    description on the next line); every ``-x``/``--long`` token in it is a
+    flag. Enum values are read from the block of lines that follows the option
+    line, in either clap's ``[possible values: a, b]`` or commander's
+    ``(choices: "a", "b")`` form.
+    """
+    surface = HelpSurface(argv=argv, text=text)
+    lines = text.splitlines()
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if not _OPTION_LINE.match(line):
+            i += 1
+            continue
+        group = re.split(r"\s{2,}", line.strip(), maxsplit=1)[0]
+        # Commander puts `<placeholder>` in the group; drop it before tokenising.
+        group = re.sub(r"<[^>]*>", " ", group)
+        flags = _FLAG_TOKEN.findall(group)
+        # Collect the block up to the next option line for enum values.
+        block = [line]
+        j = i + 1
+        while j < len(lines) and not _OPTION_LINE.match(lines[j]):
+            block.append(lines[j])
+            j += 1
+        block_text = "\n".join(block)
+        vals: set[str] = set()
+        for m in _CLAP_VALUES.finditer(block_text):
+            vals |= {v.strip() for v in m.group(1).split(",") if v.strip()}
+        for m in _COMMANDER_CHOICES.finditer(block_text):
+            vals |= set(_QUOTED.findall(m.group(1)))
+        for m in _YARGS_CHOICES.finditer(block_text):
+            vals |= set(_QUOTED.findall(m.group(1)))
+        for f in flags:
+            surface.flags.add(f)
+            if vals:
+                surface.values.setdefault(f, set()).update(vals)
+        i = j
+    return surface
+
+
+def run_help(argv: list[str], timeout: int = 30) -> tuple[int, str]:
+    """Run ``<argv> --help`` with stdin closed; returns (rc, combined output)."""
+    proc = subprocess.run(
+        [*argv, "--help"],
+        stdin=subprocess.DEVNULL,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        env={**os.environ, "NO_COLOR": "1", "TERM": "dumb"},
+    )
+    return proc.returncode, proc.stdout + proc.stderr
+
+
+_VERSION = re.compile(r"(\d+(?:\.\d+)+)")
+
+
+def installed_version(agent: str, timeout: int = 30) -> str | None:
+    proc = subprocess.run(
+        [agent, "--version"],
+        stdin=subprocess.DEVNULL,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
+    m = _VERSION.search(proc.stdout + proc.stderr)
+    return m.group(1) if m else None
+
+
+def version_tuple(v: str) -> tuple[int, ...]:
+    return tuple(int(p) for p in v.split("."))
+
+
+# --- source scanning --------------------------------------------------------
+
+# An agent name at a command position: not glued to a path (`/bin/claude`), a
+# hyphenated name (`w-claude`), a variable (`$claude`) or another word.
+_CMD_START = re.compile(r"(?<![\w/.$,-])(?<!--kind )(?<!--member )(?<!--members )(claude|codex|gemini|opencode|grok|herdr)\b(?![\w/.,-])")
+_SUBCOMMAND = re.compile(r"^[a-z][a-z-]*$")
+_FLAG = re.compile(r"^-{1,2}[A-Za-z][\w-]*")
+# Shell filters that commonly follow a `|` — stop scanning there so `jq -r`
+# flags aren't attributed to the agent.
+_PIPE_FILTERS = {"jq", "grep", "rg", "tee", "head", "tail", "awk", "sed", "xargs", "sort", "wc", "cut", "tr"}
+# Max depth of subcommand words we attribute to a command path.
+_MAX_PATH = {"claude": 2, "codex": 2, "gemini": 1, "opencode": 1, "grok": 1, "herdr": 2}
+
+SCAN_SUFFIXES = {".md", ".sh", ".py", ".toml", ".yaml", ".yml"}
+SCAN_EXCLUDE_DIRS = {"__pycache__", ".venv", "node_modules", "runs", "cache"}
+
+
+@dataclass(frozen=True)
+class Invocation:
+    agent: str
+    path: tuple[str, ...]
+    flags: tuple[str, ...]
+    file: Path
+    line: int
+    text: str
+
+    @property
+    def key(self) -> str:
+        return " ".join((self.agent, *self.path))
+
+
+def _join_continuations(text: str) -> list[tuple[int, str]]:
+    """Join backslash-continued lines; yields (first_line_no, joined_text)."""
+    out: list[tuple[int, str]] = []
+    buf: list[str] = []
+    start = 0
+    for n, line in enumerate(text.splitlines(), start=1):
+        stripped = line.rstrip()
+        if not buf:
+            start = n
+        if stripped.endswith("\\"):
+            buf.append(stripped[:-1])
+            continue
+        buf.append(stripped)
+        out.append((start, " ".join(buf)))
+        buf = []
+    if buf:
+        out.append((start, " ".join(buf)))
+    return out
+
+
+def _tokenize(s: str) -> list[str]:
+    try:
+        return shlex.split(s, posix=True)
+    except ValueError:
+        return s.split()
+
+
+def _clean(tok: str) -> str:
+    return tok.strip("[]()<>`'\",;")
+
+
+def parse_invocation(text: str, file: Path, line: int) -> list[Invocation]:
+    """Extract agent invocations (possibly nested after ``--``) from one line."""
+    if text.lstrip().startswith("#"):
+        return []
+    m = _CMD_START.search(text)
+    if not m:
+        return []
+    # Cut trailing markdown/backtick and a comment.
+    rest = text[m.end():]
+    rest = rest.split("`", 1)[0]
+    rest = re.split(r"\s#", rest, maxsplit=1)[0]
+    tokens = _tokenize(rest)
+    return _parse_tokens(m.group(1), tokens, file, line, text)
+
+
+def _parse_tokens(agent: str, tokens: list[str], file: Path, line: int, text: str) -> list[Invocation]:
+    path: list[str] = []
+    flags: list[str] = []
+    results: list[Invocation] = []
+    kind: str | None = None  # herdr `agent start --kind X` names the nested agent
+    # `<name>|--clear` style alternations in usage lines: split into parts.
+    tokens = [part for tok in tokens for part in (tok.split("|") if "|" in tok and tok != "|" else [tok])]
+    i = 0
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok in ("|", "&&", "||", ";"):
+            # Stop at a pipe into a shell filter, or at any command separator.
+            if tok == "|" and i + 1 < len(tokens) and tokens[i + 1] not in _PIPE_FILTERS:
+                i += 1
+                continue
+            break
+        if tok == "--":
+            # Everything after `--` is the nested agent's argv. `herdr agent
+            # start --kind X -- <args>` launches X itself, so the args omit the
+            # executable; otherwise the first nested token names the agent.
+            nested = tokens[i + 1:]
+            if nested and nested[0] in AGENTS:
+                results.extend(_parse_tokens(nested[0], nested[1:], file, line, text))
+            elif kind in AGENTS:
+                results.extend(_parse_tokens(kind, nested, file, line, text))
+            break
+        clean = _clean(tok)
+        if _FLAG.match(clean):
+            name = clean.split("=", 1)[0]
+            flags.append(name)
+            if name == "--kind" and i + 1 < len(tokens):
+                kind = _clean(tokens[i + 1])
+        elif not flags and len(path) < _MAX_PATH[agent] and _SUBCOMMAND.match(clean):
+            path.append(clean)
+        i += 1
+    results.insert(0, Invocation(agent, tuple(path), tuple(flags), file, line, text.strip()))
+    return results
+
+
+def iter_source_files(roots: list[Path]) -> list[Path]:
+    files: list[Path] = []
+    for root in roots:
+        if root.is_file():
+            files.append(root)
+            continue
+        for dirpath, dirnames, filenames in os.walk(root):
+            dirnames[:] = [d for d in dirnames if d not in SCAN_EXCLUDE_DIRS]
+            for fn in filenames:
+                p = Path(dirpath) / fn
+                if p.suffix not in SCAN_SUFFIXES or p.resolve() == Path(__file__).resolve():
+                    continue
+                if fn.startswith("test_") and p.suffix == ".py":
+                    continue  # pytest modules quote argv fragments as data, not invocations
+                files.append(p)
+    return sorted(files)
+
+
+def scan_sources(roots: list[Path]) -> list[Invocation]:
+    found: list[Invocation] = []
+    for f in iter_source_files(roots):
+        try:
+            text = f.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+
+exec
+/bin/bash -lc "sed -n '340,680p' src/planning-workflow/tests/agent_cli_contract.py && sed -n '1,240p' docs/agent-cli-contract-tests.md && rg -n --glob '*.md' --glob '*.sh' --glob '*.py' '(claude|codex|gemini|opencode|grok)( |\\\\)' src/planning-workflow/skills src/planning-workflow/refs | head -120" in /home/vscode/src/skills
+ succeeded in 0ms:
+            continue
+        for line_no, joined in _join_continuations(text):
+            found.extend(parse_invocation(joined, f, line_no))
+    return found
+
+
+# Sources whose agent invocations the contract must cover. Keep this list in
+# step with where skills and harnesses shell out to an agent.
+DEFAULT_SCAN_ROOTS = [
+    SRC_ROOT / "planning-workflow",
+    SRC_ROOT / "consult-the-council",
+    SRC_ROOT / "assurance" / "evals" / "run.sh",
+]
+
+
+def main(argv: list[str]) -> int:
+    roots = [Path(a) for a in argv[1:]] or DEFAULT_SCAN_ROOTS
+    by_cmd: dict[str, dict[str, list[Invocation]]] = {}
+    for inv in scan_sources(roots):
+        if not inv.flags:
+            continue
+        for fl in inv.flags:
+            by_cmd.setdefault(inv.key, {}).setdefault(fl, []).append(inv)
+    for key in sorted(by_cmd):
+        print(f"== {key}")
+        for fl in sorted(by_cmd[key]):
+            locs = by_cmd[key][fl]
+            where = ", ".join(f"{i.file.relative_to(REPO_ROOT)}:{i.line}" for i in locs[:3])
+            more = f" (+{len(locs) - 3})" if len(locs) > 3 else ""
+            print(f"   {fl:<45} {where}{more}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
+---
+hash: "c35e20b7"
+id: "d45ac9d9"
+read_when: "a delegate/review/council skill stalls or errors on a claude/codex/gemini/opencode/grok/herdr flag, after upgrading one of those CLIs, or when adding a new agent flag to a skill — how the contract tests work, how to run them, and how to update the contract"
+summary: "Contract-driven pytest suite that checks every claude/codex/gemini/opencode/grok/herdr flag the delegate, review and council skills pass against the installed CLIs' --help, verifies the skill sources use only contracted flags, and optionally smoke-runs the canonical headless invocations."
+title: "Agent CLI Contract Tests"
+---
+
+# Agent CLI Contract Tests
+
+The delegate, review and council skills shell out to `claude`, `codex`,
+`gemini`, `opencode`, `grok` and `herdr` with hardcoded flags: permission bypasses, sandbox modes, headless
+print mode, pane and worktree control. Those CLIs ship weekly. When one renames
+or drops a flag, the skill text keeps reading fine while a background worker
+silently stalls on a permission prompt nobody can answer.
+
+This suite makes that drift a test failure instead of a mystery.
+
+## Where it lives
+
+```
+src/planning-workflow/tests/
+  agent-cli-contract.toml       # the flags we depend on, per agent + command path
+  agent_cli_contract.py         # contract loader, --help parser, source scanner
+  test_agent_cli_contract.py    # the tests
+```
+
+Run with `make test` (part of the default suite) or directly:
+
+```bash
+uv run pytest src/planning-workflow/tests/            # static checks, < 1s
+make test-agent-cli-live                              # live PONG smoke, bills tokens
+```
+
+All four CLIs must be on `PATH`. A missing CLI is a failure, not a skip: the
+premise is that the latest release is installed and the skills are verified
+against it.
+
+## What is checked
+
+**Layer 0: installed and current.** Each CLI resolves on `PATH`, and its
+`--version` is not older than the contract's `verified_version`. A green run
+against an old build proves nothing, so the test refuses it.
+
+**Layer 1: `--help` advertises the contract.** For every command path in the
+contract (`claude`, `codex exec`, `herdr agent start`, …) the test runs
+`<cmd> --help`, parses the option list (commander style for Claude Code, clap
+style for the rest), and asserts every contracted flag is present. Where the
+contract pins enum values (`--permission-mode bypassPermissions`,
+`--sandbox read-only`, `--kind claude`, `--until working`) those must appear in
+the advertised choices too. No auth, no tokens.
+
+**Layer 2: the sources agree with the contract, both ways.** A scanner walks
+`src/planning-workflow/`, `src/consult-the-council/` and
+`src/assurance/evals/run.sh`, finds every `claude|codex|gemini|opencode|grok|herdr …`
+invocation (joining backslash continuations, following
+`herdr agent start --kind X -- …` into the nested agent's argv), and extracts
+the flags. Two assertions:
+
+- every flag a source uses is in the contract for that command path;
+- every flag in the contract is used by at least one source.
+
+The evals harness's `build_argv` in `src/evals/runners.py` is imported and
+checked the same way, since its argv is Python, not shell. The
+consult-the-council script's argv is checked by that module's own tests
+(`src/consult-the-council/tests/`), which load the same contract file.
+
+**Layer 3: live smoke (opt-in).** With `AGENT_CLI_LIVE=1` the canonical
+unattended invocation of each agent (`claude -p --dangerously-skip-permissions`,
+`codex exec --sandbox read-only`, `grok --permission-mode bypassPermissions
+--always-approve --single`) is run under closed stdin and must print PONG. This
+overlaps with `test-background-review-stdin.sh`, which additionally proves the
+stdin-hang negative control.
+
+## When it fails
+
+| Failure | Meaning | Fix |
+| ------- | ------- | --- |
+| `test_help_exposes_contract_flags[claude]` lists `--foo` | The installed CLI dropped or renamed `--foo` | Find the replacement in `--help`, update the refs under `src/planning-workflow/refs/` and the skill bodies, update the contract, `make compile` |
+| `test_help_exposes_contract_values[...]` | An enum value (permission mode, sandbox, agent kind) went away | Same as above |
+| `test_sources_use_only_contract_flags` names a file:line | A skill started passing a flag nobody verified | Confirm it in `--help`, add it to the contract |
+| `test_contract_flags_are_used_somewhere` | Contract lists a flag no source uses | Remove it, or the scanner missed an invocation (see below) |
+| `test_installed_version_not_older_than_verified` | The CLI on this machine is older than the contract was verified against | Update the CLI |
+
+After a green run on a newer CLI release, bump that agent's `verified_version`
+in the contract so the floor moves forward.
+
+## Adding a flag or an agent
+
+1. Use the flag in the skill source.
+2. Run the scanner to see what it extracted:
+   `uv run --no-dev python src/planning-workflow/tests/agent_cli_contract.py`
+3. Add the flag under the matching `[[agent.<name>.command]]` entry (keyed by
+   `path`, the subcommand words after the agent name, `""` for top level).
+   Pin enum values under `[agent.<name>.command.values]` when the skill depends
+   on a specific one.
+4. Run the tests.
+
+A new agent gets an `[agent.<name>]` table with `verified_version` and,
+optionally, `live_smoke` + `live_expect` for the opt-in PONG check. Add its
+name to `AGENTS` in `agent_cli_contract.py` so the scanner recognises it.
+
+## Scanner limits
+
+- Invocations behind a shell alias (`H="herdr --session x"; $H agent start …`)
+  are invisible to it. The delegation test doc uses this pattern; its flags are
+  covered because the same commands appear unaliased in the herdr refs.
+- Prose that mentions a flag without an agent name in front of it is not an
+  invocation and is not checked.
+- Short flags are contracted as written (`-p`, `-o`); the help parser records
+  both short and long forms, so either spelling passes layer 1.
+src/planning-workflow/refs/agent-conventions.md:25:| **Claude Code** | `claude --dangerously-skip-permissions` | `⏵⏵ bypass permissions on` |
+src/planning-workflow/refs/agent-conventions.md:26:| **Codex** | `codex --dangerously-bypass-approvals-and-sandbox` | `permissions: YOLO mode` — **only on newer builds**; see below |
+src/planning-workflow/refs/agent-conventions.md:35:`claude --permission-mode bypassPermissions` reaches the same state without the
+src/planning-workflow/refs/agent-conventions.md:103:| Codex | Starts a new conversation; prints prior token usage and a `codex resume <id>` line. |
+src/planning-workflow/refs/agent-conventions.md:120:claude --dangerously-skip-permissions "/execute-task 042"
+src/planning-workflow/refs/agent-conventions.md:121:codex --dangerously-bypass-approvals-and-sandbox "/execute-task 042"
+src/planning-workflow/refs/headless-delegation.md:21:| **Claude Code** | `claude -p --add-dir "$CWD" --dangerously-skip-permissions "/review-task …"` | **Requires** `< /dev/null` — inherited open stdin stalls ~3s or blocks in background | `--dangerously-skip-permissions` |
+src/planning-workflow/refs/headless-delegation.md:22:| **Codex** | `codex exec --cd "$CWD" --sandbox workspace-write "…"` | **Requires** `< /dev/null` — blocks on open stdin with "Reading additional input from stdin…" | `--sandbox workspace-write` (writes task docs) |
+src/planning-workflow/refs/headless-delegation.md:23:| **Grok** | `grok --cwd "$CWD" --permission-mode bypassPermissions --always-approve --single "/review-task …"` | **No redirect needed** — headless mode ignores piped stdin | `--permission-mode bypassPermissions --always-approve` |
+src/planning-workflow/refs/headless-delegation.md:34:Auth: Claude uses `~/.claude/.credentials.json`; Codex uses `codex login`;
+src/planning-workflow/skills/request-council-review/SKILL.md:89:claude \
+src/planning-workflow/skills/request-council-review/SKILL.md:100:codex exec \
+src/planning-workflow/skills/request-council-review/SKILL.md:111:grok \
+src/planning-workflow/skills/request-council-review/SKILL.md:127:- **Codex**: `--sandbox read-only` blocks all writes. `-o` writes the final message to the findings file. `< /dev/null` is required or `codex exec` blocks reading stdin forever in a background launch.
+src/planning-workflow/skills/request-council-review/SKILL.md:137:for AGENT in claude codex grok; do
+src/planning-workflow/skills/request-council-review/SKILL.md:236:- Which reviewers succeeded (claude / codex / grok) and which, if any, failed
+src/planning-workflow/refs/herdr/spawn-worker.md:20:| **Claude Code** | `claude --dangerously-skip-permissions` | `⏵⏵ bypass permissions on` |
+src/planning-workflow/refs/herdr/spawn-worker.md:21:| **Codex** | `codex --dangerously-bypass-approvals-and-sandbox` | `permissions: YOLO mode` |
+src/planning-workflow/refs/herdr/spawn-worker.md:29:`claude --permission-mode bypassPermissions` reaches the same mode and needs no
+src/planning-workflow/refs/herdr/spawn-worker.md:36:`claude --resume <uuid>` and **does not carry the permission flag over**, so a
+src/planning-workflow/refs/herdr/spawn-worker.md:49:herdr agent start task-NNN --kind claude --pane "$PANE" --timeout 90000 \
+src/planning-workflow/refs/herdr/spawn-worker.md:68:herdr agent start note-fix --kind claude --pane "$PANE" --timeout 90000 \
+src/planning-workflow/skills/request-grok-review/SKILL.md:3:description: "Runs a code review of task planning docs via Grok CLI, then resolves any comments left. Use when 'request grok review', 'get grok review', 'grok review task', 'have grok review', or when a second pair of eyes is needed on task docs before execution."
+src/planning-workflow/skills/request-grok-review/SKILL.md:35:grok \
+src/planning-workflow/skills/request-grok-review/SKILL.md:42:echo "grok exit code: $GROK_EXIT"
+src/planning-workflow/skills/request-grok-review/SKILL.md:45:**No `< /dev/null` redirect is needed.** Unlike `codex exec` and `claude -p`, Grok
+src/planning-workflow/skills/request-grok-review/SKILL.md:73:    echo "grok failed or no comments found; inspect log output"
+src/planning-workflow/refs/herdr/label-worker.md:10:herdr agent start <name> --kind claude --pane <pane_id> -- <agent-args...>
+src/planning-workflow/skills/delegate/SKILL.md:67:| Claude Code | `claude --dangerously-skip-permissions` |
+src/planning-workflow/skills/delegate/SKILL.md:68:| Codex | `codex --dangerously-bypass-approvals-and-sandbox` |
+src/planning-workflow/skills/delegate-task/SKILL.md:88:| Claude Code | `claude --dangerously-skip-permissions` |
+src/planning-workflow/skills/delegate-task/SKILL.md:89:| Codex | `codex --dangerously-bypass-approvals-and-sandbox` |
+src/planning-workflow/skills/delegate-task/SKILL.md:101:herdr agent start task-$ID --kind claude --pane "$PANE" --timeout 90000 \
+src/planning-workflow/skills/request-claude-review/SKILL.md:3:description: "Runs a code review of task planning docs via Claude Code, then resolves any comments left. Use when 'request claude review', 'get claude review', 'claude review task', 'have claude review', or when a second pair of eyes is needed on task docs before execution."
+src/planning-workflow/skills/request-claude-review/SKILL.md:35:claude \
+src/planning-workflow/skills/request-claude-review/SKILL.md:43:echo "claude exit code: $CLAUDE_EXIT"
+src/planning-workflow/skills/request-claude-review/SKILL.md:68:    echo "claude failed or no comments found; inspect log output"
+src/planning-workflow/skills/request-codex-review/SKILL.md:3:description: "Runs a code review of task planning docs via Codex, then resolves any comments left. Use when 'request codex review', 'get codex review', 'codex review task', 'have codex review', or when a second pair of eyes is needed on task docs before execution."
+src/planning-workflow/skills/request-codex-review/SKILL.md:35:codex exec \
+src/planning-workflow/skills/request-codex-review/SKILL.md:43:echo "codex exit code: $CODEX_EXIT"
+src/planning-workflow/skills/request-codex-review/SKILL.md:46:**`< /dev/null` is required.** `codex exec` reads its prompt from stdin whenever
+src/planning-workflow/skills/request-codex-review/SKILL.md:50:pipe, so codex hangs forever instead of running the review. Redirecting from
+src/planning-workflow/skills/request-codex-review/SKILL.md:70:    echo "codex failed or no comments found; inspect log output"
+src/planning-workflow/refs/herdr/verify-worker.md:19:   "cmdline":"claude --dangerously-skip-permissions",
+src/planning-workflow/refs/herdr/verify-worker.md:39:| `claude --dangerously-skip-permissions` | Good — bypass permissions. |
+src/planning-workflow/refs/herdr/verify-worker.md:40:| `claude --permission-mode bypassPermissions` | Good — equivalent. |
+src/planning-workflow/refs/herdr/verify-worker.md:42:| `codex --dangerously-bypass-approvals-and-sandbox` | Good — bypass/YOLO mode. |
+src/planning-workflow/refs/herdr/verify-worker.md:43:| `claude --resume <uuid>` (no flag) | **Downgraded by a server restart. Reject** — see below. |
+src/planning-workflow/refs/herdr/verify-worker.md:53:node /home/vscode/.local/bin/codex --dangerously-bypass-approvals-and-sandbox
+src/planning-workflow/refs/herdr/verify-worker.md:54:.../codex-linux-x64/.../bin/codex --dangerously-bypass-approvals-and-sandbox
+src/planning-workflow/refs/herdr/verify-worker.md:71:`claude --resume <session-uuid>` — **the original launch argv, including the
+src/planning-workflow/refs/herdr/verify-worker.md:89:claude --dangerously-skip-permissions --resume <uuid>
+
+codex
+Treat each CLI invocation as a versioned integration contract, not prose embedded in a skill. Your current design is already a strong foundation: the TOML inventory plus help checks, source scanning, version floors, and opt-in live smoke tests make drift visible in [`agent-cli-contract.toml`](/home/vscode/src/skills/src/planning-workflow/tests/agent-cli-contract.toml) and [`test_agent_cli_contract.py`](/home/vscode/src/skills/src/planning-workflow/tests/test_agent_cli_contract.py).
+
+I’d extend it this way:
+
+- Keep one machine-readable contract per CLI command path, covering flags, required values, stdin policy, expected output artifact, and required capability (headless, read-only, unattended, etc.).
+- Make every shell/Python invocation flow through a small adapter or canonical argv builder where feasible. Source scanning remains valuable as a backstop, especially for documentation snippets that users copy.
+- Run `--help` and parser checks on every PR, but add scheduled canary CI against freshly installed releases. That catches weekly upstream changes even when the repo itself is quiet.
+- Keep a small behavior suite for each critical mode: closed stdin must not hang; read-only must reject writes; write-capable mode must create a harmless fixture; headless mode must terminate and emit the expected result. Help output establishes syntax, not semantics.
+- Test representative combinations, not just individual flags—permission bypass and headless mode are particularly prone to interaction regressions.
+- Preserve failure output: installed version, full argv with secrets redacted, help excerpt, exit code, timeout status, and captured stderr. This turns an upstream break into a quick repair.
+- Define an upgrade response path: identify replacement from release notes/help, update the adapter/skill references and contract together, run static + live tests, then raise the verified-version floor.
+- Decide whether “latest release only” is the supported policy. If agents run across heterogeneous environments, test a compatibility matrix and explicitly document the supported range; a single `verified_version` floor alone does not promise older versions remain supported.
+
+The first things I’d want to know are:
+
+1. What is the support promise: always latest CLI, a minimum version, or multiple versions/OS distributions?
+2. Where do production agents actually run, and can scheduled CI install and exercise the same binaries with safe test credentials?
+3. Which behavior is non-negotiable for each CLI—noninteractive operation, sandbox guarantees, permission bypass, structured output, resuming—and what harmless end-to-end assertion proves it?
+4. Are invocations centralized or copied across generated docs, skills, scripts, aliases, and external templates? The scanner’s known alias limitation is the first coverage gap I’d map.
+5. Who owns reacting to a canary failure, and can a compatibility break block upgrades without blocking unrelated development?
+
+The key distinction is: use `--help` contracts to catch renamed syntax cheaply, and minimal live behavioral contracts to catch the more dangerous case where a still-valid flag silently changes meaning.
+hook: Stop
+hook: Stop Completed
+tokens used
+26,095

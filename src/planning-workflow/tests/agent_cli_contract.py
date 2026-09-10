@@ -34,7 +34,7 @@ REPO_ROOT = HERE.parents[2]
 SRC_ROOT = REPO_ROOT / "src"
 CONTRACT_PATH = HERE / "agent-cli-contract.toml"
 
-AGENTS = ("claude", "codex", "grok", "herdr")
+AGENTS = ("claude", "codex", "gemini", "opencode", "grok", "herdr")
 
 # --- contract ---------------------------------------------------------------
 
@@ -107,6 +107,7 @@ _OPTION_LINE = re.compile(r"^\s{2,}(-{1,2}[A-Za-z])")
 _FLAG_TOKEN = re.compile(r"(?<![\w-])(-{1,2}[A-Za-z][\w-]*)")
 _CLAP_VALUES = re.compile(r"\[possible values:\s*([^\]]+)\]")
 _COMMANDER_CHOICES = re.compile(r"\(choices:\s*([^)]+)\)")
+_YARGS_CHOICES = re.compile(r"\[choices:\s*([^\]]+)\]")
 _QUOTED = re.compile(r'"([^"]+)"')
 
 
@@ -154,6 +155,8 @@ def parse_help(argv: list[str], text: str) -> HelpSurface:
             vals |= {v.strip() for v in m.group(1).split(",") if v.strip()}
         for m in _COMMANDER_CHOICES.finditer(block_text):
             vals |= set(_QUOTED.findall(m.group(1)))
+        for m in _YARGS_CHOICES.finditer(block_text):
+            vals |= set(_QUOTED.findall(m.group(1)))
         for f in flags:
             surface.flags.add(f)
             if vals:
@@ -163,16 +166,25 @@ def parse_help(argv: list[str], text: str) -> HelpSurface:
 
 
 def run_help(argv: list[str], timeout: int = 30) -> tuple[int, str]:
-    """Run ``<argv> --help`` with stdin closed; returns (rc, combined output)."""
-    proc = subprocess.run(
-        [*argv, "--help"],
-        stdin=subprocess.DEVNULL,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        env={**os.environ, "NO_COLOR": "1", "TERM": "dumb"},
-    )
-    return proc.returncode, proc.stdout + proc.stderr
+    """Run ``<argv> --help`` with stdin closed; returns (rc, combined output).
+
+    Output goes to a temp file, not a pipe: Claude Code 2.1.267 exits before
+    draining a pipe and delivers ~8KB of a 20KB help text, which made six
+    real flags look deleted. A file never truncates.
+    """
+    import tempfile
+
+    with tempfile.TemporaryFile(mode="w+", encoding="utf-8", errors="replace") as out:
+        proc = subprocess.run(
+            [*argv, "--help"],
+            stdin=subprocess.DEVNULL,
+            stdout=out,
+            stderr=subprocess.STDOUT,
+            timeout=timeout,
+            env={**os.environ, "NO_COLOR": "1", "TERM": "dumb"},
+        )
+        out.seek(0)
+        return proc.returncode, out.read()
 
 
 _VERSION = re.compile(r"(\d+(?:\.\d+)+)")
@@ -198,14 +210,14 @@ def version_tuple(v: str) -> tuple[int, ...]:
 
 # An agent name at a command position: not glued to a path (`/bin/claude`), a
 # hyphenated name (`w-claude`), a variable (`$claude`) or another word.
-_CMD_START = re.compile(r"(?<![\w/.$-])(?<!--kind )(claude|codex|grok|herdr)\b(?![\w/.-])")
+_CMD_START = re.compile(r"(?<![\w/.$,-])(?<!--kind )(?<!--member )(?<!--members )(claude|codex|gemini|opencode|grok|herdr)\b(?![\w/.,-])")
 _SUBCOMMAND = re.compile(r"^[a-z][a-z-]*$")
 _FLAG = re.compile(r"^-{1,2}[A-Za-z][\w-]*")
 # Shell filters that commonly follow a `|` — stop scanning there so `jq -r`
 # flags aren't attributed to the agent.
 _PIPE_FILTERS = {"jq", "grep", "rg", "tee", "head", "tail", "awk", "sed", "xargs", "sort", "wc", "cut", "tr"}
 # Max depth of subcommand words we attribute to a command path.
-_MAX_PATH = {"claude": 2, "codex": 2, "grok": 1, "herdr": 2}
+_MAX_PATH = {"claude": 2, "codex": 2, "gemini": 1, "opencode": 1, "grok": 1, "herdr": 2}
 
 SCAN_SUFFIXES = {".md", ".sh", ".py", ".toml", ".yaml", ".yml"}
 SCAN_EXCLUDE_DIRS = {"__pycache__", ".venv", "node_modules", "runs", "cache"}
@@ -320,8 +332,11 @@ def iter_source_files(roots: list[Path]) -> list[Path]:
             dirnames[:] = [d for d in dirnames if d not in SCAN_EXCLUDE_DIRS]
             for fn in filenames:
                 p = Path(dirpath) / fn
-                if p.suffix in SCAN_SUFFIXES and p.resolve() != Path(__file__).resolve():
-                    files.append(p)
+                if p.suffix not in SCAN_SUFFIXES or p.resolve() == Path(__file__).resolve():
+                    continue
+                if fn.startswith("test_") and p.suffix == ".py":
+                    continue  # pytest modules quote argv fragments as data, not invocations
+                files.append(p)
     return sorted(files)
 
 
@@ -341,6 +356,7 @@ def scan_sources(roots: list[Path]) -> list[Invocation]:
 # step with where skills and harnesses shell out to an agent.
 DEFAULT_SCAN_ROOTS = [
     SRC_ROOT / "planning-workflow",
+    SRC_ROOT / "consult-the-council",
     SRC_ROOT / "assurance" / "evals" / "run.sh",
 ]
 

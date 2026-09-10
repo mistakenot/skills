@@ -45,7 +45,7 @@ check: compile lint
 # contract (flags the delegate/review skills pass to claude/codex/grok/herdr,
 # checked against the installed CLIs' --help). Needs all four CLIs on PATH.
 test:
-	uv run pytest src/assurance/tests/ src/evals/tests/ src/planning-workflow/tests/
+	uv run pytest src/assurance/tests/ src/evals/tests/ src/planning-workflow/tests/ src/consult-the-council/tests/
 
 # Live smoke for the agent CLI contract: runs the canonical headless invocation
 # of claude, codex and grok and expects a PONG. Bills tokens; needs auth.

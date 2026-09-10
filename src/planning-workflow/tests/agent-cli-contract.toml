@@ -16,7 +16,7 @@
 
 # ---------------------------------------------------------------------------
 [agent.claude]
-verified_version = "2.1.263"
+verified_version = "2.1.267"
 # Headless unattended run — opt-in via AGENT_CLI_LIVE=1, bills tokens.
 live_smoke = ["claude", "-p", "--dangerously-skip-permissions", "reply with exactly: PONG"]
 live_expect = "PONG"
@@ -33,6 +33,7 @@ flags = [
   "--verbose",                       # required alongside stream-json
   "--strict-mcp-config",             # clean-room isolation in evals
   "--model",                         # pin the model in evals
+  "--tools",                         # consult-the-council: read-only allowlist / "" for no tools
 ]
 [agent.claude.command.values]
 "--permission-mode" = ["bypassPermissions", "plan"]
@@ -56,6 +57,7 @@ flags = [
   "--cd",       # working root for a headless reviewer
   "--sandbox",  # workspace-write (edits docs) / read-only (council reviewer)
   "-o",         # --output-last-message: capture the final message to a file
+  "--skip-git-repo-check",  # consult-the-council: answer from an empty non-git dir
 ]
 [agent.codex.command.values]
 "--sandbox" = ["read-only", "workspace-write"]
@@ -76,7 +78,36 @@ flags = [
   "-p",                 # short form of --single
 ]
 [agent.grok.command.values]
-"--permission-mode" = ["bypassPermissions"]
+"--permission-mode" = ["bypassPermissions", "plan"]
+
+# ---------------------------------------------------------------------------
+[agent.gemini]
+verified_version = "0.34.0"
+live_smoke = ["gemini", "-p", "reply with exactly: PONG", "--approval-mode", "plan"]
+live_expect = "PONG"
+
+[[agent.gemini.command]]
+path = ""
+flags = [
+  "-p",               # headless prompt (consult-the-council member)
+  "--approval-mode",  # plan = read-only
+]
+[agent.gemini.command.values]
+"--approval-mode" = ["plan"]
+
+# ---------------------------------------------------------------------------
+[agent.opencode]
+verified_version = "1.15.13"
+live_smoke = ["opencode", "run", "--agent", "plan", "--format", "json", "reply with exactly: PONG"]
+live_expect = "PONG"
+
+[[agent.opencode.command]]
+path = "run"
+flags = [
+  "--agent",   # plan = the read-only agent (consult-the-council member)
+  "--dir",     # project root; the process cwd alone is not honoured
+  "--format",  # json: the default format drops the answer when stdout is not a TTY
+]
 
 # ---------------------------------------------------------------------------
 [agent.herdr]
