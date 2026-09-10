@@ -1,5 +1,5 @@
 ---
-hash: "310f3274"
+hash: "03ae01fe"
 id: "b86e61ee"
 read_when: "actually running an eval — setting one up, authoring a scenario, reading a result, iterating on a skill against it, or working out why a run failed"
 summary: "Task-oriented user guide for the src/evals/ harness: your first run, the three jobs it does, writing a scenario, reading a result in the right order, the edit-run-read loop, budgeting, troubleshooting the real failure modes, and how learnings get back into the skills."
@@ -97,6 +97,22 @@ all shaping the result. You cannot get that by testing in the repo.
 The caveat: with one arm you cannot tell *"the skill did this"* from *"the model
 would have done this anyway."* The moment you want to claim value, add `--arm
 none`. One flag turns a look into an experiment.
+
+### A skill that loads another skill
+
+Some skills depend on a sibling: `new-epic` loads `rich-doc` to write its HTML.
+In a clean room that call fails with `Unknown skill` and the agent improvises,
+which is not the skill you meant to measure. Name the dependency with `--with`:
+
+```bash
+make evals ARGS='run --skill new-epic --with rich-doc --arm HEAD --arm WORKTREE \
+    --scenario auto-stack-multi-host-epic'
+```
+
+The companion is taken from your working tree and installed identically on every
+arm that installs the skill under test, so the arms still differ in one thing.
+It is never installed on `none` — which means `--with` is for version-vs-version;
+a with/without run of a dependent skill is confounded (README, limitation 6).
 
 ---
 

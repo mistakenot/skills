@@ -18,6 +18,13 @@ loop; ``WORKTREE`` exists precisely to reach the bytes git cannot.
 Every arm carries the provenance needed to answer "what exactly did I measure?"
 a day later — a resolved commit sha for a ref, and for ``WORKTREE`` the head it
 sits on plus whether the tree was dirty. See `Arm.manifest`.
+
+**Companions** (``--with``) are skills the skill under test depends on — a skill
+that loads another by name (``new-epic`` loads ``rich-doc``) cannot run in a
+clean room without it. A companion is not an arm: it is resolved once, from the
+compiled working tree, and installed identically into every arm that installs
+the skill under test, so the arms still differ in one thing only. The ``none``
+arm stays empty — a baseline with a companion in it is a different experiment.
 """
 
 from __future__ import annotations
@@ -55,6 +62,25 @@ class ArmResolutionError(RuntimeError):
 
 
 @dataclass(frozen=True)
+class Companion:
+    """A skill installed alongside the one under test, held constant across arms."""
+
+    name: str
+    skill_src: Path
+    head: str | None = None
+    dirty: bool | None = None
+
+    def manifest(self) -> dict:
+        return {
+            "skill": self.name,
+            "sha": WORKTREE,
+            "head": self.head,
+            "dirty": self.dirty,
+            "source": str(self.skill_src),
+        }
+
+
+@dataclass(frozen=True)
 class Arm:
     """One resolved arm: what to install, and where it came from."""
 
@@ -70,13 +96,14 @@ class Arm:
         """The directory segment this arm's evidence goes under."""
         return dir_name(self.name)
 
-    def manifest(self, skill: str) -> dict:
+    def manifest(self, skill: str, companions: list[Companion] = ()) -> dict:
         """The provenance record written next to the arm's cells.
 
         `sha` is the question a reader actually asks: for a ref it is the commit
         the skill was archived from; for `WORKTREE` it is the literal string
         `WORKTREE`, because there is no commit — `head` and `dirty` say what
-        that working tree was.
+        that working tree was. `with` lists the companions this arm installed
+        beside the skill: empty on the `none` arm, which installs nothing.
         """
         return {
             "arm": self.name,
@@ -86,6 +113,7 @@ class Arm:
             "head": self.head,
             "dirty": self.dirty,
             "source": str(self.skill_src) if self.skill_src is not None else None,
+            "with": [c.manifest() for c in companions] if self.skill_src is not None else [],
         }
 
 
@@ -237,10 +265,52 @@ def resolve_all(arm_names: list[str], skill: str) -> list[Arm]:
     return [resolve(name, skill) for name in arm_names]
 
 
-def write_manifest(arm_dir: Path, arm: Arm, skill: str, run_id: str) -> Path:
+def resolve_companions(names: list[str], skill: str) -> list[Companion]:
+    """Resolve every `--with` skill off the compiled working tree.
+
+    Always the working tree, never a ref: a companion is scaffolding held
+    constant, and the version on disk is the one every arm should share. It is
+    compiled here rather than assumed, for the same reason `WORKTREE` compiles —
+    a stale `skills/` tree would install last week's companion.
+
+    Naming the skill under test as its own companion is refused: it would be
+    installed twice into one directory, and the arms would stop differing.
+    """
+    if not names:
+        return []
+    seen: set[str] = set()
+    for name in names:
+        if name == skill:
+            raise ArmResolutionError(
+                f"--with {name!r} names the skill under test; a companion must be a "
+                f"different skill"
+            )
+        if name in seen:
+            raise ArmResolutionError(f"--with {name!r} given twice")
+        seen.add(name)
+    compile_skills()
+    head, dirty = head_sha(), is_dirty()
+    return [
+        Companion(
+            name=name,
+            skill_src=_require_skill_dir(COMPILED_SKILLS_DIR / name, f"--with {name}", name),
+            head=head,
+            dirty=dirty,
+        )
+        for name in names
+    ]
+
+
+def write_manifest(
+    arm_dir: Path,
+    arm: Arm,
+    skill: str,
+    run_id: str,
+    companions: list[Companion] = (),
+) -> Path:
     """Write `manifest.json` beside an arm's cells."""
     arm_dir.mkdir(parents=True, exist_ok=True)
     path = arm_dir / MANIFEST_NAME
-    payload = {"run_id": run_id, **arm.manifest(skill)}
+    payload = {"run_id": run_id, **arm.manifest(skill, companions)}
     path.write_text(json.dumps(payload, indent=2) + "\n")
     return path

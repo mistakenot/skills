@@ -90,7 +90,29 @@ legal run (a single-arm exploration, away from this repo's ~38 skills and
 | anything else | A git ref, materialised with `git archive <ref> -- skills/<name>`. Extracted, never checked out — a checkout would move the tree the `WORKTREE` arm reads from. |
 
 `none` and `WORKTREE` are therefore reserved names: a branch called either one
-cannot be addressed as an arm. Every arm is resolved before the first token is
+cannot be addressed as an arm.
+
+### Companions (`--with`)
+
+Some skills load another skill by name — `new-epic` loads `rich-doc` to build
+its document — and cannot run in a clean room without it. An arm that hits
+`Unknown skill` and improvises around the gap measures the wrong thing.
+`--with <skill>` (repeatable) installs a **companion** beside the skill under
+test:
+
+```bash
+make evals ARGS='run --skill new-epic --with rich-doc --arm HEAD --arm WORKTREE \
+    --scenario auto-stack-multi-host-epic'
+```
+
+A companion is not an arm. It is resolved once, from the compiled working tree,
+and installed identically into every arm that installs the skill under test —
+so the arms still differ in one thing. Each installed arm's `manifest.json`
+lists its companions under `with`, and the cell snapshots them under
+`with/<name>/` next to `skill/`. The `none` arm stays empty: a baseline with
+the companion in it is a different experiment, so a with/without run of a
+skill that needs a companion is not something this flag gives you (see
+[Limitations](#limitations)). Every arm is resolved before the first token is
 spent, so a typo in the third arm's ref surfaces before the first arm is billed.
 Each arm writes a `manifest.json` recording its resolved sha (or, for
 `WORKTREE`, the head it sat on and whether the tree was dirty).
@@ -246,7 +268,15 @@ do — including reaching the network and writing outside the workspace. Scenari
 fixtures must be disposable, and a scenario prompt is as trusted as a command you
 typed yourself.
 
-### 6. Never in CI
+### 6. Companions make `none` a weaker baseline
+
+`--with` installs companions only on arms that install the skill under test.
+A `none` arm in the same run has neither, so "with vs without `new-epic`" is
+really "with `new-epic` + `rich-doc` vs nothing", and the difference cannot be
+attributed to `new-epic` alone. Use `--with` for version-vs-version, where
+every installed arm carries the same companions and the confound cancels.
+
+### 7. Never in CI
 
 A live run bills real tokens and takes minutes. `make evals` is a human-driven
 command. Only the stub lane (`--runner stub`) and `pytest src/evals/tests/` are

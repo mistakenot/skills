@@ -1,5 +1,5 @@
 ---
-hash: "e747dee2"
+hash: "11d8f2f5"
 id: "5cee9ee2"
 read_when: "deciding whether to A/B a skill change with the evals harness, or needing to know what an evals run cannot tell you before trusting its result"
 summary: "Orientation for the `src/evals/` harness: what it does, when to reach for it instead of planning-eval or the assurance harness, and the six limitations that bound what a run can tell you. The module README is the reference."
@@ -51,7 +51,10 @@ Each is stated in full, with the specific failure, in the README's
    as well as by SKILL.md. Pin both arms to the same version.
 5. **Not a sandbox.** `bypassPermissions` with real credentials in a temp dir.
    Fixtures must be disposable.
-6. **Never in CI.** A live run bills real tokens. Only the stub lane and
+6. **Companions weaken `none`.** `--with <skill>` installs a dependency
+   (`new-epic` needs `rich-doc`) on every installed arm but never on `none`,
+   so use it for version-vs-version only.
+7. **Never in CI.** A live run bills real tokens. Only the stub lane and
    `pytest src/evals/tests/` are safe to automate.
 
 ## Related

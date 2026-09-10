@@ -56,9 +56,11 @@ def _cmd_run(args: argparse.Namespace) -> int:
     # arm's ref should not surface after the first arm has already been billed.
     try:
         resolved = arms.resolve_all(args.arm, args.skill)
+        companions = arms.resolve_companions(args.with_skills, args.skill)
     except arms.ArmResolutionError as exc:
         print(f"evals: {exc}", file=sys.stderr)
         return 2
+    companion_srcs = {c.name: c.skill_src for c in companions}
 
     # Once per run, not once per cell: every arm is seeded by copying the same
     # prepared tree, so a fetch happens at most once and no two arms can see a
@@ -84,6 +86,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         invoke=args.invoke,
         trials=args.n,
         scenario=scenario.name,
+        with_skills=[c.name for c in companions],
         started_at=manifest.now(),
     )
     # Written before the first token is spent, so a run killed halfway is still
@@ -93,6 +96,12 @@ def _cmd_run(args: argparse.Namespace) -> int:
     print(f"evals: run {run_id} (runner {args.runner}, {args.n} trial(s) per arm)")
     print(f"evals: scenario {scenario.name}", end="")
     print(f" -> {workspace_seed}" if workspace_seed else " (no workspace fixture)")
+    if companions:
+        print(
+            "evals: with "
+            + ", ".join(f"{c.name} -> {c.skill_src}" for c in companions)
+            + " (held constant on every installed arm)"
+        )
 
     cells: list[tuple[str, int, Path]] = []
     records = []
@@ -111,6 +120,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
                     model=args.model,
                     runner=args.runner,
                     fixture=workspace_seed,
+                    companions=companion_srcs,
                 )
             except (cell.CellError, canaries.CanaryFailure, runners.RunnerError) as exc:
                 print(f"evals: {exc}", file=sys.stderr)
@@ -125,7 +135,9 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
         # Provenance next to the evidence: "which version was this?" has to be
         # answerable from the run tree alone, a day later.
-        arms.write_manifest(run_dir / arm.dir_name, arm, args.skill, run_id)
+        arms.write_manifest(
+            run_dir / arm.dir_name, arm, args.skill, run_id, companions
+        )
 
         # Ground truth from the transcript's tool calls, never a self-report: if
         # the skill never fired, the arms are the same run and nothing below is a
@@ -170,6 +182,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         invocations=records,
         invoke_mode=args.invoke,
         trials=args.n,
+        with_skills=[c.name for c in companions],
     )
     print(f"evals: {report_path}")
     print(f"evals: evals show {run_id}")
@@ -259,6 +272,19 @@ def build_parser() -> argparse.ArgumentParser:
             "a scenario directory (prompt.md, optional setup.sh and fixture/); "
             "a bare name is looked up under the module's scenarios/. "
             f"bundled: {', '.join(scenarios.available()) or '(none)'}"
+        ),
+    )
+    run.add_argument(
+        "--with",
+        dest="with_skills",
+        action="append",
+        default=[],
+        metavar="SKILL",
+        help=(
+            "repeatable: a companion skill the skill under test loads by name "
+            "(e.g. new-epic loads rich-doc). Taken from the compiled working "
+            "tree and installed identically on every arm that installs the "
+            f"skill; the {arms.NONE!r} arm stays empty"
         ),
     )
     run.add_argument("--model", default=cell.DEFAULT_MODEL, help="pinned model id")

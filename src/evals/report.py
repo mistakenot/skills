@@ -639,6 +639,7 @@ def write_report(
     invoke_mode: str = invocation_mod.INVOKE_DEFAULT,
     trials: int = 1,
     note: str | None = None,
+    with_skills: list[str] | None = None,
 ) -> Path:
     """Write `REPORT.md` into `run_dir`. `cells` is (arm, exit_code, cell_dir).
 
@@ -722,6 +723,14 @@ def write_report(
         # holding changes what the outputs are worth.
         f"- trials per arm: `{trials}`",
     ]
+    if with_skills:
+        # Named so a reader knows the installed arms carried more than the
+        # skill under test — and that the baseline did not.
+        lines.append(
+            "- with: "
+            + ", ".join(f"`{w}`" for w in with_skills)
+            + " (companions, held constant on every installed arm; absent on `none`)"
+        )
     if note:
         lines.append(f"- note: {note}")
     lines += [""]
@@ -816,4 +825,5 @@ def rebuild(run_dir: Path) -> Path:
         invoke_mode=data.get("invoke", invocation_mod.INVOKE_DEFAULT),
         trials=int(data.get("trials", 1) or 1),
         note=REBUILT_NOTE,
+        with_skills=[str(w) for w in data.get("with", []) or []],
     )

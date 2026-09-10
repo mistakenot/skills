@@ -83,6 +83,9 @@ class RunManifest:
     runner: str | None = None
     invoke: str | None = None
     trials: int = 1
+    # Companion skills (`--with`) installed beside the skill on every arm that
+    # installed it. Empty for a run without them, or one that predates them.
+    with_skills: list[str] = field(default_factory=list)
     started_at: str | None = None
     finished_at: str | None = None
     status: str = STATUS_INCOMPLETE
@@ -116,6 +119,7 @@ def write(
     invoke: str,
     trials: int = 1,
     scenario: str | None = None,
+    with_skills: list[str] | None = None,
     started_at: str | None = None,
     finished_at: str | None = None,
     status: str = STATUS_INCOMPLETE,
@@ -136,6 +140,7 @@ def write(
         "invoke": invoke,
         "trials": trials,
         "scenario": scenario,
+        "with": list(with_skills or []),
         "prompt": prompt,
         "started_at": started_at or now(),
         "finished_at": finished_at,
@@ -192,6 +197,8 @@ def read(run_dir: Path) -> RunManifest:
     pointers = data.get("arms")
     pointers = pointers if isinstance(pointers, list) else []
     trials = data.get("trials")
+    with_skills = data.get("with")
+    with_skills = [str(w) for w in with_skills] if isinstance(with_skills, list) else []
     return RunManifest(
         run_id=str(data.get("run_id") or run_dir.name),
         skill=data.get("skill"),
@@ -202,6 +209,7 @@ def read(run_dir: Path) -> RunManifest:
         runner=data.get("runner"),
         invoke=data.get("invoke"),
         trials=trials if isinstance(trials, int) and trials > 0 else 1,
+        with_skills=with_skills,
         started_at=data.get("started_at"),
         finished_at=data.get("finished_at"),
         status=str(data.get("status") or STATUS_INCOMPLETE),

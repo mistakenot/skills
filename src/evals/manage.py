@@ -79,6 +79,7 @@ def _field_lines(record: manifest_mod.RunManifest) -> list[str]:
         ("runner", record.runner),
         ("invoke", record.invoke),
         ("trials", str(record.trials)),
+        ("with", ", ".join(record.with_skills)),
         ("scenario", record.scenario or "(inline prompt)"),
         ("started", record.started_at),
         ("finished", record.finished_at),

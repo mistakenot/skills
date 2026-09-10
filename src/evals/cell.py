@@ -53,19 +53,28 @@ class CellResult:
     runner: str = runners.LIVE
 
 
-def _install_skill(config_dir: Path, skill_name: str, skill_src: Path | None) -> None:
+def _install_skill(
+    config_dir: Path,
+    skill_name: str,
+    skill_src: Path | None,
+    companions: dict[str, Path] | None = None,
+) -> None:
     """Copy the arm's skill into the clean room, or install nothing at all.
 
     `skill_src is None` is the `none` arm, and it must leave *no* `skills/`
     directory behind — not an empty one. An empty directory is a different
     condition from an absent one, and the baseline arm has to be the plain
-    absence of the skill.
+    absence of the skill. Companions follow the same rule: they go in beside
+    the skill under test, and only there. A `none` arm that carried the
+    companions would be a baseline of a different experiment.
     """
     if skill_src is None:
         return
     dest = config_dir / "skills" / skill_name
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(skill_src, dest)
+    for name, src in (companions or {}).items():
+        shutil.copytree(src, dest.parent / name)
 
 
 def _check_credentials(runner: str) -> None:
@@ -126,6 +135,7 @@ def run_cell(
     model: str = DEFAULT_MODEL,
     runner: str = runners.DEFAULT,
     fixture: Path | None = None,
+    companions: dict[str, Path] | None = None,
 ) -> CellResult:
     """Run one prompt in an isolated clean room, leaving evidence in `out_dir`.
 
@@ -138,6 +148,10 @@ def run_cell(
     `runner` selects the agent process: `live` spawns `claude -p`, `stub` writes
     a canned transcript offline (see `runners.py`). `fixture`, if given, is a
     directory whose contents seed the workspace before the agent starts.
+    `companions` ({name: source dir}) are installed beside the skill under test
+    on every arm that installs it, and snapshotted under `with/<name>/` — a
+    sixth entry present only when companions were given, so a cell without
+    them keeps its five-entry shape.
     """
     run_agent = runners.get(runner)
     _check_credentials(runner)
@@ -152,14 +166,15 @@ def run_cell(
     config_dir.mkdir(parents=True)
     workspace.mkdir(parents=True)
 
+    companions = dict(companions or {})
     _place_credentials(config_dir, runner)
-    _install_skill(config_dir, skill_name, skill_src)
+    _install_skill(config_dir, skill_name, skill_src, companions)
     if fixture is not None:
         shutil.copytree(fixture, workspace, dirs_exist_ok=True)
 
     # Before the process call, so the stub lane cannot pass a cell a live run
     # would have refused. A cheap check skipped in the fast lane is no check.
-    installed = {skill_name} if skill_src is not None else set()
+    installed = {skill_name, *companions} if skill_src is not None else set()
     canaries.check_all(
         config_dir=config_dir,
         workspace=workspace,
@@ -173,6 +188,10 @@ def run_cell(
         shutil.copytree(
             config_dir / "skills" / skill_name, out_dir / "skill", dirs_exist_ok=True
         )
+        for name in companions:
+            shutil.copytree(
+                config_dir / "skills" / name, out_dir / "with" / name, dirs_exist_ok=True
+            )
 
     env = dict(os.environ)
     env["CLAUDE_CONFIG_DIR"] = str(config_dir)
