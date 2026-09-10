@@ -53,8 +53,8 @@ from `/dev/null` gives an immediate EOF so the review starts without the stall.
 Count review comments Claude left in the task docs (check both markdown and HTML formats):
 
 ```bash
-MD_COUNT=$(rg -cn "<!-- (UNRESOLVED|RESOLVED|REJECTED)\(P[123]\):" "$TASK_DIR"/*.md 2>/dev/null | awk -F: '{s+=$2}END{print s+0}')
-HTML_COUNT=$(rg -cn "<pd-thread " "$TASK_DIR"/*.html 2>/dev/null | awk -F: '{s+=$2}END{print s+0}')
+MD_COUNT=$(rg -o "<!-- (UNRESOLVED|RESOLVED|REJECTED)\(P[123]\):" "$TASK_DIR"/*.md 2>/dev/null | wc -l)
+HTML_COUNT=$(rg -o "<pd-thread " "$TASK_DIR"/*.html 2>/dev/null | wc -l)
 COMMENT_COUNT=$((MD_COUNT + HTML_COUNT))
 echo "review comment count: $COMMENT_COUNT (md=$MD_COUNT html=$HTML_COUNT)"
 ```
@@ -87,8 +87,8 @@ Do NOT resolve feedback by manually editing or deleting comment threads. Comment
 Confirm that `resolve-comments` ran by checking for author replies (both formats):
 
 ```bash
-MD_REPLIES=$(rg -cn "AUTHOR:" "$TASK_DIR"/*.md 2>/dev/null | awk -F: '{s+=$2}END{print s+0}')
-HTML_REPLIES=$(rg -cn 'by="author"' "$TASK_DIR"/*.html 2>/dev/null | awk -F: '{s+=$2}END{print s+0}')
+MD_REPLIES=$(rg -o "AUTHOR:" "$TASK_DIR"/*.md 2>/dev/null | wc -l)
+HTML_REPLIES=$(rg -o 'by="author"' "$TASK_DIR"/*.html 2>/dev/null | wc -l)
 AUTHOR_REPLY_COUNT=$((MD_REPLIES + HTML_REPLIES))
 echo "author reply count: $AUTHOR_REPLY_COUNT"
 if [ "$AUTHOR_REPLY_COUNT" -eq 0 ]; then

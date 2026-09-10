@@ -55,8 +55,8 @@ pipe, so codex hangs forever instead of running the review. Redirecting from
 Count review comments Codex left in the task docs (check both markdown and HTML formats):
 
 ```bash
-MD_COUNT=$(rg -cn "<!-- (UNRESOLVED|RESOLVED|REJECTED)\(P[123]\):" "$TASK_DIR"/*.md 2>/dev/null | awk -F: '{s+=$2}END{print s+0}')
-HTML_COUNT=$(rg -cn "<pd-thread " "$TASK_DIR"/*.html 2>/dev/null | awk -F: '{s+=$2}END{print s+0}')
+MD_COUNT=$(rg -o "<!-- (UNRESOLVED|RESOLVED|REJECTED)\(P[123]\):" "$TASK_DIR"/*.md 2>/dev/null | wc -l)
+HTML_COUNT=$(rg -o "<pd-thread " "$TASK_DIR"/*.html 2>/dev/null | wc -l)
 COMMENT_COUNT=$((MD_COUNT + HTML_COUNT))
 echo "review comment count: $COMMENT_COUNT (md=$MD_COUNT html=$HTML_COUNT)"
 ```
@@ -71,6 +71,12 @@ if [ "$CODEX_EXIT" -ne 0 ] || [ "$COMMENT_COUNT" -eq 0 ]; then
     tail -n 200 "$LOG_FILE"
 fi
 ```
+
+If the log contains `unexpected argument`, the installed `codex` has renamed or
+dropped a flag this skill passes (it has happened before: `--full-auto` became
+`--sandbox workspace-write`). Check the `exec` subcommand's `--help` for the current spelling,
+and if this is a vendored copy of the skill, run `auto skill update` first — the
+upstream copy may already carry the fix.
 
 Stop and report the failure to the user. Do not proceed to resolution.
 
@@ -89,8 +95,8 @@ Do NOT resolve feedback by manually editing or deleting comment threads. Comment
 Confirm that `resolve-comments` ran by checking for author replies (both formats):
 
 ```bash
-MD_REPLIES=$(rg -cn "AUTHOR:" "$TASK_DIR"/*.md 2>/dev/null | awk -F: '{s+=$2}END{print s+0}')
-HTML_REPLIES=$(rg -cn 'by="author"' "$TASK_DIR"/*.html 2>/dev/null | awk -F: '{s+=$2}END{print s+0}')
+MD_REPLIES=$(rg -o "AUTHOR:" "$TASK_DIR"/*.md 2>/dev/null | wc -l)
+HTML_REPLIES=$(rg -o 'by="author"' "$TASK_DIR"/*.html 2>/dev/null | wc -l)
 AUTHOR_REPLY_COUNT=$((MD_REPLIES + HTML_REPLIES))
 echo "author reply count: $AUTHOR_REPLY_COUNT"
 if [ "$AUTHOR_REPLY_COUNT" -eq 0 ]; then
