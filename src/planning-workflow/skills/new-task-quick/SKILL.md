@@ -1,19 +1,23 @@
 ---
 name: new-task-quick
-description: "Plans a task end-to-end in one unattended pass: Requirements, Verification, Solution and Plan tabs, no review stops. Use when 'new task quick', 'quick task', 'plan end-to-end'. Not for stage-by-stage review (use new-task)."
+description: "Plans a task end-to-end in one unattended pass: Requirements, Verification, Solution and Plan tabs, pauses only for open questions, then Codex-reviews the answered doc. Use when 'new task quick', 'quick task', 'plan end-to-end'. Not for stage-by-stage review (use new-task)."
 ---
 
 # New Task Quick
 
 Run all three planning stages in a single unattended pass, producing the same artifacts as
 `/{{ skill:new-task }}` -> `/{{ skill:new-solution }}` -> `/{{ skill:new-plan }}`: a four-tab
-`docs/tasks/$ID-$NAME/plan.html` plus `context.md`. Stop once, at the end.
+`docs/tasks/$ID-$NAME/plan.html` plus `context.md`, then run `/{{ skill:request-codex-review }}`
+over the result. Stop at most twice: once to get open questions answered (skipped when there
+are none), and once at the end.
 
 > Part of the planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 Each stage runs the *same* instructions the individual skills run -- they are shared refs, not
 copies. This skill supplies the autonomy contract those instructions branch on, and replaces
-the three hard-stops with one.
+the three hard-stops with at most one, taken only when there are open questions. The Codex review that would normally follow `/{{ skill:commit-task }}`
+runs here instead, once every open question has an answer, so the reviewed plan is the one
+that will actually be built.
 
 ## Autonomy Contract
 
@@ -21,7 +25,8 @@ This is in force for the whole run. The stage refs below carry `When interactive
 `When running autonomously` forks: **you are running autonomously.**
 
 1. **Do not stop between stages.** No hard-stop, no summary-and-wait, no "shall I continue".
-   Finish Stage 3 before you address the user again.
+   The only permitted stop before the final report is the Answer Gate in Stage 5, and only
+   when the doc has open questions.
 2. **Do not use `AskUserQuestion`.** There is no one to answer.
 3. **Never silently guess a load-bearing decision.** Anything you cannot settle from the
    request, the codebase, or a clear repo convention -- and whose answer would change the
@@ -42,8 +47,8 @@ This is in force for the whole run. The stage refs below carry `When interactive
    [references/tab-requirements.md](references/tab-requirements.md) decides which vehicle:
    if proceeding on your guess would be reasonable, it is a prose assumption; if a wrong
    guess would waste real work, it is a `<pd-question>`.
-6. **Keep a running list of every `<pd-question>` you raise**, across all three stages. You
-   report it at the end.
+6. **Keep a running list of every `<pd-question>` you raise**, across all stages. You
+   report it at the Answer Gate, and any raised later at the final report.
 7. **Write each tab to `plan.html` before starting the next stage,** so an interrupted run
    leaves usable partial work rather than nothing.
 
@@ -69,27 +74,74 @@ Read [references/stage-plan.md](references/stage-plan.md) and follow it.
 Produces the Plan tab and backfills `phases`/`tests` onto every `<pd-ac>` card in the
 Verification tab.
 
-## Before You Stop
+## Stage 4: Self-check
 
 Check your own output, then fix what fails:
 
 - `grep -o '<pd-question[^>]*' plan.html` -- every hit carries a non-empty
   `recommendedAnswer`. Any that doesn't is a question the human has to answer cold; add it.
 - Run the pd-lint CLI on `plan.html`. Open questions are expected (that is the gate); any
-  *other* issue code is a defect you introduced -- fix it before stopping.
+  *other* issue code is a defect you introduced -- fix it before going on.
 
-## Hard-stop
+Then branch on whether the doc carries open questions:
 
-Only now, address the user. Present:
+- **No `<pd-question status="open">`** -> go straight to Stage 6 (Codex Review). The review
+  runs on settled decisions and the human sees the doc once, finished.
+- **One or more open** -> Stage 5 (Answer Gate) first. Reviewing a doc whose load-bearing
+  decisions are still guesses would review the wrong plan; the answers may change it.
 
-1. The path to the finished `plan.html` and a one-paragraph summary of the plan.
+## Stage 5: Answer Gate (only when questions are open)
+
+This is the one hard-stop. Address the user and present:
+
+1. The path to `plan.html` and a one-paragraph summary of the plan.
 2. **Decisions made on your behalf** -- every `<pd-question>` you raised, one line each, as
    `question -> recommendedAnswer`. This is the list the user is being asked to review; make
    it the prominent part of your message, not a footnote.
-3. The state of the doc and what to do next: the doc is **blocked** while those questions are
-   unanswered -- pd-lint reports `open-question` and `/{{ skill:commit-task }}` will refuse to
-   commit. That is deliberate: it is the gate that stops an unattended plan reaching execution
-   on an unmade decision. Tell them to rubber-stamp or override each question, then run
-   `/{{ skill:commit-task }}` followed by `/{{ skill:execute-task }}`.
+3. What you need: an answer to each, either by answering in the browser and pasting the
+   `=== DOC COMMENTS` block back, or by replying in chat ("accept all", or per-question
+   overrides). Say that the Codex review runs once the answers are in.
 
-If you raised no questions, say so plainly -- the doc is clean and ready to commit.
+Then wait. When the answers arrive:
+
+1. **Merge each answer** into its `<pd-question>` as a `<pd-answer by="<user>">` and set
+   `status="answered"`. Never edit or delete the question or its `recommendedAnswer`; they
+   are the decision log.
+2. **Propagate overrides.** Wherever an answer differs from the `recommendedAnswer`, revisit
+   every tab that was written on that lean -- Solution, Verification and Plan -- and rewrite
+   what the new answer changes. A stamped answer changes nothing.
+3. Re-run the pd-lint CLI; it must now be clean.
+4. Continue to Stage 6. Do not stop again before the final report.
+
+## Stage 6: Codex Review
+
+Invoke `/{{ skill:request-codex-review }} $ID` in the current agent context and follow it to the
+end, including its mandatory `/{{ skill:resolve-comments }}` pass. The autonomy contract still
+applies while those two skills run:
+
+- **Resolve or reject every thread yourself.** A thread `resolve-comments` would normally
+  "continue unresolved" pending user input is a load-bearing decision. Raise it as a
+  `<pd-question>` with a `recommendedAnswer`, proceed on that lean in the doc, and say so in
+  the thread's `AUTHOR:` reply. Do not leave `UNRESOLVED(P1)` threads behind --
+  `/{{ skill:commit-task }}` refuses them, and unlike an open question the browser gives the
+  human no one-click way to settle one.
+- **Codex failing is not a reason to stop early.** If `codex` exits non-zero or leaves no
+  comments, note the failure (with the log path) for the final report and continue.
+
+## Final Report
+
+Address the user once more (or for the first time, if Stage 5 was skipped). Present:
+
+1. The path to the finished `plan.html` and, if the user has not seen it yet, a one-paragraph
+   summary of the plan.
+2. **Codex review outcome** -- comment count by priority, how many were resolved vs
+   rejected, and what changed in the doc as a result. If the review failed, say so and give
+   the log path; the user can rerun `/{{ skill:request-codex-review }} $ID` themselves.
+3. **Questions the review raised**, if any, as `question -> recommendedAnswer`. These are new
+   since the user last looked, so make them prominent. While they are open the doc is
+   **blocked**: pd-lint reports `open-question` and `/{{ skill:commit-task }}` will refuse.
+   Tell them to rubber-stamp or override each, then run `/{{ skill:commit-task }}` followed by
+   `/{{ skill:execute-task }}`.
+
+If the review raised nothing new, say so plainly -- the doc is clean and ready for
+`/{{ skill:commit-task }}` then `/{{ skill:execute-task }}`.
