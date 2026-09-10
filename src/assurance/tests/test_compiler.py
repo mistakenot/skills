@@ -83,6 +83,14 @@ def _full_card(*, summary: str = "Catches regressions in pure logic") -> str:
     return _card_frontmatter(summary=summary) + "\n" + _card_body()
 
 
+def _write_pd_components(repo_root):
+    """The compiler reads pd-components/package.json for `{{ pd-version }}`;
+    a temp repo needs one or compile() raises before rendering anything."""
+    pkg_dir = repo_root / "pd-components"
+    pkg_dir.mkdir(parents=True, exist_ok=True)
+    (pkg_dir / "package.json").write_text('{"name": "pd-components", "version": "0.0.0-test"}\n')
+
+
 def _build_module(tmp_path, *, card_content: str | None = None):
     """
     Scaffold a throwaway module in a nested temp layout and return
@@ -99,6 +107,7 @@ def _build_module(tmp_path, *, card_content: str | None = None):
     src_dir = tmp_path / "repo" / "src"
     out_dir = tmp_path / "repo" / "skills"
     out_dir.mkdir(parents=True, exist_ok=True)
+    _write_pd_components(tmp_path / "repo")
 
     mod_dir = src_dir / "testmod"
     skill_dir = mod_dir / "skills" / "test-skill"
@@ -272,6 +281,7 @@ class TestRealModuleCompiles:
         out_dir = tmp_path / "repo" / "skills"
         src_dir.mkdir(parents=True)
         out_dir.mkdir(parents=True)
+        _write_pd_components(tmp_path / "repo")
         shutil.copytree(
             os.path.join(real_src_dir, "assurance"),
             str(src_dir / "assurance"),

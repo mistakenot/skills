@@ -13,7 +13,7 @@ Install skills from mistakenot/skills using \`auto skill\`.
 
 Options:
   --module <name>    Install only skills from a specific module.
-                     Available modules: planning-workflow, ideation, maintenance, handoff, exploration, rich-docs, reflection, assurance, research, domain-modelling, grill-me, eval-engineer, discovery
+                     Available modules: planning-workflow, ideation, maintenance, consult-the-council, handoff, exploration, rich-docs, reflection, assurance, research, domain-modelling, grill-me, eval-engineer, discovery
   --target <styles>  Comma-separated output targets (default: claude,agents).
   -h, --help         Show this help message.
 
@@ -79,6 +79,9 @@ else
     maintenance)
       SKILLS="revise-readme"
       ;;
+    consult-the-council)
+      SKILLS="consult-the-council"
+      ;;
     handoff)
       SKILLS="handoff"
       ;;
@@ -111,7 +114,7 @@ else
       ;;
     *)
       echo "Unknown module: $MODULE" >&2
-      echo "Available modules: planning-workflow, ideation, maintenance, handoff, exploration, rich-docs, reflection, assurance, research, domain-modelling, grill-me, eval-engineer, discovery" >&2
+      echo "Available modules: planning-workflow, ideation, maintenance, consult-the-council, handoff, exploration, rich-docs, reflection, assurance, research, domain-modelling, grill-me, eval-engineer, discovery" >&2
       exit 1
       ;;
   esac

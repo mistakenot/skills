@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "consult-the-council",
+  "description": "Consult a council of independent coding-agent models (claude, codex, gemini, opencode, grok) for diverse, unled opinions on a question; strategies, members and prompt framings compose like an SDK.",
+  "author": {
+    "name": "Charlie",
+    "email": "github.5ef725@todevnull.work"
+  },
+  "homepage": "https://github.com/mistakenot/skills",
+  "repository": "https://github.com/mistakenot/skills",
+  "license": "MIT",
+  "keywords": [
+    "council",
+    "second-opinion",
+    "multi-model",
+    "diversity",
+    "delphi"
+  ]
+}

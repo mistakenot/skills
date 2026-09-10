@@ -27,6 +27,12 @@
       "category": "productivity"
     },
     {
+      "name": "consult-the-council",
+      "source": "./plugins/consult-the-council",
+      "description": "Consult a council of independent coding-agent models (claude, codex, gemini, opencode, grok) for diverse, unled opinions on a question; strategies, members and prompt framings compose like an SDK.",
+      "category": "productivity"
+    },
+    {
       "name": "handoff",
       "source": "./plugins/handoff",
       "description": "Machine-local handoff stack: push and pull short text notes between agent sessions using a JSONL store.",
