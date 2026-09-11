@@ -112,10 +112,10 @@ on one task means two PRs. Recover the handle per
 `references/herdr/spawn-worker.md`.
 
 If `agent start` returns `agent_not_ready`, the agent hit a startup
-interstitial. Read the pane, answer it deliberately with `pane send-keys` on
-the pane id (one key per call, confirmed with `return`, never a bare confirm),
-and wait for it to settle — see `references/herdr/spawn-worker.md` and
-`references/herdr/unblock-worker.md`.
+interstitial. Read the pane, answer it deliberately with `agent send-keys`
+(one key per call, re-read to confirm each landed, never a bare `enter`), and
+wait for it to settle — see `references/herdr/spawn-worker.md`; fallback path
+in `references/herdr/unblock-worker.md`.
 
 Spawn **one** worker per dispatch. If spawning fails, report and stop.
 
@@ -158,4 +158,4 @@ Tell the user how to follow progress — `references/herdr/read-output.md` and
 [/{{ skill:status-report }}](../status-report/SKILL.md) covers the whole fleet.
 If the worker later goes `blocked` (it stopped to ask a question),
 `references/herdr/unblock-worker.md` is how to answer it — `agent prompt` will
-be refused, and the answer has to go in as pane keypresses.
+be refused, and the answer has to go in as keypresses.

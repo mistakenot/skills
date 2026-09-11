@@ -1,5 +1,5 @@
 ---
-hash: "57b24c8a"
+hash: "e0344e18"
 id: "herdr-vs-ntm"
 read_when: "evaluating or migrating the delegate/delegate-task/status-report worker-management skills from ntm/tmux to herdr; or needing the verified herdr 0.7.1 command surface, status mechanism, worktree behaviour, enforcement design, and gotchas"
 summary: "Evaluation + live spike of herdr (terminal agent multiplexer) as a herdr-only replacement for ntm/tmux in the delegate-* worker skills: verified command surface, push-based status, worktree interaction, a tool-agnostic git-hook enforcement design, the ephemeral-worker redesign, an ntm feature-parity table, and gotchas."
@@ -401,16 +401,20 @@ spawn time.
   creates inherit that session's environment; observed `CLAUDE_CODE_CHILD_SESSION`
   leaking in, disabling transcript saving and changing the launched agent's
   default permission mode.
-- **`send-keys` uses herdr key names** (`ctrl+u`, `shift+tab`, `down`, `return`).
+- **`send-keys` uses herdr key names** (`ctrl+u`, `shift+tab`, `down`, `enter`).
   tmux notation (`C-u`) is **silently ignored** — a "clear the input box" step
   written that way does nothing and the next text appends to what was there.
-- **Clearing a `blocked` worker needs `pane send-keys <pane_id>` and `return`**
-  (verified 2026-09-11, herdr 0.8.2 + Claude Code 2.1.252). Against an
-  `AskUserQuestion` picker, `agent send-keys <name>` returned `ok` and delivered
-  nothing; so did the key name `enter` at either level, and option numbers.
-  `agent prompt` is refused (`agent_blocked`). Navigate one press at a time,
-  re-reading for the `❯` marker between presses; never `esc` (cancel). Recipe
-  in `src/planning-workflow/refs/herdr/unblock-worker.md`.
+- **Clearing a `blocked` worker is keystrokes only** — `agent prompt` is
+  refused (`agent_blocked`). Verified 2026-09-11 on herdr 0.8.2 + Claude Code
+  2.1.268: `agent send-keys <name>` and `pane send-keys <pane_id>`, with `enter`
+  or `return`, single or batched, all cleared both an `AskUserQuestion` picker
+  and the folder-trust interstitial. A same-day report on Claude Code 2.1.252
+  claimed only `pane send-keys` + `return` worked and agent-level / `enter`
+  silently no-op'd; it did not reproduce here. Reads fired in the same instant
+  as a press can show the previous frame (t+0 unmoved, t+0.5s moved), which may
+  explain that report. `{"type":"ok"}` is not delivery: re-read after each
+  press, and never `esc` (cancel). Recipe and fallback in
+  `src/planning-workflow/refs/herdr/unblock-worker.md`.
 - **`pane wait-output` matches your own echoed prompt.** Waiting for `PONG`
   after sending "reply with PONG" matched the input line. Match on something
   only the agent's output can contain, or wait on status.

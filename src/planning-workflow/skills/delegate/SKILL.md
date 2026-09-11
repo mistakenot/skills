@@ -82,16 +82,17 @@ working — the name just never bound. Do not respawn; recover the handle per
 
 If `agent start` returns `agent_not_ready`, the agent hit a startup
 interstitial. Do not retry blindly — read the pane, answer the dialog
-deliberately with `pane send-keys` on the pane id (one key per call, confirmed
-with `return`, never a bare confirm), and wait for it to settle. Full procedure
-in `references/herdr/spawn-worker.md` and `references/herdr/unblock-worker.md`.
+deliberately with `agent send-keys` (one key per call, re-read to confirm each
+landed, never a bare `enter`), and wait for it to settle. Full procedure in
+`references/herdr/spawn-worker.md`; fallback path in
+`references/herdr/unblock-worker.md`.
 
 **Prompt construction:** send the user's prompt as-is. Do not wrap it in a slash
 command or add preamble.
 
 One addition is worth making when the work involves judgement calls: a worker
-that asks a question mid-run goes `blocked`, and nothing but a pane-level
-keypress or a human can clear it. If the user is happy for the worker to
+that asks a question mid-run goes `blocked`, and nothing but keystrokes or a
+human can clear it. If the user is happy for the worker to
 decide, append a line telling it to proceed on its recommended answer and
 record the question and choice in its output rather than ask. Leave that line
 out when the user wants to be consulted — then a `blocked` worker is doing its

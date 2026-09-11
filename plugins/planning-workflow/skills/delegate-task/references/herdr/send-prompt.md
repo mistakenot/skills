@@ -36,10 +36,9 @@ autocomplete menu open, where Enter selects a menu entry instead of submitting.
 `agent prompt` refuses to send **before writing any input**, which is exactly
 what you want: blind input into a dialog answers the dialog. Read the pane
 (`references/herdr/read-output.md`) to see what it is asking, then either
-answer it per `references/herdr/unblock-worker.md` — **`pane send-keys` on the
-pane id, one key at a time, confirmed with `return`** — or escalate to the
-user. `agent send-keys <name>` and the key name `enter` both report `ok` and
-deliver nothing to a Claude Code question picker.
+answer it per `references/herdr/unblock-worker.md` — `agent send-keys`, one
+press at a time, **re-reading the pane after each** to confirm it landed — or
+escalate to the user.
 
 **`agent_prompt_stalled`** — the prompt produced no observed state change within
 5s:
@@ -66,18 +65,20 @@ Reach for the raw pane surface only when you deliberately need keystrokes rather
 than a prompt:
 
 ```bash
-herdr pane send-keys <pane_id> <key> [key ...]   # e.g. down, return, ctrl+c, shift+tab
+herdr agent send-keys <target> <key> [key ...]   # e.g. esc, enter, ctrl+c, down, shift+tab
+herdr pane  send-keys <pane_id> <key> [key ...]  # same, addressed by pane id
 herdr pane run <pane_id> "<command>"             # shell command + Enter, for a shell pane
 ```
 
-Address the **pane id**, not the agent name: `agent send-keys <name>` exists
-and validates the keys, but against a Claude Code question picker it returned
-`ok` and delivered nothing (verified live, herdr 0.8.2). Confirm with `return`
-— `enter` is accepted and also does nothing there. Send one key per call and
-re-read the pane between presses; `{"type":"ok"}` is not evidence of delivery.
-Full procedure in `references/herdr/unblock-worker.md`.
+`agent send-keys` validates every key before writing any bytes, but
+`{"type":"ok"}` is not evidence of delivery — re-read the pane (after a short
+pause) to confirm a dialog actually moved. Both levels and both confirm
+spellings (`enter`, `return`) verified live against Claude Code dialogs on
+herdr 0.8.2; if a re-read shows nothing landed, `pane send-keys <pane_id>` with
+`return` is the fallback path one report needed. Full procedure in
+`references/herdr/unblock-worker.md`.
 
-Key names are herdr's own (`ctrl+u`, `shift+tab`, `down`, `return`, `esc`) —
+Key names are herdr's own (`ctrl+u`, `shift+tab`, `down`, `enter`, `esc`) —
 **tmux syntax like `C-u` is silently ignored**, verified live, so a "clear the
 input box" step written in tmux notation does nothing and the next text appends
 to whatever was already there.

@@ -72,28 +72,28 @@ Seen live:
 
 | Prompt | Agent | Default option | Correct answer |
 | ------ | ----- | -------------- | -------------- |
-| *"Is this a project you trust?"* | Claude Code | **No, exit** | `down`, then `return` |
-| *"Do you trust the contents of this directory?"* | Codex | Yes, continue | `1`, then `return` |
-| *"Update available… 1. Update now"* | Codex | **Update now** | `3`, then `return` (skip until next version) |
-| *"Hooks need review"* | Codex | Review hooks | `2`, then `return` (trust all) |
+| *"Is this a project you trust?"* | Claude Code | **No, exit** | `down`, `enter` |
+| *"Do you trust the contents of this directory?"* | Codex | Yes, continue | `1`, `enter` |
+| *"Update available… 1. Update now"* | Codex | **Update now** | `3`, `enter` (skip until next version) |
+| *"Hooks need review"* | Codex | Review hooks | `2`, `enter` (trust all) |
 
-**Never answer an interstitial with a bare confirm.** The defaults are not
+**Never answer an interstitial with a bare `enter`.** The defaults are not
 uniformly safe: Codex's update prompt defaults to *Update now*, which runs
 `npm install` and drops the pane back to a shell, swallowing whatever you sent.
 Read the pane, then send the specific key.
 
-Send keys with `herdr pane send-keys <pane_id>` — one per call, re-reading
-between presses — and confirm with `return`. Against a Claude Code question
-picker, `agent send-keys <name>` and the key `enter` both returned `ok` and
-delivered nothing (herdr 0.8.2). The interstitials above have not been
-re-verified under those two spellings, so treat a cleared dialog on re-read as
-the only proof of delivery. Full procedure:
-`references/herdr/unblock-worker.md`.
+Send one key per call and **re-read the pane after a short pause** before
+the next: `{"type":"ok"}` only means herdr accepted the key names, and a read
+fired in the same instant can still show the previous frame. The Claude Code
+row was verified live (herdr 0.8.2, Claude Code 2.1.268) with both
+`agent send-keys <name>` + `enter` and `pane send-keys <pane_id>` + `return`.
+If a re-read shows the selection unmoved, `references/herdr/unblock-worker.md`
+has the fallback path.
 
 The same mechanism clears a mid-task `blocked` state (a Claude Code
 `AskUserQuestion` picker): `agent prompt` is refused with `agent_blocked`, and
-only a pane-level keypress or a human at `agent attach` can answer it. Do not
-send `esc` — the picker treats it as *cancel* and discards the question.
+only keystrokes or a human at `agent attach` can answer it. Do not send `esc` —
+the picker treats it as *cancel* and discards the question.
 
 Each of these is remembered once answered, so they mostly bite on a machine's
 first worker. Claude Code does **not** re-prompt for trust inside a git worktree

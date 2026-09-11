@@ -52,17 +52,17 @@
       "render_version": "1"
     },
     "delegate": {
-      "template_hash": "fe11f6905267cf8deea7fe98bd69558ed367c72006229067439be0a0e7c0a048",
+      "template_hash": "fc6b532c4bce60648c1fe841dcc68c85fdb498306aa143f96d88455023136751",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "c5925fb2b73721adb3a37cd7574fbed39cb06260c21f20a24f8ee21cc4717e9b",
+      "skill_version": "4f613f2a5e65423505203fb8bc012ebabc57ce142225dfbef707458d544438bc",
       "render_version": "1"
     },
     "delegate-task": {
-      "template_hash": "0efd541bc1293da6b7c21dc38dbeb3b920479a783530afd11211a387601f4087",
+      "template_hash": "4f233b9f8ff43add8ed1c304f756f9cd30f98c42cbbaf773a13e925a061c3961",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "d96f410c7b4fc3d2c3662fe6919eafdc182b9de3ad12819e09c67617f4e8fecd",
+      "skill_version": "56c64f933456fb7408462f7783eaab0af3e65729912af75f2be48a0ece718fb0",
       "render_version": "1"
     },
     "domain-modelling": {
@@ -255,10 +255,10 @@
       "render_version": "1"
     },
     "status-report": {
-      "template_hash": "f6db8bbeb7deeefa067ccc9ef105bdd45d0f5a4ed24cf03648d5ecd24089126f",
+      "template_hash": "6034618c4556fd34743356fd326d9d2495f814c3d7b062f95b48a646287a6a03",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "861e8e5719abe69202af72cfee3c86d9df19b3dbf433548ec2a82f9554b83a36",
+      "skill_version": "85d27971e33c60f273f49376cf36b54835a843a218ed5bfeb2731291fc256dc4",
       "render_version": "1"
     },
     "task-feedback-analyser": {
@@ -286,8 +286,8 @@
         "commit-task": "68b64fbbfae0080266f2b54a58a0cc9169c5d9c352993634db83e82b7a681714",
         "complete-task": "fa534ad5fbb40cc51e03c53231ada74fa4603234b929ae588048a1f97be2bbc7",
         "consult-the-council": "aaa50e4581ab1dd9111af3fbb71ef08195d57a5b539d7d1aebf9355403f2a30d",
-        "delegate": "c5925fb2b73721adb3a37cd7574fbed39cb06260c21f20a24f8ee21cc4717e9b",
-        "delegate-task": "d96f410c7b4fc3d2c3662fe6919eafdc182b9de3ad12819e09c67617f4e8fecd",
+        "delegate": "4f613f2a5e65423505203fb8bc012ebabc57ce142225dfbef707458d544438bc",
+        "delegate-task": "56c64f933456fb7408462f7783eaab0af3e65729912af75f2be48a0ece718fb0",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
         "eval-engineer": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
         "execute-task": "32456e2c66a35f3a4e7c17c1fec70f793775f9c74ce95b563ebec7950024341a",
@@ -315,7 +315,7 @@
         "revise-readme": "f5c0a4c78fcf506521def5ad31e3bc3b742ca619cd1dcf7aa1f878e6c6c085de",
         "rich-doc": "40bd6b48546197e07f40ceb9a1c7a9c727ba7a2dc198aba9603bc5df78cbe70d",
         "skill-reviewer": "d0f30430f598da6e73384ff7b6304a4216899d110611ad9055e2d2d2811eb96b",
-        "status-report": "861e8e5719abe69202af72cfee3c86d9df19b3dbf433548ec2a82f9554b83a36",
+        "status-report": "85d27971e33c60f273f49376cf36b54835a843a218ed5bfeb2731291fc256dc4",
         "task-feedback-analyser": "753743917a150966710303a2cbdd7f84378d45b08d3f047ba6e91d2133e6c942",
         "tech-spike": "1cb07d5004de3966851ed99fa8c74fc81bab28a289abf21e4bdeb72409b56182"
       }
@@ -329,8 +329,8 @@
         "commit-task": "68b64fbbfae0080266f2b54a58a0cc9169c5d9c352993634db83e82b7a681714",
         "complete-task": "fa534ad5fbb40cc51e03c53231ada74fa4603234b929ae588048a1f97be2bbc7",
         "consult-the-council": "aaa50e4581ab1dd9111af3fbb71ef08195d57a5b539d7d1aebf9355403f2a30d",
-        "delegate": "c5925fb2b73721adb3a37cd7574fbed39cb06260c21f20a24f8ee21cc4717e9b",
-        "delegate-task": "d96f410c7b4fc3d2c3662fe6919eafdc182b9de3ad12819e09c67617f4e8fecd",
+        "delegate": "4f613f2a5e65423505203fb8bc012ebabc57ce142225dfbef707458d544438bc",
+        "delegate-task": "56c64f933456fb7408462f7783eaab0af3e65729912af75f2be48a0ece718fb0",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
         "eval-engineer": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
         "execute-task": "32456e2c66a35f3a4e7c17c1fec70f793775f9c74ce95b563ebec7950024341a",
@@ -358,7 +358,7 @@
         "revise-readme": "f5c0a4c78fcf506521def5ad31e3bc3b742ca619cd1dcf7aa1f878e6c6c085de",
         "rich-doc": "40bd6b48546197e07f40ceb9a1c7a9c727ba7a2dc198aba9603bc5df78cbe70d",
         "skill-reviewer": "d0f30430f598da6e73384ff7b6304a4216899d110611ad9055e2d2d2811eb96b",
-        "status-report": "861e8e5719abe69202af72cfee3c86d9df19b3dbf433548ec2a82f9554b83a36",
+        "status-report": "85d27971e33c60f273f49376cf36b54835a843a218ed5bfeb2731291fc256dc4",
         "task-feedback-analyser": "753743917a150966710303a2cbdd7f84378d45b08d3f047ba6e91d2133e6c942",
         "tech-spike": "1cb07d5004de3966851ed99fa8c74fc81bab28a289abf21e4bdeb72409b56182"
       }

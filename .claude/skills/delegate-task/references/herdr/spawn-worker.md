@@ -139,13 +139,13 @@ If the agent hits a startup interstitial, `agent start` returns immediately with
 **This is not a failure to retry blindly.** The name stays bound to the pane, so:
 
 1. Read the pane (`references/herdr/read-output.md`) to see *which* interstitial.
-2. Answer it with `herdr pane send-keys <pane_id> <key>` — the **pane id**, one
-   key per call, re-reading the pane after each press, and confirming with
-   `return`. Pick the option deliberately, never a bare confirm (see
+2. Answer it with `herdr agent send-keys <name> <key>` — one press at a time,
+   re-reading the pane after each to confirm it landed — and pick the option
+   deliberately, never a bare `enter` (see
    [references/agent-conventions.md](references/agent-conventions.md); Codex's
    update prompt defaults to "Update now", which drops the pane to a shell).
-   `agent send-keys <name>` and the key `enter` both report `ok` without
-   reaching a Claude Code dialog — `references/herdr/unblock-worker.md`.
+   If a re-read shows nothing moved, `references/herdr/unblock-worker.md` has
+   the fallback path.
 3. Wait for it to settle — `references/herdr/wait-for-ready.md`.
 
 Interstitials seen live: Claude Code's *"Is this a project you trust?"* folder

@@ -2,9 +2,8 @@
 
 A worker whose `agent_status` is `blocked` is sitting at a dialog — a Claude
 Code `AskUserQuestion` picker, an approval prompt, a startup interstitial. Only
-**interactive input** clears it: `agent prompt` is refused by design
-(`agent_blocked`), and nothing else the worker does will move it. Verified live
-against herdr 0.8.2 and Claude Code 2.1.252.
+**keystrokes** clear it: `agent prompt` is refused by design (`agent_blocked`),
+and nothing the worker does on its own will move it.
 
 ## Decide first: answer it, or hand it to a human
 
@@ -22,74 +21,55 @@ Read the pane (`references/herdr/read-output.md`) and work out what it is asking
 ## The recipe
 
 ```bash
-herdr agent read  <name>                 # find the ❯ marker: which option is selected
-herdr pane send-keys <PANE_ID> down      # or up — ONE press at a time
-herdr agent read  <name> | grep '❯'      # verify the marker moved, after EVERY press
-herdr pane send-keys <PANE_ID> return    # 'return', not 'enter'
-herdr agent get   <name>                 # confirm: blocked -> working
+herdr agent read     <name> | grep '❯'        # which option is selected
+herdr agent send-keys <name> down             # or up — one press
+sleep 1; herdr agent read <name> | grep '❯'   # confirm the ❯ marker moved
+herdr agent send-keys <name> enter            # confirm the selection
+sleep 2; herdr agent get <name>               # blocked -> working (or done)
 ```
 
-`<PANE_ID>` comes from `agent list` / `agent get` (`pane_id`, e.g. `w3:p1`) —
-see `references/herdr/list-workers.md`.
-
-Two things here are non-obvious and both cost real time when got wrong:
-
-1. **`pane send-keys <PANE_ID>`, not `agent send-keys <NAME>`.** The
-   agent-level command returns `{"result":{"type":"ok"}}` and delivers nothing
-   to the picker. `agent focus` first does not help — focus is not the problem.
-2. **`return`, not `enter`.** `enter` is also accepted with `ok` and also does
-   nothing — at either level. Navigation (`up`/`down`) works under both
-   spellings; only the confirm key is fussy.
-
+**Re-read after every press, and wait before you do.** A read fired in the
+same instant as the press can still show the previous frame: verified live, a
+read at t+0 showed the marker unmoved and a read at t+0.5s showed it moved.
 `{"type":"ok"}` means herdr validated the key names, **not** that the dialog
-received them. The only evidence of delivery is a re-read showing the marker
+received them; the only evidence of delivery is a re-read showing the marker
 moved or the dialog gone.
 
-## What does not work
+The picker does **not** take option numbers (`1`, `2`) as a shortcut — navigate
+with `up`/`down`.
 
-| Attempt | Result |
-| :-- | :-- |
-| `agent prompt <name> "option 1"` | `agent_blocked` — refused loudly, before writing any input |
-| `agent send-keys <name> enter` | `ok`, nothing happens |
-| `agent send-keys <name> 1` | `ok`, nothing happens — the picker does not take option numbers |
-| `agent focus <name>` then `agent send-keys` | `ok`, nothing happens |
-| `pane send-keys <PANE_ID> enter` | `ok`, nothing happens |
+## If a press appears not to land
 
-## Diagnose before you flail
+Two spellings exist for every part of this. Verified 2026-09-11 on herdr 0.8.2
+with Claude Code 2.1.268, **all of these cleared both an `AskUserQuestion`
+picker and the folder-trust interstitial**: `agent send-keys <name>` and
+`pane send-keys <pane_id>`; `enter` and `return`; single presses and a batched
+`down down return`.
 
-Send a **navigation** key and check whether the `❯` marker moved. It is
-non-destructive and separates "keys are not arriving" from "this key name is
-wrong":
+A report from the same day on Claude Code **2.1.252** saw the opposite:
+`agent send-keys <name>` with `down`, `enter`, or `1` returned `ok` and moved
+nothing, `pane send-keys <pane_id> enter` did nothing, and only
+`pane send-keys <pane_id> return` confirmed the selection. That may have been a
+version difference or reads taken before the press rendered (the same report
+noted presses "arriving late"). Either way the fallback is cheap, so when a
+re-read shows the marker unmoved:
 
 ```bash
-herdr agent read <name> | grep -E '^\s*❯?\s*[1-4]\.'   # before
-herdr pane send-keys <PANE_ID> down
-herdr agent read <name> | grep -E '^\s*❯?\s*[1-4]\.'   # after — did ❯ move?
+herdr pane send-keys <pane_id> down      # pane id from `agent get` / `agent list`
+sleep 1; herdr agent read <name> | grep '❯'
+herdr pane send-keys <pane_id> return
 ```
 
-Marker moved ⇒ keys land; only the confirm key is in question (use `return`).
-Marker did not move ⇒ you are on the wrong command (agent-level instead of
-pane-level).
-
-## One press at a time
-
-Do **not** batch presses (`down down return`). In one observed run the marker
-ended up two positions from where a single press should have left it —
-plausibly earlier agent-level presses arriving late, or a boundary wrap. Send
-one key, re-read, repeat. Two seconds per press removes all guessing. There is
-no shortcut via option numbers.
-
-## Fallback
-
-If the recipe does not clear it, hand it to a human: `herdr agent attach
-<name>`, answer, detach. Do not keep sending keys into a dialog you cannot see
-responding.
+Diagnose with a **navigation** key first — it is non-destructive, and whether
+the marker moves separates "keys are not arriving on this path" from "the
+confirm key is wrong". If nothing moves on either path, do not keep sending
+keys into a dialog you cannot see responding: hand it to a human with
+`herdr agent attach <name>`, answer, detach.
 
 ## Avoiding it in the first place
 
-A blocked background worker is a hard stop until a correctly formed pane
-keypress or a human arrives. When dispatching unattended work whose prompt you
-control, tell the worker to proceed on its recommended answer and record the
-question rather than ask — the pattern
-`/{{ skill:new-task-quick }}` uses for gating questions. Reserve blocking for
-decisions that are genuinely load-bearing.
+A blocked background worker is a hard stop until a keypress or a human
+arrives. When dispatching unattended work whose prompt you control, tell the
+worker to proceed on its recommended answer and record the question rather than
+ask — the pattern `/{{ skill:new-task-quick }}` uses for gating questions.
+Reserve blocking for decisions that are genuinely load-bearing.

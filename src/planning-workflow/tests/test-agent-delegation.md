@@ -71,14 +71,15 @@ answer it **with the specific key, never a bare `enter`**:
 
 ```bash
 $H pane read "$P1" --source visible
-$H pane send-keys "$P1" down               # pane id, one key per call
-$H pane read "$P1" --source visible        # confirm the selection moved
-$H pane send-keys "$P1" return             # 'return' — 'enter' reports ok and does nothing
+$H agent send-keys t-claude down           # one key per call
+sleep 1; $H pane read "$P1" --source visible   # confirm ❯ moved to "Yes, I trust this folder"
+$H agent send-keys t-claude enter
 $H agent wait t-claude --timeout 60000
 ```
 
-(`agent send-keys t-claude ...` returns `ok` without reaching a Claude Code
-dialog — see `refs/herdr/unblock-worker.md`.)
+Verified 2026-09-11 (herdr 0.8.2, Claude Code 2.1.268): this sequence, and the
+`pane send-keys "$P1" down` / `return` equivalent, both clear the prompt. If a
+re-read shows the marker unmoved, see `refs/herdr/unblock-worker.md`.
 
 **Check 1 — permission mode from argv, not the status line:**
 
