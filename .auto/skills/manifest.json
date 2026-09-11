@@ -52,17 +52,17 @@
       "render_version": "1"
     },
     "delegate": {
-      "template_hash": "567f85372a1432898922167d62755bfe525c0f5c01b48a217ee6b0d55f58855d",
+      "template_hash": "fe11f6905267cf8deea7fe98bd69558ed367c72006229067439be0a0e7c0a048",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "bc637dee8b5db929b0a4cbdd40f27d3da0506a89414b79b275d1564a7ffb2696",
+      "skill_version": "c5925fb2b73721adb3a37cd7574fbed39cb06260c21f20a24f8ee21cc4717e9b",
       "render_version": "1"
     },
     "delegate-task": {
-      "template_hash": "a0d29215d47964eef3f636da4652fbbf78b7b803a97f4822f98ef9b0cc1b6936",
+      "template_hash": "0efd541bc1293da6b7c21dc38dbeb3b920479a783530afd11211a387601f4087",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "bfed0eaf4b28ff04a893b1ff3f37f2398629daa2d486fcebcea07c7f971f9ce7",
+      "skill_version": "d96f410c7b4fc3d2c3662fe6919eafdc182b9de3ad12819e09c67617f4e8fecd",
       "render_version": "1"
     },
     "domain-modelling": {
@@ -83,7 +83,7 @@
       "template_hash": "9aaa122d38f8914203cd15d4021f22e82a413a5cb172ef2bb9a2d3d897a61c6f",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "3dac49f5a9534cac7a091d40860b4d678c5da8348943bcd20273e9d854f59bf9",
+      "skill_version": "32456e2c66a35f3a4e7c17c1fec70f793775f9c74ce95b563ebec7950024341a",
       "render_version": "1"
     },
     "extract-demand-from-customer-conversation": {
@@ -255,10 +255,10 @@
       "render_version": "1"
     },
     "status-report": {
-      "template_hash": "7bbc8e8e59ee6e4c0cadf55d720cd698f9c7de2afa4e04f8430e8bc139b0f665",
+      "template_hash": "f6db8bbeb7deeefa067ccc9ef105bdd45d0f5a4ed24cf03648d5ecd24089126f",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "fda3cc74281f04ac7ec13693a4939531170f9d59946a3e9cfaeaafba6630b96e",
+      "skill_version": "861e8e5719abe69202af72cfee3c86d9df19b3dbf433548ec2a82f9554b83a36",
       "render_version": "1"
     },
     "task-feedback-analyser": {
@@ -286,11 +286,11 @@
         "commit-task": "68b64fbbfae0080266f2b54a58a0cc9169c5d9c352993634db83e82b7a681714",
         "complete-task": "fa534ad5fbb40cc51e03c53231ada74fa4603234b929ae588048a1f97be2bbc7",
         "consult-the-council": "aaa50e4581ab1dd9111af3fbb71ef08195d57a5b539d7d1aebf9355403f2a30d",
-        "delegate": "bc637dee8b5db929b0a4cbdd40f27d3da0506a89414b79b275d1564a7ffb2696",
-        "delegate-task": "bfed0eaf4b28ff04a893b1ff3f37f2398629daa2d486fcebcea07c7f971f9ce7",
+        "delegate": "c5925fb2b73721adb3a37cd7574fbed39cb06260c21f20a24f8ee21cc4717e9b",
+        "delegate-task": "d96f410c7b4fc3d2c3662fe6919eafdc182b9de3ad12819e09c67617f4e8fecd",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
         "eval-engineer": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
-        "execute-task": "3dac49f5a9534cac7a091d40860b4d678c5da8348943bcd20273e9d854f59bf9",
+        "execute-task": "32456e2c66a35f3a4e7c17c1fec70f793775f9c74ce95b563ebec7950024341a",
         "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
         "generate-10-ideas": "86f06f47c77cc7fa813f6da24b8e219f1f82cd3cfb875b7ee89d2ca3d275af68",
@@ -315,7 +315,7 @@
         "revise-readme": "f5c0a4c78fcf506521def5ad31e3bc3b742ca619cd1dcf7aa1f878e6c6c085de",
         "rich-doc": "40bd6b48546197e07f40ceb9a1c7a9c727ba7a2dc198aba9603bc5df78cbe70d",
         "skill-reviewer": "d0f30430f598da6e73384ff7b6304a4216899d110611ad9055e2d2d2811eb96b",
-        "status-report": "fda3cc74281f04ac7ec13693a4939531170f9d59946a3e9cfaeaafba6630b96e",
+        "status-report": "861e8e5719abe69202af72cfee3c86d9df19b3dbf433548ec2a82f9554b83a36",
         "task-feedback-analyser": "753743917a150966710303a2cbdd7f84378d45b08d3f047ba6e91d2133e6c942",
         "tech-spike": "1cb07d5004de3966851ed99fa8c74fc81bab28a289abf21e4bdeb72409b56182"
       }
@@ -329,11 +329,11 @@
         "commit-task": "68b64fbbfae0080266f2b54a58a0cc9169c5d9c352993634db83e82b7a681714",
         "complete-task": "fa534ad5fbb40cc51e03c53231ada74fa4603234b929ae588048a1f97be2bbc7",
         "consult-the-council": "aaa50e4581ab1dd9111af3fbb71ef08195d57a5b539d7d1aebf9355403f2a30d",
-        "delegate": "bc637dee8b5db929b0a4cbdd40f27d3da0506a89414b79b275d1564a7ffb2696",
-        "delegate-task": "bfed0eaf4b28ff04a893b1ff3f37f2398629daa2d486fcebcea07c7f971f9ce7",
+        "delegate": "c5925fb2b73721adb3a37cd7574fbed39cb06260c21f20a24f8ee21cc4717e9b",
+        "delegate-task": "d96f410c7b4fc3d2c3662fe6919eafdc182b9de3ad12819e09c67617f4e8fecd",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
         "eval-engineer": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
-        "execute-task": "3dac49f5a9534cac7a091d40860b4d678c5da8348943bcd20273e9d854f59bf9",
+        "execute-task": "32456e2c66a35f3a4e7c17c1fec70f793775f9c74ce95b563ebec7950024341a",
         "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
         "generate-10-ideas": "86f06f47c77cc7fa813f6da24b8e219f1f82cd3cfb875b7ee89d2ca3d275af68",
@@ -358,7 +358,7 @@
         "revise-readme": "f5c0a4c78fcf506521def5ad31e3bc3b742ca619cd1dcf7aa1f878e6c6c085de",
         "rich-doc": "40bd6b48546197e07f40ceb9a1c7a9c727ba7a2dc198aba9603bc5df78cbe70d",
         "skill-reviewer": "d0f30430f598da6e73384ff7b6304a4216899d110611ad9055e2d2d2811eb96b",
-        "status-report": "fda3cc74281f04ac7ec13693a4939531170f9d59946a3e9cfaeaafba6630b96e",
+        "status-report": "861e8e5719abe69202af72cfee3c86d9df19b3dbf433548ec2a82f9554b83a36",
         "task-feedback-analyser": "753743917a150966710303a2cbdd7f84378d45b08d3f047ba6e91d2133e6c942",
         "tech-spike": "1cb07d5004de3966851ed99fa8c74fc81bab28a289abf21e4bdeb72409b56182"
       }

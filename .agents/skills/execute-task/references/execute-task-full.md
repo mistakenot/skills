@@ -31,6 +31,7 @@ Dispatch one subagent per phase. No nesting beyond two levels.
   - Only touch files listed in plan.md -- don't "improve" adjacent code or refactor things that aren't broken
   - Match existing code style, even if you'd do it differently
   - State assumptions before coding. If the plan step is ambiguous, surface the ambiguity back to the coordinator rather than guessing
+  - Never ask the user directly from a subagent; only the coordinator decides whether a question is worth stopping for
   - Fix routine failures (test bugs, type errors, lint) autonomously
   - Stop on fundamental issues (wrong architecture, missing prerequisites)
   - Commit at end: `feat($ID): phase N - description`
@@ -51,6 +52,7 @@ Dispatch one subagent per phase. No nesting beyond two levels.
    - Clean pass -> dispatch next phase (follow DAG for parallelism)
    - Routine failure subagent couldn't fix -> attempt resolution
    - Fundamental failure -> stop, record what happened, skip to PR
+   - Ambiguity a subagent surfaced -> resolve it from the task docs where they settle it, and record the choice. Ask the user only when the decision is load-bearing (schema, scope, anything destructive): this run is usually unattended in a background worker, where a question halts everything until a human answers it
 5. Maintain running list of problems encountered
 
 ### Parallel vs serial

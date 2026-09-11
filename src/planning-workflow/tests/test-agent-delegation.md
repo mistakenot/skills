@@ -71,9 +71,14 @@ answer it **with the specific key, never a bare `enter`**:
 
 ```bash
 $H pane read "$P1" --source visible
-$H agent send-keys t-claude down enter    # "Yes, I trust this folder"
+$H pane send-keys "$P1" down               # pane id, one key per call
+$H pane read "$P1" --source visible        # confirm the selection moved
+$H pane send-keys "$P1" return             # 'return' — 'enter' reports ok and does nothing
 $H agent wait t-claude --timeout 60000
 ```
+
+(`agent send-keys t-claude ...` returns `ok` without reaching a Claude Code
+dialog — see `refs/herdr/unblock-worker.md`.)
 
 **Check 1 — permission mode from argv, not the status line:**
 

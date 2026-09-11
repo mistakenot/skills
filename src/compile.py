@@ -115,6 +115,7 @@ HERDR_OPS = [
     "reset-worker",
     "reap-worker",
     "label-worker",
+    "unblock-worker",
 ]
 
 
@@ -756,14 +757,16 @@ if __name__ == "__main__":
         skill("delegate-task",          refs=[overview, ref("task-status.md"), ref("agent-conventions.md"), ref("worker-pools.md"),
                                               *herdr_refs("list-workers", "read-output", "scan-output", "spawn-worker",
                                                           "verify-worker", "wait-for-ready", "send-prompt",
-                                                          "reset-worker", "label-worker")]),
+                                                          "reset-worker", "label-worker", "unblock-worker")]),
         skill("delegate",               refs=[ref("agent-conventions.md"), ref("worker-pools.md"),
                                               *herdr_refs("list-workers", "read-output", "scan-output", "spawn-worker",
                                                           "verify-worker", "wait-for-ready", "send-prompt",
-                                                          "reset-worker", "reap-worker", "label-worker")]),
+                                                          "reset-worker", "reap-worker", "label-worker",
+                                                          "unblock-worker")]),
         skill("status-report",          refs=[overview, ref("agent-conventions.md"), ref("worker-pools.md"),
                                               *herdr_refs("list-workers", "read-output", "scan-output", "verify-worker",
-                                                          "reap-worker", "reset-worker", "label-worker")]),
+                                                          "reap-worker", "reset-worker", "label-worker",
+                                                          "unblock-worker")]),
         skill("address-feedback",       refs=[overview]),
         skill("complete-task",          refs=[overview, ref("template-feedback.md"), ref("commit-conventions.md")]),
         skill("code-review",            refs=[overview]),

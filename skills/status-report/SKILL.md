@@ -35,7 +35,7 @@ rather than guessing from screen output.
 | `working` | **in progress** | A turn is running. |
 | `done` | **finished a turn** | The normal resting state for a background worker — **not** an error, and far more common than `idle`. |
 | `idle` | **finished a turn** | Same ready state as `done`, but the user has seen the tab. |
-| `blocked` | **needs attention** | Waiting at an approval or question dialog. Read it and report what it is asking. |
+| `blocked` | **needs attention** | Waiting at an approval or question dialog. Read it and report what it is asking verbatim. Only a pane keypress or a human can clear it — `references/herdr/unblock-worker.md`. |
 | `unknown` | **unclassified** | herdr cannot classify it. **This does not mean finished** — read the pane. |
 
 A separate axis, invisible to `agent_status`: a worker launched without
@@ -86,7 +86,12 @@ For each worker determine:
   - finished + PR open → `/address-feedback`
   - feedback resolved → `/complete-task`
   - PR merged → reap it (Step 6)
-  - `blocked` → what it is waiting on
+  - `blocked` → what it is waiting on. If the task docs or the user's
+    dispatch prompt already settle the answer, clear it per
+    `references/herdr/unblock-worker.md` (`pane send-keys` on the pane id,
+    one key at a time, confirm with `return`, never `esc`). If the decision
+    is load-bearing — schema, scope, anything destructive — report the
+    question and let the user answer it.
   - unhealthy → reap and respawn
 
 ### Step 5: Present results
