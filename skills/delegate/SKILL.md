@@ -92,11 +92,11 @@ command or add preamble.
 
 One addition is worth making when the work involves judgement calls: a worker
 that asks a question mid-run goes `blocked`, and nothing but keystrokes or a
-human can clear it. If the user is happy for the worker to
-decide, append a line telling it to proceed on its recommended answer and
-record the question and choice in its output rather than ask. Leave that line
-out when the user wants to be consulted — then a `blocked` worker is doing its
-job, and `references/herdr/unblock-worker.md` is how you answer it.
+human can clear it. If the user is happy for the worker to decide, append a
+line telling it to proceed on its recommended answer and record the question
+and choice in its output rather than ask. Leave that line out when the user
+wants to be consulted — then a `blocked` worker is doing its job, and
+`references/herdr/unblock-worker.md` is how you answer it.
 
 Leave **repo-relative paths relative** — they resolve inside the worker's
 worktree, which is what you want. Absolutising them to the primary checkout

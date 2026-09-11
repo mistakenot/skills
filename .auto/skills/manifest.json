@@ -52,10 +52,10 @@
       "render_version": "1"
     },
     "delegate": {
-      "template_hash": "fc6b532c4bce60648c1fe841dcc68c85fdb498306aa143f96d88455023136751",
+      "template_hash": "49bbab7ad5c062c3719f88eb884348508cd06451a5e701288259541cdfd39ee1",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "4f613f2a5e65423505203fb8bc012ebabc57ce142225dfbef707458d544438bc",
+      "skill_version": "8e7fa64afb13985d995ea2a08c84b4acb0ec41d6f3584d13f45ae85d0b38cfc2",
       "render_version": "1"
     },
     "delegate-task": {
@@ -286,7 +286,7 @@
         "commit-task": "68b64fbbfae0080266f2b54a58a0cc9169c5d9c352993634db83e82b7a681714",
         "complete-task": "fa534ad5fbb40cc51e03c53231ada74fa4603234b929ae588048a1f97be2bbc7",
         "consult-the-council": "aaa50e4581ab1dd9111af3fbb71ef08195d57a5b539d7d1aebf9355403f2a30d",
-        "delegate": "4f613f2a5e65423505203fb8bc012ebabc57ce142225dfbef707458d544438bc",
+        "delegate": "8e7fa64afb13985d995ea2a08c84b4acb0ec41d6f3584d13f45ae85d0b38cfc2",
         "delegate-task": "56c64f933456fb7408462f7783eaab0af3e65729912af75f2be48a0ece718fb0",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
         "eval-engineer": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
@@ -329,7 +329,7 @@
         "commit-task": "68b64fbbfae0080266f2b54a58a0cc9169c5d9c352993634db83e82b7a681714",
         "complete-task": "fa534ad5fbb40cc51e03c53231ada74fa4603234b929ae588048a1f97be2bbc7",
         "consult-the-council": "aaa50e4581ab1dd9111af3fbb71ef08195d57a5b539d7d1aebf9355403f2a30d",
-        "delegate": "4f613f2a5e65423505203fb8bc012ebabc57ce142225dfbef707458d544438bc",
+        "delegate": "8e7fa64afb13985d995ea2a08c84b4acb0ec41d6f3584d13f45ae85d0b38cfc2",
         "delegate-task": "56c64f933456fb7408462f7783eaab0af3e65729912af75f2be48a0ece718fb0",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
         "eval-engineer": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
