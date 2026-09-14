@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>evals</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/diff2html/2.12.2/diff2html.min.css">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="app">
+  <header id="header">
+    <div class="brand"><a href="/">evals</a></div>
+    <div id="run-meta" class="meta"></div>
+    <div class="spacer"></div>
+    <button id="toggle-comments" type="button" title="show/hide comments">Comments</button>
+  </header>
+  <div id="body">
+    <main id="main">
+      <div id="run-list" hidden></div>
+      <div id="run-view" hidden>
+        <nav id="tabs" class="tabs">
+          <button type="button" data-tab="outputs" class="active">Outputs</button>
+          <button type="button" data-tab="diffs">Diffs</button>
+          <button type="button" data-tab="transcript">Transcript</button>
+        </nav>
+        <section id="tab-outputs" class="tab"></section>
+        <section id="tab-diffs" class="tab" hidden>
+          <div class="diff-controls">
+            <label><input type="radio" name="diff-mode" value="skill" checked> Skill</label>
+            <label><input type="radio" name="diff-mode" value="output"> Output</label>
+            <span id="diff-skill-controls">
+              <select id="skill-a"></select> vs <select id="skill-b"></select>
+            </span>
+            <span id="diff-output-controls" hidden>
+              <select id="out-a"></select> vs <select id="out-b"></select>
+              <input id="out-file" type="text" placeholder="path within ws/ (default: primary output)" size="48">
+              <button id="out-go" type="button">Diff</button>
+            </span>
+          </div>
+          <div id="diff-body"></div>
+        </section>
+        <section id="tab-transcript" class="tab" hidden></section>
+      </div>
+      <div id="error" class="error" hidden></div>
+    </main>
+    <aside id="comments" class="collapsed">
+      <div class="comments-head">
+        <strong>Comments</strong>
+        <span class="spacer"></span>
+        <button id="comment-add" type="button">Add comment</button>
+        <button id="comment-copy" type="button" title="copy all comments as a paste-ready block">Copy</button>
+        <button id="comment-clear" type="button">Clear all</button>
+      </div>
+      <form id="comment-form" hidden>
+        <div class="context" id="comment-context"></div>
+        <label>Quote <input id="comment-quote" type="text" placeholder="selected text (editable)"></label>
+        <p class="hint">Text selected on the page is captured automatically. Selections inside a rendered HTML document (an iframe) are not reachable — paste them into Quote by hand.</p>
+        <textarea id="comment-text" rows="4" placeholder="what did you see?"></textarea>
+        <div class="row">
+          <button type="submit">Save</button>
+          <button type="button" id="comment-cancel">Cancel</button>
+        </div>
+      </form>
+      <ol id="comment-list"></ol>
+      <div id="comment-status" class="hint"></div>
+    </aside>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/15.0.12/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/diff2html/2.12.2/diff2html.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
