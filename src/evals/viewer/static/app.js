@@ -283,13 +283,20 @@
     for (const cell of state.run.cells) {
       const col = el("div", { class: "tr-col" });
       col.append(el("h3", { text: `${cell.arm} · trial ${cell.trial} — ${cell.tool_calls} tool calls` }));
+      const tally = el("div", { class: "tr-tally muted" });
       const list = el("ol");
-      col.append(list);
+      col.append(tally, list);
       box.append(col);
       try {
         const data = await api(`/api/runs/${encodeURIComponent(state.runId)}/transcript?cell=${encodeURIComponent(cellKey(cell))}`);
+        tally.innerHTML = data.by_tool.map((t) => `<span class="pill tool-${esc(t.name.toLowerCase())}">${esc(t.name)}</span> ${t.count}`).join(" · ")
+          + (data.workspace ? ` <span class="tr-ws">paths relative to the workspace</span>` : "");
         for (const t of data.calls) {
-          list.append(el("li", { html: `<span class="tool">${esc(t.name)}</span><span class="arg mono">${esc(t.summary)}</span>` }));
+          const li = el("li", { class: `call tool-${t.name.toLowerCase()}` });
+          const arg = el("span", { class: "arg mono", text: t.summary });
+          if (t.full && t.full !== t.summary) arg.title = t.full;
+          li.append(el("span", { class: `pill tool-${t.name.toLowerCase()}`, text: t.name }), arg);
+          list.append(li);
         }
         if (!data.calls.length) list.append(el("li", { text: "(no tool calls)" }));
       } catch (e) {

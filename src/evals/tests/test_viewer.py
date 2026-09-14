@@ -414,10 +414,16 @@ def test_transcript_lists_tool_calls_with_their_key_input(runs_dir, capsys):
     assert names == ["Skill", "Read", "Bash", "Write"]
     by_name = {c["name"]: c["summary"] for c in data["calls"]}
     assert by_name["Skill"] == "demo"
-    assert by_name["Read"].endswith("/skills/demo/SKILL.md")
+    # Paths read relative to the workspace: the per-cell `/tmp/evals-…` prefix
+    # is gone, the workspace root is the bare filename, the config dir is named.
+    assert by_name["Read"] == "<skills>/demo/SKILL.md"
     assert by_name["Bash"] == "ls -la"
-    assert by_name["Write"].endswith("/answer.md")
+    assert by_name["Write"] == "answer.md"
+    assert not any("/tmp/" in c["summary"] for c in data["calls"])
+    assert data["workspace"].endswith("/ws")
+    assert {t["name"]: t["count"] for t in data["by_tool"]} == {"Skill": 1, "Read": 1, "Bash": 1, "Write": 1}
     assert all(len(c["summary"]) <= viewer_server.TOOL_SUMMARY_CHARS + 1 for c in data["calls"])
+    assert all(c["full"].startswith(c["summary"].rstrip("…")) for c in data["calls"])
     assert _get(f"/api/runs/{run_id}/transcript", {"cell": ["nope/1"]}).status == 404
     assert _get(f"/api/runs/{run_id}/transcript", {}).status == 400
 
@@ -556,3 +562,17 @@ def test_view_parser_defaults(runs_dir):
     assert args.runs_dir is None
     args = cli.build_parser().parse_args(["view", "abc", "--port", "9176", "--runs-dir", "/x"])
     assert (args.run_id, args.port, args.runs_dir) == ("abc", 9176, "/x")
+
+
+def test_relativise_strips_every_cell_prefix_in_a_command():
+    cell = "/tmp/evals-abc123"
+    cmd = (f"find {cell}/ws/auto-stack -type f | grep -v {cell}/ws/auto-stack/.git; "
+           f"cat {cell}/config/skills/new-epic/SKILL.md; ls {cell}/ws; ls /tmp/evals-other/ws/x")
+    out = viewer_server._relativise(cmd, cell)
+    assert out == ("find auto-stack -type f | grep -v auto-stack/.git; "
+                   "cat <skills>/new-epic/SKILL.md; ls .; ls x")
+
+
+def test_relativise_without_an_init_event_still_recognises_the_cell_shape():
+    assert viewer_server._relativise("/tmp/evals-q1w2e3/ws/docs/a.md", None) == "docs/a.md"
+    assert viewer_server._relativise("/home/me/docs/a.md", None) == "/home/me/docs/a.md"

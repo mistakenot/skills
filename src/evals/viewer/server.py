@@ -36,6 +36,7 @@ from __future__ import annotations
 import difflib
 import http.server
 import json
+import re
 import mimetypes
 import socketserver
 import sys
@@ -213,9 +214,53 @@ def _output_json(out: report.OutputFile, cell_dir: Path) -> dict:
     }
 
 
-def _tool_summary(block: dict) -> dict:
+# The cell's temp dir when the transcript carries no `cwd` — the shape
+# `cell.run_cell` creates (`mktemp -d` with the `evals-` prefix).
+_CELL_TMP = re.compile(r"/(?:tmp|var/tmp)/evals-[A-Za-z0-9_-]+")
+
+
+def _path_rewrites(stream_path: Path) -> list[tuple[str, str]]:
+    """Prefixes to strip so paths read relative to the workspace.
+
+    The workspace is `<cell>/ws` and the relocated config dir `<cell>/config`;
+    both sit under a per-cell temp dir that differs in every cell and tells a
+    reader nothing. Read off the init event's `cwd` when there is one, so the
+    rewrite is exact; otherwise fall back to the shape the cell creates.
+    Longest prefix first, so `…/ws/` is stripped before `…/` could be.
+    """
+    init = invocation_mod.init_event(stream_path) if stream_path.is_file() else None
+    cwd = init.get("cwd") if isinstance(init, dict) else None
+    if isinstance(cwd, str) and cwd.rstrip("/").endswith("/ws"):
+        cell = cwd.rstrip("/")[: -len("/ws")]
+    else:
+        cell = None
+    cells = [cell] if cell else []
+    return [(c, "") for c in cells]
+
+
+def _relativise(text: str, cell: str | None) -> str:
+    """Strip the cell's temp-dir prefixes: `<cell>/ws/x` -> `x`,
+    `<cell>/config/skills/x` -> `<skills>/x`, `<cell>/config/x` -> `<config>/x`.
+    Applied everywhere in the string — a Bash command names paths mid-line."""
+    def sub(base: str, s: str) -> str:
+        s = s.replace(base + "/ws/", "")
+        s = re.sub(re.escape(base) + r"/ws(?![\w/])", ".", s)
+        s = s.replace(base + "/config/skills/", "<skills>/")
+        s = s.replace(base + "/config/", "<config>/")
+        return s
+    if cell:
+        text = sub(cell, text)
+    # Anything left in the cell-tmp shape (a different cell's path quoted in
+    # a command, or a transcript with no init event).
+    for base in {m.group(0) for m in _CELL_TMP.finditer(text)}:
+        text = sub(base, text)
+    return text
+
+
+def _tool_summary(block: dict, cell: str | None = None) -> dict:
     """One tool call as the transcript tab lists it: the tool's name and the
-    one input a reader needs to know what it did."""
+    one input a reader needs to know what it did, with paths relative to the
+    workspace. `full` is the untruncated form, for a tooltip."""
     name = block.get("name") if isinstance(block.get("name"), str) else "?"
     args = block.get("input") if isinstance(block.get("input"), dict) else {}
     keys = {
@@ -245,10 +290,11 @@ def _tool_summary(block: dict) -> dict:
             if isinstance(value, str) and value.strip():
                 summary = value.strip()
                 break
-    summary = summary.replace("\n", " ⏎ ")
+    summary = _relativise(summary.replace("\n", " ⏎ "), cell)
+    full = summary
     if len(summary) > TOOL_SUMMARY_CHARS:
         summary = summary[:TOOL_SUMMARY_CHARS] + "…"
-    return {"name": name, "summary": summary}
+    return {"name": name, "summary": summary, "full": full}
 
 
 def transcript(run_dir: Path, ref: str) -> Response:
@@ -265,8 +311,19 @@ def transcript(run_dir: Path, ref: str) -> Response:
     stream = cell_dir / "stream.jsonl"
     if not cell_dir.is_dir():
         return Response.error(404, f"no cell {ref} in run {record.run_id}")
-    calls = [_tool_summary(b) for b in invocation_mod.tool_calls(stream)] if stream.is_file() else []
-    return Response.json({"cell": ref, "calls": calls})
+    rewrites = _path_rewrites(stream)
+    cell = rewrites[0][0] if rewrites else None
+    calls = [_tool_summary(b, cell) for b in invocation_mod.tool_calls(stream)] if stream.is_file() else []
+    counts: dict[str, int] = {}
+    for c in calls:
+        counts[c["name"]] = counts.get(c["name"], 0) + 1
+    by_tool = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    return Response.json({
+        "cell": ref,
+        "workspace": cell + "/ws" if cell else None,
+        "calls": calls,
+        "by_tool": [{"name": n, "count": k} for n, k in by_tool],
+    })
 
 
 def _invocation_by_trial(arm_dir: Path) -> dict[int, bool]:

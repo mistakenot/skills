@@ -178,6 +178,20 @@ def tool_calls(stream_path: Path) -> list[dict]:
     return _tool_uses(_events(stream_path))
 
 
+def init_event(stream_path: Path) -> dict | None:
+    """The transcript's `system/init` event, or None if it never arrived.
+
+    It carries the clean room's `cwd` — the workspace the agent ran in — which
+    is what lets a reader see paths relative to that workspace instead of a
+    `/tmp/evals-…` prefix that is different in every cell and meaningless in
+    all of them.
+    """
+    for event in _events(stream_path):
+        if event.get("type") == "system" and event.get("subtype") == "init":
+            return event
+    return None
+
+
 def result_envelope(stream_path: Path) -> dict | None:
     """The transcript's final `result` event, or None when it never arrived.
 
