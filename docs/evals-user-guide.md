@@ -1,5 +1,5 @@
 ---
-hash: "03ae01fe"
+hash: "f362f639"
 id: "b86e61ee"
 read_when: "actually running an eval — setting one up, authoring a scenario, reading a result, iterating on a skill against it, or working out why a run failed"
 summary: "Task-oriented user guide for the src/evals/ harness: your first run, the three jobs it does, writing a scenario, reading a result in the right order, the edit-run-read loop, budgeting, troubleshooting the real failure modes, and how learnings get back into the skills."
@@ -38,6 +38,7 @@ Then look at what it left behind:
 ```bash
 make evals ARGS='list'
 make evals ARGS='show <run-id>'
+make evals ARGS='view <run-id>'     # the same run, rendered, in the browser
 ```
 
 Once the stub run works, the live lane is the same command minus `--runner
@@ -184,10 +185,37 @@ second arm has no structure.
 enough to see the shape of the difference without opening anything.
 
 **4. The output files themselves**, if you need to judge quality. Paths are in
-the Files section.
+the Files section — or open them rendered, in `evals view` (next).
 
 Counts in the report are **observations, not scores**. Nothing in the artifact
 tells you which arm is better — that judgement is yours, deliberately.
+
+### Reading it in the browser
+
+For step 4 — and for anything that is an HTML document — open the run in the
+viewer instead of the file tree:
+
+```bash
+make evals ARGS='view 20260910-143416-4987dd6'    # prints http://127.0.0.1:9175/run/...
+```
+
+It shows each cell's rendered output in its own column (Outputs), the
+installed skill trees and the output files diffed side by side (Diffs), and
+what each cell actually did (Transcript). Write what you see into the
+Comments sidebar as you go; **Copy** turns them into a block you can paste
+straight back into the session that asked for the run. Comments live in
+`runs/<run-id>/comments.json`, next to the evidence.
+
+To reach it from another machine, put it behind tailscale rather than
+binding a public interface (the same pattern `pd-components/dev.sh` uses):
+
+```bash
+tailscale serve --bg --https=9175 http://localhost:9175
+```
+
+`--runs-dir` serves a `runs/` from somewhere else, and `--port` moves it off
+9175. The full tour is in
+[`src/evals/README.md`](../src/evals/README.md#viewing-a-run).
 
 ---
 

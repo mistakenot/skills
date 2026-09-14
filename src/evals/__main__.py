@@ -32,6 +32,7 @@ from . import (
     report,
     runners,
     scenarios,
+    viewer,
 )
 
 
@@ -244,6 +245,35 @@ def _cmd_clean(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_view(args: argparse.Namespace) -> int:
+    """Serve the viewer until interrupted. Binds before printing the URL, so a
+    port already in use fails loudly rather than printing a link to someone
+    else's server."""
+    runs_dir = Path(args.runs_dir).resolve() if args.runs_dir else paths.RUNS_DIR
+    if args.run_id and viewer.server._run_dir(runs_dir, args.run_id) is None:
+        print(
+            f"evals: no run {args.run_id!r} under {runs_dir}; try `evals list`",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        server = viewer.make_server(args.host, args.port, runs_dir)
+    except OSError as exc:
+        print(f"evals: cannot bind {args.host}:{args.port}: {exc}", file=sys.stderr)
+        return 2
+    url = server.url + (f"/run/{args.run_id}" if args.run_id else "/")
+    print(f"evals: viewing {runs_dir}")
+    print(f"evals: {url}")
+    print("evals: ctrl-c to stop")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="evals", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -356,6 +386,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="actually delete; without it nothing is removed",
     )
     clean.set_defaults(func=_cmd_clean)
+
+    view = sub.add_parser(
+        "view", help="open a run in a local web viewer (rendered outputs, diffs, comments)"
+    )
+    view.add_argument(
+        "run_id", nargs="?", help="a run id from `evals list`; omit for the run list"
+    )
+    view.add_argument("--port", type=int, default=viewer.DEFAULT_PORT, help="default %(default)s")
+    view.add_argument(
+        "--host", default=viewer.DEFAULT_HOST,
+        help="bind address (default %(default)s; use tailscale serve rather than 0.0.0.0)",
+    )
+    view.add_argument(
+        "--runs-dir",
+        metavar="DIR",
+        help=f"serve runs from DIR instead of the module's runs/ ({paths.RUNS_DIR})",
+    )
+    view.set_defaults(func=_cmd_view)
     return parser
 
 

@@ -167,6 +167,32 @@ def _tool_errors(events: list[dict]) -> dict[str, bool]:
     return errors
 
 
+def tool_calls(stream_path: Path) -> list[dict]:
+    """Every `tool_use` block in one transcript, in the order the agent made them.
+
+    The viewer's transcript tab and its tool-call count read this rather than
+    re-parsing the stream: one reader of `assistant` events means one place to
+    fix when the CLI's event shape moves. Each block is returned as the CLI
+    emitted it — `name`, `input`, `id` — with no interpretation applied.
+    """
+    return _tool_uses(_events(stream_path))
+
+
+def result_envelope(stream_path: Path) -> dict | None:
+    """The transcript's final `result` event, or None when it never arrived.
+
+    The last one wins, as in `cell.extract_result_text`. Cost, duration, turn
+    count and `is_error` all live here, and a run killed before the envelope
+    was written has none of them — callers must treat None as *unknown*, not
+    as a zero-cost success.
+    """
+    envelope = None
+    for event in _events(stream_path):
+        if event.get("type") == "result":
+            envelope = event
+    return envelope
+
+
 def _skill_named(block: dict) -> str | None:
     """The skill a `Skill` tool_use names, whichever key the CLI used for it."""
     args = block.get("input")

@@ -63,6 +63,7 @@ make evals ARGS='run --skill rich-doc --arm none --arm WORKTREE \
 ```bash
 make evals ARGS='list'
 make evals ARGS='show 20260904-124538-3ea2ee7'
+make evals ARGS='view 20260904-124538-3ea2ee7'   # in the browser; see below
 make evals ARGS='clean --keep 5 --yes'
 ```
 
@@ -130,6 +131,7 @@ are in [`scenarios/README.md`](scenarios/README.md).
 runs/<run-id>/
     manifest.json         what this run compared: skill, arms, prompt, model, invoke mode, trials
     REPORT.md             the human-facing summary
+    comments.json         (optional) what a reader noted in `evals view`
     <arm>/
         manifest.json     provenance: kind, resolved sha, head, dirty
         invocation.json   did the skill fire, what did it read
@@ -149,6 +151,65 @@ is dry by default — it prints what it would remove and removes nothing until
 The run manifest is written *before* the first token is spent and rewritten at
 the end, so a run killed halfway still lists and is visibly `status:
 incomplete`.
+
+## Viewing a run
+
+`REPORT.md` is the reading aid; `evals view` is the reading room. The outputs
+that matter most are rendered documents — an HTML epic built from
+pd-components is unreadable as source — so the viewer puts each cell's
+rendered output in its own column and the rest of the run beside it.
+
+```bash
+make evals ARGS='view'                          # the run list
+make evals ARGS='view 20260910-143416-4987dd6'  # one run
+make evals ARGS='view --port 9180 --runs-dir /elsewhere/runs'
+```
+
+It binds `127.0.0.1:9175` by default, prints the URL, and serves until
+ctrl-c. `--runs-dir` points it at a `runs/` other than this module's (a copy
+taken off another machine, a worktree's checkout). Stdlib only — no new
+dependency; the page's own libraries (`marked`, `diff2html`) are pinned on a
+CDN, and without them the outputs still show as text and the diffs as `<pre>`.
+
+Three tabs:
+
+- **Outputs** — one column per cell (`arm · trial`), side by side. The header
+  says whether the skill fired, the agent's exit, and the cost, duration and
+  turn count off the transcript's `result` event. A select lists the cell's
+  outputs (the same list `REPORT.md` shows: new or changed against the
+  scenario seed, else the `ws/` root) plus the final message and stderr. HTML
+  renders in a sandboxed iframe, markdown is rendered, everything else is
+  text.
+- **Diffs** — *Skill*: the installed trees (`skill/` and `with/`) of two arms,
+  per file, `added` / `removed` / `changed` / `same`, side by side; the `none`
+  arm is an empty tree. *Output*: one workspace file between two cells. With
+  no file named it diffs each cell's primary output — and when two trials
+  named the deliverable differently, it diffs them anyway and says so.
+- **Transcript** — per cell, the tool calls in order: tool name plus the
+  input that says what it did (the `Read` path, the `Bash` command, the
+  `Skill` name). Parsed by the same code as the invocation check.
+
+The **Comments** sidebar is where the judgement goes. *Add comment* captures
+the context you are looking at — tab, cell, file, and any text selected on
+the page (a selection inside a rendered HTML iframe is not reachable; paste
+it into the quote by hand). Comments are stored in `runs/<run-id>/comments.json`
+next to the evidence they are about, mirrored to the browser's localStorage
+as a fallback. *Copy* puts them on the clipboard as a block meant to be
+pasted back into the conversation that asked for the run:
+
+```
+=== EVAL COMMENTS run 20260910-143416-4987dd6 (skill new-epic) ===
+[1] WORKTREE/2 · WORKTREE/2/ws/auto-stack/docs/epics/epic-003-x.html
+    > "quoted selection if any"
+    the comment text
+[2] ...
+=== END EVAL COMMENTS ===
+```
+
+Like the report, the viewer never judges: nothing on the page says which arm
+is better. To reach it from another machine, use tailscale rather than
+binding `0.0.0.0` — `tailscale serve --bg --https=9175 http://localhost:9175`
+— since the file endpoint serves everything under the run directory.
 
 ## The one automated check
 

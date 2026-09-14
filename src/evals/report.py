@@ -808,18 +808,10 @@ def _exit_from_stream(stream_path: Path) -> int | None:
     """
     if not stream_path.is_file():
         return None
-    code: int | None = None
-    for line in stream_path.read_text(errors="replace").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            event = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(event, dict) and event.get("type") == "result":
-            code = 1 if event.get("is_error") else 0
-    return code
+    envelope = invocation_mod.result_envelope(stream_path)
+    if envelope is None:
+        return None
+    return 1 if envelope.get("is_error") else 0
 
 
 def _record_from_dict(data: dict) -> invocation_mod.ArmInvocation:
