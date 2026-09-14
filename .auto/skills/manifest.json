@@ -129,10 +129,10 @@
       "render_version": "1"
     },
     "new-epic": {
-      "template_hash": "184ac6ed73b91c57266e386415d6917f904a079e3ca8145435ae504c17305fe5",
+      "template_hash": "2d183cb3297a6c6ef8086174338ab5c34bffe17bea5f6e88dc8638f2a6ece82c",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "70be95652f3bd86dfb750ea7295770a8c6ec33da50e887c4e2b3a62b569daaa4",
+      "skill_version": "7ba66d86c6daaa5570f23e52b17c0a069e86fce22215033e6d5f15d3e99d4d23",
       "render_version": "1"
     },
     "new-plan": {
@@ -297,7 +297,7 @@
         "grill-me": "a471c7e964a021b3480d4788c265fc6ec26f47043f2b1219ad8ff0f29812430e",
         "handoff": "c738f330651061c89307aa2e559e7521718c34b6e94bf62aed5c80af4141a31d",
         "learning-diary": "562de1c03280fc192012f69eabf7010d156c06847b6859cbd7804031531fe6d7",
-        "new-epic": "70be95652f3bd86dfb750ea7295770a8c6ec33da50e887c4e2b3a62b569daaa4",
+        "new-epic": "7ba66d86c6daaa5570f23e52b17c0a069e86fce22215033e6d5f15d3e99d4d23",
         "new-plan": "7ded94e5b1f99dcb0e46a65d35b0be98621b54a11857e0402079334ef3dcbecf",
         "new-solution": "efe6c24f890af9ddc2610f51c14bdd8092176dd1b230c34bb1f30091640378aa",
         "new-task": "5232db22c3753ed70fa11d26ff93379f118b4ab65505b32f83fc0050a14a538e",
@@ -340,7 +340,7 @@
         "grill-me": "a471c7e964a021b3480d4788c265fc6ec26f47043f2b1219ad8ff0f29812430e",
         "handoff": "c738f330651061c89307aa2e559e7521718c34b6e94bf62aed5c80af4141a31d",
         "learning-diary": "562de1c03280fc192012f69eabf7010d156c06847b6859cbd7804031531fe6d7",
-        "new-epic": "70be95652f3bd86dfb750ea7295770a8c6ec33da50e887c4e2b3a62b569daaa4",
+        "new-epic": "7ba66d86c6daaa5570f23e52b17c0a069e86fce22215033e6d5f15d3e99d4d23",
         "new-plan": "7ded94e5b1f99dcb0e46a65d35b0be98621b54a11857e0402079334ef3dcbecf",
         "new-solution": "efe6c24f890af9ddc2610f51c14bdd8092176dd1b230c34bb1f30091640378aa",
         "new-task": "5232db22c3753ed70fa11d26ff93379f118b4ab65505b32f83fc0050a14a538e",
