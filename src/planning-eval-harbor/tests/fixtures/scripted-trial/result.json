@@ -2,7 +2,7 @@
     "id": "ee833c27-aac1-4ec4-a3d0-2526c7706946",
     "task_name": "steps",
     "trial_name": "steps__cgxjLkg",
-    "trial_uri": "file:///tmp/claude-1002/-home-vscode--herdr-worktrees-skills-task-harbor-planning-eval/bfeb0459-8a41-4961-b6cb-b1a06730d3e4/scratchpad/smoke/jobs/smoke-steps/steps__cgxjLkg",
+    "trial_uri": "file:///scratch/smoke/jobs/smoke-steps/steps__cgxjLkg",
     "task_id": {
         "path": "steps"
     },

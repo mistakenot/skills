@@ -1,5 +1,5 @@
 ---
-hash: "3388638e"
+hash: "57124e74"
 id: "736983b0"
 read_when: "deciding whether planning replays should run on Harbor or on planning-eval's NTM harness, or picking up src/planning-eval-harbor/ and needing the evidence and the known gaps behind it (auth stripping, skills not reaching the ACP target, Docker iteration cost)"
 summary: "Research finding on replacing src/planning-eval/ (NTM-driven multi-turn planning replay) with the Harbor agent-eval framework: what Harbor 0.23 actually provides (verified by running it), the three patches its simulated-user path needed for a claude-code target on subscription auth, what a migration costs and loses, the side-by-side implementation in src/planning-eval-harbor/, live evidence with costs, and a recommendation. Decisions taken without asking are listed at the end."
@@ -115,7 +115,7 @@ hand with the same token, answered `PONG`.
 Fix: seed `~/.claude/.credentials.json` into each role's `CLAUDE_CONFIG_DIR`
 (the recipe `docs/headless-claude-cli-evals.md` verified), and export no token
 at all. This also lets the CLI refresh an access token that would otherwise
-expire mid-run (this machine's expires in ~7 h).
+expire mid-run (access tokens live for hours, not days).
 
 Whether an `ANTHROPIC_API_KEY` survives the same shell hop was **not** tested —
 none exists here. Harbor's own simulated-user examples use API keys, so it is

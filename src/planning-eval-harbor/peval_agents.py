@@ -8,9 +8,9 @@ It is a thin subclass of Harbor's `claude-code` integration that closes three
 gaps found while verifying the simulated-user path against Harbor 0.23.0 (see
 docs/research/harbor-vs-planning-eval.md, "What had to be patched"):
 
-1. **Auth from a credentials file, not the environment.** This machine
-   authenticates Claude Code with `~/.claude/.credentials.json` (a Max
-   subscription), not an API key. Harbor forwards `CLAUDE_CODE_OAUTH_TOKEN`
+1. **Auth from a credentials file, not the environment.** This harness
+   authenticates Claude Code with `~/.claude/.credentials.json` (a `claude`
+   login), not an API key. Harbor forwards `CLAUDE_CODE_OAUTH_TOKEN`
    into the sandbox environment, which works for a headless `claude -p` — but
    an OAuth access token expires within hours and cannot refresh without the
    file, and in a simulated-user trial it never reaches the target at all:

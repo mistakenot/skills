@@ -53,11 +53,11 @@ def test_simulated_task_layout(fixture_file: Path, tmp_path: Path) -> None:
 def test_fixture_persona_overrides_default(fixture_file: Path, tmp_path: Path) -> None:
     import json
     data = json.loads(fixture_file.read_text())
-    data["persona"] = "You are Charlie, terse and impatient."
+    data["persona"] = "You are a terse, impatient tech lead."
     fixture_file.write_text(json.dumps(data))
     fx = fixture_mod.load(fixture_file)
     built = task_mod.build_task(fx, tmp_path / "tasks", task_mod.SIMULATED)
-    assert (built.dir / "persona.md").read_text() == "You are Charlie, terse and impatient.\n"
+    assert (built.dir / "persona.md").read_text() == "You are a terse, impatient tech lead.\n"
 
 
 def test_seed_tree_drops_repo_skills_but_keeps_project_context(
