@@ -289,7 +289,7 @@ def _parse_tokens(agent: str, tokens: list[str], file: Path, line: int, text: st
     results: list[Invocation] = []
     kind: str | None = None  # herdr `agent start --kind X` names the nested agent
     # `<name>|--clear` style alternations in usage lines: split into parts.
-    tokens = [part for tok in tokens for part in (tok.split("|") if "|" in tok and tok != "|" else [tok])]
+    tokens = [part for tok in tokens for part in (tok.split("|") if "|" in tok and tok not in ("|", "||") else [tok])]
     i = 0
     while i < len(tokens):
         tok = tokens[i]

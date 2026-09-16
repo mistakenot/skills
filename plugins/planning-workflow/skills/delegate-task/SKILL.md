@@ -7,9 +7,13 @@ description: "Dispatches /execute-task for a planned task to a fresh background 
 
 Dispatch `/execute-task` for a planned task to a fresh background worker.
 
-> Read `references/herdr/spawn-worker.md` before dispatching. Its permission
-> section is not optional reading: a worker launched without the right flags
-> comes up asking a human for approval on every tool call and silently stalls.
+> The launch is a bundled script, not a procedure: `scripts/herdr-worker.sh`
+> (next to this file). It creates the worktree, starts the agent with the right
+> permission flags, verifies the process table, sends `/execute-task` and
+> confirms kickoff, and prints one JSON object. **Do not hand-roll
+> `herdr agent start`**, and never launch a task worker in the primary
+> checkout or with a weaker permission mode — both end in a worker that cannot
+> merge its PR.
 
 > Part of the task planning workflow. See
 > [references/workflow-overview.md](references/workflow-overview.md) for the
@@ -18,18 +22,17 @@ Dispatch `/execute-task` for a planned task to a fresh background worker.
 > **Ad-hoc work without task docs?** Use
 > [/delegate](../delegate/SKILL.md) instead.
 >
-> **Pool model.** Dispatches into the **workers** pool — workers run in
-> worktrees and open PRs, distinct from planners which commit to `main`. See
+> **Pool model.** Task workers always run in a **worktree** on `task/$ID`,
+> distinct from planners which commit to `main`. See
 > [references/worker-pools.md](references/worker-pools.md). For per-agent CLI
 > behaviour, see
 > [references/agent-conventions.md](references/agent-conventions.md).
 
 ## Prerequisites
 
-herdr **0.8.2 or newer** (`herdr --version`), with the integration installed for
-the target agent (`herdr integration status`). Earlier versions lack
-`agent start --kind`, `agent prompt`, and blocked-startup detection; stop and
-tell the user to upgrade rather than falling back to raw keystrokes.
+herdr **0.8.2+** with the integration installed for the target agent
+(`herdr integration status`). The script checks both and refuses with
+`herdr_too_old` / `integration_missing` rather than falling back.
 
 ## Input
 
@@ -60,102 +63,61 @@ git log origin/main --oneline -5 -- tasks/$ID/
 If the docs are not on `origin/main`, push them first or stop and tell the user.
 Step 1's push normally satisfies this.
 
-### Step 3: Check for an existing worker on this task
-
-Enumerate with `references/herdr/list-workers.md`. If a worker is already on a
-`task/$ID` branch, **do not dispatch a second one** — report what it is doing
-and stop. Two workers on one task means two PRs and a merge conflict.
-
-### Step 4: Spawn a fresh worker
-
-**Always spawn fresh. Never reuse an existing worker.** A worker that has run a
-task carries its context, and there is no in-place reset: `/clear` is
-cooperative and detonates mid-task, and permission mode is fixed at launch. See
-`references/herdr/reset-worker.md`.
-
-Use the **worktree pattern** in `references/herdr/spawn-worker.md` — a task
-worker must never run in the primary checkout:
+### Step 3: Launch the worker
 
 ```bash
-herdr worktree create --cwd <repo> --branch task/$ID --base origin/main \
-  --label task-$ID --no-focus
+bash <skill-dir>/scripts/herdr-worker.sh worker \
+  --slug $ID --branch task/$ID --repo <repo> \
+  --prompt "/execute-task $ID" [--agent codex]
 ```
 
-Then launch the agent into the pane it returns, with the mandatory flags:
+This names the agent and its tab `work-$ID`, creates the worktree off
+`origin/main`, launches with the mandatory flags, verifies argv and cwd, sends
+the prompt, and returns in a few seconds once `working` is observed. It
+**refuses** (`worktree_exists`) if a worktree already exists on `task/$ID` —
+two workers on one task means two PRs and a merge conflict — so there is no
+separate "check for an existing worker" step; if you want the survey anyway,
+`bash <skill-dir>/scripts/herdr-worker.sh list --repo <repo>`
+(`references/herdr/list-workers.md`).
 
-| Agent | Launch argv |
-| ----- | ----------- |
-| Claude Code | `claude --dangerously-skip-permissions` |
-| Codex | `codex --dangerously-bypass-approvals-and-sandbox` |
+Success looks like:
 
-**Do not use Pattern B here.** `/execute-task` runs for many minutes to hours,
-and `agent start` blocks until an argv prompt's work finishes — it would hold
-this session for the whole task (the opposite of delegating) and then fail with
-a `timeout` error, leaving a live worker whose name never bound.
-
-Use **Pattern A**: start the agent with the flags, name it `task-$ID` so every
-later command can address it by name (`references/herdr/label-worker.md`), then
-dispatch with `agent prompt` and **no** `--wait`:
-
-```bash
-herdr agent start task-$ID --kind claude --pane "$PANE" --timeout 90000 \
-  -- --dangerously-skip-permissions
-herdr agent prompt task-$ID "/execute-task $ID"
+```json
+{"ok":true,"role":"worker","name":"work-042","pane_id":"w12:p1","workspace_id":"w12",
+ "worktree_path":"/…/.herdr/worktrees/<repo>/task-042","branch":"task/042","base":"origin/main",
+ "cmdline":"claude --dangerously-skip-permissions",
+ "verified":{"flags":true,"cwd":true,"role":true},
+ "kickoff":{"ok":true,"agent_status":"working"},"follow":{"read":"…","status":"…","reap":"…"}}
 ```
 
-Omitting `--wait` is deliberate — it returns immediately instead of blocking
-until the task completes.
+### Step 4: Act on a failure
 
-If `agent start` nonetheless returns a `timeout` error, do **not** respawn: the
-worker is probably alive and working with its name unbound, and a second worker
-on one task means two PRs. Recover the handle per
-`references/herdr/spawn-worker.md`.
+`ok:false` carries an `error` code and, where useful, a pane `snapshot`.
 
-If `agent start` returns `agent_not_ready`, the agent hit a startup
-interstitial. Read the pane, answer it deliberately with `agent send-keys`
-(one key per call, re-read to confirm each landed, never a bare `enter`), and
-wait for it to settle — see `references/herdr/spawn-worker.md`; fallback path
-in `references/herdr/unblock-worker.md`.
+| `error` | Meaning | Do |
+| ------- | ------- | -- |
+| `worktree_exists`, `name_in_use` | a worker is (or was) already on this task | do **not** dispatch a second one; report what is there and stop |
+| `agent_not_ready` | startup interstitial | read the snapshot, answer it deliberately per `references/herdr/unblock-worker.md` (one key per call, re-read after each; never a bare `enter` — `references/agent-conventions.md`), then `verify` and `prompt --prompt "/execute-task $ID"` |
+| `kickoff_failed` with `agent_blocked` | the agent is at a dialog | as above, then `prompt` again (`references/herdr/send-prompt.md`) |
+| `kickoff_failed` with `kickoff_not_observed` | `/execute-task` may not have landed | read the pane before retrying — never send it twice blind |
+| `verify_failed`, `start_timeout` | wrong flags / cwd / no agent | `reap --name work-$ID` and launch again; a worker cannot be repaired in place (`references/herdr/verify-worker.md`, `references/herdr/reset-worker.md`) |
+| `herdr_*`, `integration_missing`, `missing_dependency` | environment | stop and tell the user what to install |
 
-Spawn **one** worker per dispatch. If spawning fails, report and stop.
+If the launch command itself is **denied by the auto-mode classifier** in this
+session, do not switch the worker to a weaker permission mode: the fix is a
+settings entry, described in `references/herdr/spawn-worker.md`.
 
-### Step 5: Verify the worker is fit
+### Step 5: Report
 
-Run the health check in `references/herdr/verify-worker.md` before reporting
-success:
+State the worker's name (`work-$ID`), workspace/pane, branch, worktree path,
+agent kind, that flags and worktree verified, and that `/execute-task $ID` was
+accepted (the `kickoff` status).
 
-- The pane runs the agent, not a shell.
-- Its argv carries the permission flag. A bare `claude` or `codex` means manual
-  approval mode — **reap and respawn**; it cannot be repaired in place.
-- Its cwd is the **worktree** (`git-dir != git-common-dir`), not the primary
-  checkout.
-
-### Step 6: Confirm kickoff
-
-Confirm `/execute-task $ID` was actually accepted rather than assuming it —
-watch for the transition into `working` per
-`references/herdr/wait-for-ready.md`:
-
-```bash
-herdr agent wait task-$ID --until working --timeout 20000
-```
-
-If it never reaches `working`, the prompt did not land; see
-`references/herdr/send-prompt.md` for `agent_blocked` and
-`agent_prompt_stalled`.
-
-Only **after** kickoff is confirmed, apply any display labels
-(`references/herdr/label-worker.md`) — doing it earlier just queues behind the
-dispatch.
-
-### Step 7: Report
-
-State the worker's name, workspace/pane, branch, worktree path, agent kind,
-confirmation that the permission flags verified, and what it is doing now.
-
-Tell the user how to follow progress — `references/herdr/read-output.md` and
-`references/herdr/scan-output.md` — and that
+Tell the user how to follow progress — the `follow.read` command
+(`references/herdr/read-output.md`; `references/herdr/scan-output.md` for the
+fleet; status semantics in `references/herdr/wait-for-ready.md`) — and that
 [/status-report](../status-report/SKILL.md) covers the whole fleet.
 If the worker later goes `blocked` (it stopped to ask a question),
-`references/herdr/unblock-worker.md` is how to answer it — `agent prompt` will
-be refused, and the answer has to go in as keypresses.
+`references/herdr/unblock-worker.md` is how to answer it — a prompt will be
+refused, and the answer has to go in as keypresses. Display labels, should you
+need to rename anything, are in `references/herdr/label-worker.md`.

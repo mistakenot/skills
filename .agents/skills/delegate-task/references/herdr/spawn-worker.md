@@ -1,5 +1,11 @@
 # Spawning a worker (herdr)
 
+> **The delegate skills ship this procedure as a script.** `scripts/herdr-worker.sh
+> worker|planner` (bundled with `delegate`, `delegate-task` and `status-report`)
+> performs everything below — pane, flags, verification, kickoff — and prints one
+> JSON object. Prefer it; this reference is the manual procedure behind it, and
+> the background for the failure paths the script reports but does not act on.
+
 Create a new coding-agent worker. herdr never picks the agent's flags for you:
 **you always supply the launch arguments**, and getting them wrong is the single
 most common delegation failure — see the permission section below before
@@ -29,6 +35,37 @@ repair it.
 `claude --permission-mode bypassPermissions` reaches the same mode and needs no
 extra opt-in flag, so either form works; prefer
 `--dangerously-skip-permissions` for consistency with Codex's single-flag form.
+
+## If the launch itself is denied by the auto-mode classifier
+
+Since Claude Code 2.1.2xx the delegating session usually starts in **auto
+mode**, and auto mode's classifier blocks the launch above with
+`Denied by auto mode classifier ∙ [Create Unsafe Agents]` — the
+`--dangerously-skip-permissions` flag is exactly what that rule looks for.
+Verified live on 2.1.270 with `/delegate`.
+
+**Do not respond by dropping the flag or swapping in `--permission-mode auto`.**
+An auto-mode worker looks healthy but cannot `gh pr merge` (its own classifier
+blocks "Merge Without Review"), so the task stalls at the very end. Stop and
+tell the user instead. The fix is one entry in **`~/.claude/settings.json`**
+(user scope — the classifier ignores `autoMode` in project settings):
+
+```json
+{
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Delegated worker launches: on this machine the user runs background coding-agent workers through herdr. Running `herdr agent start <name> --kind claude ... -- --dangerously-skip-permissions` or `herdr agent start <name> --kind codex ... -- --dangerously-bypass-approvals-and-sandbox` (usually into a git worktree created by `herdr worktree create`), directly or via the delegate skills' `scripts/herdr-worker.sh worker|planner` wrapper, is the approved, user-sanctioned way to dispatch work to a worker. Treat these launches as allowed; they are not Create Unsafe Agents or Safety Bypass Flag."
+    ]
+  }
+}
+```
+
+Confirm with `claude auto-mode config`, then retry the spawn. A
+`permissions.allow` rule such as `Bash(herdr agent start:*)` is **not** enough:
+it only matches when the launch is the whole command, and the spawn is normally
+part of a compound command. A parent started with
+`--dangerously-skip-permissions` has no classifier and never hits this.
 
 Always confirm the flags actually took effect after spawning — see
 `references/herdr/verify-worker.md`. Re-confirm after any herdr **server

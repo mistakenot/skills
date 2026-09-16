@@ -732,6 +732,8 @@ if __name__ == "__main__":
     # shared across all skills in this module
     overview = ref("workflow-overview.md")
 
+    herdr_worker_script = asset("src/planning-workflow/scripts/herdr-worker.sh", "scripts/herdr-worker.sh")
+
     planning = module("planning-workflow",
         skill("new-epic",               refs=[overview, ref("epic-overview.md"), ref("epic-tabs.md")]),
         skill("new-task",               refs=[overview, ref("stage-requirements.md"), ref("tab-requirements.md")]),
@@ -754,19 +756,25 @@ if __name__ == "__main__":
         # herdr ops per skill: dispatchers find/spawn/verify/send; the monitor
         # reads, verifies and reaps. label-worker is reached transitively, via
         # worker-pools.md.
+        # The launch/verify/reap procedure is a bundled script; the herdr refs
+        # remain as the manual procedure behind it and for the failure paths the
+        # script reports but does not act on (interstitials, blocked workers).
         skill("delegate-task",          refs=[overview, ref("task-status.md"), ref("agent-conventions.md"), ref("worker-pools.md"),
                                               *herdr_refs("list-workers", "read-output", "scan-output", "spawn-worker",
                                                           "verify-worker", "wait-for-ready", "send-prompt",
-                                                          "reset-worker", "label-worker", "unblock-worker")]),
+                                                          "reset-worker", "label-worker", "unblock-worker")],
+                                        assets=[herdr_worker_script]),
         skill("delegate",               refs=[ref("agent-conventions.md"), ref("worker-pools.md"),
                                               *herdr_refs("list-workers", "read-output", "scan-output", "spawn-worker",
                                                           "verify-worker", "wait-for-ready", "send-prompt",
                                                           "reset-worker", "reap-worker", "label-worker",
-                                                          "unblock-worker")]),
+                                                          "unblock-worker")],
+                                        assets=[herdr_worker_script]),
         skill("status-report",          refs=[overview, ref("agent-conventions.md"), ref("worker-pools.md"),
                                               *herdr_refs("list-workers", "read-output", "scan-output", "verify-worker",
                                                           "reap-worker", "reset-worker", "label-worker",
-                                                          "unblock-worker")]),
+                                                          "unblock-worker")],
+                                        assets=[herdr_worker_script]),
         skill("address-feedback",       refs=[overview]),
         skill("complete-task",          refs=[overview, ref("template-feedback.md"), ref("commit-conventions.md")]),
         skill("code-review",            refs=[overview]),

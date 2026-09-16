@@ -2,7 +2,7 @@
 
 Before dispatching to a pane — and when auditing a fleet — confirm three things
 that no status field tells you: that the pane is running the **agent** you think
-it is, that it was launched with **no-permissions-required** flags, and that it
+it is, that it was launched with **bypass-permissions** flags (not merely a mode that runs unattended), and that it
 is **where** you think it is.
 
 ## The mechanism: `pane process-info`
@@ -38,6 +38,7 @@ herdr pane process-info --pane "$PANE" \
 | `claude` (no flags) | **Manual mode. Reject.** It will stall on the first tool call, and `shift+tab` cannot rescue it. Reap and respawn. |
 | `claude --dangerously-skip-permissions` | Good — bypass permissions. |
 | `claude --permission-mode bypassPermissions` | Good — equivalent. |
+| `claude --permission-mode auto` | **Auto mode. Reject.** It runs, but its classifier blocks `gh pr merge` ("Merge Without Review"), so the task stalls at the end. This is what a delegating session falls back to when *its* classifier denied the bypass launch — see `references/herdr/spawn-worker.md`. Reap and respawn. |
 | `codex` (no flags) | **Approval-gated. Reject.** Reap and respawn. |
 | `codex --dangerously-bypass-approvals-and-sandbox` | Good — bypass/YOLO mode. |
 | `claude --resume <uuid>` (no flag) | **Downgraded by a server restart. Reject** — see below. |
