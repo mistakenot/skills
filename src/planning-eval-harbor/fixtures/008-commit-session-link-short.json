@@ -1,0 +1,25 @@
+{
+  "id": "008-commit-session-link-short",
+  "_provenance": {
+    "derived_from": "src/planning-eval/fixtures/008-commit-session-link.json",
+    "note": "The same task, start SHA, opening prompt and first steering turn as planning-eval's worked example, truncated after the Requirements stage (two operator messages instead of six). Small enough to be the harness's live evidence run; the full fixture drives an end-to-end comparison when wanted. The two harnesses accept the same file, so `run.py run src/planning-eval/fixtures/008-commit-session-link.json` replays the whole thing."
+  },
+  "fixture": {
+    "target_repo": "/home/vscode/src/auto-stack",
+    "start_sha": "0ea36adc43943dea77a2d6b66fad161d4558ced4",
+    "prompt": "/new-task we want to extract the session id from a message in auto-etl using a fallback mechanism: if the trailer is present use that, otherwise try to extract it from the commit messages, as previously discussed. Create the requirements, and also explain why this is useful."
+  },
+  "arm": {
+    "id": "v2",
+    "skills_dir": "skills"
+  },
+  "human_turns": [
+    "Add to the requirements: auto-config, in its project init command, will have a sub-function for setting up git hooks. It adds a git pre-commit hook to generate the right trailers if one doesn't already exist; if a hook already exists, it errors out with a clear message. For anything still open, go with your recommended answer."
+  ],
+  "limits": {
+    "max_turns": 2,
+    "wall_clock_s": 1800,
+    "per_turn_timeout_s": 900,
+    "max_budget_usd": 8
+  }
+}

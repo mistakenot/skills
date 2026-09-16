@@ -1,0 +1,92 @@
+run 008-commit-session-link-short-v2-scripted-20260916-151727 / trial 008-commit-session-link-short-v2__anU5cRr — ok
+
+================================================================================
+TURN 0 (202723 ms, $0.7870)
+>>> SENT:
+/new-task we want to extract the session id from a message in auto-etl using a fallback mechanism: if the trailer is present use that, otherwise try to extract it from the commit messages, as previously discussed. Create the requirements, and also explain why this is useful.
+
+--- REPLY:
+Starting by reading the relevant project docs and scanning for existing task folders.
+
+Now let me look at the existing ETL transform code to understand the current session ID extraction logic.
+
+Now let me look at the git extraction and parser code to understand the current session ID mechanism and what the "trailer" refers to.
+
+Let me check the git model and look for any existing session ID linking in the Commit schema.
+
+Now I have enough context. The task is to add a `session_id` field to `model.Commit` by extracting it from the git commit message: first checking the `TrailersJSON` for a `Session-Id:` trailer, then falling back to regex-matching a UUID in the message body. Task ID is `008`.
+
+Now I'll author the plan.html with a Requirements tab:
+
+Now lint the doc:
+
+The linter reports one open question — that's a gate, not a defect. The question is intentionally unresolved pending human input.
+
+`docs/tasks/008-session-id-from-commit/plan.html` is created. Here's a summary of what's in it:
+
+---
+
+**Task 008: Session ID from Commit Message**
+
+**Why this is useful:**
+The auto-etl pipeline captures agent sessions and git commits as independent parquet datasets with no join key. Adding `session_id` to `model.Commit` makes them joinable, enabling queries like:
+- Which session produced which commits?
+- How many commits came out of a session?
+- What was the agent doing before it committed?
+- Which sessions produced zero commits?
+
+The regex fallback matters for **historical coverage** — existing commits don't have a `Session-Id:` trailer, but many have a UUID somewhere in the message body (task IDs, worktree branch names, handoff references).
+
+**What the requirements specify:**
+- New `SessionID string` field on `model.Commit` (parquet: `session_id,dict`)
+- Pure helper `extractSessionID(messageBody, trailersJSON string) string` with fallback chain:
+  1. Check `trailers_json` for `Session-Id` key → use trailer value
+  2. `regexp` scan message body for first standard UUID
+  3. Return `""` if neither matches
+- Trailer always wins over body UUID (precision over recall)
+- 5 unit tests, genstats counter, no external dependencies
+- `CommitFile` / `CommitHunk` denormalization is explicitly out of scope
+
+**Open question** (gates the doc): Is `Session-Id` the agreed trailer key name, and will the harness begin including it automatically in future sessions?
+
+---
+
+Open `docs/tasks/008-session-id-from-commit/plan.html` in a browser to review. When ready, run `/new-solution` to continue.
+
+================================================================================
+TURN 1 (102815 ms, $0.3619)
+>>> SENT:
+Add to the requirements: auto-config, in its project init command, will have a sub-function for setting up git hooks. It adds a git pre-commit hook to generate the right trailers if one doesn't already exist; if a hook already exists, it errors out with a clear message. For anything still open, go with your recommended answer.
+
+--- REPLY:
+Reading the current plan.html before editing.
+
+I need to: resolve the open question with the recommended answer, add the auto-config hook requirements, update Goals/Out-of-Scope, and add new ACs.
+
+Now add the Auto-Config Hook section and new FRs, and resolve the open question:
+
+Now add FRs for the hook and resolve the open question:
+
+Now resolve the open question and add new ACs for the hook:
+
+Now lint to confirm the open question is resolved:
+
+Lint passes clean. Here's what changed in the doc:
+
+**Open question resolved** — `Session-Id` is the canonical trailer key. The auto-config hook is the mechanism for installing it going forward; no upstream harness change needed.
+
+**New: Auto-Config Hook section** (FR-6, FR-7, FR-8) covering:
+- `autoconfig init --project` calls `setupHooks(repoRoot)` which writes `.git/hooks/pre-commit` (mode `0755`)
+- The hook appends `Session-Id: $CLAUDE_SESSION_ID` via `git interpret-trailers` — a no-op when the env var is unset (manual commits, CI)
+- **Conflict behaviour**: if a hook already exists without the autoconfig marker → exit non-zero + clear error naming the file + print the snippet the user can manually append
+- **Idempotent**: if the marker is already present → exit zero, file unchanged
+
+**New ACs** — ac-7 (fresh install), ac-8 (conflict errors correctly), ac-9 (idempotent rerun)
+
+**Out-of-scope updated** — removed the old "defining the trailer convention is upstream" note; replaced with the actual boundaries (no hook modification, no env var redefinition, bash/sh only).
+
+Review `docs/tasks/008-session-id-from-commit/plan.html` in a browser. When ready, run `/new-solution` to continue.
+
+================================================================================
+PRODUCED:
+  docs/tasks/008-session-id-from-commit/plan.html

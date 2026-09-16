@@ -1,0 +1,23 @@
+{
+  "run": "008-commit-session-link-short-v2-scripted-20260916-151727",
+  "status": "ok",
+  "fixture_id": "008-commit-session-link-short",
+  "arm_id": "v2",
+  "operator": "scripted",
+  "model": "anthropic/claude-sonnet-4-6",
+  "started_at": "2026-09-16T15:17:27+00:00",
+  "finished_at": "2026-09-16T15:23:20+00:00",
+  "harbor_exit": 0,
+  "harbor_job_id": "6191add9-0b86-4772-b2b7-b5a2fcba0227",
+  "trials": [
+    {
+      "trial": "008-commit-session-link-short-v2__anU5cRr",
+      "completion": "ok",
+      "total_wall_ms": 349926,
+      "turn_count": 2,
+      "cost_usd": 1.148936,
+      "tokens": 1925538,
+      "artifacts": 1
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+# Run outputs (Harbor job dirs + this harness's summaries) — local evidence, never committed.
+runs/
+# Compiled Harbor task dirs — derived from fixtures on every run, includes the repo tarball.
+tasks/
+.venv/
+__pycache__/
