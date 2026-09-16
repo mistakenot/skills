@@ -1,5 +1,5 @@
 ---
-hash: "11d8f2f5"
+hash: "d38615d2"
 id: "5cee9ee2"
 read_when: "deciding whether to A/B a skill change with the evals harness, or needing to know what an evals run cannot tell you before trusting its result"
 summary: "Orientation for the `src/evals/` harness: what it does, when to reach for it instead of planning-eval or the assurance harness, and the six limitations that bound what a run can tell you. The module README is the reference."
@@ -25,7 +25,7 @@ summary.
 | Shape | Harness |
 |---|---|
 | One prompt fully determines the output (generate a doc, transform a file) | **`src/evals/`** — this tool |
-| The skill hard-stops and waits for a human, or quality depends on the back-and-forth | `src/planning-eval/` (NTM-driven, multi-turn) |
+| The skill hard-stops and waits for a human, or quality depends on the back-and-forth | `src/planning-eval/` (NTM-driven, multi-turn) or its Harbor-backed sibling `src/planning-eval-harbor/` (Docker sandbox, same fixtures; see [harbor-vs-planning-eval.md](research/harbor-vs-planning-eval.md)) |
 | You want mechanical checks and an LLM judge over a with/without differential | `src/assurance/evals/` |
 | "Does the right skill fire for the right query?" | trigger evals (skill-creator's description optimizer) |
 
