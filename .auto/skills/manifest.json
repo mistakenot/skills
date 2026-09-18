@@ -83,7 +83,7 @@
       "template_hash": "9aaa122d38f8914203cd15d4021f22e82a413a5cb172ef2bb9a2d3d897a61c6f",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "32456e2c66a35f3a4e7c17c1fec70f793775f9c74ce95b563ebec7950024341a",
+      "skill_version": "6cd5f58fa39dbc63f59868202941756137f704b335141bf970ba963c6d12ff6b",
       "render_version": "1"
     },
     "extract-demand-from-customer-conversation": {
@@ -136,17 +136,17 @@
       "render_version": "1"
     },
     "new-plan": {
-      "template_hash": "c4112b2dd8a1bfa0b654bbfc1ac3a3015b0284ee23f7c39c6c7d70af5b15b6c3",
+      "template_hash": "8ab98ffdf30674c3a57f478d1225b86f4dba73a13d3f914078eab41c5281310c",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "7ded94e5b1f99dcb0e46a65d35b0be98621b54a11857e0402079334ef3dcbecf",
+      "skill_version": "3807193bce34162c416fca855eb2dc2ac6fb53967868c82c2b37f8eadcd1011b",
       "render_version": "1"
     },
     "new-solution": {
-      "template_hash": "0514e42b1248c32497bf9b4f2b359cccb88b60ad5a7c334aaa434aaf6c78c117",
+      "template_hash": "ecc9ccafe6d7cc77eb36089734783bf2eff4ca8d5789a1074fd70359dd08ac2d",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "efe6c24f890af9ddc2610f51c14bdd8092176dd1b230c34bb1f30091640378aa",
+      "skill_version": "8b8d3173823f411dc3fb2c2b185f0ff82ec91c437f3ad0dad524eb7c8dfc1392",
       "render_version": "1"
     },
     "new-task": {
@@ -157,10 +157,10 @@
       "render_version": "1"
     },
     "new-task-quick": {
-      "template_hash": "92516618e0d297a5b1d09e99478679ca3b3bf442ac46dba57a659597a76cfd1c",
+      "template_hash": "23da6b8a8d536ffa71a1aab018b4e6836c2db68f391a722e2540c3142a0b6071",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "76e938ee3c44b24f842d7ed35386eb78592dd671a8801969f54b6fcc26f2dd94",
+      "skill_version": "1bb0705ca226dbde31e6932659bffd8c94e9d8aa4b0123ae4b4c5660c94b59a9",
       "render_version": "1"
     },
     "playbook-observe": {
@@ -290,7 +290,7 @@
         "delegate-task": "e37f11c18714d5a86c3f4a9ab35077f4a3dadf932fee5ddb3ed463ad41e0cfb5",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
         "eval-engineer": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
-        "execute-task": "32456e2c66a35f3a4e7c17c1fec70f793775f9c74ce95b563ebec7950024341a",
+        "execute-task": "6cd5f58fa39dbc63f59868202941756137f704b335141bf970ba963c6d12ff6b",
         "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
         "generate-10-ideas": "86f06f47c77cc7fa813f6da24b8e219f1f82cd3cfb875b7ee89d2ca3d275af68",
@@ -298,10 +298,10 @@
         "handoff": "c738f330651061c89307aa2e559e7521718c34b6e94bf62aed5c80af4141a31d",
         "learning-diary": "562de1c03280fc192012f69eabf7010d156c06847b6859cbd7804031531fe6d7",
         "new-epic": "7ba66d86c6daaa5570f23e52b17c0a069e86fce22215033e6d5f15d3e99d4d23",
-        "new-plan": "7ded94e5b1f99dcb0e46a65d35b0be98621b54a11857e0402079334ef3dcbecf",
-        "new-solution": "efe6c24f890af9ddc2610f51c14bdd8092176dd1b230c34bb1f30091640378aa",
+        "new-plan": "3807193bce34162c416fca855eb2dc2ac6fb53967868c82c2b37f8eadcd1011b",
+        "new-solution": "8b8d3173823f411dc3fb2c2b185f0ff82ec91c437f3ad0dad524eb7c8dfc1392",
         "new-task": "5232db22c3753ed70fa11d26ff93379f118b4ab65505b32f83fc0050a14a538e",
-        "new-task-quick": "76e938ee3c44b24f842d7ed35386eb78592dd671a8801969f54b6fcc26f2dd94",
+        "new-task-quick": "1bb0705ca226dbde31e6932659bffd8c94e9d8aa4b0123ae4b4c5660c94b59a9",
         "playbook-observe": "8fb0772012871ac78065a82c8f9861fb7d4c5d51b731c88421b1daf715e2590f",
         "playbook-refine": "2c322d39d5131cfd30776036dbc14aca2a87181f30d545810046918df905224e",
         "playbook-search": "1e86b067218a1edaaeaacc1e31610dd7bde0b4d7155b63c7a3318ca2888f93ed",
@@ -333,7 +333,7 @@
         "delegate-task": "e37f11c18714d5a86c3f4a9ab35077f4a3dadf932fee5ddb3ed463ad41e0cfb5",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
         "eval-engineer": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
-        "execute-task": "32456e2c66a35f3a4e7c17c1fec70f793775f9c74ce95b563ebec7950024341a",
+        "execute-task": "6cd5f58fa39dbc63f59868202941756137f704b335141bf970ba963c6d12ff6b",
         "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
         "generate-10-ideas": "86f06f47c77cc7fa813f6da24b8e219f1f82cd3cfb875b7ee89d2ca3d275af68",
@@ -341,10 +341,10 @@
         "handoff": "c738f330651061c89307aa2e559e7521718c34b6e94bf62aed5c80af4141a31d",
         "learning-diary": "562de1c03280fc192012f69eabf7010d156c06847b6859cbd7804031531fe6d7",
         "new-epic": "7ba66d86c6daaa5570f23e52b17c0a069e86fce22215033e6d5f15d3e99d4d23",
-        "new-plan": "7ded94e5b1f99dcb0e46a65d35b0be98621b54a11857e0402079334ef3dcbecf",
-        "new-solution": "efe6c24f890af9ddc2610f51c14bdd8092176dd1b230c34bb1f30091640378aa",
+        "new-plan": "3807193bce34162c416fca855eb2dc2ac6fb53967868c82c2b37f8eadcd1011b",
+        "new-solution": "8b8d3173823f411dc3fb2c2b185f0ff82ec91c437f3ad0dad524eb7c8dfc1392",
         "new-task": "5232db22c3753ed70fa11d26ff93379f118b4ab65505b32f83fc0050a14a538e",
-        "new-task-quick": "76e938ee3c44b24f842d7ed35386eb78592dd671a8801969f54b6fcc26f2dd94",
+        "new-task-quick": "1bb0705ca226dbde31e6932659bffd8c94e9d8aa4b0123ae4b4c5660c94b59a9",
         "playbook-observe": "8fb0772012871ac78065a82c8f9861fb7d4c5d51b731c88421b1daf715e2590f",
         "playbook-refine": "2c322d39d5131cfd30776036dbc14aca2a87181f30d545810046918df905224e",
         "playbook-search": "1e86b067218a1edaaeaacc1e31610dd7bde0b4d7155b63c7a3318ca2888f93ed",

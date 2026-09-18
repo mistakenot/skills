@@ -51,6 +51,11 @@ This is in force for the whole run. The stage refs below carry `When interactive
    report it at the Answer Gate, and any raised later at the final report.
 7. **Write each tab to `plan.html` before starting the next stage,** so an interrupted run
    leaves usable partial work rather than nothing.
+8. **Spawn every subagent unnamed.** The stages below fan work out to subagents. Because
+   this run is a single unbroken turn, a *named* agent -- an addressable teammate -- can
+   never report back to you: its result is delivered only when the turn ends. Omit the
+   `name` parameter, wait for the completion notification, and never ask an agent to
+   resend a report that merely looks missing.
 
 ## Stage 1: Requirements
 

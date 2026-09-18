@@ -20,6 +20,13 @@ Task ID (numeric, e.g. `042`).
 
 Dispatch one subagent per phase. No nesting beyond two levels.
 
+**Dispatch each subagent unnamed.** If your subagent tool takes a `name` (or other
+identity) parameter, omit it: a named agent is an addressable teammate whose report is
+only delivered once your turn ends, and this coordinator runs as one long unattended
+turn -- you would mark the phase complete having never read its result. Wait for each
+completion notification; do not poll an agent-listing tool, and never ask a subagent to
+resend its report.
+
 ### What each subagent receives
 
 - Absolute worktree path (critical -- subagents do not inherit coordinator cwd)
