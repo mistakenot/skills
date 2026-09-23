@@ -6,18 +6,24 @@ directory, and limits — so one file can drive either harness and the two can b
 compared on identical input. See `src/planning-eval/README.md` ("Authoring a
 fixture") for how to mine one from a real task.
 
-Two optional additions this harness reads and planning-eval ignores:
+Optional additions this harness reads and planning-eval ignores:
 
   * `limits.max_budget_usd` — a hard spend cap handed to Claude Code.
   * `persona` — text for the simulated operator (`--operator simulated` only).
+  * `fixture.repo_url` in place of `fixture.target_repo` — any git URL; the
+    start commit is fetched into a cache (`sources.py`).
+  * `arm.skills_ref` in place of `arm.skills_dir` — a commit of this repo whose
+    compiled `skills/` is the arm (`sources.py`).
 """
 
 from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
+
+import sources
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent.parent
@@ -60,6 +66,8 @@ class Fixture:
     human_turns: tuple[str, ...]
     limits: Limits
     persona: str | None = None
+    repo_url: str | None = None
+    skills_sha: str | None = None
 
     @property
     def messages(self) -> list[str]:
@@ -118,9 +126,20 @@ def load(path: Path | str, repo_root: Path = REPO_ROOT) -> Fixture:
             f"fixture.start_sha must be a literal 40-character commit sha, got {sha!r}"
         )
 
-    target_repo = Path(str(_require(fx, "target_repo", "fixture"))).expanduser()
-    if not (target_repo / ".git").exists():
-        raise FixtureError(f"fixture.target_repo is not a git checkout: {target_repo}")
+    repo_url = fx.get("repo_url")
+    if repo_url is not None:
+        if "target_repo" in fx:
+            raise FixtureError("fixture: give target_repo or repo_url, not both")
+        if not isinstance(repo_url, str) or not repo_url.strip():
+            raise FixtureError("fixture.repo_url must be a non-empty string")
+        try:
+            target_repo = sources.ensure_commit(repo_url, sha)
+        except sources.SourceError as exc:
+            raise FixtureError(str(exc)) from exc
+    else:
+        target_repo = Path(str(_require(fx, "target_repo", "fixture"))).expanduser()
+        if not (target_repo / ".git").exists():
+            raise FixtureError(f"fixture.target_repo is not a git checkout: {target_repo}")
 
     prompt = _require(fx, "prompt", "fixture")
     if not isinstance(prompt, str) or not prompt.strip():
@@ -129,21 +148,16 @@ def load(path: Path | str, repo_root: Path = REPO_ROOT) -> Fixture:
     arm_id = str(_require(arm, "id", "arm"))
     if not re.fullmatch(r"[A-Za-z0-9._-]+", arm_id):
         raise FixtureError(f"arm.id must be a filename-safe string, got {arm_id!r}")
-    skills_dir = Path(str(_require(arm, "skills_dir", "arm")))
-    if not skills_dir.is_absolute():
-        skills_dir = repo_root / skills_dir
-    skills_dir = skills_dir.resolve()
-    if not skills_dir.is_dir():
-        raise FixtureError(f"arm.skills_dir does not exist: {skills_dir}")
-    bad = sorted(
-        p.name for p in skills_dir.iterdir() if p.is_dir() and not (p / "SKILL.md").is_file()
-    )
-    if bad:
-        # Harbor's skill loader takes a root whose immediate children are each a
-        # skill; a stray directory there fails the trial after the image build.
-        raise FixtureError(
-            f"arm.skills_dir children without SKILL.md: {', '.join(bad)} ({skills_dir})"
-        )
+    if ("skills_dir" in arm) == ("skills_ref" in arm):
+        raise FixtureError("arm: give exactly one of skills_dir or skills_ref")
+    skills_sha: str | None = None
+    if "skills_ref" in arm:
+        skills_sha, skills_dir = _export_arm(str(arm["skills_ref"]), repo_root)
+    else:
+        skills_dir = Path(str(arm["skills_dir"]))
+        if not skills_dir.is_absolute():
+            skills_dir = repo_root / skills_dir
+        skills_dir = _check_skills_dir(skills_dir.resolve(), "arm.skills_dir")
 
     turns = data.get("human_turns", [])
     if not isinstance(turns, list) or not all(isinstance(t, str) and t.strip() for t in turns):
@@ -177,4 +191,41 @@ def load(path: Path | str, repo_root: Path = REPO_ROOT) -> Fixture:
         human_turns=tuple(turns),
         limits=limits,
         persona=persona,
+        repo_url=repo_url,
+        skills_sha=skills_sha,
     )
+
+
+def _check_skills_dir(skills_dir: Path, ctx: str) -> Path:
+    if not skills_dir.is_dir():
+        raise FixtureError(f"{ctx} does not exist: {skills_dir}")
+    bad = sorted(
+        p.name for p in skills_dir.iterdir() if p.is_dir() and not (p / "SKILL.md").is_file()
+    )
+    if bad:
+        # Harbor's skill loader takes a root whose immediate children are each a
+        # skill; a stray directory there fails the trial after the image build.
+        raise FixtureError(f"{ctx} children without SKILL.md: {', '.join(bad)} ({skills_dir})")
+    return skills_dir
+
+
+def _export_arm(ref: str, repo_root: Path) -> tuple[str, Path]:
+    try:
+        sha, skills_dir = sources.export_skills(repo_root, ref)
+    except sources.SourceError as exc:
+        raise FixtureError(str(exc)) from exc
+    return sha, _check_skills_dir(skills_dir, f"skills/ at {sha[:12]}")
+
+
+def with_skills_ref(fx: Fixture, ref: str, arm_id: str | None = None,
+                    repo_root: Path = REPO_ROOT) -> Fixture:
+    """The same fixture with its arm replaced by this repo's `skills/` at `ref`.
+
+    What `run --skills-ref` uses, so one fixture file can be replayed against
+    any version of the skills — including past ones — without editing it.
+    """
+    sha, skills_dir = _export_arm(ref, repo_root)
+    arm_id = arm_id or f"skills-{sha[:12]}"
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", arm_id):
+        raise FixtureError(f"arm id must be a filename-safe string, got {arm_id!r}")
+    return replace(fx, arm_id=arm_id, skills_dir=skills_dir, skills_sha=sha)

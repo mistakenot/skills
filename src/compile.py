@@ -903,6 +903,8 @@ if __name__ == "__main__":
             ref("fixtures-from-history.md"),
             ref("harnesses.md"),
         ]),
+        # open coding over generated plans; the tooling lives in src/plan-review/
+        skill("plan-review"),
         description="Build, run, validate, and manage A/B evals for skills in this repo: replay real tasks, compare skill versions on cost and quality, and validate the eval before trusting it.",
         category="development",
         keywords=["eval", "evaluation", "benchmark", "ab-testing", "skill-quality"],

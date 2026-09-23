@@ -1,0 +1,17 @@
+{
+  "id": "pi-8133-per-model-compaction",
+  "_provenance": {
+    "source": "oss",
+    "repo": "https://github.com/earendil-works/pi (TypeScript monorepo, formerly badlogic/pi-mono)",
+    "issue": "https://github.com/earendil-works/pi/issues/8133 (title and body verbatim)",
+    "reference_fix": "46bde88a1cd752966aa2a357d292e83aff98b132 'feat(coding-agent): support per-model compaction token budgets', a single commit that closes #8133",
+    "start_sha_note": "parent of the fix commit"
+  },
+  "fixture": {
+    "repo_url": "https://github.com/earendil-works/pi.git",
+    "start_sha": "400d6905ce46ec46e79da8a7701b1b48850192df",
+    "prompt": "/new-task-quick implement github issue #8133, text below.\n\n# Per-model compaction settings\n\n### What do you want to change?\n\nLet compaction settings vary per model: a `compaction.profiles` map in settings.json keyed by model id, with the current global values as fallback.\n\n```json\n{\n  \"compaction\": {\n    \"reserveTokens\": 16384,\n    \"profiles\": {\n      \"some-provider/big-model\": { \"reserveTokens\": 400000 }\n    }\n  }\n}\n```\n\n### Why?\n\nThe auto-compaction trigger is `contextTokens > contextWindow - reserveTokens`, and reserveTokens is one global value. I switch between a 200K model and a 1M model in the same sessions, and no single number works for both. 400000 gives the 1M model a sensible trigger around 600K, but would make the 200K model compact from the first turn. The 16384 default lets the 1M model run to ~984K before compacting, and a trigger that close to the edge has already bitten me: the summarization request itself overflowed the window (\"Prompt is too long\").\n\nI've carried this as a local patch to agent-session.js since 0.79 and reapply it after every release. It works, but it breaks whenever that file gets refactored.\n\n#4471 and #5722 asked for the same thing. Both were auto-closed without review (refactor freeze, new-contributor gate).\n\n### How? (optional)\n\nResolve reserveTokens/keepRecentTokens through a per-model lookup with global fallback at the point where compaction reads its settings. Happy to send a PR if approved.\n\nStop after Stage 4 (self-check); do not run the Codex review."
+  },
+  "arm": {"id": "head", "skills_ref": "HEAD"},
+  "limits": {"max_turns": 1, "wall_clock_s": 3600, "per_turn_timeout_s": 3600, "max_budget_usd": 15}
+}

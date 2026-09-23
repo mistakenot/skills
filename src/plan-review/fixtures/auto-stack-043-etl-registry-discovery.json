@@ -1,0 +1,16 @@
+{
+  "id": "auto-stack-043-etl-registry-discovery",
+  "_provenance": {
+    "source": "historic",
+    "task": "auto-stack docs/tasks/043-etl-registry-repo-discovery",
+    "session": "349e56bc-ba57-4a5d-9edb-ded35da164d4 (opening /new-task message, verbatim)",
+    "start_sha_note": "parent of d2925511, the first commit carrying the 043 task docs; the implementation landed later in 6e3564d0 (#100)"
+  },
+  "fixture": {
+    "target_repo": "/home/vscode/src/auto-stack",
+    "start_sha": "3f6a3334b30117262f559f2e66924fbc7611cb31",
+    "prompt": "/new-task-quick auto etl repository discovery should be done via global config files registering projects, not purely from the message trail of agents, we keep sucking in lots of unrelated project data from random github projects i pulled in.\n\nStop after Stage 4 (self-check); do not run the Codex review."
+  },
+  "arm": {"id": "head", "skills_ref": "HEAD"},
+  "limits": {"max_turns": 1, "wall_clock_s": 3600, "per_turn_timeout_s": 3600, "max_budget_usd": 15}
+}
