@@ -665,6 +665,12 @@ $('#prev').onclick = () => openPlan(S.idx - 1);
 $('#next').onclick = () => openPlan(S.idx + 1);
 $('#jump').onchange = (e) => openPlan(S.plans.findIndex((p) => p.plan_id === e.target.value));
 window.addEventListener('resize', () => layout());
+// A pasted or edited #p=<id> link opens that plan without a reload.
+window.addEventListener('hashchange', () => {
+  const id = (location.hash.match(/p=([0-9a-f]{12})/) || [])[1];
+  const i = S.plans.findIndex((p) => p.plan_id === id);
+  if (i >= 0 && i !== S.idx) openPlan(i);
+});
 
 let toastTimer = null;
 function toast(msg) {

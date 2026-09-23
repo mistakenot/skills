@@ -72,7 +72,7 @@ main { padding: 12px 16px 64px; }
 #prompt, #context {
   margin: 6px 0 0; white-space: pre-wrap; word-wrap: break-word;
   font: 13px/1.5 ui-monospace, "SF Mono", Menlo, monospace;
-  max-height: 14rem; overflow: auto;
+  max-height: 8rem; overflow: auto;
 }
 #context { max-height: 28rem; }
 details summary { cursor: pointer; color: var(--muted); font-size: 12px; margin-top: 6px; }
