@@ -733,6 +733,9 @@ if __name__ == "__main__":
     overview = ref("workflow-overview.md")
 
     herdr_worker_script = asset("src/planning-workflow/scripts/herdr-worker.sh", "scripts/herdr-worker.sh")
+    # commit-task gates on a clean pd-lint of plan.html, so it carries its own
+    # copy of the linter (skills can't reach into rich-doc's scripts dir).
+    pd_lint_script = asset("pd-components/dist/pd-lint.mjs", "scripts/pd-lint.mjs")
 
     planning = module("planning-workflow",
         skill("new-epic",               refs=[overview, ref("epic-overview.md"), ref("epic-tabs.md")]),
@@ -751,7 +754,8 @@ if __name__ == "__main__":
         skill("request-grok-review",    refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
         skill("request-council-review", refs=[overview, ref("review-format.md"), ref("review-format-html.md"), ref("headless-delegation.md")]),
         skill("resolve-comments",       refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
-        skill("commit-task",            refs=[overview, ref("commit-conventions.md"), ref("task-status.md")]),
+        skill("commit-task",            refs=[overview, ref("commit-conventions.md"), ref("task-status.md")],
+                                        assets=[pd_lint_script]),
         skill("execute-task",           refs=[overview, ref("template-pr-body.md"), ref("worktree-conventions.md"), ref("commit-conventions.md"), ref("execute-task-full.md"), ref("task-status.md")]),
         # herdr ops per skill: dispatchers find/spawn/verify/send; the monitor
         # reads, verifies and reaps. label-worker is reached transitively, via
