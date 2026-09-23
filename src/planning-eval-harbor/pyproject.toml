@@ -1,0 +1,24 @@
+# The Harbor-backed planning replay harness. Unlike `src/evals/` this module has
+# a real dependency (the `harbor` framework), so it carries its own environment:
+#
+#     uv run --project src/planning-eval-harbor python src/planning-eval-harbor/run.py ...
+#
+# (see the `peval-harbor` target in the root Makefile). The pytest suite under
+# tests/ deliberately imports nothing from harbor, so it runs in the root
+# environment alongside the other module suites (`make test`).
+[project]
+name = "planning-eval-harbor"
+version = "0.1.0"
+description = "Replays planning-eval fixtures as Harbor simulated-user trials."
+requires-python = ">=3.12"
+dependencies = [
+    # Simulated-user trials (`--user-agent`/`--bridge acp`) arrived in 0.22.0;
+    # 0.23.0 is what this module was built and verified against.
+    "harbor>=0.23.0,<0.24",
+]
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.uv]
+package = false

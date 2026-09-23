@@ -1,0 +1,2 @@
+SKILLS: peval-marker,dataviz,update-config,keybindings-help,code-review,simplify,fewer-permission-prompts,loop,schedule,claude-api,workflow-authoring,run,init,security-review
+MARKER: XYLOPHONE-7731

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>008: session-id-from-commit</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.9.0/pd-components/dist/pd-components.js"></script>
+</head>
+<body>
+
+<script type="application/json" id="pd-meta">
+{
+  "id": "008",
+  "name": "session-id-from-commit",
+  "status": "planning",
+  "created": "2026-09-16"
+}
+</script>
+
+<pd-doc title="008: Session ID from Commit Message" status="draft">
+
+  <pd-tab name="Requirements">
+
+    <pd-section id="problem" title="Problem" summary="Why this matters: commits produced by an agent session are not linked back to the session that created them.">
+      <md><script type="text/plain">
+The auto-etl pipeline captures two independent datasets: **coding agent sessions** (from Claude Code JSONL files) and **git commits** (from `git log`). These datasets live side-by-side in parquet but have no join key — there is no field linking a commit back to the session that authored it.
+
+This gap blocks a whole class of analytics:
+
+- "Which agent session produced these commits?"
+- "How many commits came out of session X?"
+- "What was the agent doing in the 10 minutes before it ran `git commit`?"
+- "Which sessions produced zero commits?" (pure exploration vs. productive work)
+
+Every Claude Code commit today ends with an attribution trailer (`Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`), but the session UUID is not recorded in the commit message. The `Session-Id:` trailer does not yet exist in historical commits, and no tooling installs it automatically.
+
+A two-step fallback extracts the session ID with high recall:
+
+1. **Trailer first** — if a `Session-Id:` key exists in `trailers_json`, use its value directly. Zero ambiguity, zero false positives.
+2. **Message body fallback** — regex-scan the commit message body for a UUID matching the format `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`. Take the _first_ UUID found. This catches commits where agents paste the session ID into the message body (e.g. from a `handoff` skill or a status line).
+
+The extracted value lands in a new `session_id` field on `model.Commit`.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="why-useful" title="Why This Is Useful" summary="The business value of the session-to-commit link.">
+      <md><script type="text/plain">
+Once `commits.session_id` is populated, the two largest auto-etl datasets become joinable:
+
+| Query | Enabled by |
+|---|---|
+| Commits per session | `GROUP BY session_id` on commits |
+| Sessions with no commits | `LEFT JOIN sessions ON commits.session_id = sessions.id WHERE commits.session_id IS NULL` |
+| Agent activity before a commit | `WHERE messages.session_id = commits.session_id AND messages.timestamp < commits.author_date` |
+| Commit rate by model or agent type | `JOIN sessions ON session_id` → `GROUP BY sessions.model` |
+| Cross-session diff analysis | Compare `commit_files` records across sessions on the same repo |
+
+This link is also the foundation for **reflect** and **autosearch** features: surfacing which skills or patterns produced the most durable code changes (i.e. commits that weren't reverted), and highlighting sessions where agents committed and then immediately amended (a signal of iteration churn).
+
+The fallback mechanism matters for **historical coverage**: most existing commits in the corpus do not have a `Session-Id:` trailer, but many do have a UUID somewhere in the message body (worktree branch names, task IDs, or handoff references). The regex fallback recovers those links without requiring a retroactive git rewrite.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="goals" title="Goals">
+      <md><script type="text/plain">
+1. Add a `session_id string` field to `model.Commit` (parquet: `session_id,dict`).
+2. Populate it during `extractCommits` / `parseCommitLog` using the fallback strategy:
+   - **Primary**: parse `trailers_json` and use the value of `Session-Id` if present.
+   - **Fallback**: regex-scan the raw `messageBody` for the first standard UUID (`xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`). Store empty string if neither yields a match.
+3. Expose a pure, unit-testable helper `extractSessionID(messageBody, trailersJSON string) string` in `internal/git/`.
+4. Do **not** modify the `model.CommitFile` or `model.CommitHunk` schemas — denormalizing `session_id` there is a future concern.
+5. Write unit tests covering: trailer present, trailer absent + UUID in body, trailer absent + no UUID, trailer present + UUID in body (trailer wins), malformed UUID ignored.
+6. Update the E2E test corpus expectations: `stats.json` should include a `commitsWithSessionID int` counter so the E2E harness can verify the extraction runs without regression.
+7. In `auto-config`, add a `setup-hooks` sub-function to `autoconfig init --project` that installs a git pre-commit hook appending `Session-Id: <uuid>` to commit messages — see the **Auto-Config Hook** section below.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="out-of-scope" title="Out of Scope">
+      <md><script type="text/plain">
+- Denormalizing `session_id` onto `CommitFile` or `CommitHunk` rows — that join is trivial via `commit_id` and is deferred.
+- Retroactively injecting `Session-Id:` trailers into existing git history — ETL is read-only and non-destructive.
+- Populating `session_id` on `AgentMessage` or `AgentSession` with a reverse-link to the commit — out of scope; the join goes the other direction.
+- Fuzzy matching / heuristics beyond the two-step trailer + UUID regex — the goal is high precision with acceptable recall, not maximum recall.
+- Multi-UUID disambiguation — if multiple UUIDs appear in the message body, take the first; do not attempt to match against the known sessions dataset at ETL time (that is an autosearch/reflect concern).
+- Removing or modifying an existing pre-commit hook — if one already exists, `setup-hooks` errors out; the user must integrate manually.
+- Reading the `Session-Id` trailer value at commit time from anything other than the active Claude Code session environment variable or `.auto/settings.json`.
+- Supporting hooks in shell environments other than bash/sh.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="functional-requirements" title="Functional Requirements">
+      <md><script type="text/plain">
+**FR-1 — Model field**
+`model.Commit` gains a `SessionID string \`parquet:"session_id,dict"\`` field. Empty string when no session ID can be extracted.
+
+**FR-2 — Extraction helper**
+A package-internal function `extractSessionID(messageBody, trailersJSON string) string` in `internal/git/` implements the fallback chain:
+1. Unmarshal `trailersJSON`; look for key `"Session-Id"`. If the slice is non-empty, return `strings.TrimSpace(values[0])`.
+2. Apply `uuidRe.FindString(messageBody)` where `uuidRe = regexp.MustCompile(`(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`)`. Return the match if found.
+3. Return `""`.
+
+**FR-3 — Integration**
+`parseCommitLog` calls `extractSessionID(messageBody, trailersJSON)` and stores the result in `Commit.SessionID`. The call happens after `trailersJSON` is computed so both inputs are available.
+
+**FR-4 — Unit tests**
+`internal/git/extract_test.go` covers:
+- `TestExtractSessionID_TrailerPresent` — trailer wins over body UUID.
+- `TestExtractSessionID_TrailerAbsentBodyUUID` — UUID found in body when no trailer.
+- `TestExtractSessionID_NoMatch` — empty string returned when neither is present.
+- `TestExtractSessionID_MalformedUUIDIgnored` — partial UUID (7 hex chars short) does not match.
+- `TestExtractSessionID_FirstUUIDWins` — body with two UUIDs; first is returned.
+
+**FR-5 — Genstats counter**
+`cmd/genstats/main.go` adds `commitsWithSessionID int` to `stats.json`. The E2E test checks this counter is non-negative (and ideally non-zero against the `.tmp/` corpus if any commits carry a UUID).
+
+**FR-6 — Hook install (auto-config)**
+`autoconfig init --project` calls a `setupHooks(repoRoot string) error` function that:
+- Returns an error (with the snippet appended) if `.git/hooks/pre-commit` exists and does not contain the autoconfig marker.
+- Writes the hook file with mode `0755` and the marker comment otherwise.
+
+**FR-7 — Hook idempotency**
+If `.git/hooks/pre-commit` already contains the string `# Added by autoconfig`, `setupHooks` returns nil (no-op).
+
+**FR-8 — Hook unit tests (auto-config)**
+`auto-config` tests cover:
+- `TestSetupHooks_FreshRepo` — no existing hook → file created, executable, contains marker.
+- `TestSetupHooks_ExistingHookErrors` — existing hook without marker → error returned, file unchanged.
+- `TestSetupHooks_IdempotentRerun` — hook with marker already present → no error, file unchanged.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="autoconfig-hook" title="Auto-Config Hook" summary="auto-config project init installs a pre-commit hook that stamps Session-Id onto every future commit.">
+      <md><script type="text/plain">
+### Context
+
+`auto-config` (`auto-config/` sub-project, binary `autoconfig`) provides project-local setup via `autoconfig init --project`. This task adds a **`setup-hooks`** sub-function that wires up the `Session-Id:` trailer for all future commits in a repo.
+
+### Behaviour
+
+When `autoconfig init --project` runs `setup-hooks`:
+
+1. **Detect existing hook**: check whether `.git/hooks/pre-commit` exists.
+   - If it exists (any content) → print a clear error to `stderr` and exit non-zero:
+     ```
+     error: a pre-commit hook already exists at .git/hooks/pre-commit
+     To add Session-Id trailer support, append the following to your existing hook:
+     <snippet printed to stderr>
+     ```
+   - If it does not exist → install the hook (see below).
+
+2. **Install the hook**: write `.git/hooks/pre-commit` with mode `0755`:
+   ```sh
+   #!/bin/sh
+   # Added by autoconfig — appends Session-Id trailer to commit messages.
+   # Remove this file or comment out the block to disable.
+   if [ -n "$CLAUDE_SESSION_ID" ]; then
+     git interpret-trailers --if-exists doNothing --trailer "Session-Id: $CLAUDE_SESSION_ID" \
+       --in-place "$1"
+   fi
+   ```
+   The hook reads `$CLAUDE_SESSION_ID` from the environment. Claude Code sets this variable for the duration of a session; when the env var is absent (manual commits, CI) the hook is a no-op.
+
+3. **Idempotency guard**: if `autoconfig init --project` is re-run and the hook already contains the `autoconfig` marker comment, treat it as already-installed and exit zero (no-op, no error).
+
+### Source variable
+
+`CLAUDE_SESSION_ID` is the environment variable name. This task does **not** define where Claude Code exports it — that is an upstream concern. The hook is a no-op if the variable is unset, so it is safe to install even before the upstream change ships.
+
+### Error message quality
+
+The error output when a hook already exists must:
+- Name the conflicting file path.
+- Print the snippet the user can manually append, so they can self-serve without re-reading docs.
+- Exit with a non-zero code (e.g. `1`) so `autoconfig init --project` surfaces the failure.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="non-functional" title="Non-Functional Requirements">
+      <md><script type="text/plain">
+- **Performance**: UUID regex is compiled once at package init (not inside the loop). Trailer parsing already runs per-commit; `extractSessionID` adds negligible overhead.
+- **Precision over recall**: The regex matches the standard UUID format only. It does not match short IDs (`ab2a6291`) or agent hex IDs (`38babac48c0a60a1`) — those are different ID spaces and should not be confused with session UUIDs.
+- **No external dependencies**: pure stdlib (`regexp`, `encoding/json`, `strings`).
+- **Schema backward-compatibility**: existing parquet partitions without the `session_id` column continue to be readable; DuckDB and parquet-go handle missing columns gracefully by returning zero values.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="open-questions" title="Open Questions">
+
+      <pd-question status="answered" anchor="q-trailer-key-name">
+        <md><script type="text/plain">
+**What is the canonical trailer key name for the session ID?**
+
+The requirement assumes `Session-Id` (hyphenated, title-case). Is this already established as the convention, or is it still undecided? Related: will Claude Code's harness begin including this trailer automatically in future sessions, or is it opt-in per skill?
+        </script></md>
+        <pd-answer by="author">
+          <md><script type="text/plain">
+Recommended answer accepted: **`Session-Id`** is the canonical key (consistent with git trailer conventions like `Signed-off-by`, `Co-Authored-By`). The regex fallback covers the existing corpus regardless. The auto-config hook (FR-6) is the mechanism for installing it in new projects — no upstream harness change is required.
+          </script></md>
+        </pd-answer>
+      </pd-question>
+
+    </pd-section>
+
+    <pd-section id="data-flow" title="Data Flow" summary="How the extraction fits into the existing ETL pipeline.">
+      <pd-mermaid caption="Session ID extraction within parseCommitLog">
+        <script type="text/plain">
+flowchart TD
+    A[git log output] --> B[parseCommitLog]
+    B --> C[parseTrailers\nmessageBody]
+    C --> D{Session-Id\nin trailers?}
+    D -- yes --> E[session_id = trailer value]
+    D -- no --> F[uuidRe.FindString\nmessageBody]
+    F --> G{UUID found?}
+    G -- yes --> H[session_id = UUID match]
+    G -- no --> I[session_id = empty string]
+    E --> J[model.Commit\nSessionID populated]
+    H --> J
+    I --> J
+        </script>
+      </pd-mermaid>
+    </pd-section>
+
+    <pd-section id="acceptance-criteria" title="Acceptance Criteria">
+      <pd-ac id="ac-1" title="Trailer extraction" phases="1">
+        <md><script type="text/plain">
+Given a commit message with `Session-Id: abc12345-0000-0000-0000-000000000000` in the trailer block, `model.Commit.SessionID` equals `abc12345-0000-0000-0000-000000000000`.
+        </script></md>
+      </pd-ac>
+      <pd-ac id="ac-2" title="Body UUID fallback" phases="1">
+        <md><script type="text/plain">
+Given a commit message with no `Session-Id` trailer but containing `ab2a6291-d5fb-4aa3-a590-fc3584911d44` in the message body, `model.Commit.SessionID` equals `ab2a6291-d5fb-4aa3-a590-fc3584911d44`.
+        </script></md>
+      </pd-ac>
+      <pd-ac id="ac-3" title="Trailer wins over body UUID" phases="1">
+        <md><script type="text/plain">
+Given both a `Session-Id` trailer AND a different UUID in the message body, the trailer value is used.
+        </script></md>
+      </pd-ac>
+      <pd-ac id="ac-4" title="Empty when no match" phases="1">
+        <md><script type="text/plain">
+Given a commit message with neither a `Session-Id` trailer nor any UUID, `model.Commit.SessionID` is empty string.
+        </script></md>
+      </pd-ac>
+      <pd-ac id="ac-5" title="Unit tests pass" phases="1">
+        <md><script type="text/plain">
+`go test ./internal/git/...` passes with all five `TestExtractSessionID_*` cases green.
+        </script></md>
+      </pd-ac>
+      <pd-ac id="ac-6" title="E2E build passes" phases="1">
+        <md><script type="text/plain">
+`go build ./...` and `go test ./...` pass without errors after the changes.
+        </script></md>
+      </pd-ac>
+      <pd-ac id="ac-7" title="Hook install: fresh repo" phases="1">
+        <md><script type="text/plain">
+Running `autoconfig init --project` in a repo with no existing pre-commit hook creates `.git/hooks/pre-commit`, sets it executable (mode `0755`), and the file contains both the autoconfig marker comment and `git interpret-trailers` invocation referencing `$CLAUDE_SESSION_ID`.
+        </script></md>
+      </pd-ac>
+      <pd-ac id="ac-8" title="Hook install: existing hook errors" phases="1">
+        <md><script type="text/plain">
+Running `autoconfig init --project` when `.git/hooks/pre-commit` already exists (and lacks the autoconfig marker) exits non-zero, prints a message naming the conflicting file path, and leaves the existing hook file byte-for-byte unchanged.
+        </script></md>
+      </pd-ac>
+      <pd-ac id="ac-9" title="Hook install: idempotent" phases="1">
+        <md><script type="text/plain">
+Re-running `autoconfig init --project` after the hook is already installed (contains the autoconfig marker) exits zero and does not modify the hook file.
+        </script></md>
+      </pd-ac>
+    </pd-section>
+
+  </pd-tab>
+
+</pd-doc>
+
+</body>
+</html>

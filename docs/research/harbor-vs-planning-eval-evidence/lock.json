@@ -1,0 +1,263 @@
+{
+    "schema_version": 3,
+    "created_at": "2026-09-16T15:17:28.696939Z",
+    "harbor": {
+        "version": "0.23.0",
+        "is_editable": false
+    },
+    "n_concurrent_trials": 1,
+    "retry": {
+        "max_retries": 0,
+        "exclude_exceptions": [
+            "RewardFileNotFoundError",
+            "AgentSafetyRefusalError",
+            "VerifierTimeoutError",
+            "ApiUsageLimitError",
+            "VerifierOutputParseError",
+            "RewardFileEmptyError",
+            "ModelNotFoundError",
+            "AgentAuthenticationError",
+            "AgentTimeoutError"
+        ],
+        "wait_multiplier": 1.0,
+        "min_wait_sec": 1.0,
+        "max_wait_sec": 60.0
+    },
+    "trials": [
+        {
+            "schema_version": 2,
+            "task": {
+                "name": "008-commit-session-link-short-v2-scripted",
+                "type": "local",
+                "digest": "sha256:94c3ccf63d2de4e2623d991f206a755630b39b37c083c565168780cdcb8648e2",
+                "path": "<repo>/src/planning-eval-harbor/tasks/008-commit-session-link-short-v2-scripted"
+            },
+            "install_only": false,
+            "timeout_multiplier": 1.0,
+            "agent": {
+                "import_path": "peval_agents:ClaudeCodeReplay",
+                "model_name": "anthropic/claude-sonnet-4-6",
+                "skills": [
+                    "<repo>/skills"
+                ],
+                "resume_trajectory": true,
+                "extra_allowed_hosts": [],
+                "kwargs": {
+                    "max_budget_usd": "8"
+                },
+                "mcp_servers": []
+            },
+            "bridge_inputs": {},
+            "skills": [
+                {
+                    "name": "address-feedback",
+                    "source": "<repo>/skills/address-feedback",
+                    "digest": "sha256:e6cc2332a8249528b1f97d80436e40a9bfd3521d2ddae090c121af14754b011c"
+                },
+                {
+                    "name": "assurance-strategist",
+                    "source": "<repo>/skills/assurance-strategist",
+                    "digest": "sha256:5a29c8dce69d67a0a26d05d055d19ba8fd0ab752215b4d002cc087d39aedd712"
+                },
+                {
+                    "name": "borrow-from-oss",
+                    "source": "<repo>/skills/borrow-from-oss",
+                    "digest": "sha256:e7a7d250c1e0f5e2a0165260d92b30a9dcb57a448d529640d6b6afc66f0f263a"
+                },
+                {
+                    "name": "code-review",
+                    "source": "<repo>/skills/code-review",
+                    "digest": "sha256:96ac4abea8bc15306d1ece2b9d72a2f7b97949575c8245ed85bcf4dcf145ba47"
+                },
+                {
+                    "name": "commit-task",
+                    "source": "<repo>/skills/commit-task",
+                    "digest": "sha256:4b9cf5749ca86d34564ce2585c5902c46d43b387409026908b601b11a63db7d5"
+                },
+                {
+                    "name": "complete-task",
+                    "source": "<repo>/skills/complete-task",
+                    "digest": "sha256:463c14f4c7de5d1040f375fb407439affc5d8b5162fe1353a12ab651ea2adbd2"
+                },
+                {
+                    "name": "consult-the-council",
+                    "source": "<repo>/skills/consult-the-council",
+                    "digest": "sha256:9d7159cdcd819bdab0227a956b4124b51d34d3e0c958c80223e1ae6adb450bcc"
+                },
+                {
+                    "name": "delegate",
+                    "source": "<repo>/skills/delegate",
+                    "digest": "sha256:36354a8274997dd4114926b77af60dc63201a1f3c2d750093dfc4ca44f3fe106"
+                },
+                {
+                    "name": "delegate-task",
+                    "source": "<repo>/skills/delegate-task",
+                    "digest": "sha256:6e2fc8f52f33f4621cd1aadba5b9d62b3ef7621669ea2a35b7fe754ef6145133"
+                },
+                {
+                    "name": "domain-modelling",
+                    "source": "<repo>/skills/domain-modelling",
+                    "digest": "sha256:4eb7b64ab64b8fb3f6e3f4d99d6db849ee74d07e09bf50e36feb310c04a1bbea"
+                },
+                {
+                    "name": "eval-engineer",
+                    "source": "<repo>/skills/eval-engineer",
+                    "digest": "sha256:041a0fce91d4dc5b54ccb64815d217aa48aa25c67440cf34b2b8f91d60686927"
+                },
+                {
+                    "name": "execute-task",
+                    "source": "<repo>/skills/execute-task",
+                    "digest": "sha256:faece818e8313c2d845f48c264ad7203082eddce83634d6d703c05dd00f100e3"
+                },
+                {
+                    "name": "extract-demand-from-customer-conversation",
+                    "source": "<repo>/skills/extract-demand-from-customer-conversation",
+                    "digest": "sha256:4207f0f05264be874d498253a35fb5592b63d394ecb6a6bd49da765d05b610cc"
+                },
+                {
+                    "name": "fan-out-user-simulation",
+                    "source": "<repo>/skills/fan-out-user-simulation",
+                    "digest": "sha256:3968740638dad03bada247c665b94cced6630ff5a34418963244e35027542e5f"
+                },
+                {
+                    "name": "generate-10-ideas",
+                    "source": "<repo>/skills/generate-10-ideas",
+                    "digest": "sha256:f0f919b644b2e88e276e0a42d44c2ad4beb21e670571cb744d5a2c330cf3f67b"
+                },
+                {
+                    "name": "grill-me",
+                    "source": "<repo>/skills/grill-me",
+                    "digest": "sha256:ac4499631c7677ef07e3bb7fd6215194e1744d5a3e769a31f5372126bdf49843"
+                },
+                {
+                    "name": "handoff",
+                    "source": "<repo>/skills/handoff",
+                    "digest": "sha256:5f2615bc54d3e08f9202da04ee73ee7b7036e6b45f6c001cb96cc49c9b8562c2"
+                },
+                {
+                    "name": "learning-diary",
+                    "source": "<repo>/skills/learning-diary",
+                    "digest": "sha256:6eac8837edbe16b1798764b1f673b392dff56cb131315a3dfd0acd95b396df54"
+                },
+                {
+                    "name": "new-epic",
+                    "source": "<repo>/skills/new-epic",
+                    "digest": "sha256:8f9b9598b375b034e1a453696bb1d334ab7128ab77ee28585ce8398b64b3f726"
+                },
+                {
+                    "name": "new-plan",
+                    "source": "<repo>/skills/new-plan",
+                    "digest": "sha256:e2372675b7dfec846d8f45dd775f381ede01dc603f0b9089bab7b703a307cdf1"
+                },
+                {
+                    "name": "new-solution",
+                    "source": "<repo>/skills/new-solution",
+                    "digest": "sha256:0278f9b34da8e032e81281b5bac9000998975b793eadaf81dcbb84a7178b76ea"
+                },
+                {
+                    "name": "new-task",
+                    "source": "<repo>/skills/new-task",
+                    "digest": "sha256:3c685d3a9eff67616a5444d858622ae20dc2969882cb287bea41eb0cf9b96669"
+                },
+                {
+                    "name": "new-task-quick",
+                    "source": "<repo>/skills/new-task-quick",
+                    "digest": "sha256:8b7afe1c9363d7cddd7528c0a84883fc9deb02b8ed008b2631c77c994ea02531"
+                },
+                {
+                    "name": "playbook-observe",
+                    "source": "<repo>/skills/playbook-observe",
+                    "digest": "sha256:795a966357cc1caf7abd25d09a0b53e10425181c4675da9744610169c09391bd"
+                },
+                {
+                    "name": "playbook-refine",
+                    "source": "<repo>/skills/playbook-refine",
+                    "digest": "sha256:ae94477ba099435a47bd772a9bb64f3d49264ad83042a7794d4e7b98e68ea468"
+                },
+                {
+                    "name": "playbook-search",
+                    "source": "<repo>/skills/playbook-search",
+                    "digest": "sha256:8a4b90d93029a81f81ef8271935beecc543343ef48e9ddec2ac715e326ce21e0"
+                },
+                {
+                    "name": "postmortum",
+                    "source": "<repo>/skills/postmortum",
+                    "digest": "sha256:c57d0cb690fbf9653918942f08b353d6a9c080ce555150133473b1f5c44147fb"
+                },
+                {
+                    "name": "request-claude-review",
+                    "source": "<repo>/skills/request-claude-review",
+                    "digest": "sha256:4c8df42fdc2f68ca2007aa6558bc150cdad8cf26c9a0c9f20223a155c9c6a417"
+                },
+                {
+                    "name": "request-codex-review",
+                    "source": "<repo>/skills/request-codex-review",
+                    "digest": "sha256:f87f9c8cddc70924074120c581ee2a7ccfb4146c1bc5f3c3b427d34b1a55df15"
+                },
+                {
+                    "name": "request-council-review",
+                    "source": "<repo>/skills/request-council-review",
+                    "digest": "sha256:f90c6befbb761084403b68cc4d6fb11ab15060d40e504cebe1a6e34ed52aa096"
+                },
+                {
+                    "name": "request-grok-review",
+                    "source": "<repo>/skills/request-grok-review",
+                    "digest": "sha256:db3e9a3119581f8da3937e7edbc8e109022c0bc19a22d5f66ba351c9c017d128"
+                },
+                {
+                    "name": "resolve-comments",
+                    "source": "<repo>/skills/resolve-comments",
+                    "digest": "sha256:87339b6deb6e7ee86fe9d450c8b1c99ce60408f1b9148569bfc822ef97d09b4d"
+                },
+                {
+                    "name": "review-task",
+                    "source": "<repo>/skills/review-task",
+                    "digest": "sha256:4a512277b242176e1aafa4e610592725840562afc524e0d44200f2035e06d7b1"
+                },
+                {
+                    "name": "revise-readme",
+                    "source": "<repo>/skills/revise-readme",
+                    "digest": "sha256:f6e5d3287f95091cc2e8636c11107afd5f98343474a3408b41e659c7fcc8649e"
+                },
+                {
+                    "name": "rich-doc",
+                    "source": "<repo>/skills/rich-doc",
+                    "digest": "sha256:d5120c851f18b58e7fd909ec4b77a7b4c87504680ce3003e5ef2d165786680bf"
+                },
+                {
+                    "name": "skill-reviewer",
+                    "source": "<repo>/skills/skill-reviewer",
+                    "digest": "sha256:c2e1a7f2b054f7c5c1e4b45c3cb5a7cc0df2ac3f92502008c2b833218d0577db"
+                },
+                {
+                    "name": "status-report",
+                    "source": "<repo>/skills/status-report",
+                    "digest": "sha256:63f8266971a27e00f66f45f97bf198095a24f2d654efd8a801a887ebbc2a35e6"
+                },
+                {
+                    "name": "task-feedback-analyser",
+                    "source": "<repo>/skills/task-feedback-analyser",
+                    "digest": "sha256:6361509fdffbeae74e94b8e2b56aa6cab9570fd5cce0d5d0e765512d971c4345"
+                },
+                {
+                    "name": "tech-spike",
+                    "source": "<repo>/skills/tech-spike",
+                    "digest": "sha256:e66ba3d4203a7532df7f69358d80a9f897c8bc41168d86455a4e5871cf812ed4"
+                }
+            ],
+            "environment": {
+                "type": "docker",
+                "force_build": false,
+                "delete": true,
+                "cpu_enforcement_policy": "auto",
+                "memory_enforcement_policy": "auto",
+                "extra_docker_compose": [],
+                "kwargs": {},
+                "extra_allowed_hosts": []
+            },
+            "verifier": {
+                "disable": true
+            }
+        }
+    ]
+}

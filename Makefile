@@ -1,4 +1,4 @@
-.PHONY: compile lint check install pd-components pd-dev pd-test test test-agent-cli-live test-review-stdin eval-assurance evals release
+.PHONY: compile lint check install pd-components pd-dev pd-test test test-agent-cli-live test-review-stdin eval-assurance evals peval-harbor release
 
 # Compiles skill source files from ./src/ into ./skills/ output.
 # Run after editing any skill source in ./src/.
@@ -45,7 +45,7 @@ check: compile lint
 # contract (flags the delegate/review skills pass to claude/codex/grok/herdr,
 # checked against the installed CLIs' --help). Needs all four CLIs on PATH.
 test:
-	uv run pytest src/assurance/tests/ src/evals/tests/ src/planning-workflow/tests/ src/consult-the-council/tests/
+	uv run pytest src/assurance/tests/ src/evals/tests/ src/planning-workflow/tests/ src/consult-the-council/tests/ src/planning-eval-harbor/tests/
 
 # Live smoke for the agent CLI contract: runs the canonical headless invocation
 # of claude, codex and grok and expects a PONG. Bills tokens; needs auth.
@@ -70,3 +70,11 @@ eval-assurance: compile
 # Usage: make evals ARGS='run --skill rich-doc --arm WORKTREE --prompt "..."'
 evals:
 	PYTHONPATH=src uv run --no-dev python -m evals $(ARGS)
+
+# Replays a planning-eval fixture as a Harbor job: Docker sandbox, the arm's
+# skills injected, one step per operator turn, no verifier. Bills real tokens
+# (`--dry-run` doesn't). The module has its own uv environment (it depends on
+# harbor); results land under src/planning-eval-harbor/runs/.
+# Usage: make peval-harbor ARGS='run src/planning-eval-harbor/fixtures/008-commit-session-link-short.json'
+peval-harbor:
+	uv run --project src/planning-eval-harbor --no-dev python src/planning-eval-harbor/run.py $(ARGS)
