@@ -1,5 +1,5 @@
 ---
-hash: "57124e74"
+hash: "d3237147"
 id: "736983b0"
 read_when: "deciding whether planning replays should run on Harbor or on planning-eval's NTM harness, or picking up src/planning-eval-harbor/ and needing the evidence and the known gaps behind it (auth stripping, skills not reaching the ACP target, Docker iteration cost)"
 summary: "Research finding on replacing src/planning-eval/ (NTM-driven multi-turn planning replay) with the Harbor agent-eval framework: what Harbor 0.23 actually provides (verified by running it), the three patches its simulated-user path needed for a claude-code target on subscription auth, what a migration costs and loses, the side-by-side implementation in src/planning-eval-harbor/, live evidence with costs, and a recommendation. Decisions taken without asking are listed at the end."
@@ -54,7 +54,7 @@ What matters for a planning replay, with the evidence:
 | **Full transcripts**: stream-json per step (`agent/claude-code.txt`), ATIF `trajectory.json`, native session `.jsonl` | yes | the same stream-json shape `src/evals/invocation.py` already parses |
 | **Artifacts**: collect `/app` (excluding `.git`) after each step | yes | multi-step collects run-level artifacts *per step* under `steps/<name>/artifacts/`, which gives the workspace after every turn for free |
 | Per-step **cost and token** accounting | yes | `step_results[].agent_result` has cost/tokens per step, from the stream `result` event |
-| **Viewer** (`harbor view <jobs-dir>`) | yes (started, not screenshotted) | renders trajectory, cost, timing, artifacts, config, lock per trial |
+| **Viewer** (`harbor view <jobs-dir>`) | yes, with a gap | lists jobs and trials, renders the trajectory with per-step cost and timing, shows config, lock and an artifact file tree — but serves an HTML artifact as `text/plain` (verified 2026-09-23), so a pd-components plan is shown as source, not rendered; no arm-vs-arm diff and no comments |
 | **Subscription (OAuth) auth** via `CLAUDE_CODE_OAUTH_TOKEN` | yes for a headless target; **no** for the ACP target | §3.1 |
 | `harbor run --dry-run` validates config, task, credentials without a container | yes | used by `run.py --dry-run` |
 
@@ -236,8 +236,20 @@ count, different token meter — but they say the Docker cost is not the story.
    land, `peval_agents.py` shrinks to the credentials seeding.
 4. **Do not adopt Harbor's verifier/reward path.** Nothing in this repo's eval
    stance changed: judgement stays human, and the harness never emits a score.
-   `harbor view` is a good reading room precisely because it shows the
-   trajectory and artifacts, not because of the reward it also shows.
+   `harbor view` is useful for the trajectory and the artifact tree, not for
+   judging a rendered document: it previews HTML as source. For human
+   judgement of the produced docs, side-by-side arms, and comments that feed
+   the next iteration, the `src/evals/` viewer already does all three — an
+   exporter from the Harbor run layout into the evals run layout is the
+   cheapest route (see §8a).
+
+8a. **Arms and a reading room are the next two pieces.** `run.py` takes one
+   arm per run today (the fixture's `skills_dir`); comparing an edit to a
+   skill against its committed version means two runs and a hand-made
+   snapshot. Lifting `src/evals/arms.py` (`--arm HEAD --arm WORKTREE`, any
+   ref via `git archive`) and putting each arm into one Harbor job as its own
+   `agents[]` entry gives both arms in one job, one image build, and per-arm
+   skill digests in the lock file.
 5. **Bundle git history into the seed if a replay needs it.** Cheap to add
    (`git bundle`), not needed for the evidence run.
 

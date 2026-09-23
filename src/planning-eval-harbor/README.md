@@ -110,7 +110,12 @@ The scripted operator needs no such check: the instruction file *is* the message
 
 Run the same fixture twice with different `arm.skills_dir` (as planning-eval
 does), then read the two runs' `transcript.txt` and `produced/` side by side.
-`harbor view` renders every step's trajectory with its cost and timing.
+`harbor view` renders every step's trajectory with its cost and timing, but
+previews an HTML artifact as source, not rendered. To judge a produced
+`plan.html` open `produced/…/plan.html` in a browser (it is a self-contained
+pd-components document), or see the research doc's §8a for the planned export
+into the `src/evals/` viewer, which renders HTML side by side and carries
+comments.
 
 Planning is non-deterministic: planning-eval measured a 1.5–1.8× spread between
 identical runs (`docs/research/planning-eval-validation.md`). `--trials 3`
