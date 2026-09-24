@@ -76,7 +76,7 @@
       "template_hash": "deca8279c1ce77e4ce2eeb61e1c6c6db56876fe13256ae45d2ea662fa946258f",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "01409c2ecbed8c927897375bd1d17ec4bc5727c4c5d8f4119cc26896f4151183",
+      "skill_version": "47d6d52225843ad3ed63108c47a17b04d4e6f4db3c4a9614178d55df5e492b55",
       "render_version": "1"
     },
     "execute-task": {
@@ -164,10 +164,10 @@
       "render_version": "1"
     },
     "plan-review": {
-      "template_hash": "33c889b721432fd3198c052f75c1b7d4247a3f851605d7135410ebed46a848bf",
+      "template_hash": "34c33d31098c4764da4f01d48d350c4e7b91a6d7f0e9019919768a32123d6cae",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "32a7ce7497b1a04720a61c19cf61892c3eddaa64d00514c77c453e7f3d9fe097",
+      "skill_version": "36c5752b0290d89449e9fd0c85b9adcbb10b2d996375347144fe45a485cf9133",
       "render_version": "1"
     },
     "playbook-observe": {
@@ -296,7 +296,7 @@
         "delegate": "ee1a554b73df015dd0e5b0402ddec6b26b1ee5794f39de60e4d6c07fec67030c",
         "delegate-task": "e37f11c18714d5a86c3f4a9ab35077f4a3dadf932fee5ddb3ed463ad41e0cfb5",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
-        "eval-engineer": "01409c2ecbed8c927897375bd1d17ec4bc5727c4c5d8f4119cc26896f4151183",
+        "eval-engineer": "47d6d52225843ad3ed63108c47a17b04d4e6f4db3c4a9614178d55df5e492b55",
         "execute-task": "01676a76b754cee851bff9671f2250dea0b1ed6eb35ecd84278880ccbaafc59c",
         "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
@@ -309,7 +309,7 @@
         "new-solution": "8b8d3173823f411dc3fb2c2b185f0ff82ec91c437f3ad0dad524eb7c8dfc1392",
         "new-task": "5232db22c3753ed70fa11d26ff93379f118b4ab65505b32f83fc0050a14a538e",
         "new-task-quick": "1bb0705ca226dbde31e6932659bffd8c94e9d8aa4b0123ae4b4c5660c94b59a9",
-        "plan-review": "32a7ce7497b1a04720a61c19cf61892c3eddaa64d00514c77c453e7f3d9fe097",
+        "plan-review": "36c5752b0290d89449e9fd0c85b9adcbb10b2d996375347144fe45a485cf9133",
         "playbook-observe": "8fb0772012871ac78065a82c8f9861fb7d4c5d51b731c88421b1daf715e2590f",
         "playbook-refine": "2c322d39d5131cfd30776036dbc14aca2a87181f30d545810046918df905224e",
         "playbook-search": "1e86b067218a1edaaeaacc1e31610dd7bde0b4d7155b63c7a3318ca2888f93ed",
@@ -340,7 +340,7 @@
         "delegate": "ee1a554b73df015dd0e5b0402ddec6b26b1ee5794f39de60e4d6c07fec67030c",
         "delegate-task": "e37f11c18714d5a86c3f4a9ab35077f4a3dadf932fee5ddb3ed463ad41e0cfb5",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
-        "eval-engineer": "01409c2ecbed8c927897375bd1d17ec4bc5727c4c5d8f4119cc26896f4151183",
+        "eval-engineer": "47d6d52225843ad3ed63108c47a17b04d4e6f4db3c4a9614178d55df5e492b55",
         "execute-task": "01676a76b754cee851bff9671f2250dea0b1ed6eb35ecd84278880ccbaafc59c",
         "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
@@ -353,7 +353,7 @@
         "new-solution": "8b8d3173823f411dc3fb2c2b185f0ff82ec91c437f3ad0dad524eb7c8dfc1392",
         "new-task": "5232db22c3753ed70fa11d26ff93379f118b4ab65505b32f83fc0050a14a538e",
         "new-task-quick": "1bb0705ca226dbde31e6932659bffd8c94e9d8aa4b0123ae4b4c5660c94b59a9",
-        "plan-review": "32a7ce7497b1a04720a61c19cf61892c3eddaa64d00514c77c453e7f3d9fe097",
+        "plan-review": "36c5752b0290d89449e9fd0c85b9adcbb10b2d996375347144fe45a485cf9133",
         "playbook-observe": "8fb0772012871ac78065a82c8f9861fb7d4c5d51b731c88421b1daf715e2590f",
         "playbook-refine": "2c322d39d5131cfd30776036dbc14aca2a87181f30d545810046918df905224e",
         "playbook-search": "1e86b067218a1edaaeaacc1e31610dd7bde0b4d7155b63c7a3318ca2888f93ed",
