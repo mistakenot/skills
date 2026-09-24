@@ -5,10 +5,14 @@
     make plan-review ARGS='ingest <harbor-run-dir> ... | --all'
     make plan-review ARGS='serve [--port 8765] [--host 127.0.0.1] [--reviewer NAME]'
     make plan-review ARGS='status'
+    make plan-review ARGS='label <plan_id> <mode> present|absent [--evidence ID ...] [--reason TEXT]'
+    make plan-review ARGS='report [--by version|fixture]'
 
 `generate` replays each fixture through planning-eval-harbor (`run.py run
 --skills-ref`) and ingests what it produced. `serve` starts the open-coding
-app. Nothing here scores a plan: judgement is the reviewer's notes.
+app. `label` records axial-coding judgements against data/taxonomy.json and
+`report` counts verdicts and failure modes per skills version. Nothing here
+scores a plan by itself: judgement is the reviewer's.
 """
 
 from __future__ import annotations
@@ -23,6 +27,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
+import coding  # noqa: E402
 import corpus  # noqa: E402
 import notes  # noqa: E402
 import server  # noqa: E402
@@ -129,6 +134,36 @@ def cmd_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_label(args: argparse.Namespace) -> int:
+    try:
+        tax = coding.load_taxonomy(args.data_dir)
+        if tax is None:
+            raise coding.CodingError(f"no taxonomy yet: write {args.data_dir / 'taxonomy.json'} first")
+        plans = corpus.load(args.runs_dir, args.data_dir)
+        lab = coding.make_label(args.plan_id, args.mode, args.value == "present", tax, set(plans),
+                                args.by or _reviewer_default(), args.evidence, args.reason)
+    except coding.CodingError as exc:
+        print(f"plan-review: {exc}", file=sys.stderr)
+        return 2
+    coding.append_label(lab, args.data_dir)
+    print(f"plan-review: {lab['plan_id']} {lab['mode']} = {args.value} (taxonomy v{lab['taxonomy_version']})")
+    return 0
+
+
+def cmd_report(args: argparse.Namespace) -> int:
+    try:
+        tax = coding.load_taxonomy(args.data_dir)
+    except coding.CodingError as exc:
+        print(f"plan-review: {exc}", file=sys.stderr)
+        return 2
+    review = server.Review(args.runs_dir, args.data_dir, _reviewer_default())
+    rep = coding.report(review.plans(), review.state()["verdicts"], tax,
+                        coding.load_labels(args.data_dir), by=args.by)
+    names = {m["id"]: m["name"] for m in tax["modes"]} if tax else {}
+    print(coding.render_report(rep, names))
+    return 0
+
+
 def cmd_serve(args: argparse.Namespace) -> int:
     review = server.Review(args.runs_dir, args.data_dir, args.reviewer or _reviewer_default())
     httpd = server.serve(review, args.host, args.port)
@@ -172,6 +207,19 @@ def main(argv: list[str] | None = None) -> int:
     s.set_defaults(func=cmd_serve)
 
     sub.add_parser("status", help="corpus and review progress").set_defaults(func=cmd_status)
+
+    lab = sub.add_parser("label", help="record whether a failure mode is present in a plan (axial coding)")
+    lab.add_argument("plan_id")
+    lab.add_argument("mode", help="a mode id from data/taxonomy.json")
+    lab.add_argument("value", choices=("present", "absent"))
+    lab.add_argument("--evidence", nargs="*", default=[], metavar="NOTE_ID", help="note ids supporting it")
+    lab.add_argument("--reason", default="", help="one line: why")
+    lab.add_argument("--by", help="who judged (default: the reviewer name)")
+    lab.set_defaults(func=cmd_label)
+
+    rep = sub.add_parser("report", help="verdicts and failure-mode rates per skills version (unblinds)")
+    rep.add_argument("--by", choices=("version", "fixture"), default="version")
+    rep.set_defaults(func=cmd_report)
 
     args = p.parse_args(argv)
     return args.func(args)

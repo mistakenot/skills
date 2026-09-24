@@ -80,8 +80,10 @@ free-text notes (open coding), later grouped into named failure modes (axial cod
 then become narrow judges validated against those notes. `src/plan-review/` is the reference
 for `new-task-quick` plans: fixtures replayed through `src/planning-eval-harbor/` with the arm
 pinned to a skills commit (`--skills-ref`), a blind review app over the produced `plan.html`,
-and an append-only notes log in `src/plan-review/data/`. The `plan-review` skill runs a
-session. Use it to *discover* what to measure; use harnesses 1–2 once you know.
+an append-only notes log in `src/plan-review/data/`, then failure-mode labels and a
+per-version `report`. The `plan-review` skill runs the whole loop: generate, open code,
+axial code, change the skill, regenerate both arms, compare. Use it to *discover* what
+to measure and to judge changes by it; use harnesses 1–2 once a mode has a validated judge.
 
 ## Choosing between 1 and 2
 

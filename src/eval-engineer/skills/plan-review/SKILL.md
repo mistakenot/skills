@@ -1,65 +1,94 @@
 ---
 name: plan-review
-description: "Runs a blind open-coding review of new-task-quick plans generated in Harbor, via a note-taking app. Use when 'plan review', 'open coding', 'review generated plans'. Not for one task's docs (use review-task)."
+description: "Improves new-task-quick through a human-review loop: generate plans, blind open coding, failure-mode labels, change, regenerate, compare. Use when 'plan review', 'open coding', 'improve plan quality'. Not for one task's docs (use review-task)."
 ---
 
-# Plan Review — open coding over generated plans
+# Plan Review — the plan-quality improvement loop
 
-A person reads plans that `/{{ skill:new-task-quick }}` produced and writes down, in their own
-words, what is wrong (or right) with each. That is **open coding**: the first step of error
-analysis, before anyone knows what the failure modes are. Grouping the notes into named
-failure modes (**axial coding**) comes after and is not part of this skill yet.
+This skill improves `/{{ skill:new-task-quick }}` using a person's judgement of the
+plans it actually produces. A reviewer reads generated plans and notes what is
+wrong. Those notes become named failure modes. Each skill change is tested by
+regenerating plans with the old and new skills and counting the modes in each.
 
-The reviewer notices; you keep the machinery running and stay out of the way. Everything
-lives in `src/plan-review/` (see its README for the data model).
+```
+        ┌────────────────────────────────────────────────────────────────────┐
+        ▼                                                                    │
+  1 GENERATE ──► 2 OPEN CODING ──► 3 AXIAL CODING ──► 4 CHANGE ──► 5 REGENERATE ──► 6 COMPARE
+  plans from      reviewer's free-    failure modes +     one skill     baseline +        report;
+  fixtures at     text notes and      per-plan labels     edit, one     candidate, same   keep / revert
+  skills@REF      verdicts (blind)    (taxonomy.json)     hypothesis    fixtures, blind   (iterations.md)
+```
+
+Steps 1–3 run once to build the baseline taxonomy. Each iteration then runs
+4 → 5 → 2 → 3 → 6 on the new batch: the new plans are open-coded and labelled
+before anything is compared.
+
+The tooling is in `src/plan-review/` (its README documents the data model). Run
+everything as `make plan-review ARGS='...'` from the repo root.
 
 ## Invariants
 
-- **Do not prime the reviewer.** During open coding never suggest failure categories, never
-  summarise their themes back to them, never point at instances in a plan. Early framing from
-  you becomes their framing and the notes stop being independent evidence. Answer direct
-  questions, then step back.
-- **Blind.** Never reveal which skills version, trial, model or cost produced a plan while a
-  session is running. The app hides them; `runs/corpus.jsonl` does not — don't read it aloud.
-- **Notes are append-only.** `data/notes.jsonl` is written only by the app, one event per line.
-  Never edit or rewrite it; `data/plans/` and `data/open-coding-log.jsonl` are committed with it.
-- **Interactive only.** In a headless run (`claude -p`, `codex exec`) there is no reviewer:
-  run `status`, report, and stop. Never claim a review happened or that a server is still up.
+- **The reviewer judges; you draft and operate.** You never decide on your own
+  that a plan is good or bad. You propose taxonomies and labels, and the reviewer
+  confirms or overrides them.
+- **Blind until labelled.** The review app hides the skills version, trial, model and
+  cost. Don't reveal them during review. `report` unblinds, so run it only after the
+  batch is fully labelled. When comparing versions, generate both arms in the same
+  batch so the unreviewed set is mixed (see the iterate reference).
+- **Don't prime.** During open coding, never suggest categories or point at
+  instances. Your framing would replace theirs.
+- **One change per iteration, and every arm is a commit.** `--skills-ref` sees only
+  committed, compiled `skills/`. Two changes in one iteration can't be told apart.
+- **Append-only evidence.** Never hand-edit `data/notes.jsonl` or `data/labels.jsonl`.
+  The app and `label` write them. `data/` (plan snapshots, notes, logs, taxonomy,
+  labels, iterations) belongs in git.
+- **Spend is confirmed.** Every `generate` bills tokens (about $1–2.50 per plan so
+  far, capped at $15 per plan). State the count and cost, and wait for a yes.
+  `--dry-run` is free.
+- **Interactive only.** A headless run (`claude -p`, `codex exec`) has no reviewer:
+  run `status` and `report`, say where the loop stands, and stop. Never claim a
+  review happened.
+
+## Where are we? (run `status`, then pick the stage)
+
+| State | Stage | Read |
+|---|---|---|
+| Corpus empty or too narrow; or starting an iteration's regeneration | Generate | [references/plan-review-generate.md](references/plan-review-generate.md) |
+| Plans without a verdict | Open coding | [references/plan-review-open-coding.md](references/plan-review-open-coding.md) |
+| Verdicts but no `data/taxonomy.json`, or reviewed plans missing labels | Axial coding | [references/plan-review-axial-coding.md](references/plan-review-axial-coding.md) |
+| Everything labelled; no open entry in `data/iterations.md` | Iterate: pick a target, change the skill | [references/plan-review-iterate.md](references/plan-review-iterate.md) §1–4 |
+| Open iteration entry; its batch is generated | Open coding, then axial coding, on the new plans | the two references above |
+| Open iteration entry; its batch is fully labelled | Iterate: compare and decide | [references/plan-review-iterate.md](references/plan-review-iterate.md) §6–7 |
+
+Read the reference for the stage you're entering. Each is self-contained. Tell the
+user which stage you're in and what the next stage will be.
 
 ## Commands
 
-All via `make plan-review ARGS='...'` from the repo root:
+| Command | Stage | Does |
+|---|---|---|
+| `generate [fx.json ...] [--skills-ref REF] [--trials N] [--model M] [--dry-run]` | 1, 5 | Replays fixtures in Harbor at skills@REF and ingests the plans |
+| `ingest <run-dir> ... \| --all` | 1, 5 | Adds plans from existing Harbor runs |
+| `serve [--port 8765]` | 2 | The blind review app: span notes, verdicts, progress |
+| `status` | any | Plans, verdicts, note counts |
+| `label <plan> <mode> present\|absent [--evidence IDs] [--reason ...]` | 3 | One failure-mode judgement against the current taxonomy |
+| `report [--by version\|fixture]` | 3, 6 | Verdicts and mode rates per skills version (unblinds) |
 
-| Command | Does |
-|---|---|
-| `status` | Corpus size, verdicts, notes per plan |
-| `generate [fixture.json ...] [--skills-ref REF] [--trials N]` | Replays fixtures (default: all in `src/plan-review/fixtures/`) through Harbor with the skills at `REF`, then ingests. **Bills tokens** (~$5–15 per plan) — confirm with the user first; `--dry-run` is free |
-| `ingest <harbor-run-dir> ... \| --all` | Adds plans from existing planning-eval-harbor runs |
-| `serve [--port 8765]` | The review app |
+## State files (`src/plan-review/data/`)
 
-## Session
+| File | Written by | Holds |
+|---|---|---|
+| `plans/<id>/` | the app, on first open | A snapshot of the plan. Plans can't be regenerated identically, so this is kept |
+| `notes.jsonl` | the app | Span notes and verdicts (event log) |
+| `open-coding-log.jsonl` | you, per verdict | New vs repeat themes per plan, used to judge saturation |
+| `taxonomy.json` | you + reviewer | Failure modes, versioned |
+| `labels.jsonl` | `label` | Present/absent per plan × mode × taxonomy version |
+| `iterations.md` | you + reviewer | One entry per iteration: hypothesis, arms, result, decision |
 
-1. **Corpus.** Run `status`. If it is empty or everything has a verdict, offer `generate`
-   (state the cost, wait for a yes). Writing a new fixture: copy one in `fixtures/`; the prompt
-   must end with the stop line (`corpus.STOP_SUFFIX`) so the run halts at the first gate.
-2. **Serve.** Start `serve` in the background and give the user `http://localhost:8765/`
-   (in a devcontainer the port must be forwarded). One line on use: select text → note
-   (Enter saves); `1`/`2`/`d` = pass/fail/defer with a plan-level note; `←`/`→` move between
-   plans; Progress shows everything noted so far.
-3. **Watch** `src/plan-review/data/notes.jsonl` for new lines by polling every 2 s (not
-   filesystem events). In Claude Code use the Monitor tool:
-   `f=src/plan-review/data/notes.jsonl; n=$(cat $f 2>/dev/null | wc -l); while true; do m=$(cat $f 2>/dev/null | wc -l); [ "$m" -gt "$n" ] && tail -n $((m-n)) $f | cut -c1-240; n=$m; sleep 2; done`.
-   Elsewhere run the same loop in the background, appending to a log you read each turn.
-4. **On each verdict event**, read every note on that plan and compare it with the themes
-   seen on earlier plans. Append one line to `src/plan-review/data/open-coding-log.jsonl`:
-   `{"plan_id": ..., "ts": ..., "new_codes": [...], "repeat_codes": [...]}`, where each code is
-   a short descriptive label **in the reviewer's own words** (in-vivo), not a category you
-   invented. Tell the user one line — "plan #4: 2 new themes, 1 repeat" — without the labels
-   unless they ask. The app charts this log.
-5. **Re-review.** Once about five plans have verdicts, suggest one pass back over the first
-   two: criteria drift as the reviewer sees more, and early plans are read with a thinner eye.
-6. **Saturation.** When three consecutive reviewed plans add at most one new theme between
-   them, say open coding is saturating and offer the next step: axial coding on the notes,
-   or `generate` with more varied fixtures if coverage (repos, task shapes) is the gap.
-7. **Close.** Stop the server. Report plans reviewed, notes taken, and themes per plan.
-   `data/` changes (snapshots, notes, log) are the durable record — they belong in git.
+## When to stop
+
+Stop iterating when the remaining modes are rare or cheap, or when two iterations
+in a row fail to move their target. At that point, write narrow automated judges for
+the stable modes and validate them against `labels.jsonl`, so later iterations need
+less hand labelling. New fixtures from new repos restart discovery: open-code them
+before trusting the taxonomy on them.

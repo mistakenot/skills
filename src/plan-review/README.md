@@ -1,16 +1,42 @@
 # plan-review
 
-Human open coding over plans that `/new-task-quick` generated. Fixtures are
-replayed through [`planning-eval-harbor`](../planning-eval-harbor/README.md)
-in Docker with the skills pinned to a commit. The resulting `plan.html` files
-go into a corpus, and a reviewer reads them in a blind review app, writing
-free-text notes on spans and a pass/fail/defer verdict per plan.
-Nothing is scored automatically. The notes *are* the output: the raw material
-for axial coding (grouping notes into named failure modes) and, after that,
-for validating judges.
+The tooling for improving `/new-task-quick` with human judgement.
+Fixtures are replayed through
+[`planning-eval-harbor`](../planning-eval-harbor/README.md) in Docker, with the
+skills pinned to a commit. The resulting `plan.html` files go into a corpus. A
+reviewer reads them in a blind review app, writing free-text notes on spans and
+a pass/fail/defer verdict per plan (open coding). The notes are then grouped into
+named failure modes and each plan is labelled (axial coding). Each skill change
+is judged by how those failure-mode counts move between the old and new
+versions.
 
-The `plan-review` skill (`src/eval-engineer/skills/plan-review/`) runs a
-session: it serves the app, watches the notes, and logs theme saturation.
+**The whole loop is run by the `plan-review` skill**
+(`src/eval-engineer/skills/plan-review/`, one reference per stage). Invoke it and
+it works out which stage you're in. This README is the reference for the
+tooling underneath.
+
+## The improvement loop
+
+```
+  1 GENERATE ──► 2 OPEN CODING ──► 3 AXIAL CODING ──► 4 CHANGE ──► 5 REGENERATE ──► 6 COMPARE ──┐
+  fixtures at     reviewer's notes    taxonomy.json +     one skill    baseline AND      report;      │
+  skills@REF      + verdicts, blind   labels.jsonl        edit + commit candidate arms   keep/revert  │
+      ▲                                                                                              │
+      └───────────────────────── next iteration: next failure mode ◄────────────────────────────────┘
+```
+
+| Step | What happens | Command(s) | Writes |
+|---|---|---|---|
+| 1 Generate | Replay every fixture at a skills commit; ingest the plans | `generate --skills-ref REF --trials N` | `runs/corpus.jsonl` |
+| 2 Open coding | Reviewer reads plans blind, notes spans, gives verdicts; agent logs new vs repeat themes | `serve` | `data/plans/`, `data/notes.jsonl`, `data/open-coding-log.jsonl` |
+| 3 Axial coding | Agent drafts failure modes from the notes, reviewer settles them; each reviewed plan labelled per mode | `label`, `report` | `data/taxonomy.json`, `data/labels.jsonl` |
+| 4 Change | Pick the most frequent and costly mode, trace it to a stage/tab reference, make one edit, `make compile`, commit | — | `data/iterations.md` (opened) |
+| 5 Regenerate | Generate **both** the baseline and candidate commits, same fixtures and trials, so the unreviewed batch is mixed and blind. Then steps 2–3 on the new plans | `generate --skills-ref <each>` | as 1–3 |
+| 6 Compare | Per-version mode rates for the batch. Keep if the target fell beyond noise and nothing rose; revert otherwise | `report` | `data/iterations.md` (closed) |
+
+The skill's references hold the rules for each step: how many trials, how to
+write a failure mode, when to bump the taxonomy version, how to decide, and how
+to avoid overfitting to the fixtures.
 
 ```
 fixtures/*.json ─► generate ─► planning-eval-harbor (Docker, skills @ REF, stops at gate 1)
@@ -22,6 +48,8 @@ fixtures/*.json ─► generate ─► planning-eval-harbor (Docker, skills @ RE
                     serve ─► data/plans/<id>/               (committed)
                               data/notes.jsonl              (committed, append-only)
                               data/open-coding-log.jsonl    (committed, written by the agent)
+                    label ─► data/labels.jsonl              (committed, append-only; vs data/taxonomy.json)
+                   report ◄─ corpus + verdicts + labels, grouped by skills version
 ```
 
 ## Quickstart
@@ -33,6 +61,8 @@ make plan-review ARGS='generate f.json --skills-ref main~10 --trials 2'
 make plan-review ARGS='ingest --all'                # pick up any existing Harbor runs
 make plan-review ARGS='serve'                       # http://127.0.0.1:8765/
 make plan-review ARGS='status'
+make plan-review ARGS='label 44a39a479d9e untestable-acceptance-criteria present --evidence 82738282a42f'
+make plan-review ARGS='report'                      # per skills version (unblinds); --by fixture
 ```
 
 Prerequisites are planning-eval-harbor's own: Docker, `~/.claude/.credentials.json`,
@@ -147,10 +177,34 @@ line per reviewed plan:
 reviewer's words. When recent plans stop adding codes, open coding has
 saturated.
 
+### Axial coding: taxonomy, labels, report
+
+`data/taxonomy.json` holds the failure modes. It is JSON so the module stays
+stdlib-only. The agent drafts it from the notes and the reviewer settles it:
+
+```json
+{"version": 1, "modes": [{"id": "untestable-acceptance-criteria", "name": "...",
+  "definition": "...", "include": "...", "exclude": "..."}]}
+```
+
+`label` appends one judgement to `data/labels.jsonl`:
+`{plan_id, mode, present, taxonomy_version, evidence: [note ids], reason, ts, by}`.
+It first validates the plan, the mode and the current version. The latest line
+wins per (plan, mode) within a version. Bumping the taxonomy version retires the
+old labels from the counts without deleting them.
+
+`report` groups the corpus by skills version (or `--by fixture`). For each group it
+shows the plan count, the verdict split, and, per mode, `present/labelled`. A plan
+counts toward a mode only once it has a label for that mode: unlabelled is not
+"absent".
+
+`data/iterations.md` is the decision log, one entry per iteration. The agent writes
+it with the reviewer, using the template in the skill's iterate reference.
+
 ## Not built yet
 
-- **Axial coding:** group the notes into a versioned failure-mode taxonomy
-  (`taxonomy.yaml`), then label each plan against it (`labels.jsonl`).
+- **Labelling in the app:** today labels are proposed in chat and recorded with
+  `label`.
 - **Suggest-then-confirm:** subagents that search the whole corpus for
   instances of one confirmed failure mode, for the reviewer to accept or
   dismiss.

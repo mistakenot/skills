@@ -79,9 +79,9 @@ evals:
 peval-harbor:
 	uv run --project src/planning-eval-harbor --no-dev python src/planning-eval-harbor/run.py $(ARGS)
 
-# Open-coding review of generated plans: generate new-task-quick plans from
+# The plan-quality improvement loop (see the plan-review skill): generate new-task-quick plans from
 # src/plan-review/fixtures/ in Harbor (bills tokens), ingest them, and serve the
-# review app. Notes and reviewed plans land in src/plan-review/data/ (committed).
-# Usage: make plan-review ARGS='generate --skills-ref HEAD' | ARGS='serve' | ARGS='status'
+# review app, label failure modes, report per skills version. Evidence lands in src/plan-review/data/ (committed).
+# Usage: make plan-review ARGS='generate --skills-ref HEAD' | serve | status | label ... | report
 plan-review:
 	uv run --no-dev python src/plan-review/review.py $(ARGS)
