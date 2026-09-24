@@ -51,7 +51,7 @@ Open the iteration entry now, before any results exist:
 
 ```markdown
 ## Iteration 3: <target mode id>
-- baseline: <sha>   candidate: <sha>   taxonomy: v<N>
+- baseline: <sha>   candidate: <sha>   batch: it3   taxonomy: v<N>
 - hypothesis: <one sentence>
 - change: <what was edited, where>
 - expected: <target mode down>; watch for <modes the change could plausibly worsen>
@@ -60,12 +60,15 @@ Open the iteration entry now, before any results exist:
 ## 4. Regenerate, both arms
 
 Regenerate **both** the baseline and the candidate, with the same fixtures and the
-same trial count (at least 2), in the same batch:
+same trial count (at least 2), in **one** `generate` call. The call stamps a single
+batch id on every plan it produces:
 
 ```bash
-make plan-review ARGS='generate --skills-ref <baseline-sha> --trials 2'
-make plan-review ARGS='generate --skills-ref <candidate-sha> --trials 2'
+make plan-review ARGS='generate --skills-ref <baseline-sha> --skills-ref <candidate-sha> --trials 2 --batch it3'
 ```
+
+Record the batch id in the iteration entry. If the arms have to be generated
+separately (for example, one crashed), pass the same `--batch` to both calls.
 
 Regenerating the baseline in the same batch has two purposes:
 
@@ -89,12 +92,15 @@ elsewhere show up. Confirm the cost first (see the generate reference).
 ## 6. Compare and decide
 
 ```bash
-make plan-review ARGS='report'
+make plan-review ARGS='report --batch it3'
 ```
 
-Compare the baseline column with the candidate column. Compare only plans from the
-**same batch**: an old baseline column mixes in a different time and possibly a
-different taxonomy.
+Compare the baseline column with the candidate column, **within the batch**.
+Without `--batch`, the baseline's column also counts every earlier batch at that
+sha (the report warns when more than one batch exists), which makes the
+denominators unequal. Each generated plan counts once for its arm. If two trials
+wrote byte-identical plans, the reviewer reads and labels that document once, and
+the label counts for each of them.
 
 - **Keep** if:
   - the target mode fell by more than noise (with 2 trials × N fixtures per arm,

@@ -16,18 +16,22 @@ Event kinds:
   verdict      {plan_id, verdict: pass|fail|defer, text}
                The whole-plan judgement. Latest wins.
 
-Every event also carries `ts` and `reviewer`, stamped by the server.
+Every event also carries `ts` and `reviewer`, stamped by the server, and an
+`eid` the client generates once per change: the server logs a given `eid` at
+most once (`append_once`), so a retried POST cannot duplicate a note.
 """
 
 from __future__ import annotations
 
 import datetime as _dt
 import json
+import re
 import threading
 import uuid
 from pathlib import Path
 
 VERDICTS = ("pass", "fail", "defer")
+_ID = re.compile(r"^[A-Za-z0-9_-]{6,64}$")
 _lock = threading.Lock()
 
 
@@ -50,6 +54,10 @@ def validate(ev: dict, plan_ids: set[str], reviewer: str) -> dict:
         raise EventError("event must be an object")
     kind = ev.get("event")
     out: dict = {"event": kind}
+    for key in ("eid", "id"):
+        if ev.get(key) is not None and not (isinstance(ev[key], str) and _ID.fullmatch(ev[key])):
+            raise EventError(f"{kind}: {key} must be 6-64 characters of [A-Za-z0-9_-]")
+    out["eid"] = ev.get("eid") or uuid.uuid4().hex
     if kind == "note.create":
         out["id"] = ev.get("id") or uuid.uuid4().hex[:12]
         out["plan_id"] = _str(ev, "plan_id")
@@ -83,6 +91,21 @@ def append(ev: dict, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a") as f:
             f.write(json.dumps(ev) + "\n")
+
+
+def append_once(ev: dict, path: Path) -> bool:
+    """Append unless an event with the same `eid` (or a note with the same id) is
+    already logged. Returns whether it was written."""
+    with _lock:
+        for old in load(path):
+            if old.get("eid") == ev["eid"]:
+                return False
+            if ev["event"] == "note.create" and old.get("event") == "note.create" and old.get("id") == ev["id"]:
+                return False
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a") as f:
+            f.write(json.dumps(ev) + "\n")
+        return True
 
 
 def load(path: Path) -> list[dict]:

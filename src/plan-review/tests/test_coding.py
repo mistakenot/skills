@@ -55,18 +55,19 @@ def test_latest_label_wins_within_a_version() -> None:
 
 
 def test_report_groups_by_skills_version() -> None:
-    plans = {
-        "p1": {"skills_sha": "a" * 40, "fixture_id": "f1", "ingested_at": "1"},
-        "p2": {"skills_sha": "a" * 40, "fixture_id": "f2", "ingested_at": "2"},
-        "p3": {"skills_sha": "b" * 40, "fixture_id": "f1", "ingested_at": "3"},
-    }
+    rows = [
+        {"plan_id": "p1", "skills_sha": "a" * 40, "fixture_id": "f1", "ingested_at": "1"},
+        {"plan_id": "p2", "skills_sha": "a" * 40, "fixture_id": "f2", "ingested_at": "2"},
+        {"plan_id": "p3", "skills_sha": "b" * 40, "fixture_id": "f1", "ingested_at": "3"},
+    ]
+    plans = {r["plan_id"] for r in rows}
     verdicts = {"p1": {"verdict": "fail"}, "p3": {"verdict": "pass"}}
     labels = [
-        coding.make_label("p1", "vague-verification", True, TAX, set(plans), "c"),
-        coding.make_label("p2", "vague-verification", True, TAX, set(plans), "c"),
-        coding.make_label("p3", "vague-verification", False, TAX, set(plans), "c"),
+        coding.make_label("p1", "vague-verification", True, TAX, plans, "c"),
+        coding.make_label("p2", "vague-verification", True, TAX, plans, "c"),
+        coding.make_label("p3", "vague-verification", False, TAX, plans, "c"),
     ]
-    rep = coding.report(plans, verdicts, TAX, labels)
+    rep = coding.report(rows, verdicts, TAX, labels)
     a, b = rep["groups"][f"skills@{'a' * 12}"], rep["groups"][f"skills@{'b' * 12}"]
     assert (a["plans"], a["reviewed"], a["fail"]) == (2, 1, 1)
     assert a["modes"]["vague-verification"] == {"present": 2, "labelled": 2}
@@ -75,5 +76,20 @@ def test_report_groups_by_skills_version() -> None:
     assert a["modes"]["ignores-existing-code"] == {"present": 0, "labelled": 0}
     text = coding.render_report(rep, {m["id"]: m["name"] for m in TAX["modes"]})
     assert "2/2" in text and "0/1" in text and "Vague verification" in text
-    by_fx = coding.report(plans, verdicts, TAX, labels, by="fixture")
+    by_fx = coding.report(rows, verdicts, TAX, labels, by="fixture")
     assert set(by_fx["groups"]) == {"f1", "f2"}
+
+
+def test_identical_documents_from_two_arms_count_once_per_arm() -> None:
+    # Baseline and candidate wrote byte-identical plans (same plan_id): each arm
+    # keeps its sample, and the one label on the document counts for both.
+    rows = [
+        {"plan_id": "p1", "skills_sha": "a" * 40, "run": "r1", "trial": "t", "task_dir": "d"},
+        {"plan_id": "p1", "skills_sha": "b" * 40, "run": "r2", "trial": "t", "task_dir": "d"},
+    ]
+    labels = [coding.make_label("p1", "vague-verification", True, TAX, {"p1"}, "c")]
+    rep = coding.report(rows, {"p1": {"verdict": "fail"}}, TAX, labels)
+    for sha in ("a", "b"):
+        g = rep["groups"][f"skills@{sha * 12}"]
+        assert g["plans"] == 1 and g["fail"] == 1
+        assert g["modes"]["vague-verification"] == {"present": 1, "labelled": 1}

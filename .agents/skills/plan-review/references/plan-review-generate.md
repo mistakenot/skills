@@ -12,8 +12,12 @@ make plan-review ARGS='generate --dry-run'                          # every fixt
 make plan-review ARGS='generate --skills-ref <REF> --trials 2'      # all fixtures at REF; bills
 make plan-review ARGS='generate f1.json f2.json --skills-ref <REF>' # a subset
 make plan-review ARGS='generate --skills-ref <REF> --model <id>'    # override the pinned model
+make plan-review ARGS='generate --skills-ref <A> --skills-ref <B> --trials 2 --batch it3'  # both arms, one batch
 make plan-review ARGS='ingest --all'                                # pick up existing Harbor runs
 ```
+
+Every invocation stamps one **batch** id on the plans it produces (`--batch`, or a
+timestamp by default). `report --batch` compares versions within a batch.
 
 `REF` is any commit-ish of this repo (`HEAD`, `main`, a sha). The arm is the
 **committed** `skills/` tree at that commit. Uncommitted edits are not in it, so run

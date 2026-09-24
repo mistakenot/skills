@@ -93,8 +93,22 @@ def codex_ran(trial_dir: Path, result: dict) -> bool:
 # --- ingest -------------------------------------------------------------------
 
 
-def ingest_run(run_dir: Path) -> list[dict]:
-    """One corpus entry per plan.html produced by any trial of a Harbor run."""
+def row_key(e: dict) -> str:
+    """A corpus row is one plan produced by one trial of one run.
+
+    Rows, not plan_ids, are what reports count: two trials (or two arms) that
+    happen to write byte-identical plans are two samples, even though the
+    reviewer reads — and labels — that document once.
+    """
+    return f"{e['run']}/{e['trial']}/{e['task_dir']}"
+
+
+def ingest_run(run_dir: Path, batch: str | None = None) -> list[dict]:
+    """One corpus row per plan.html produced by any trial of a Harbor run.
+
+    `batch` names the generation batch the run belongs to (`generate` stamps
+    one per invocation); a comparison only counts plans from the same batch.
+    """
     meta = _read_json(run_dir / "peval.json")
     if meta is None:
         raise ValueError(f"{run_dir} is not a planning-eval-harbor run (no peval.json)")
@@ -109,6 +123,7 @@ def ingest_run(run_dir: Path) -> list[dict]:
             velocity = result.get("velocity") or {}
             entries.append({
                 "plan_id": plan_id(content),
+                "batch": batch,
                 "fixture_id": meta.get("fixture_id"),
                 "prompt": (meta.get("messages") or [""])[0],
                 "target": meta.get("repo_url") or meta.get("target_repo"),
@@ -136,20 +151,64 @@ def ingest_run(run_dir: Path) -> list[dict]:
     return entries
 
 
-def add(entries: list[dict], runs_dir: Path = RUNS_DIR) -> list[dict]:
-    """Append entries not already in the corpus; returns the ones added."""
-    known = set(load(runs_dir=runs_dir, data_dir=None))
-    fresh = [e for e in entries if e["plan_id"] not in known]
+def _snapshot_metas(data_dir: Path | None) -> list[tuple[Path, dict]]:
+    if data_dir is None or not (data_dir / "plans").is_dir():
+        return []
+    out = []
+    for meta in sorted((data_dir / "plans").glob("*/meta.json")):
+        e = _read_json(meta)
+        if e:
+            out.append((meta, e))
+    return out
+
+
+def load_rows(runs_dir: Path = RUNS_DIR, data_dir: Path | None = DATA_DIR) -> list[dict]:
+    """Every corpus row: the local index plus the rows committed with snapshots.
+
+    Snapshots carry the rows of their plan, so the counts behind a report
+    survive the Harbor runs (and the gitignored index) being cleaned.
+    """
+    rows: dict[str, dict] = {}
+    corpus = runs_dir / "corpus.jsonl"
+    if corpus.is_file():
+        for line in corpus.read_text().splitlines():
+            if line.strip():
+                e = json.loads(line)
+                rows.setdefault(row_key(e), e)
+    for _, snap in _snapshot_metas(data_dir):
+        for r in snap.get("rows") or [snap]:
+            rows.setdefault(row_key(r), r)
+    return list(rows.values())
+
+
+def add(entries: list[dict], runs_dir: Path = RUNS_DIR, data_dir: Path | None = DATA_DIR) -> list[dict]:
+    """Append rows not already in the corpus; returns the ones added.
+
+    Idempotent per row (run, trial, task dir), so re-ingesting a run is safe. A
+    new row for a plan that is already snapshotted is added to the snapshot too.
+    """
+    known = {row_key(r) for r in load_rows(runs_dir, data_dir)}
+    fresh: list[dict] = []
+    for e in entries:
+        if row_key(e) not in known:
+            known.add(row_key(e))
+            fresh.append(e)
     if fresh:
         runs_dir.mkdir(parents=True, exist_ok=True)
         with (runs_dir / "corpus.jsonl").open("a") as f:
             for e in fresh:
                 f.write(json.dumps(e) + "\n")
+        metas = {snap["plan_id"]: (path, snap) for path, snap in _snapshot_metas(data_dir)}
+        for e in fresh:
+            if e["plan_id"] in metas:
+                path, snap = metas[e["plan_id"]]
+                snap["rows"] = [*(snap.get("rows") or [snap]), e]
+                path.write_text(json.dumps(snap, indent=2) + "\n")
     return fresh
 
 
 def load(runs_dir: Path = RUNS_DIR, data_dir: Path | None = DATA_DIR) -> dict[str, dict]:
-    """plan_id -> entry: the local corpus, overlaid by committed snapshots.
+    """plan_id -> entry: one per distinct document, for the review app.
 
     A snapshot's meta wins, and its paths point into `data/plans/`, so a plan
     stays reviewable after its Harbor run is gone.
@@ -160,17 +219,18 @@ def load(runs_dir: Path = RUNS_DIR, data_dir: Path | None = DATA_DIR) -> dict[st
         for line in corpus.read_text().splitlines():
             if line.strip():
                 e = json.loads(line)
-                out[e["plan_id"]] = e
-    if data_dir is not None and (data_dir / "plans").is_dir():
-        for meta in sorted((data_dir / "plans").glob("*/meta.json")):
-            e = _read_json(meta)
-            if e:
-                out[e["plan_id"]] = e
+                out.setdefault(e["plan_id"], e)
+    for _, snap in _snapshot_metas(data_dir):
+        out[snap["plan_id"]] = snap
     return out
 
 
-def snapshot(entry: dict, data_dir: Path = DATA_DIR) -> dict:
-    """Copy a plan into `data/plans/<plan_id>/` (once) and return the durable entry."""
+def snapshot(entry: dict, data_dir: Path = DATA_DIR, rows: list[dict] | None = None) -> dict:
+    """Copy a plan into `data/plans/<plan_id>/` (once) and return the durable entry.
+
+    `rows` are every corpus row that produced this document; they are stored
+    with it so reports still count each of them once the runs are cleaned.
+    """
     dest = data_dir / "plans" / entry["plan_id"]
     meta_path = dest / "meta.json"
     if meta_path.is_file():
@@ -184,6 +244,7 @@ def snapshot(entry: dict, data_dir: Path = DATA_DIR) -> dict:
         snap["context_path"] = _stored(dest / "context.md")
     # The transcript is not copied (it can run to megabytes); it stays a pointer
     # into the Harbor run and is simply unavailable once that run is cleaned.
+    snap["rows"] = rows or [entry]
     snap["snapshot_at"] = _now()
     meta_path.write_text(json.dumps(snap, indent=2) + "\n")
     return snap

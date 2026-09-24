@@ -28,6 +28,28 @@ import corpus
 import notes
 
 APP_DIR = Path(__file__).resolve().parent / "app"
+
+# Served with every plan.html. The plan is untrusted output (the agent that
+# wrote it read arbitrary repos and issues), yet it must share the app's origin
+# so the app can highlight and select inside it. So the plan document gets a
+# policy of its own: only the exact scripts pd-components docs load (the pd
+# bundle from this repo's own GitHub releases, the Tailwind browser build, and
+# the marked build pd's <md> fetches) may run — no inline or injected script —
+# and it may make no requests at all, so it cannot reach /api/events.
+PLAN_CSP = "; ".join([
+    "default-src 'none'",
+    "script-src https://cdn.jsdelivr.net/gh/mistakenot/ "
+    "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4 "
+    "https://cdn.jsdelivr.net/npm/marked/marked.min.js",
+    "style-src 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src https://fonts.gstatic.com data:",
+    "img-src data: https:",
+    "connect-src 'none'",
+    "form-action 'none'",
+    "base-uri 'none'",
+    "frame-src 'none'",
+    "object-src 'none'",
+])
 _PLAN_ROUTE = re.compile(r"^/plan/([0-9a-f]{12})/(plan\.html|context\.md|transcript\.txt)$")
 _PLAN_API = re.compile(r"^/api/plans/([0-9a-f]{12})$")
 
@@ -86,7 +108,8 @@ class Review:
             return None
         if name == "plan.html":
             # Opening a plan is what makes it durable (see corpus.snapshot).
-            e = corpus.snapshot(e, self.data_dir)
+            rows = [r for r in corpus.load_rows(self.runs_dir, self.data_dir) if r["plan_id"] == pid]
+            e = corpus.snapshot(e, self.data_dir, rows)
             return corpus.resolve(e["plan_path"])
         key = {"context.md": "context_path", "transcript.txt": "transcript_path"}[name]
         p = corpus.resolve(e.get(key))
@@ -108,24 +131,26 @@ def make_handler(review: Review) -> type[BaseHTTPRequestHandler]:
         def log_message(self, fmt: str, *args) -> None:  # quiet: the agent tails notes, not HTTP
             pass
 
-        def _send(self, status: int, body: bytes, ctype: str) -> None:
+        def _send(self, status: int, body: bytes, ctype: str, csp: str | None = None) -> None:
             self.send_response(status)
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
+            if csp:
+                self.send_header("Content-Security-Policy", csp)
             self.end_headers()
             self.wfile.write(body)
 
         def _json(self, obj, status: int = 200) -> None:
             self._send(status, json.dumps(obj).encode(), "application/json")
 
-        def _file(self, path: Path) -> None:
+        def _file(self, path: Path, csp: str | None = None) -> None:
             ctype = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
             if path.suffix in (".md", ".txt"):
                 ctype = "text/plain"
             if ctype.startswith("text/") or ctype in ("application/javascript",):
                 ctype += "; charset=utf-8"
-            self._send(200, path.read_bytes(), ctype)
+            self._send(200, path.read_bytes(), ctype, csp)
 
         def _missing(self) -> None:
             self._json({"error": "not found"}, HTTPStatus.NOT_FOUND)
@@ -144,7 +169,9 @@ def make_handler(review: Review) -> type[BaseHTTPRequestHandler]:
                 return self._json(d) if d else self._missing()
             if m := _PLAN_ROUTE.match(path):
                 p = review.plan_file(m.group(1), m.group(2))
-                return self._file(p) if p else self._missing()
+                if not p:
+                    return self._missing()
+                return self._file(p, PLAN_CSP if m.group(2) == "plan.html" else None)
             if path == "/api/state":
                 return self._json(review.state())
             if path == "/api/log":
@@ -160,8 +187,10 @@ def make_handler(review: Review) -> type[BaseHTTPRequestHandler]:
                 clean = notes.validate(ev, set(review.plans()), review.reviewer)
             except (ValueError, notes.EventError) as exc:
                 return self._json({"error": str(exc)}, HTTPStatus.BAD_REQUEST)
-            notes.append(clean, review.notes_path)
-            return self._json({"ok": True, "event": clean})
+            # Idempotent per client event id: a retry after a lost response, or
+            # the same queued event sent twice, is acknowledged, not re-logged.
+            logged = notes.append_once(clean, review.notes_path)
+            return self._json({"ok": True, "event": clean, "duplicate": not logged})
 
     return Handler
 

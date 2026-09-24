@@ -67,12 +67,12 @@ user which stage you're in and what the next stage will be.
 
 | Command | Stage | Does |
 |---|---|---|
-| `generate [fx.json ...] [--skills-ref REF] [--trials N] [--model M] [--dry-run]` | 1, 5 | Replays fixtures in Harbor at skills@REF and ingests the plans |
-| `ingest <run-dir> ... \| --all` | 1, 5 | Adds plans from existing Harbor runs |
+| `generate [fx.json ...] [--skills-ref REF ...] [--batch ID] [--trials N] [--model M] [--dry-run]` | 1, 5 | Replays fixtures in Harbor at each skills@REF (repeat the flag for both arms) and ingests the plans under one batch id |
+| `ingest <run-dir> ... \| --all [--batch ID]` | 1, 5 | Adds plans from existing Harbor runs |
 | `serve [--port 8765]` | 2 | The blind review app: span notes, verdicts, progress |
 | `status` | any | Plans, verdicts, note counts |
 | `label <plan> <mode> present\|absent [--evidence IDs] [--reason ...]` | 3 | One failure-mode judgement against the current taxonomy |
-| `report [--by version\|fixture]` | 3, 6 | Verdicts and mode rates per skills version (unblinds) |
+| `report [--by version\|fixture] [--batch ID]` | 3, 6 | Verdicts and mode rates per skills version (unblinds); `--batch` restricts to one comparison |
 
 ## State files (`src/plan-review/data/`)
 

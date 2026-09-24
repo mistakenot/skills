@@ -57,33 +57,53 @@ function saveState(text, bad = false) {
 
 // Every change is one event; the server appends it to data/notes.jsonl. If the
 // server is unreachable the event waits in localStorage and is retried, so a
-// restart of the server never loses a note.
+// restart of the server never loses a note. Each event carries an `eid` made
+// once, here, and a new note its id: the server logs an eid at most once, so a
+// retry after a lost response cannot duplicate anything.
+function newId() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID().replace(/-/g, '');
+  // randomUUID needs a secure context; a port-forwarded http:// URL is not one.
+  return Array.from({ length: 4 }, () => Math.random().toString(36).slice(2, 10)).join('');
+}
+
 async function post(ev) {
-  const q = [...queued(), ev];
-  setQueued(q);
+  const stamped = { ...ev, eid: newId() };
+  if (ev.event === 'note.create') stamped.id = newId().slice(0, 16);
+  setQueued([...queued(), stamped]);
   await flush();
 }
 
+// One flush worker at a time. A post() during a flush only enqueues: the
+// running worker re-reads the queue each iteration and picks it up.
+let flushing = false;
+let retryTimer = null;
+
 async function flush() {
-  let q = queued();
-  while (q.length) {
-    try {
-      const r = await fetch('/api/events', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(q[0]),
-      });
-      if (r.status === 400) {
-        const err = await r.json().catch(() => ({}));
-        toast(`Not saved: ${err.error || 'rejected'}`);
-      } else if (!r.ok) {
-        throw new Error(String(r.status));
+  if (flushing) return;
+  flushing = true;
+  clearTimeout(retryTimer);
+  try {
+    for (let q = queued(); q.length; q = queued()) {
+      const head = q[0];
+      try {
+        const r = await fetch('/api/events', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(head),
+        });
+        if (r.status === 400) {
+          const err = await r.json().catch(() => ({}));
+          toast(`Not saved: ${err.error || 'rejected'}`);
+        } else if (!r.ok) {
+          throw new Error(String(r.status));
+        }
+      } catch {
+        saveState(`offline — ${q.length} unsaved change(s), retrying`, true);
+        retryTimer = setTimeout(flush, 5000);
+        return;
       }
-      q = q.slice(1);
-      setQueued(q);
-    } catch {
-      saveState(`offline — ${q.length} unsaved change(s), retrying`, true);
-      setTimeout(flush, 5000);
-      return;
+      setQueued(queued().filter((e) => e.eid !== head.eid));
     }
+  } finally {
+    flushing = false;
   }
   saveState(`saved ${new Date().toLocaleTimeString()}`);
   await refreshState();

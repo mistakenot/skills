@@ -107,9 +107,14 @@ def version_key(entry: dict) -> str:
     return f"skills@{sha[:12]}" if sha else (entry.get("arm_id") or "?")
 
 
-def report(plans: dict[str, dict], verdicts: dict[str, dict], taxonomy: dict | None,
+def report(rows: list[dict], verdicts: dict[str, dict], taxonomy: dict | None,
            labels: list[dict], by: str = "version") -> dict:
     """Counts per group (skills version, or fixture) — the numbers an iteration is judged on.
+
+    `rows` are corpus rows (corpus.load_rows): one per generated plan, so two
+    trials that wrote byte-identical documents are two samples. Verdicts and
+    labels attach to the document (plan_id) and count for every row of it.
+    Callers restrict `rows` to one batch when comparing versions.
 
     For each group: plans generated, plans with a verdict and their split, and
     per failure mode how many *labelled* plans have it. A plan counts toward a
@@ -119,7 +124,8 @@ def report(plans: dict[str, dict], verdicts: dict[str, dict], taxonomy: dict | N
     cur = current_labels(labels, taxonomy["version"]) if taxonomy else {}
     modes = [m["id"] for m in taxonomy["modes"]] if taxonomy else []
     groups: dict[str, dict] = {}
-    for pid, e in sorted(plans.items(), key=lambda kv: (kv[1].get("ingested_at") or "", kv[0])):
+    for e in sorted(rows, key=lambda r: (r.get("ingested_at") or "", r["plan_id"])):
+        pid = e["plan_id"]
         g = groups.setdefault(keyf(e), {
             "plans": 0, "reviewed": 0, "pass": 0, "fail": 0, "defer": 0,
             "modes": {m: {"present": 0, "labelled": 0} for m in modes},

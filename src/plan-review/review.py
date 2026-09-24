@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """plan-review CLI — generate plans in Harbor, ingest them, review them by hand.
 
-    make plan-review ARGS='generate [fixture.json ...] [--skills-ref REF] [--trials N] [--dry-run]'
+    make plan-review ARGS='generate [fixture.json ...] [--skills-ref REF ...] [--batch ID] [--trials N] [--dry-run]'
     make plan-review ARGS='ingest <harbor-run-dir> ... | --all'
     make plan-review ARGS='serve [--port 8765] [--host 127.0.0.1] [--reviewer NAME]'
     make plan-review ARGS='status'
     make plan-review ARGS='label <plan_id> <mode> present|absent [--evidence ID ...] [--reason TEXT]'
-    make plan-review ARGS='report [--by version|fixture]'
+    make plan-review ARGS='report [--by version|fixture] [--batch ID]'
 
 `generate` replays each fixture through planning-eval-harbor (`run.py run
 --skills-ref`) and ingests what it produced. `serve` starts the open-coding
@@ -22,6 +22,7 @@ import getpass
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -41,15 +42,15 @@ def _reviewer_default() -> str:
     return (out.stdout.strip() or getpass.getuser()).lower()
 
 
-def _ingest(run_dirs: list[Path], runs_dir: Path) -> int:
+def _ingest(run_dirs: list[Path], runs_dir: Path, data_dir: Path, batch: str | None) -> int:
     added = 0
     for rd in run_dirs:
         try:
-            entries = corpus.ingest_run(rd)
+            entries = corpus.ingest_run(rd, batch)
         except ValueError as exc:
             print(f"plan-review: skip {rd.name}: {exc}", file=sys.stderr)
             continue
-        fresh = corpus.add(entries, runs_dir)
+        fresh = corpus.add(entries, runs_dir, data_dir)
         added += len(fresh)
         if not entries:
             print(f"plan-review: {rd.name}: no plan.html produced")
@@ -73,12 +74,18 @@ def cmd_generate(args: argparse.Namespace) -> int:
     if not fixtures:
         print("plan-review: no fixtures", file=sys.stderr)
         return 2
+    # One batch per invocation: every arm and fixture generated here is
+    # comparable with the others, and `report --batch` keeps it apart from
+    # earlier batches (see the iterate reference).
+    batch = args.batch or time.strftime("b%Y%m%d-%H%M%S")
+    refs = args.skills_ref or ["HEAD"]
+    print(f"plan-review: batch {batch}: {len(refs)} arm(s) x {len(fixtures)} fixture(s) x {args.trials} trial(s)")
     rc = 0
     run_dirs: list[Path] = []
-    for fx in fixtures:
+    for ref, fx in ((r, f) for r in refs for f in fixtures):
         cmd = [
             "uv", "run", "--project", str(HARBOR_DIR), "--no-dev", "python", str(HARBOR_DIR / "run.py"),
-            "run", str(fx), "--skills-ref", args.skills_ref, "--trials", str(args.trials),
+            "run", str(fx), "--skills-ref", ref, "--trials", str(args.trials),
             "--concurrent", str(args.concurrent),
         ]
         if args.model:
@@ -99,8 +106,8 @@ def cmd_generate(args: argparse.Namespace) -> int:
         if run_dir and not args.dry_run:
             run_dirs.append(run_dir)
     if run_dirs:
-        added = _ingest(run_dirs, args.runs_dir)
-        print(f"plan-review: {added} new plan(s) in the corpus")
+        added = _ingest(run_dirs, args.runs_dir, args.data_dir, batch)
+        print(f"plan-review: {added} new plan(s) in the corpus (batch {batch})")
     return rc
 
 
@@ -112,7 +119,7 @@ def cmd_ingest(args: argparse.Namespace) -> int:
     if not dirs:
         print("plan-review: give run directories or --all", file=sys.stderr)
         return 2
-    added = _ingest(dirs, args.runs_dir)
+    added = _ingest(dirs, args.runs_dir, args.data_dir, args.batch)
     print(f"plan-review: {added} new plan(s) in the corpus")
     return 0
 
@@ -157,7 +164,14 @@ def cmd_report(args: argparse.Namespace) -> int:
         print(f"plan-review: {exc}", file=sys.stderr)
         return 2
     review = server.Review(args.runs_dir, args.data_dir, _reviewer_default())
-    rep = coding.report(review.plans(), review.state()["verdicts"], tax,
+    rows = corpus.load_rows(args.runs_dir, args.data_dir)
+    batches = sorted({r.get("batch") or "-" for r in rows})
+    if args.batch:
+        rows = [r for r in rows if (r.get("batch") or "-") in args.batch]
+    elif len(batches) > 1:
+        print(f"plan-review: {len(batches)} batches in the corpus ({', '.join(batches)}); "
+              "compare versions within one batch: --batch <id>", file=sys.stderr)
+    rep = coding.report(rows, review.state()["verdicts"], tax,
                         coding.load_labels(args.data_dir), by=args.by)
     names = {m["id"]: m["name"] for m in tax["modes"]} if tax else {}
     print(coding.render_report(rep, names))
@@ -188,7 +202,9 @@ def main(argv: list[str] | None = None) -> int:
 
     g = sub.add_parser("generate", help="replay fixtures in Harbor and ingest the plans (bills tokens)")
     g.add_argument("fixtures", nargs="*", help=f"fixture JSON files (default: all in {FIXTURES_DIR})")
-    g.add_argument("--skills-ref", default="HEAD", help="skills version to plan with (default HEAD)")
+    g.add_argument("--skills-ref", action="append", metavar="REF",
+                   help="skills version to plan with; repeat for several arms in one batch (default HEAD)")
+    g.add_argument("--batch", help="batch id stamped on the plans (default: b<timestamp>)")
     g.add_argument("--trials", type=int, default=1)
     g.add_argument("--concurrent", type=int, default=1)
     g.add_argument("--model", help="override planning-eval-harbor's pinned model")
@@ -198,6 +214,7 @@ def main(argv: list[str] | None = None) -> int:
     i = sub.add_parser("ingest", help="add the plans from existing Harbor runs to the corpus")
     i.add_argument("run_dirs", nargs="*")
     i.add_argument("--all", action="store_true", help="every run under planning-eval-harbor/runs/")
+    i.add_argument("--batch", help="batch id to stamp on the ingested plans")
     i.set_defaults(func=cmd_ingest)
 
     s = sub.add_parser("serve", help="start the open-coding app")
@@ -219,6 +236,8 @@ def main(argv: list[str] | None = None) -> int:
 
     rep = sub.add_parser("report", help="verdicts and failure-mode rates per skills version (unblinds)")
     rep.add_argument("--by", choices=("version", "fixture"), default="version")
+    rep.add_argument("--batch", action="append", metavar="ID",
+                     help="count only plans from this batch (repeatable); '-' = unbatched")
     rep.set_defaults(func=cmd_report)
 
     args = p.parse_args(argv)

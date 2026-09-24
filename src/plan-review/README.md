@@ -31,8 +31,8 @@ tooling underneath.
 | 2 Open coding | Reviewer reads plans blind, notes spans, gives verdicts; agent logs new vs repeat themes | `serve` | `data/plans/`, `data/notes.jsonl`, `data/open-coding-log.jsonl` |
 | 3 Axial coding | Agent drafts failure modes from the notes, reviewer settles them; each reviewed plan labelled per mode | `label`, `report` | `data/taxonomy.json`, `data/labels.jsonl` |
 | 4 Change | Pick the most frequent and costly mode, trace it to a stage/tab reference, make one edit, `make compile`, commit | — | `data/iterations.md` (opened) |
-| 5 Regenerate | Generate **both** the baseline and candidate commits, same fixtures and trials, so the unreviewed batch is mixed and blind. Then steps 2–3 on the new plans | `generate --skills-ref <each>` | as 1–3 |
-| 6 Compare | Per-version mode rates for the batch. Keep if the target fell beyond noise and nothing rose; revert otherwise | `report` | `data/iterations.md` (closed) |
+| 5 Regenerate | Generate **both** the baseline and candidate commits in one batch, same fixtures and trials, so the unreviewed batch is mixed and blind. Then steps 2–3 on the new plans | `generate --skills-ref A --skills-ref B --batch ID` | as 1–3 |
+| 6 Compare | Per-version mode rates within the batch. Keep if the target fell beyond noise and nothing rose; revert otherwise | `report --batch ID` | `data/iterations.md` (closed) |
 
 The skill's references hold the rules for each step: how many trials, how to
 write a failure mode, when to bump the taxonomy version, how to decide, and how
@@ -62,7 +62,7 @@ make plan-review ARGS='ingest --all'                # pick up any existing Harbo
 make plan-review ARGS='serve'                       # http://127.0.0.1:8765/
 make plan-review ARGS='status'
 make plan-review ARGS='label 44a39a479d9e untestable-acceptance-criteria present --evidence 82738282a42f'
-make plan-review ARGS='report'                      # per skills version (unblinds); --by fixture
+make plan-review ARGS='report --batch it3'          # per skills version, one batch (unblinds); --by fixture
 ```
 
 Prerequisites are planning-eval-harbor's own: Docker, `~/.claude/.credentials.json`,
@@ -132,6 +132,18 @@ run exists.
   Highlights use the CSS Custom Highlight API, so the plan's DOM is never
   modified. pd-doc's own comment controls are hidden, because feedback here
   goes to the review log, not to the doc.
+- **The plan is untrusted.** The agent that wrote it read arbitrary repos and
+  issues, so a prompt injection could put script in it. The app needs
+  same-origin access to highlight inside the plan, so the plan can't simply be
+  sandboxed or moved to another origin. Instead every `plan.html` is served
+  with its own Content-Security-Policy (`server.PLAN_CSP`):
+  - only the exact scripts pd docs load may run: the pd bundle from this
+    repo's GitHub releases, the Tailwind browser build, and marked
+  - no inline or injected script
+  - `connect-src 'none'`, so the plan can't reach `/api/events` or anything
+    else
+
+  A plan that loads other scripts won't render them.
 - **Two kinds of note.**
   - **Span notes:** select text, write a note, press Enter. The note sits in
     the right margin next to its text. Notes on another tab are listed at
@@ -146,8 +158,12 @@ run exists.
   that tab's text. When the quote occurs more than once, the prefix and
   suffix pick the right occurrence. A note that can't be re-anchored is
   listed, never dropped.
-- **Nothing lost.** Each change is POSTed as one event. If the server is
-  down, the event waits in `localStorage` and is retried.
+- **Nothing lost, nothing doubled.** Each change is POSTed as one event. If
+  the server is down, the event waits in `localStorage` and is retried.
+  - The app generates each event's `eid` (and each new note's `id`) once,
+    and a single worker drains the queue.
+  - The server logs an `eid` or note id at most once, so a retry after a
+    lost response is acknowledged, not duplicated.
 - **Progress view.** Verdict counts, the agent's new-themes-per-plan chart
   (from `data/open-coding-log.jsonl`), every plan with its plan-level note,
   and every span note, each linking back to where it was made.
@@ -193,7 +209,12 @@ It first validates the plan, the mode and the current version. The latest line
 wins per (plan, mode) within a version. Bumping the taxonomy version retires the
 old labels from the counts without deleting them.
 
-`report` groups the corpus by skills version (or `--by fixture`). For each group it
+`report` groups corpus **rows** by skills version (or `--by fixture`). There is one
+row per generated plan (run × trial × task dir), so two trials that wrote
+byte-identical plans are two samples; the document is reviewed and labelled once,
+and its verdict and labels count for every row. `--batch ID` restricts the report
+to one generation batch. Without it, a version's column spans every batch at that
+sha, and the report warns. For each group it
 shows the plan count, the verdict split, and, per mode, `present/labelled`. A plan
 counts toward a mode only once it has a label for that mode: unlabelled is not
 "absent".

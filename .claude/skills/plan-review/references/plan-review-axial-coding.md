@@ -78,7 +78,8 @@ reference, "Later rounds").
 ## 4. Read the report
 
 ```bash
-make plan-review ARGS='report'              # per skills version
+make plan-review ARGS='report'              # per skills version, every batch
+make plan-review ARGS='report --batch it3'  # one comparison batch
 make plan-review ARGS='report --by fixture' # is a mode one repo's quirk?
 ```
 
