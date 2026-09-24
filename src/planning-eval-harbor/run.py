@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """planning-eval-harbor CLI — replay a planning-eval fixture as a Harbor job.
 
-    make peval-harbor ARGS='run <fixture.json> [--operator scripted|simulated] [--trials N]'
+    make peval-harbor ARGS='run <fixture.json> [--operator scripted|simulated] [--trials N]
+                                [--skills-ref REF [--arm-id ID]]'
     make peval-harbor ARGS='list'
     make peval-harbor ARGS='show <run>'
     make peval-harbor ARGS='clean [--yes]'
@@ -53,6 +54,8 @@ def _write_meta(run_dir: Path, meta: dict) -> None:
 def cmd_run(args: argparse.Namespace) -> int:
     try:
         fx = fixture_mod.load(args.fixture)
+        if args.skills_ref:
+            fx = fixture_mod.with_skills_ref(fx, args.skills_ref, args.arm_id)
     except fixture_mod.FixtureError as exc:
         print(f"peval-harbor: {exc}", file=sys.stderr)
         return 2
@@ -74,7 +77,8 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     print(f"peval-harbor: run {job_name}")
     print(f"peval-harbor: fixture {fx.path}")
-    print(f"peval-harbor: arm {fx.arm_id} -> {fx.skills_dir}")
+    print(f"peval-harbor: arm {fx.arm_id} -> {fx.skills_dir}"
+          + (f" (skills @ {fx.skills_sha[:12]})" if fx.skills_sha else ""))
     print(f"peval-harbor: task {built.dir} ({args.operator}, {len(built.messages)} message(s))")
     print(f"peval-harbor: model {args.model}, {args.trials} trial(s); credentials expire "
           f"{'(already expired; refresh will be attempted)' if creds.get('expired') else 'later'}")
@@ -90,10 +94,12 @@ def cmd_run(args: argparse.Namespace) -> int:
         "fixture_id": fx.id,
         "arm_id": fx.arm_id,
         "skills_dir": str(fx.skills_dir),
+        "skills_sha": fx.skills_sha,
         "operator": args.operator,
         "model": args.model,
         "trials": args.trials,
         "target_repo": str(fx.target_repo),
+        "repo_url": fx.repo_url,
         "start_sha": fx.start_sha,
         "messages": fx.shown_messages,
         "messages_full": built.messages,
@@ -222,6 +228,10 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--trials", type=int, default=1, help="attempts of the same arm (default 1)")
     run.add_argument("--concurrent", type=int, default=1, help="trials to run at once (default 1)")
     run.add_argument("--model", default=job_mod.DEFAULT_MODEL, help="pinned model (default %(default)s)")
+    run.add_argument("--skills-ref", metavar="REF",
+                     help="replace the fixture's arm with this repo's compiled skills/ at REF "
+                          "(any commit-ish, e.g. HEAD, main~5, a sha)")
+    run.add_argument("--arm-id", help="arm label with --skills-ref (default skills-<sha12>)")
     run.add_argument("--dry-run", action="store_true",
                      help="compile the task and validate the job with harbor, spend nothing")
     run.set_defaults(func=cmd_run)

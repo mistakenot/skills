@@ -1,0 +1,3 @@
+# Local corpus index + anything generated; reviewed plans are snapshotted into data/ and committed.
+runs/
+__pycache__/

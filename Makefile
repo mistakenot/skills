@@ -1,4 +1,4 @@
-.PHONY: compile lint check install pd-components pd-dev pd-test test test-agent-cli-live test-review-stdin eval-assurance evals peval-harbor release
+.PHONY: compile lint check install pd-components pd-dev pd-test test test-agent-cli-live test-review-stdin eval-assurance evals peval-harbor plan-review release
 
 # Compiles skill source files from ./src/ into ./skills/ output.
 # Run after editing any skill source in ./src/.
@@ -45,7 +45,7 @@ check: compile lint
 # contract (flags the delegate/review skills pass to claude/codex/grok/herdr,
 # checked against the installed CLIs' --help). Needs all four CLIs on PATH.
 test:
-	uv run pytest src/assurance/tests/ src/evals/tests/ src/planning-workflow/tests/ src/consult-the-council/tests/ src/planning-eval-harbor/tests/
+	uv run pytest src/assurance/tests/ src/evals/tests/ src/planning-workflow/tests/ src/consult-the-council/tests/ src/planning-eval-harbor/tests/ src/plan-review/tests/
 
 # Live smoke for the agent CLI contract: runs the canonical headless invocation
 # of claude, codex and grok and expects a PONG. Bills tokens; needs auth.
@@ -78,3 +78,10 @@ evals:
 # Usage: make peval-harbor ARGS='run src/planning-eval-harbor/fixtures/008-commit-session-link-short.json'
 peval-harbor:
 	uv run --project src/planning-eval-harbor --no-dev python src/planning-eval-harbor/run.py $(ARGS)
+
+# The plan-quality improvement loop (see the plan-review skill): generate new-task-quick plans from
+# src/plan-review/fixtures/ in Harbor (bills tokens), ingest them, and serve the
+# review app, label failure modes, report per skills version. Evidence lands in src/plan-review/data/ (committed).
+# Usage: make plan-review ARGS='generate --skills-ref HEAD' | serve | status | label ... | report
+plan-review:
+	uv run --no-dev python src/plan-review/review.py $(ARGS)

@@ -72,6 +72,19 @@ valuable ones are near-misses that share keywords but shouldn't trigger), split 
 and let it propose description improvements scored on the held-out set. Use this *after* the
 skill's behaviour is good; it tunes routing, not capability.
 
+## 4. Human judgement of generated artifacts → open coding (`plan-review`)
+
+When "better" cannot be written down yet — nobody knows the failure modes of a generated
+plan well enough to score it — the first instrument is a person reading outputs and taking
+free-text notes (open coding), later grouped into named failure modes (axial coding), which
+then become narrow judges validated against those notes. `src/plan-review/` is the reference
+for `new-task-quick` plans: fixtures replayed through `src/planning-eval-harbor/` with the arm
+pinned to a skills commit (`--skills-ref`), a blind review app over the produced `plan.html`,
+an append-only notes log in `src/plan-review/data/`, then failure-mode labels and a
+per-version `report`. The `plan-review` skill runs the whole loop: generate, open code,
+axial code, change the skill, regenerate both arms, compare. Use it to *discover* what
+to measure and to judge changes by it; use harnesses 1–2 once a mode has a validated judge.
+
 ## Choosing between 1 and 2
 
 If the skill hard-stops and waits for human input partway through, or its quality depends on a

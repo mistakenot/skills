@@ -903,6 +903,14 @@ if __name__ == "__main__":
             ref("fixtures-from-history.md"),
             ref("harnesses.md"),
         ]),
+        # the plan-quality improvement loop (generate, open/axial coding, iterate);
+        # the tooling lives in src/plan-review/
+        skill("plan-review", refs=[
+            ref("plan-review-generate.md"),
+            ref("plan-review-open-coding.md"),
+            ref("plan-review-axial-coding.md"),
+            ref("plan-review-iterate.md"),
+        ]),
         description="Build, run, validate, and manage A/B evals for skills in this repo: replay real tasks, compare skill versions on cost and quality, and validate the eval before trusting it.",
         category="development",
         keywords=["eval", "evaluation", "benchmark", "ab-testing", "skill-quality"],

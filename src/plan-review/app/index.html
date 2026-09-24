@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plan review</title>
+  <link rel="stylesheet" href="/app/app.css">
+</head>
+<body>
+  <header class="bar">
+    <strong class="brand">Plan review</strong>
+    <nav class="views" role="tablist">
+      <button type="button" data-view="review" class="on">Review</button>
+      <button type="button" data-view="progress">Progress</button>
+    </nav>
+    <div class="pager">
+      <button type="button" id="prev" title="Previous plan (←)">←</button>
+      <select id="jump" aria-label="Jump to plan"></select>
+      <button type="button" id="next" title="Next plan (→)">→</button>
+    </div>
+    <span id="save-state" class="muted"></span>
+  </header>
+
+  <main id="review-view">
+    <section class="panel request">
+      <div class="panel-head">
+        <span class="label">Request</span>
+        <span id="fixture" class="muted"></span>
+        <a id="transcript-link" target="_blank" rel="noopener" hidden>transcript</a>
+      </div>
+      <pre id="prompt"></pre>
+      <details id="context-box" hidden>
+        <summary>context.md</summary>
+        <pre id="context"></pre>
+      </details>
+    </section>
+
+    <section class="panel verdict">
+      <div class="verdict-buttons">
+        <span class="label">Verdict</span>
+        <button type="button" data-verdict="pass">Pass <kbd>1</kbd></button>
+        <button type="button" data-verdict="fail">Fail <kbd>2</kbd></button>
+        <button type="button" data-verdict="defer">Defer <kbd>d</kbd></button>
+        <span class="muted hint">Select text in the plan to note a span.</span>
+      </div>
+      <textarea id="verdict-text" rows="1"
+        placeholder="The plan as a whole: what's wrong (or right) with it, in your own words. Saved with the verdict."></textarea>
+    </section>
+
+    <div class="reader">
+      <iframe id="doc" title="Plan under review"></iframe>
+      <aside id="margin" aria-label="Notes">
+        <div id="offtab"></div>
+      </aside>
+    </div>
+  </main>
+
+  <main id="progress-view" hidden>
+    <div id="progress"></div>
+  </main>
+
+  <div id="popover" hidden>
+    <div class="quote"></div>
+    <textarea rows="3" placeholder="What do you notice? Enter saves · Shift+Enter newline · Esc cancels"></textarea>
+  </div>
+  <div id="toast" role="status" hidden></div>
+
+  <script type="module" src="/app/app.js"></script>
+</body>
+</html>

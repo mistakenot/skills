@@ -76,7 +76,7 @@
       "template_hash": "deca8279c1ce77e4ce2eeb61e1c6c6db56876fe13256ae45d2ea662fa946258f",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
+      "skill_version": "47d6d52225843ad3ed63108c47a17b04d4e6f4db3c4a9614178d55df5e492b55",
       "render_version": "1"
     },
     "execute-task": {
@@ -161,6 +161,13 @@
       "replacements": {},
       "file_refs": [],
       "skill_version": "1bb0705ca226dbde31e6932659bffd8c94e9d8aa4b0123ae4b4c5660c94b59a9",
+      "render_version": "1"
+    },
+    "plan-review": {
+      "template_hash": "8501ee6fa9efd74f77cef3f18c6af73da8af5d9cc5b2acc4f166eccc2d184b7f",
+      "replacements": {},
+      "file_refs": [],
+      "skill_version": "218cedc553ee44e282490db8834316bf17c0a3dbe8f7b827a1ce254359202a18",
       "render_version": "1"
     },
     "playbook-observe": {
@@ -289,7 +296,7 @@
         "delegate": "ee1a554b73df015dd0e5b0402ddec6b26b1ee5794f39de60e4d6c07fec67030c",
         "delegate-task": "e37f11c18714d5a86c3f4a9ab35077f4a3dadf932fee5ddb3ed463ad41e0cfb5",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
-        "eval-engineer": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
+        "eval-engineer": "47d6d52225843ad3ed63108c47a17b04d4e6f4db3c4a9614178d55df5e492b55",
         "execute-task": "01676a76b754cee851bff9671f2250dea0b1ed6eb35ecd84278880ccbaafc59c",
         "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
@@ -302,6 +309,7 @@
         "new-solution": "8b8d3173823f411dc3fb2c2b185f0ff82ec91c437f3ad0dad524eb7c8dfc1392",
         "new-task": "5232db22c3753ed70fa11d26ff93379f118b4ab65505b32f83fc0050a14a538e",
         "new-task-quick": "1bb0705ca226dbde31e6932659bffd8c94e9d8aa4b0123ae4b4c5660c94b59a9",
+        "plan-review": "218cedc553ee44e282490db8834316bf17c0a3dbe8f7b827a1ce254359202a18",
         "playbook-observe": "8fb0772012871ac78065a82c8f9861fb7d4c5d51b731c88421b1daf715e2590f",
         "playbook-refine": "2c322d39d5131cfd30776036dbc14aca2a87181f30d545810046918df905224e",
         "playbook-search": "1e86b067218a1edaaeaacc1e31610dd7bde0b4d7155b63c7a3318ca2888f93ed",
@@ -332,7 +340,7 @@
         "delegate": "ee1a554b73df015dd0e5b0402ddec6b26b1ee5794f39de60e4d6c07fec67030c",
         "delegate-task": "e37f11c18714d5a86c3f4a9ab35077f4a3dadf932fee5ddb3ed463ad41e0cfb5",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
-        "eval-engineer": "c95f538bddaaadcb6acc4b3c3ab6b0399798a1a5f04b8806bdb7e59655c2ba4e",
+        "eval-engineer": "47d6d52225843ad3ed63108c47a17b04d4e6f4db3c4a9614178d55df5e492b55",
         "execute-task": "01676a76b754cee851bff9671f2250dea0b1ed6eb35ecd84278880ccbaafc59c",
         "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
         "fan-out-user-simulation": "79e097a4c022aacb366989c30414fae88834e21d7ad0c9901c39ff4aaa884709",
@@ -345,6 +353,7 @@
         "new-solution": "8b8d3173823f411dc3fb2c2b185f0ff82ec91c437f3ad0dad524eb7c8dfc1392",
         "new-task": "5232db22c3753ed70fa11d26ff93379f118b4ab65505b32f83fc0050a14a538e",
         "new-task-quick": "1bb0705ca226dbde31e6932659bffd8c94e9d8aa4b0123ae4b4c5660c94b59a9",
+        "plan-review": "218cedc553ee44e282490db8834316bf17c0a3dbe8f7b827a1ce254359202a18",
         "playbook-observe": "8fb0772012871ac78065a82c8f9861fb7d4c5d51b731c88421b1daf715e2590f",
         "playbook-refine": "2c322d39d5131cfd30776036dbc14aca2a87181f30d545810046918df905224e",
         "playbook-search": "1e86b067218a1edaaeaacc1e31610dd7bde0b4d7155b63c7a3318ca2888f93ed",

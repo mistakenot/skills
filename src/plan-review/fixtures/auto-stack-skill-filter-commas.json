@@ -1,0 +1,14 @@
+{
+  "id": "auto-stack-skill-filter-commas",
+  "_provenance": {
+    "source": "authored",
+    "note": "Written for plan-review in the operator's usual voice (lowercase, terse, names the code area, asks for a consistency check). Grounded in a real gotcha from the operator's global CLAUDE.md: --skill is repeatable and exact-match, so a comma list silently matches nothing. Unfixed at start_sha: auto-skill/internal/cli/add.go registers --skill as a StringArray with no comma handling."
+  },
+  "fixture": {
+    "target_repo": "/home/vscode/src/auto-stack",
+    "start_sha": "f03feaa918c4f8ca00ead589a71fa3dd2aaeb3fa",
+    "prompt": "/new-task-quick `auto skill add --skill` is exact match and repeatable, but people (and agents especially) keep passing a comma list like `--skill a,b` which silently matches nothing and installs nothing. make this friendlier - either accept comma separated names or fail loudly with a hint showing the repeatable form, your call. also when a --skill filter matches nothing at all we should say so and list what skills the source actually has. check how the other auto commands handle list flags so we stay consistent.\n\nStop after Stage 4 (self-check); do not run the Codex review."
+  },
+  "arm": {"id": "head", "skills_ref": "HEAD"},
+  "limits": {"max_turns": 1, "wall_clock_s": 3600, "per_turn_timeout_s": 3600, "max_budget_usd": 15}
+}

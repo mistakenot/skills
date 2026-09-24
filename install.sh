@@ -107,7 +107,7 @@ else
       SKILLS="grill-me"
       ;;
     eval-engineer)
-      SKILLS="eval-engineer"
+      SKILLS="eval-engineer,plan-review"
       ;;
     discovery)
       SKILLS="extract-demand-from-customer-conversation"
