@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "modes": [
+    {
+      "id": "prose-wall",
+      "name": "Prose wall",
+      "definition": "A section carries list-like or multi-point content as a paragraph instead of bullets, a numbered list or a diagram.",
+      "include": "Paragraphs of 3+ sentences holding separable points; text the reviewer called hard to scan or eye-glazing.",
+      "exclude": "A 1-2 sentence lead-in to a list or diagram. Content that should be deleted outright is low-signal-content."
+    },
+    {
+      "id": "file-map-not-first",
+      "name": "File map not first",
+      "definition": "The Solution tab does not open with the file tree or a diagram; prose comes before the reader's mental map.",
+      "include": "A file tree that exists but sits below approach prose; no file tree or diagram at all.",
+      "exclude": "A one-line heading or caption above the file tree."
+    },
+    {
+      "id": "implementer-level-detail",
+      "name": "Implementer-level detail",
+      "definition": "The plan does the implementer's job: full function or test bodies, or line-by-line edit recipes, instead of seams, public signatures and brief comments.",
+      "include": "Complete test functions; complete function bodies; step-by-step edit instructions ('before calling X, check for Y').",
+      "exclude": "Signatures, interface changes and pseudo-code sketches. A snippet that is itself the entire change on a very small task."
+    },
+    {
+      "id": "low-signal-content",
+      "name": "Low-signal content",
+      "definition": "The plan contains at least one passage that can be deleted without losing anything a reader needs.",
+      "include": "Filler lead-ins ('Two small changes:'); statements of the obvious ('tests use Vitest'); restating repo facts or other parts of the doc; long passages that reduce to 'extend the existing pattern at [path]'.",
+      "exclude": "Needed content that is badly formatted (prose-wall)."
+    },
+    {
+      "id": "open-questions-untagged",
+      "name": "Open questions untagged",
+      "definition": "Open questions or assumptions that need human attention are written as prose or checklists instead of the built-in open-question element.",
+      "include": "'Assumptions (comfortable proceeding on): ...' lists in prose or checkboxes.",
+      "exclude": "Decisions the plan resolves itself and does not ask a human to confirm."
+    },
+    {
+      "id": "gwt-inline",
+      "name": "Given/When/Then rendered inline",
+      "definition": "Given/When/Then clauses of a scenario render as one run-on line instead of one clause per line.",
+      "include": "Clauses on separate source lines but without list markers or line breaks, so they collapse into one paragraph when rendered.",
+      "exclude": "Clauses rendered one per line (bullets or explicit breaks), whether or not the labels are aligned."
+    }
+  ]
+}
