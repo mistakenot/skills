@@ -166,13 +166,23 @@ if [ "$AUTHOR_REPLY_COUNT" -eq 0 ]; then
 fi
 ```
 
-### Step 7: Report
+### Step 7: Strip Closed Threads from Regular Docs
+
+Plan files keep every thread as their decision log. A regular doc (a README, guide, or plain HTML page) should not carry review history, so once resolution is verified, remove its RESOLVED and REJECTED threads:
+
+```bash
+bash <skill-dir>/scripts/strip-closed-threads.sh "$SCOPE_FILE"
+```
+
+The script skips plan files (anything under `docs/tasks/`, and pd-* HTML docs) and `.review.md` sidecars, and always keeps UNRESOLVED threads — they still need an answer. Run it only after Step 6, which counts the replies it removes.
+
+### Step 8: Report
 
 Summarize:
 - Whether the Claude review succeeded, and the mode (task / files)
 - Comment count by priority (P1/P2/P3)
 - How many threads were resolved, rejected, or left unresolved
-- Which files were changed, and any `.review.md` sidecars created (the user decides whether to keep or delete them)
+- Which files were changed, which regular docs had closed threads stripped, and any `.review.md` sidecars created (the user decides whether to keep or delete them)
 - Any threads needing user input
 
 ## Comment Format

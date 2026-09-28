@@ -17,7 +17,7 @@ Run a **panel of three independent reviewers** — Claude Code, Codex, and Grok 
 
 ## Why reviewers don't edit
 
-Three agents editing the same files in parallel would race and produce duplicate, conflicting threads anchored to the same content. Instead each reviewer is **read-only** and emits a structured findings block on stdout. The coordinator is the single writer, so de-duplication and placement happen once, deterministically.
+Three agents editing the same files in parallel would race and write duplicate, conflicting threads. Instead each reviewer is **read-only** and emits a findings block on stdout. The coordinator is the single writer, so de-duplication and placement happen once, deterministically.
 
 ## Process
 
@@ -298,7 +298,15 @@ if [ "$AUTHOR_REPLY_COUNT" -eq 0 ]; then
 fi
 ```
 
-### Step 9: Report
+### Step 9: Strip Closed Threads from Regular Docs
+
+Remove closed threads from regular docs; plan files, sidecars and UNRESOLVED threads are kept (see review-targets.md):
+
+```bash
+bash <skill-dir>/scripts/strip-closed-threads.sh "$SCOPE_FILE"
+```
+
+### Step 10: Report
 
 Summarize:
 - Which reviewers succeeded (claude / codex / grok) and which, if any, failed
@@ -306,7 +314,7 @@ Summarize:
 - Consensus breakdown — how many issues were raised by 3/3, 2/3, 1/3 reviewers
 - Merged comment count by priority (P1/P2/P3)
 - How many threads were resolved, rejected, or left unresolved
-- Which files were changed, and any `.review.md` sidecars created (the user decides whether to keep them)
+- Which files were changed, which regular docs were stripped, and any `.review.md` sidecars created (the user decides whether to keep them)
 - Any threads needing user input
 
 ## Comment Format

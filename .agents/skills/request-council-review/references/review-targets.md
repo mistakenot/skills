@@ -45,6 +45,14 @@ forever. Callers in src/sync.py:88 expect an exception.
 - Sidecars outlive the review. The caller decides whether to keep them (as a
   record) or delete them once every thread is closed.
 
+## After resolution
+
+Plan files keep every thread: there the thread is the decision log. Regular docs
+(a README, guide, or plain HTML page) do not: once the caller has verified
+resolution it strips their RESOLVED and REJECTED threads with the bundled
+`scripts/strip-closed-threads.sh`. A plan file is anything under `docs/tasks/`,
+or a pd-* HTML doc. UNRESOLVED threads and sidecars are never stripped.
+
 ## Clean-review marker
 
 A review that finds nothing must still leave exactly one thread, so the caller

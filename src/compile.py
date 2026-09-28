@@ -32,10 +32,24 @@ class Asset:
     dst: str
 
 @dataclasses.dataclass
+class VarFile:
+    """A template variable whose value is a file's contents.
+
+    `path` is relative to the template's directory (e.g. 'codex.md' for
+    templates/request-agent-review/codex.md).
+    """
+    path: str
+
+@dataclasses.dataclass
 class Skill:
     name: str
     refs: list[Ref]
     assets: list["Asset"] = dataclasses.field(default_factory=list)
+    # When set, the skill is rendered from templates/<template>/SKILL.md instead
+    # of skills/<name>/SKILL.md, with {{ var:X }} filled from `vars`. Lets
+    # near-identical skills (one per agent CLI) share a single source.
+    template: str | None = None
+    vars: dict[str, "str | VarFile"] = dataclasses.field(default_factory=dict)
 
 @dataclasses.dataclass
 class Module:
@@ -66,9 +80,15 @@ def herdr_refs(*ops: str) -> list[Ref]:
 def asset(src: str, dst: str) -> Asset:
     return Asset(src=src, dst=dst)
 
+def var_file(path: str) -> VarFile:
+    return VarFile(path=path)
+
 def skill(name: str, refs: list[Ref] | None = None,
-          assets: list[Asset] | None = None) -> Skill:
-    return Skill(name=name, refs=refs or [], assets=assets or [])
+          assets: list[Asset] | None = None,
+          template: str | None = None,
+          vars: dict[str, "str | VarFile"] | None = None) -> Skill:
+    return Skill(name=name, refs=refs or [], assets=assets or [],
+                 template=template, vars=vars or {})
 
 def module(name: str, *skills: Skill, description: str = "", category: str = "",
            keywords: list[str] | None = None, display_name: str = "") -> Module:
@@ -89,6 +109,8 @@ REF_CODE_PATTERN = re.compile(r"`references/([^`]+?\.md)`")
 SKILL_REF_PATTERN = re.compile(r"\{\{\s*skill:(.+?)\s*\}\}")
 # Inline directive: {{ pd-version }} -> pd-vX.Y.Z tag from pd-components/package.json
 PD_VERSION_PATTERN = re.compile(r"\{\{\s*pd-version\s*\}\}")
+# Inline directive: {{ var:<name> }} -> a value from the skill's `vars` (templated skills only)
+VAR_PATTERN = re.compile(r"\{\{\s*var:([A-Za-z_][\w-]*)\s*\}\}")
 MAX_OUTPUT_CHARS = 15_000
 
 # ---------------------------------------------------------------------------
@@ -154,6 +176,60 @@ def _replace_skill_ref(m: re.Match) -> str:
     else:
         skill_name = raw
     return skill_name
+
+
+def _template_path(mod_dir: str, sk: Skill) -> str:
+    if sk.template:
+        return os.path.join(mod_dir, "templates", sk.template, "SKILL.md")
+    return os.path.join(mod_dir, "skills", sk.name, "SKILL.md")
+
+
+def _load_template(mod_dir: str, sk: Skill) -> tuple[str, list[str], list[str]]:
+    """Read a skill's source and fill {{ var:X }}. Returns (text, errors, warnings).
+
+    Var values may themselves contain {{ var:X }} (a per-agent fragment naming
+    the agent), so substitution repeats until nothing is left to expand.
+    """
+    tag = f"[{os.path.basename(mod_dir)}/{sk.name}]"
+    path = _template_path(mod_dir, sk)
+    with open(path) as f:
+        text = f.read()
+    if not sk.template:
+        if VAR_PATTERN.search(text):
+            return text, [f"{tag} uses {{{{ var:X }}}} but is not declared with a template"], []
+        return text, [], []
+
+    errors: list[str] = []
+    values: dict[str, str] = {}
+    for key, value in sk.vars.items():
+        if isinstance(value, VarFile):
+            var_path = os.path.join(os.path.dirname(path), value.path)
+            if not os.path.isfile(var_path):
+                errors.append(f"{tag} var '{key}' file not found: {var_path}")
+                continue
+            with open(var_path) as f:
+                values[key] = f.read().rstrip("\n")
+        else:
+            values[key] = value
+
+    used: set[str] = set()
+    def replace_var(m: re.Match) -> str:
+        key = m.group(1)
+        used.add(key)
+        return values.get(key, m.group(0))
+    for _ in range(5):
+        expanded = VAR_PATTERN.sub(replace_var, text)
+        if expanded == text:
+            break
+        text = expanded
+    for key in sorted(set(VAR_PATTERN.findall(text))):
+        errors.append(f"{tag} template uses {{{{ var:{key} }}}} but the skill declares no such var")
+
+    warnings = [f"{tag} var '{k}' declared but never used" for k in sorted(set(sk.vars) - used)]
+    fm = _parse_frontmatter(text)
+    if fm and fm.get("name") != sk.name:
+        errors.append(f"{tag} rendered frontmatter name '{fm.get('name')}' does not match skill name")
+    return text, errors, warnings
 
 
 def _parse_frontmatter(text: str) -> dict | None:
@@ -257,7 +333,6 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
     for mod in modules:
         mod_dir = os.path.join(src_dir, mod.name)
         refs_dir = os.path.join(mod_dir, "refs")
-        skills_dir = os.path.join(mod_dir, "skills")
 
         if not os.path.isdir(mod_dir):
             errors.append(f"Module directory not found: {mod_dir}")
@@ -265,7 +340,7 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
 
         for sk in mod.skills:
             tag = f"[{mod.name}/{sk.name}]"
-            template_path = os.path.join(skills_dir, sk.name, "SKILL.md")
+            template_path = _template_path(mod_dir, sk)
 
             # Template must exist
             if not os.path.isfile(template_path):
@@ -288,9 +363,10 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
                 if not os.path.isfile(asset_path):
                     errors.append(f"{tag} Asset not found: {a.src} (build it before compiling)")
 
-            # Read template
-            with open(template_path) as f:
-                template = f.read()
+            # Read template (filling {{ var:X }} for templated skills)
+            template, var_errors, var_warnings = _load_template(mod_dir, sk)
+            errors.extend(var_errors)
+            warnings.extend(var_warnings)
 
             # Frontmatter checks
             fm = _parse_frontmatter(template)
@@ -361,20 +437,18 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
     for mod in modules:
         mod_dir = os.path.join(src_dir, mod.name)
         refs_dir = os.path.join(mod_dir, "refs")
-        skills_dir = os.path.join(mod_dir, "skills")
 
         if not os.path.isdir(mod_dir):
             continue
 
         for sk in mod.skills:
             tag = f"[{mod.name}/{sk.name}]"
-            template_path = os.path.join(skills_dir, sk.name, "SKILL.md")
+            template_path = _template_path(mod_dir, sk)
 
             # Collect all content to scan: template + ref files
             contents_to_scan: list[tuple[str, str]] = []  # (label, content)
             if os.path.isfile(template_path):
-                with open(template_path) as f:
-                    contents_to_scan.append((f"{tag} template", f.read()))
+                contents_to_scan.append((f"{tag} template", _load_template(mod_dir, sk)[0]))
             for r in sk.refs:
                 ref_path = os.path.join(refs_dir, r.filename)
                 if os.path.isfile(ref_path):
@@ -421,14 +495,10 @@ def compile(modules: list[Module], src_dir: str | None = None, out_dir: str | No
     for mod in modules:
         mod_dir = os.path.join(src_dir, mod.name)
         refs_dir = os.path.join(mod_dir, "refs")
-        skills_dir = os.path.join(mod_dir, "skills")
 
         for sk in mod.skills:
             tag = f"[{mod.name}/{sk.name}]"
-            template_path = os.path.join(skills_dir, sk.name, "SKILL.md")
-
-            with open(template_path) as f:
-                content = f.read()
+            content = _load_template(mod_dir, sk)[0]
 
             # Expand {{ ref:X }} tags
             def replace_ref(m: re.Match) -> str:
@@ -732,6 +802,21 @@ if __name__ == "__main__":
     # shared across all skills in this module
     overview = ref("workflow-overview.md")
 
+    # every review skill: comment grammar (md + pd-thread) and where threads land by file type
+    review_refs = [overview, ref("review-format.md"), ref("review-format-html.md"), ref("review-targets.md")]
+
+    # the caller strips closed threads from regular (non-plan) docs after resolving
+    strip_threads_script = asset("src/planning-workflow/scripts/strip-closed-threads.sh", "scripts/strip-closed-threads.sh")
+
+    def request_review(agent: str, title: str, product: str) -> Skill:
+        """request-<agent>-review: the shared template plus that agent's headless launch."""
+        return skill(f"request-{agent}-review",
+                     refs=[*review_refs, ref("review-scope.md")],
+                     assets=[strip_threads_script],
+                     template="request-agent-review",
+                     vars={"agent": agent, "Agent": title, "product": product,
+                           "invoke": var_file(f"{agent}.md")})
+
     herdr_worker_script = asset("src/planning-workflow/scripts/herdr-worker.sh", "scripts/herdr-worker.sh")
     # commit-task gates on a clean pd-lint of plan.html, so it carries its own
     # copy of the linter (skills can't reach into rich-doc's scripts dir).
@@ -748,12 +833,15 @@ if __name__ == "__main__":
                                               ref("stage-requirements.md"), ref("stage-solution.md"), ref("stage-plan.md"),
                                               ref("tab-requirements.md"), ref("tab-verification.md"),
                                               ref("tab-solution.md"), ref("tab-plan.md"), ref("template-context.md")]),
-        skill("review-task",            refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
-        skill("request-codex-review",   refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
-        skill("request-claude-review",  refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
-        skill("request-grok-review",    refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
-        skill("request-council-review", refs=[overview, ref("review-format.md"), ref("review-format-html.md"), ref("headless-delegation.md")]),
-        skill("resolve-comments",       refs=[overview, ref("review-format.md"), ref("review-format-html.md")]),
+        # composite: the root routes task mode vs file mode to review-plan / review-files
+        skill("review-task",            refs=[*review_refs, ref("review-plan.md"), ref("review-files.md")]),
+        # one template, one per-agent launch fragment (templates/request-agent-review/<agent>.md)
+        request_review("codex",  "Codex",  "Codex"),
+        request_review("claude", "Claude", "Claude Code"),
+        request_review("grok",   "Grok",   "Grok CLI"),
+        skill("request-council-review", refs=[*review_refs, ref("review-scope.md"), ref("headless-delegation.md")],
+                                        assets=[strip_threads_script]),
+        skill("resolve-comments",       refs=review_refs),
         skill("commit-task",            refs=[overview, ref("commit-conventions.md"), ref("task-status.md")],
                                         assets=[pd_lint_script]),
         skill("execute-task",           refs=[overview, ref("template-pr-body.md"), ref("worktree-conventions.md"), ref("commit-conventions.md"), ref("execute-task-full.md"), ref("task-status.md")]),

@@ -39,10 +39,11 @@ skills/
 - `refs/` contains shared reference files available to all skills in the module.
 - `skills/<name>/SKILL.md` is the template for each skill. It must have YAML frontmatter with `name` and `description`.
 - Skills can include additional files beyond SKILL.md (e.g. their own local references not shared with other skills).
+- `templates/<name>/SKILL.md` is a **shared template** for several near-identical skills (e.g. `request-{codex,claude,grok}-review`). A templated skill has no `skills/<name>/` dir; edit the template and its fragments instead. See `{{ var:X }}` below.
 
 ## Templating
 
-SKILL.md files support two directives:
+SKILL.md files support these directives:
 
 - `{{ ref:<filename> }}` — replaced with the full contents of `refs/<filename>` from the same module. The referenced file is also copied to `references/<filename>` in the compiled output. Must appear on its own line (line-anchored).
 
@@ -55,6 +56,8 @@ SKILL.md files support two directives:
   **Validation:** The compiler validates all `{{ skill:X }}` references in Phase 1 (before writing any output). Unknown skills, unknown modules, and ambiguous bare names all produce errors.
 
 - `{{ pd-version }}` — replaced with the current pd-components release tag (e.g. `pd-v0.4.0`), read from `pd-components/package.json` at compile time. Appears inline. Works in both SKILL.md templates and ref files.
+
+- `{{ var:<name> }}` — templated skills only. Replaced with the value the skill declares in `vars` — a plain string, or `var_file("<path>")`, the contents of a file beside the template (e.g. a per-agent launch fragment). Values may themselves contain `{{ var:X }}`. Appears inline. Declared with `skill("request-codex-review", template="request-agent-review", vars={"agent": "codex", "invoke": var_file("codex.md")})`. An undeclared var, a missing var file, or a rendered frontmatter `name` that differs from the skill name fails the build; an unused var warns.
 
 - `{{ index:techniques }}` — replaced with a generated markdown table of all technique cards declared for the skill. Columns: Technique, What it catches, Oracle, Archetypes, Crit, Volatility, Link. The table is built from each `technique-*.md` card's frontmatter at compile time.
 
@@ -134,7 +137,8 @@ Skills installed this way are namespaced as `<module>:<skill>` (e.g. `planning-w
 ## Pre-compile checks
 
 - All ref files referenced in the DSL exist in the module's `refs/` directory
-- All skill template files exist in the module's `skills/<name>/` directory
+- All skill template files exist in the module's `skills/<name>/` directory (or `templates/<template>/` for templated skills)
+- Every `{{ var:X }}` in a templated skill is declared, every `var_file` exists, and the rendered `name` matches the skill
 - Every `{{ ref:X }}` tag in a template has a corresponding ref in the DSL declaration
 - Every ref in the DSL declaration is actually used by a `{{ ref:X }}` tag in the template (warn, don't fail)
 - Every `{{ skill:X }}` tag in templates and ref files resolves to a known skill (error on unknown or ambiguous)
