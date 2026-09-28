@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>001: per-model-compaction-settings</title>
+  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.9.0/pd-components/dist/pd.min.js" defer></script>
+</head>
+<body>
+<script type="application/json" id="pd-meta">
+{
+  "id": "001",
+  "name": "per-model-compaction-settings",
+  "status": "planning",
+  "created": "2026-09-23"
+}
+</script>
+
+<!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
+<pd-doc title="001: per-model-compaction-settings" status="draft" pr="pending" generated="2026-09-23">
+
+  <pd-tab name="Requirements">
+    <pd-scope></pd-scope>
+
+    <pd-section id="problem" title="Problem">
+      <md><script type="text/plain">
+Auto-compaction uses a single global `reserveTokens` value across all models. Users who switch between models with very different context windows — for example a 200K model and a 1M model in the same session — cannot pick a `reserveTokens` value that works for both: `400000` leaves a sensible 600K headroom on the 1M model but makes the 200K model compact on the first turn, while the 16384 default lets the 1M model run to ~984K before compacting — so close to the edge that the summarization request itself overflows the window.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="goals" title="Goals">
+      <md><script type="text/plain">
+- Allow `compaction.profiles` — a map keyed by `"provider/modelId"` — in `settings.json`, with the existing global values as fallback.
+- Both `reserveTokens` and `keepRecentTokens` are overridable per-model; either field alone is valid (partial override).
+- The interactive coding-agent session resolves the correct profile at each compaction-check point using the current model.
+- Existing sessions and configs with no `profiles` key continue to work unchanged.
+- New setting is documented in `settings.md` and `compaction.md`.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="out-of-scope" title="Out of Scope">
+      <md><script type="text/plain">
+- Per-model compaction settings in the harness-level executor path (`packages/agent/src/harness/runtime/drive/structural.ts`) — that path uses a pre-resolved `CompactionSettings` snapshot and is for worker agents, not the interactive session. Can be addressed in a follow-up.
+- A UI or CLI for editing profiles — the user edits `settings.json` directly.
+- Validation that the profile's `reserveTokens` is below the model's actual context window — that is already the user's responsibility for the global setting.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="open-questions" title="Open Questions">
+      <md><script type="text/plain">
+- **Assumption**: Key format follows the established `modelThinkingLevels` pattern: `"provider/modelId"` (e.g. `"anthropic/claude-opus-4-5"`, `"some-provider/big-model"`). No alternative key scheme is needed.
+- **Assumption**: `profiles` entries are not merged with the global compaction settings beyond the field-level fallback already implemented in `getCompactionSettings`. No recursive profile merging.
+      </script></md>
+    </pd-section>
+  </pd-tab>
+
+  <pd-tab name="Verification">
+    <pd-section id="test-strategy" title="Test Strategy">
+      <md><script type="text/plain">
+Unit-test the per-model profile lookup in `packages/coding-agent/test/settings-manager.test.ts` using the existing `SettingsManager.inMemory(settings)` factory — no file I/O needed. Each test asserts on the object returned by `getCompactionSettings(provider, modelId)`.
+
+No integration or e2e tests are needed: the change is a pure settings-resolution function with no external side-effects. The call sites in `agent-session.ts` are covered indirectly by the existing session tests.
+
+Run tests with:
+```
+node "$(git rev-parse --show-toplevel)/node_modules/vitest/dist/cli.js" --run packages/coding-agent/test/settings-manager.test.ts
+```
+      </script></md>
+    </pd-section>
+
+    <pd-ac id="AC-1" title="Profile overrides reserveTokens for matching model" phases="1" tests="packages/coding-agent/test/settings-manager.test.ts">
+      <md><script type="text/plain">
+- Given `compaction.reserveTokens = 16384` and `compaction.profiles["anthropic/claude-opus"] = { reserveTokens: 400000 }`
+- When `getCompactionSettings("anthropic", "claude-opus")` is called
+- Then `reserveTokens` is `400000` and `keepRecentTokens` is `20000` (global default)
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-2" title="Global fallback when no profile matches" phases="1" tests="packages/coding-agent/test/settings-manager.test.ts">
+      <md><script type="text/plain">
+- Given `compaction.reserveTokens = 32768` and a `profiles` map with one unrelated entry
+- When `getCompactionSettings("anthropic", "claude-haiku")` is called (no matching profile)
+- Then `reserveTokens` is `32768` (global) and `keepRecentTokens` is `20000` (global default)
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-3" title="keepRecentTokens is also overridable per-model" phases="1" tests="packages/coding-agent/test/settings-manager.test.ts">
+      <md><script type="text/plain">
+- Given `compaction.keepRecentTokens = 20000` and `compaction.profiles["openai/gpt-4o"] = { keepRecentTokens: 80000 }`
+- When `getCompactionSettings("openai", "gpt-4o")` is called
+- Then `keepRecentTokens` is `80000` and `reserveTokens` is `16384` (global default)
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-4" title="No model arg → global values returned" phases="1" tests="packages/coding-agent/test/settings-manager.test.ts">
+      <md><script type="text/plain">
+- Given `compaction.profiles` is set with several entries
+- When `getCompactionSettings()` is called with no arguments
+- Then `reserveTokens` and `keepRecentTokens` return the global defaults (profiles are ignored)
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-5" title="No profiles key → existing behavior unchanged" phases="1" tests="packages/coding-agent/test/settings-manager.test.ts">
+      <md><script type="text/plain">
+- Given a settings file with no `compaction.profiles` key (upgrade scenario)
+- When `getCompactionSettings("anthropic", "claude-sonnet")` is called
+- Then global `reserveTokens` and `keepRecentTokens` are returned with no error
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-6" title="Documentation updated in settings.md" phases="2" tests="">
+      <md><script type="text/plain">
+- Given the updated `packages/coding-agent/docs/settings.md`
+- When reviewed, the `compaction` section includes `compaction.profiles` with type, default (`{}`), description, and a JSON example matching the issue's proposed format
+      </script></md>
+    </pd-ac>
+
+    <pd-section id="verification-gaps" title="Known Gaps and Risks">
+      <md><script type="text/plain">
+- **Call sites not unit-tested in isolation**: the 4 `agent-session.ts` call sites that pass `this.model?.provider, this.model?.id` are not directly unit-tested; they rely on the getter being correct (covered by AC-1 through AC-5). The risk is low — the call site change is mechanical.
+- **Harness path not covered**: `structural.ts` still uses a pre-resolved `CompactionSettings` without profiles; described under Out of Scope.
+      </script></md>
+    </pd-section>
+  </pd-tab>
+
+  <pd-tab name="Solution">
+    <pd-section id="approach" title="Approach">
+      <md><script type="text/plain">
+Add `profiles?: Record<string, { reserveTokens?: number; keepRecentTokens?: number }>` to the user-facing `CompactionSettings` interface in `settings-manager.ts`, following the established `modelThinkingLevels` pattern (same key format: `"provider/modelId"`, same field-level fallback).
+
+Update `getCompactionSettings()` to accept optional `provider` and `modelId` parameters. When both are present, look up `profiles["provider/modelId"]` and use its `reserveTokens`/`keepRecentTokens` in place of the global values if defined.
+
+Update the four call sites in `agent-session.ts` that call `getCompactionSettings()` to pass `this.model?.provider` and `this.model?.id`. The model is already available at each site.
+
+Update `settings.md` and `compaction.md` to document the new setting.
+      </script></md>
+    </pd-section>
+
+    <pd-files>
+      <pd-file path="packages/coding-agent/src/core/settings-manager.ts" change="edit">Add `profiles` field to `CompactionSettings` interface; update `getCompactionSettings(provider?, modelId?)` to resolve per-model overrides.</pd-file>
+      <pd-file path="packages/coding-agent/src/core/agent-session.ts" change="edit">Pass `this.model?.provider, this.model?.id` to the four `getCompactionSettings()` call sites (lines 540, 1981, 2154, 2270).</pd-file>
+      <pd-file path="packages/coding-agent/docs/settings.md" change="edit">Add `compaction.profiles` row to the compaction settings table and update the JSON example.</pd-file>
+      <pd-file path="packages/coding-agent/docs/compaction.md" change="edit">Add a note on per-model profile resolution.</pd-file>
+      <pd-file path="packages/coding-agent/test/settings-manager.test.ts" change="edit">Add tests for per-model profile lookup (AC-1 through AC-5).</pd-file>
+    </pd-files>
+
+    <pd-section id="key-types" title="Interface Changes">
+      <pd-api kind="interface" name="CompactionSettings" lang="ts" path="packages/coding-agent/src/core/settings-manager.ts" caption="User-facing settings type (before → after)">
+        <pd-member kind="field" sig="enabled?: boolean">default: true</pd-member>
+        <pd-member kind="field" sig="reserveTokens?: number">default: 16384</pd-member>
+        <pd-member kind="field" sig="keepRecentTokens?: number">default: 20000</pd-member>
+        <pd-member kind="field" sig="profiles?: Record&lt;string, { reserveTokens?: number; keepRecentTokens?: number }&gt;">Per-model overrides keyed by "provider/modelId". NEW</pd-member>
+      </pd-api>
+
+      <pd-api kind="method" name="getCompactionSettings" lang="ts" path="packages/coding-agent/src/core/settings-manager.ts" caption="Updated signature">
+        <pd-member kind="method" sig="getCompactionSettings(provider?: string, modelId?: string): { enabled: boolean; reserveTokens: number; keepRecentTokens: number }">Resolves per-model profile when provider+modelId supplied; falls back to globals otherwise.</pd-member>
+      </pd-api>
+    </pd-section>
+
+    <pd-section id="rejected-alternatives" title="Rejected Alternatives">
+      <md><script type="text/plain">
+- **`getCompactionSettingsForModel(provider, modelId)` as a separate method**: Keeps the old zero-arg form unchanged but adds API surface. Rejected — updating the signature with optional args is sufficient and avoids the duplication.
+- **Resolve profiles in the harness `capturedSettings`**: Would require adding `profiles` to the harness-internal `CompactionSettings` (different package, different type, non-optional fields) and updating `validateCompactionSettings`. The harness path is for executor workers, not the interactive session; the cost/scope ratio is high for the reported use case. Deferred.
+- **Single `"provider/modelId"` string parameter to `getCompactionSettings`**: Slightly less consistent with how the rest of `SettingsManager` passes provider/model pairs (always as separate arguments, matching the `getModelThinkingLevel(provider, modelId)` pattern). Rejected.
+      </script></md>
+    </pd-section>
+
+    <pd-decisions></pd-decisions>
+  </pd-tab>
+
+  <pd-tab name="Plan">
+    <pd-section id="summary" title="Summary">
+      <md><script type="text/plain">
+Two sequential phases: Phase 1 wires the full end-to-end path (type + getter + call sites + tests); Phase 2 updates documentation. Phase 1 is a complete, runnable feature after its commit; Phase 2 adds the missing user-visible surface.
+      </script></md>
+    </pd-section>
+
+    <pd-dag caption="Execution order"></pd-dag>
+
+    <pd-stepper>
+      <pd-phase n="1" title="Core implementation and tests" status="todo"
+                files="packages/coding-agent/src/core/settings-manager.ts,packages/coding-agent/src/core/agent-session.ts,packages/coding-agent/test/settings-manager.test.ts">
+        <md><script type="text/plain">
+**Goal**: End-to-end: type change → getter update → call sites → passing tests.
+
+1. Edit `packages/coding-agent/src/core/settings-manager.ts`:
+   - Add `profiles?: Record<string, { reserveTokens?: number; keepRecentTokens?: number }>` to the `CompactionSettings` interface (after `keepRecentTokens`).
+   - Update `getCompactionSettings()` signature to `getCompactionSettings(provider?: string, modelId?: string)`.
+   - Inside `getCompactionSettings`, resolve the profile: `const profile = provider && modelId ? this.settings.compaction?.profiles?.[`${provider}/${modelId}`] : undefined;`
+   - Return `reserveTokens: profile?.reserveTokens ?? this.getCompactionReserveTokens()` and `keepRecentTokens: profile?.keepRecentTokens ?? this.getCompactionKeepRecentTokens()`.
+
+2. Edit `packages/coding-agent/src/core/agent-session.ts` — update all four call sites:
+   - Line 540 (`_compactBeforeNextAssistantResponse`): `this.settingsManager.getCompactionSettings(this.model?.provider, this.model?.id)`
+   - Line 1981 (`compact()` manual path): `this.settingsManager.getCompactionSettings(this.model?.provider, this.model?.id)`
+   - Line 2154 (`_checkCompaction`): `this.settingsManager.getCompactionSettings(this.model?.provider, this.model?.id)`
+   - Line 2270 (`_runAutoCompaction`): `this.settingsManager.getCompactionSettings(this.model?.provider, this.model?.id)`
+
+3. Edit `packages/coding-agent/test/settings-manager.test.ts` — add a `describe("compaction profiles")` block with tests covering AC-1 through AC-5. Use `SettingsManager.inMemory({ compaction: { ... } })` factory; assert with `toEqual`.
+
+4. Run tests: `node "$(git rev-parse --show-toplevel)/node_modules/vitest/dist/cli.js" --run packages/coding-agent/test/settings-manager.test.ts`
+
+5. Run full check: `npm run check` — fix any type errors or lint warnings.
+
+6. Commit: `feat(coding-agent): add per-model compaction profiles closes #8133`
+        </script></md>
+      </pd-phase>
+
+      <pd-phase n="2" title="Documentation" status="todo" depends-on="1"
+                files="packages/coding-agent/docs/settings.md,packages/coding-agent/docs/compaction.md">
+        <md><script type="text/plain">
+**Goal**: Document the new setting so users can discover and configure it.
+
+1. Edit `packages/coding-agent/docs/settings.md` — in the `### Compaction` section:
+   - Add a row: `| \`compaction.profiles\` | object | \`{}\` | Per-model overrides keyed by \`"provider/modelId"\`. Each entry may set \`reserveTokens\` and/or \`keepRecentTokens\`. |`
+   - Update the JSON example block to include a `profiles` entry showing the format from the issue.
+
+2. Edit `packages/coding-agent/docs/compaction.md` — add a short section explaining that `reserveTokens` and `keepRecentTokens` can be overridden per model via `compaction.profiles`, with the same example JSON.
+
+3. Run `npm run check` to verify no issues were introduced.
+
+4. Commit: `docs(coding-agent): document compaction.profiles per-model overrides`
+        </script></md>
+      </pd-phase>
+    </pd-stepper>
+
+    <pd-section id="success-criteria" title="Success Criteria">
+      <md><script type="text/plain">
+- AC-1 through AC-5 pass (unit tests in settings-manager.test.ts).
+- AC-6 met (settings.md updated with profiles row and JSON example).
+- `npm run check` exits 0 with no errors, warnings, or infos.
+      </script></md>
+    </pd-section>
+
+    <pd-trace caption="Acceptance coverage"></pd-trace>
+  </pd-tab>
+
+</pd-doc>
+</body>
+</html>

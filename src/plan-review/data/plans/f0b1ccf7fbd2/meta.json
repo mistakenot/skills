@@ -1,0 +1,65 @@
+{
+  "plan_id": "f0b1ccf7fbd2",
+  "batch": "b20260923-infra",
+  "fixture_id": "pi-8133-per-model-compaction",
+  "prompt": "/new-task-quick implement github issue #8133, text below.\n\n# Per-model compaction settings\n\n### What do you want to change?\n\nLet compaction settings vary per model: a `compaction.profiles` map in settings.json keyed by model id, with the current global values as fallback.\n\n```json\n{\n  \"compaction\": {\n    \"reserveTokens\": 16384,\n    \"profiles\": {\n      \"some-provider/big-model\": { \"reserveTokens\": 400000 }\n    }\n  }\n}\n```\n\n### Why?\n\nThe auto-compaction trigger is `contextTokens > contextWindow - reserveTokens`, and reserveTokens is one global value. I switch between a 200K model and a 1M model in the same sessions, and no single number works for both. 400000 gives the 1M model a sensible trigger around 600K, but would make the 200K model compact from the first turn. The 16384 default lets the 1M model run to ~984K before compacting, and a trigger that close to the edge has already bitten me: the summarization request itself overflowed the window (\"Prompt is too long\").\n\nI've carried this as a local patch to agent-session.js since 0.79 and reapply it after every release. It works, but it breaks whenever that file gets refactored.\n\n#4471 and #5722 asked for the same thing. Both were auto-closed without review (refactor freeze, new-contributor gate).\n\n### How? (optional)\n\nResolve reserveTokens/keepRecentTokens through a per-model lookup with global fallback at the point where compaction reads its settings. Happy to send a PR if approved.\n\nStop after Stage 4 (self-check); do not run the Codex review.",
+  "target": "https://github.com/earendil-works/pi.git",
+  "start_sha": "400d6905ce46ec46e79da8a7701b1b48850192df",
+  "arm_id": "skills-99f2cce8c728",
+  "skills_sha": "99f2cce8c728bca679b3a596d429aeb4abe4f4a7",
+  "model": "anthropic/claude-sonnet-4-6",
+  "run": "pi-8133-per-model-compaction-skills-99f2cce8c728-scripted-20260923-234105",
+  "trial": "pi-8133-per-model-compaction-ski__vov2JNo",
+  "completion": "ok",
+  "cost_usd": 2.317282,
+  "wall_ms": 526846,
+  "task_dir": "docs/tasks/001-per-model-compaction-settings",
+  "plan_path": "src/plan-review/data/plans/f0b1ccf7fbd2/plan.html",
+  "context_path": "src/plan-review/data/plans/f0b1ccf7fbd2/context.md",
+  "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/pi-8133-per-model-compaction-skills-99f2cce8c728-scripted-20260923-234105/pi-8133-per-model-compaction-ski__vov2JNo/transcript.txt",
+  "checks": {
+    "questions": 0,
+    "open_questions": 0,
+    "codex_ran": false,
+    "lint": {
+      "ok": true,
+      "codes": [],
+      "blocking": []
+    }
+  },
+  "ingested_at": "2026-09-24T14:43:00+00:00",
+  "rows": [
+    {
+      "plan_id": "f0b1ccf7fbd2",
+      "batch": "b20260923-infra",
+      "fixture_id": "pi-8133-per-model-compaction",
+      "prompt": "/new-task-quick implement github issue #8133, text below.\n\n# Per-model compaction settings\n\n### What do you want to change?\n\nLet compaction settings vary per model: a `compaction.profiles` map in settings.json keyed by model id, with the current global values as fallback.\n\n```json\n{\n  \"compaction\": {\n    \"reserveTokens\": 16384,\n    \"profiles\": {\n      \"some-provider/big-model\": { \"reserveTokens\": 400000 }\n    }\n  }\n}\n```\n\n### Why?\n\nThe auto-compaction trigger is `contextTokens > contextWindow - reserveTokens`, and reserveTokens is one global value. I switch between a 200K model and a 1M model in the same sessions, and no single number works for both. 400000 gives the 1M model a sensible trigger around 600K, but would make the 200K model compact from the first turn. The 16384 default lets the 1M model run to ~984K before compacting, and a trigger that close to the edge has already bitten me: the summarization request itself overflowed the window (\"Prompt is too long\").\n\nI've carried this as a local patch to agent-session.js since 0.79 and reapply it after every release. It works, but it breaks whenever that file gets refactored.\n\n#4471 and #5722 asked for the same thing. Both were auto-closed without review (refactor freeze, new-contributor gate).\n\n### How? (optional)\n\nResolve reserveTokens/keepRecentTokens through a per-model lookup with global fallback at the point where compaction reads its settings. Happy to send a PR if approved.\n\nStop after Stage 4 (self-check); do not run the Codex review.",
+      "target": "https://github.com/earendil-works/pi.git",
+      "start_sha": "400d6905ce46ec46e79da8a7701b1b48850192df",
+      "arm_id": "skills-99f2cce8c728",
+      "skills_sha": "99f2cce8c728bca679b3a596d429aeb4abe4f4a7",
+      "model": "anthropic/claude-sonnet-4-6",
+      "run": "pi-8133-per-model-compaction-skills-99f2cce8c728-scripted-20260923-234105",
+      "trial": "pi-8133-per-model-compaction-ski__vov2JNo",
+      "completion": "ok",
+      "cost_usd": 2.317282,
+      "wall_ms": 526846,
+      "task_dir": "docs/tasks/001-per-model-compaction-settings",
+      "plan_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/pi-8133-per-model-compaction-skills-99f2cce8c728-scripted-20260923-234105/pi-8133-per-model-compaction-ski__vov2JNo/produced/docs/tasks/001-per-model-compaction-settings/plan.html",
+      "context_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/pi-8133-per-model-compaction-skills-99f2cce8c728-scripted-20260923-234105/pi-8133-per-model-compaction-ski__vov2JNo/produced/docs/tasks/001-per-model-compaction-settings/context.md",
+      "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/pi-8133-per-model-compaction-skills-99f2cce8c728-scripted-20260923-234105/pi-8133-per-model-compaction-ski__vov2JNo/transcript.txt",
+      "checks": {
+        "questions": 0,
+        "open_questions": 0,
+        "codex_ran": false,
+        "lint": {
+          "ok": true,
+          "codes": [],
+          "blocking": []
+        }
+      },
+      "ingested_at": "2026-09-24T14:43:00+00:00"
+    }
+  ],
+  "snapshot_at": "2026-09-24T15:21:43+00:00"
+}

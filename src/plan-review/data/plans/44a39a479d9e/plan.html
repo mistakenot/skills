@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>045: etl-project-registry</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.8.0/pd-components/dist/pd.min.js" defer></script>
+  <script type="application/json" id="pd-meta">
+  {
+    "id": "045",
+    "name": "etl-project-registry",
+    "status": "planning",
+    "created": "2026-09-23"
+  }
+  </script>
+</head>
+<body>
+  <pd-doc title="045: etl-project-registry" status="draft" generated="2026-09-23">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TAB 1: REQUIREMENTS
+         ═══════════════════════════════════════════════════════════ -->
+    <pd-tab name="Requirements">
+
+      <pd-section id="problem" title="Problem">
+        <md><script type="text/plain">
+The `auto etl run` pipeline has three data-source phases — `sessions`, `git`,
+and `github`. The `git` and `github` phases currently discover which repositories
+to index by reading the **remotes cache** (`~/.auto/etl/settings.json`), a map of
+workspace paths to remote URLs that is built organically each time the `sessions`
+phase runs.
+
+Because the sessions phase scans every directory under `~/.claude/projects/`, the
+remotes cache accumulates **every repo Claude has ever opened** — including random
+GitHub projects pulled in briefly to research a problem. The `git` phase then
+indexes every commit in all those repos, and the `github` phase tries to sync PRs
+from all of them, polluting the parquet output with large volumes of unrelated
+project data.
+
+The registry needed to fix this already exists: `~/.auto/projects.json`
+(`ProjectsConfig` in `auto-shared/config/projects.go`) is the canonical host-level
+project registry, already used by `auto-watch`, `auto-skill`, and `auto-cli init --project`.
+The ETL pipeline simply does not use it yet.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="goals" title="Goals">
+        <md><script type="text/plain">
+1. **Registry-driven discovery**: `auto etl run --only git` and `--only github`
+   (and the combined default run) discover repos from `~/.auto/projects.json`
+   instead of the remotes cache.
+2. **Explicit overrides still work**: `--repo-path` continues to supplement the
+   registry for one-off git indexing.
+3. **Empty registry is a clear error**: when the registry has no projects and no
+   `--repo-path` is given, the `git` and `github` phases warn and skip with a
+   concrete remediation hint (`auto init --project`).
+4. **Session ETL is unchanged**: the `sessions` phase continues to process all
+   sessions from `~/.claude/projects/`; it is not filtered by the registry.
+5. **Remotes cache retained for session-to-remote resolution**: the workspace →
+   remote-URL cache remains but is no longer used as the discovery source for
+   `git`/`github` phases.
+6. **Opt-in legacy fallback** (`--all-remotes` flag): allows the old
+   remotes-cache-based discovery for migration / power-user scenarios.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="out-of-scope" title="Out of Scope">
+        <md><script type="text/plain">
+- Project management CLI (`auto etl project add/remove/list`) — project
+  registration is already handled by `auto init --project` at the stack level.
+- Filtering the `sessions` phase by registered projects.
+- Multi-host or S3-backed project registry.
+- Automatic migration / pruning of existing unrelated parquet data already written.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="open-questions" title="Open Questions">
+        <md><script type="text/plain">
+- [x] **Assumption**: The `sessions` phase must remain unfiltered — session data
+  from all workspaces is valuable, even from ad-hoc projects. (Confirmed by
+  user's framing: "we keep sucking in lots of unrelated project data from random
+  github projects I pulled in" — the concern is git/github indexing, not session
+  data.)
+- [x] **Assumption**: `auto init --project` is the correct UX for registering a
+  project; no new ETL-specific registration command is needed.
+        </script></md>
+
+        <pd-question id="Q-1" status="open" priority="p1" for="user"
+                     title="Empty registry behaviour: warn-and-skip or hard error?"
+                     recommendedAnswer="Warn and skip (non-fatal) — same pattern as the current github phase when no GitHub remotes are found. This keeps `auto etl run` (default all-sources) useful before the registry is populated.">
+When the project registry is empty and `--repo-path` is not provided, should the
+`git` and `github` phases:
+(a) warn on stderr and skip gracefully (non-fatal, matching current github behaviour), or
+(b) return a hard error (exit non-zero)?
+
+The recommended answer is (a) warn-and-skip when running all sources by default,
+but return a hard error when `--only git` or `--only github` is passed explicitly
+(matching the existing `explicitOnly` pattern already in `runGitHubSync`).
+        </pd-question>
+
+      </pd-section>
+
+    </pd-tab>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TAB 2: VERIFICATION
+         ═══════════════════════════════════════════════════════════ -->
+    <pd-tab name="Verification">
+
+      <pd-section id="test-strategy" title="Test Strategy">
+        <md><script type="text/plain">
+The existing test suite uses a combination of unit tests and E2E tests with real
+fixture data on disk (`auto-etl/e2e_test.go`, `cmd/run_test.go`). The verification
+strategy follows the same pattern:
+
+- **Unit tests** for the new discovery-from-registry helpers in
+  `internal/git/discover.go` and `internal/github/repo.go`.
+- **Integration tests** in `cmd/run_test.go` that mock a minimal
+  `~/.auto/projects.json` on disk and assert the correct repos are passed to the
+  git/github phases.
+- **Build check**: `go build ./...` must pass after each change.
+- **Vet**: `go vet ./...` must be clean.
+        </script></md>
+      </pd-section>
+
+      <pd-ac id="AC-1" title="Registry used for git discovery" phases="" tests="">
+        <md><script type="text/plain">
+**Given** `~/.auto/projects.json` contains one project entry with path `/repos/myapp`
+**When** `auto etl run --only git` is executed
+**Then** only `/repos/myapp` is discovered for git indexing (the remotes cache
+is not consulted for discovery)
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-2" title="Registry used for GitHub discovery" phases="" tests="">
+        <md><script type="text/plain">
+**Given** `~/.auto/projects.json` contains one project entry with remote
+`https://github.com/owner/repo`
+**When** `auto etl run --only github` is executed
+**Then** only `owner/repo` is fetched from the GitHub API
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-3" title="Empty registry warns and skips (default run)" phases="" tests="">
+        <md><script type="text/plain">
+**Given** `~/.auto/projects.json` is empty (no projects registered)
+**And** `--repo-path` is not provided
+**And** `auto etl run` is invoked (all sources, no `--only`)
+**When** the git and github phases execute
+**Then** both phases print a warning to stderr with a remediation hint
+(`run auto init --project`) and exit without error
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-4" title="Empty registry is a hard error with --only git/github" phases="" tests="">
+        <md><script type="text/plain">
+**Given** the project registry is empty and `--repo-path` is not provided
+**When** `auto etl run --only git` or `auto etl run --only github` is invoked
+**Then** the command exits non-zero with a clear error message
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-5" title="--repo-path supplements the registry" phases="" tests="">
+        <md><script type="text/plain">
+**Given** `~/.auto/projects.json` has project `/repos/myapp`
+**And** `--repo-path /repos/otherrepo` is provided
+**When** `auto etl run --only git` is executed
+**Then** both `/repos/myapp` and `/repos/otherrepo` are indexed (union, deduplicated)
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-6" title="--all-remotes flag restores legacy behaviour" phases="" tests="">
+        <md><script type="text/plain">
+**Given** `--all-remotes` is passed
+**When** `auto etl run --only git` is executed
+**Then** discovery uses the remotes cache (legacy behaviour), ignoring the registry
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-7" title="Session ETL is unaffected" phases="" tests="">
+        <md><script type="text/plain">
+**Given** any project registry state
+**When** `auto etl run --only sessions` is executed
+**Then** all sessions under `~/.claude/projects/` are processed (same as before)
+        </script></md>
+      </pd-ac>
+
+      <pd-section id="verification-gaps" title="Known Gaps and Risks">
+        <md><script type="text/plain">
+- The E2E test (`e2e_test.go`) exercises the full pipeline against real fixture
+  data; it does not run the git/github phases (no GitHub token in CI). New
+  unit/integration tests in `cmd/run_test.go` will cover the discovery logic with
+  a mocked filesystem.
+- We cannot easily test the GitHub API call without a live token; the GitHub
+  discovery change is tested at the `DiscoverReposFromRegistry` unit level only.
+        </script></md>
+      </pd-section>
+
+    </pd-tab>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TAB 3: SOLUTION
+         ═══════════════════════════════════════════════════════════ -->
+    <pd-tab name="Solution">
+
+      <pd-section id="approach" title="Approach">
+        <md><script type="text/plain">
+Change `runGitETL` and `runGitHubSync` in `auto-etl/cmd/run.go` to load the
+project registry from `~/.auto/projects.json` (via `sharedconfig.EnsureProjects`)
+and use it as the primary discovery source, falling back to the existing
+`--repo-path` flag for one-off additions.
+
+Add two new helper functions — one in each internal discovery package — that
+convert `[]config.ProjectRef` into the package-native type:
+- `git.DiscoverReposFromRegistry(projects []config.ProjectRef, explicitPaths []string) []RepoInfo`
+- `github.DiscoverReposFromRegistry(projects []config.ProjectRef) []RepoRef`
+
+The `--all-remotes` boolean flag on the `run` command opts in to the old
+remotes-cache-based discovery path (calls the existing `DiscoverRepos` functions
+unchanged). This provides a migration escape hatch without changing the default.
+
+The remotes cache (`~/.auto/etl/settings.json`) continues to be built and read
+for `GitRemoteForSession` during session ETL — it is not removed.
+        </script></md>
+      </pd-section>
+
+      <pd-files>
+        <pd-file action="edit" path="auto-etl/cmd/run.go">
+          Add `--all-remotes` flag; modify `runGitETL` and `runGitHubSync` to
+          load the project registry and call the new `DiscoverReposFromRegistry`
+          helpers when `--all-remotes` is not set. Pass `explicitOnly` semantics
+          for empty-registry errors.
+        </pd-file>
+        <pd-file action="edit" path="auto-etl/internal/git/discover.go">
+          Add `DiscoverReposFromRegistry(projects []config.ProjectRef, explicitPaths []string) []RepoInfo`
+          that builds a `[]RepoInfo` from project paths + explicit paths, resolving
+          git toplevels and deduplicating. Reuses existing `gitToplevel` and
+          `gitOriginRemote` helpers.
+        </pd-file>
+        <pd-file action="edit" path="auto-etl/internal/github/repo.go">
+          Add `DiscoverReposFromRegistry(projects []config.ProjectRef) []RepoRef`
+          that extracts GitHub owner/repo from `ProjectRef.Remote` fields.
+          Reuses existing `parseGitHubRemote` helper.
+        </pd-file>
+        <pd-file action="edit" path="auto-etl/internal/git/discover_test.go">
+          New file: unit tests for `DiscoverReposFromRegistry` — empty registry,
+          single project, duplicate paths, non-git path skipped with warning.
+        </pd-file>
+        <pd-file action="edit" path="auto-etl/internal/github/repo_test.go">
+          Extend existing tests with cases for `DiscoverReposFromRegistry` — empty
+          registry, HTTPS remote, SSH remote, non-GitHub remote ignored.
+        </pd-file>
+        <pd-file action="edit" path="auto-etl/docs/requirements.md">
+          Document the registry-driven discovery: how projects are registered
+          (`auto init --project`), the `--all-remotes` escape hatch, and the
+          empty-registry behaviour.
+        </pd-file>
+      </pd-files>
+
+      <pd-section id="rejected-alternatives" title="Rejected Alternatives">
+        <md><script type="text/plain">
+- **Add an ETL-specific project subcommand** (`auto etl project add`): The
+  shared registry already exists and `auto init --project` handles registration.
+  A duplicate surface adds complexity without benefit.
+- **Filter sessions phase by registry**: The sessions phase is the most valuable
+  data source; filtering it would silently drop session history for any repo not
+  yet registered. The problem is scoped to git/github indexing only.
+- **Keep remotes cache as primary, add an allowlist**: More complex (two sources
+  of truth) and doesn't solve the contamination problem for users who have already
+  accumulated a large cache.
+- **Hard-delete the remotes cache**: The cache serves a different purpose
+  (workspace→remote resolution during session ETL) and must be kept.
+        </script></md>
+      </pd-section>
+
+      <pd-decisions></pd-decisions>
+
+    </pd-tab>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         TAB 4: PLAN
+         ═══════════════════════════════════════════════════════════ -->
+    <pd-tab name="Plan">
+
+      <pd-section id="summary" title="Summary">
+        <md><script type="text/plain">
+Add `DiscoverReposFromRegistry` helpers to the `git` and `github` internal
+packages, then wire them into `runGitETL` and `runGitHubSync` in `cmd/run.go`
+as the default discovery path — Phase 1 adds the skeleton end-to-end; Phase 2
+adds the `--all-remotes` escape hatch and docs.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="execution-sequence" title="Execution Sequence">
+        <md><script type="text/plain">
+```
+Phase 1 (skeleton)
+  └── Phase 2 (escape hatch + docs)
+```
+Phases are sequential (Phase 2 builds on Phase 1's wired-up discovery).
+        </script></md>
+      </pd-section>
+
+      <pd-stepper>
+
+        <pd-phase n="1"
+                  title="Registry-driven discovery (walking skeleton)"
+                  files="auto-etl/internal/git/discover.go,auto-etl/internal/github/repo.go,auto-etl/cmd/run.go,auto-etl/internal/github/repo_test.go"
+                  status="todo">
+          <md><script type="text/plain">
+**Goal**: Wire the project registry into both discovery paths end-to-end with one
+happy-path test passing.
+
+1. **`auto-etl/internal/git/discover.go`**: Add
+   ```go
+   func DiscoverReposFromRegistry(projects []config.ProjectRef, explicitPaths []string) []RepoInfo
+   ```
+   - Iterate `projects`; for each, call `gitToplevel(p.Path)` to resolve and
+     validate; use `p.Remote` if non-empty, else call `gitOriginRemote`.
+   - Append `explicitPaths` to the candidates and deduplicate by toplevel.
+   - Warn to stderr for paths that fail `gitToplevel`.
+   - **Verify**: `go build ./...` passes in `auto-etl/`.
+
+2. **`auto-etl/internal/github/repo.go`**: Add
+   ```go
+   func DiscoverReposFromRegistry(projects []config.ProjectRef) []RepoRef
+   ```
+   - Iterate `projects`; call `parseGitHubRemote(p.Remote)` for each.
+   - Non-GitHub remotes are silently skipped (same pattern as existing function).
+   - **Verify**: `go build ./...` passes.
+
+3. **`auto-etl/cmd/run.go`**:
+   - In `runGitETL`: call `sharedconfig.EnsureProjects()` to load the registry;
+     call `git.DiscoverReposFromRegistry(cfg.Projects, explicitPaths)` instead of
+     `git.DiscoverRepos(remotes, explicitPaths)`.
+   - In `runGitHubSync`: call `github.DiscoverReposFromRegistry(cfg.Projects)`
+     instead of `github.DiscoverRepos(remotes)`.
+   - Empty registry + no explicit paths: if `explicitOnly` (i.e. `--only` flag
+     was set), return hard error with remediation; otherwise warn and return nil.
+   - **Verify**: `go build ./...` passes; `go vet ./...` clean.
+
+4. **`auto-etl/internal/github/repo_test.go`**: Add test cases for
+   `DiscoverReposFromRegistry` covering empty input, HTTPS remote, SSH remote,
+   non-GitHub remote skipped.
+   - **Verify**: `go test ./internal/github/...` passes.
+
+5. Commit: `feat(etl): use project registry for git and github discovery`
+          </script></md>
+        </pd-phase>
+
+        <pd-phase n="2"
+                  title="--all-remotes escape hatch + discover test file + docs"
+                  files="auto-etl/cmd/run.go,auto-etl/internal/git/discover_test.go,auto-etl/docs/requirements.md"
+                  status="todo">
+          <md><script type="text/plain">
+**Goal**: Add the migration escape hatch, unit tests for the git discovery helper,
+and a docs update.
+
+1. **`auto-etl/cmd/run.go`**: Add `--all-remotes` boolean flag to `newRunCmd`.
+   - When true: `runGitETL` calls the legacy `git.DiscoverRepos(remotes, ...)`;
+     `runGitHubSync` calls the legacy `github.DiscoverRepos(remotes)`.
+   - Update `--help` output to describe the flag.
+   - **Verify**: `go build ./...` passes.
+
+2. **`auto-etl/internal/git/discover_test.go`**: Unit tests for
+   `DiscoverReposFromRegistry`:
+   - Empty registry + no explicit paths → empty slice.
+   - Single valid project path → one RepoInfo.
+   - Duplicate paths (same toplevel from registry + explicit) → deduplicated.
+   - Non-git path → skipped with warning, rest returned.
+   - Use `t.TempDir()` for any on-disk fixtures.
+   - **Verify**: `go test ./internal/git/...` passes.
+
+3. **`auto-etl/docs/requirements.md`**: Add a "Repository Discovery" section
+   explaining the registry-first approach, how to register projects
+   (`auto init --project`), the `--all-remotes` flag, and the empty-registry
+   behaviour.
+   - **Verify**: file saved, no broken links.
+
+4. Commit: `feat(etl): add --all-remotes flag and registry discovery docs`
+          </script></md>
+        </pd-phase>
+
+      </pd-stepper>
+
+      <pd-section id="success-criteria" title="Success Criteria">
+        <md><script type="text/plain">
+- AC-1 through AC-7 pass.
+- `go build ./...` and `go vet ./...` are clean in `auto-etl/`.
+- `go test ./...` passes in `auto-etl/`.
+        </script></md>
+      </pd-section>
+
+    </pd-tab>
+
+  </pd-doc>
+</body>
+</html>

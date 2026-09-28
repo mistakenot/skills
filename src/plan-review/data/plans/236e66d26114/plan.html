@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>001: improve-time-flags</title>
+  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.9.0/pd-components/dist/pd.min.js" defer></script>
+</head>
+<body>
+<script type="application/json" id="pd-meta">
+{
+  "id": "001",
+  "name": "improve-time-flags",
+  "status": "planning",
+  "created": "2026-09-24"
+}
+</script>
+
+<!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
+<pd-doc title="001: improve-time-flags" status="draft" pr="pending" generated="2026-09-24">
+
+  <pd-tab name="Requirements">
+    <pd-scope></pd-scope>
+
+    <pd-section id="problem" title="Problem">
+      <md><script type="text/plain">
+Three separate usability bugs make jlogs time flags frustrating:
+
+1. `--since 1d` errors — `ParseSince` delegates directly to `time.ParseDuration`, which rejects `d` (days) and `w` (weeks) as unknown units.
+2. `--since 2h --before 2026-03-13T15:00:00Z` silently drops `--before` — `buildTimeFilter` returns as soon as `sinceFlag` is non-empty, ignoring any `--before` value the user supplied.
+3. `--after 2026-03-13` (plain date) is rejected — `NewTimeFilterAbsolute` calls `time.Parse(time.RFC3339, …)` which requires a full timestamp including time and timezone.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="goals" title="Goals">
+      <md><script type="text/plain">
+- Accept `d` (days) and `w` (weeks) in `--since` (e.g. `--since 1d`, `--since 2w`).
+- Accept a plain date (`YYYY-MM-DD`) in `--after` and `--before`; interpret as midnight UTC of that day.
+- When `--since` and `--before` are both supplied, combine them (since sets the lower bound, before sets the upper bound) rather than silently dropping `--before`.
+- When `--since` and `--after` are both supplied (conflicting lower bounds), return a clear error instead of silently ignoring one.
+- Keep help text in `cmd/root.go` and the time-filtering section in `README.md` in sync with the new syntax.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="out-of-scope" title="Out of Scope">
+      <md><script type="text/plain">
+- Supporting other shorthand units beyond `d` and `w` (e.g. `mo`, `y`).
+- Timezone-aware plain-date parsing (dates always interpret as midnight UTC).
+- Changing how `--stats` or `--schema` interact with time flags.
+- Interactive flag validation beyond what is already tested via `go test`.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="open-questions" title="Open Questions">
+      <md><script type="text/plain">
+Assumptions proceeding on (prose — not load-bearing enough to gate the doc):
+
+- [ ] Plain dates in `--after`/`--before` are treated as midnight UTC (00:00:00Z). Local timezone is deliberately not used to keep behaviour reproducible across machines and timezones.
+- [ ] `1d` = exactly 24 hours, `1w` = exactly 168 hours (not calendar-aware). Daylight-saving edge cases are explicitly out of scope.
+- [ ] `--since` combined with `--before` is the only useful mixed-mode combination; `--since` combined with `--after` always errors (both claim the lower bound).
+      </script></md>
+    </pd-section>
+  </pd-tab>
+
+  <pd-tab name="Verification">
+    <pd-section id="test-strategy" title="Test Strategy">
+      <md><script type="text/plain">
+All three bugs live in pure functions with no I/O: `ParseSince` and `NewTimeFilterAbsolute` in `internal/filter/filter.go`, and `buildTimeFilter` in `cmd/root.go`. The testing approach is:
+
+- **Unit tests** in `internal/filter/filter_test.go` — table-driven, covering every new input form (days, weeks, plain dates, conflict error).
+- **buildTimeFilter** is a package-level function in `cmd/` that reads package-level vars; test it via the existing e2e suite (the binary is built and invoked). If a dedicated unit test for `buildTimeFilter` is awkward to isolate, a targeted e2e case suffices.
+- **E2E regression** — run existing `go test ./e2e/ -v` to confirm no regressions in the full pipeline.
+      </script></md>
+    </pd-section>
+
+    <pd-ac id="AC-1" title="--since 1d accepted" phases="1,2" tests="internal/filter/filter_test.go">
+      <md><script type="text/plain">
+- Given a user runs `jlogs --since 1d --app web`
+- When the flag is parsed
+- Then no error is returned and the lower time bound is set to `now - 24h`
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-2" title="--since 1w accepted" phases="1,2" tests="internal/filter/filter_test.go">
+      <md><script type="text/plain">
+- Given a user runs `jlogs --since 1w --app web`
+- When the flag is parsed
+- Then no error is returned and the lower time bound is set to `now - 168h`
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-3" title="--since 2h --before RFC3339 combines correctly" phases="1,2" tests="internal/filter/filter_test.go">
+      <md><script type="text/plain">
+- Given a user supplies both `--since 2h` and `--before 2026-03-13T15:00:00Z`
+- When `buildTimeFilter` is called
+- Then `After = now - 2h` and `Before = 2026-03-13T15:00:00Z` (both bounds set, --before is not dropped)
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-4" title="--since + --after returns a clear error" phases="1" tests="internal/filter/filter_test.go">
+      <md><script type="text/plain">
+- Given a user supplies both `--since 2h` and `--after 2026-03-13T12:00:00Z`
+- When `buildTimeFilter` is called
+- Then a non-nil error is returned explaining the conflict (does not silently ignore one)
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-5" title="--after plain date accepted" phases="1,2" tests="internal/filter/filter_test.go">
+      <md><script type="text/plain">
+- Given a user supplies `--after 2026-03-13`
+- When the flag is parsed
+- Then `After = 2026-03-13T00:00:00Z` (midnight UTC, no error)
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-6" title="--before plain date accepted" phases="1,2" tests="internal/filter/filter_test.go">
+      <md><script type="text/plain">
+- Given a user supplies `--before 2026-03-13`
+- When the flag is parsed
+- Then `Before = 2026-03-13T00:00:00Z` (midnight UTC, no error)
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-7" title="Help text and README reflect new syntax" phases="2" tests="">
+      <md><script type="text/plain">
+- Given the implementation is complete
+- When a user reads `jlogs --help` or `README.md`'s time-filtering section
+- Then examples show `--since 1d` and plain-date `--after`/`--before`, and the flag description for `--since` mentions `d`/`w` units
+      </script></md>
+    </pd-ac>
+
+    <pd-section id="verification-gaps" title="Known Gaps &amp; Risks">
+      <md><script type="text/plain">
+- `buildTimeFilter` reads package-level cobra flag variables; pure unit testing it requires a refactor that is out of scope. Coverage via e2e test is the pragmatic alternative.
+- The conflict check (`--since` + `--after`) is not directly visible in unit tests for `ParseSince`; it lives in `buildTimeFilter` and is covered by e2e.
+      </script></md>
+    </pd-section>
+  </pd-tab>
+
+  <pd-tab name="Solution">
+    <pd-section id="approach" title="Approach">
+      <md><script type="text/plain">
+Three targeted changes, each in the layer where the bug lives:
+
+**1. `internal/filter/filter.go` — extend `ParseSince` and `NewTimeFilterAbsolute`**
+
+`ParseSince` pre-processes the input string before handing it to `time.ParseDuration`: replace a trailing `d` suffix with `*24h` and a trailing `w` suffix with `*168h` (integer multiples only, no decimals for simplicity). This keeps the implementation minimal — no custom parser, just a string rewrite.
+
+`NewTimeFilterAbsolute` (and a new helper `ParseAbsoluteTime`) tries `time.RFC3339` first, then falls back to `time.DateOnly` (`"2006-01-02"`). A plain date is treated as midnight UTC.
+
+**2. `cmd/root.go` — fix `buildTimeFilter` logic and update help**
+
+The current early-return when `sinceFlag != ""` is replaced with a combined path: if `sinceFlag` is set and `afterFlag` is also set, return an error. If `sinceFlag` is set and `beforeFlag` is set, parse both and return a `TimeFilter` with `After` from since and `Before` from beforeFlag. Flag descriptions and the `Example:` block are updated to show `d`/`w` units and plain dates.
+
+**3. `README.md` — update time filtering section**
+
+The table row for `--since` gets `d` and `w` added to the accepted units. The `--after`/`--before` rows note plain-date support. The code examples show at least one `1d` and one plain-date usage.
+      </script></md>
+    </pd-section>
+
+    <pd-files>
+      <pd-file path="internal/filter/filter.go" change="edit">Extend ParseSince (d/w), add ParseAbsoluteTime helper, update NewTimeFilterAbsolute</pd-file>
+      <pd-file path="internal/filter/filter_test.go" change="edit">Add table-driven tests for d/w durations, plain dates, and conflict edge cases</pd-file>
+      <pd-file path="cmd/root.go" change="edit">Fix buildTimeFilter combining logic, update --since flag description and Example block</pd-file>
+      <pd-file path="README.md" change="edit">Update time-filtering section: d/w units for --since, plain-date support for --after/--before</pd-file>
+    </pd-files>
+
+    <pd-section id="rejected-alternatives" title="Rejected Alternatives">
+      <md><script type="text/plain">
+- **Combine `--since` + `--after`** (use the more restrictive lower bound): more magic, less obvious. A user who supplies both almost certainly made a mistake; an error is more helpful than a silent pick.
+- **Calendar-aware day arithmetic** (`time.AddDate`): overkill for this use case; users expect `1d = 24h` for log filtering. Daylight-saving boundary cases are an acceptable trade-off.
+- **Parse plain dates as local midnight**: would produce different results on different machines and in CI. UTC is deterministic and matches what most log timestamps use.
+- **Error on `--since` + `--before`** instead of combining: less useful. The combination is natural ("last hour, but stop at 3pm yesterday"), and the semantics are unambiguous (since → lower bound, before → upper bound).
+      </script></md>
+    </pd-section>
+
+    <pd-decisions></pd-decisions>
+  </pd-tab>
+
+  <pd-tab name="Plan">
+    <pd-section id="summary" title="Summary">
+      <md><script type="text/plain">
+Fix all three time-flag bugs in two vertical phases: Phase 1 wires the new parsing logic end-to-end (filter layer + CLI) with a passing test, Phase 2 adds full test coverage and updates docs.
+      </script></md>
+    </pd-section>
+
+    <pd-mermaid caption="Execution sequence">
+flowchart LR
+  P1["Phase 1\nFilter + CLI core"] --> P2["Phase 2\nTests + docs"]
+    </pd-mermaid>
+
+    <pd-dag caption="Phase dependency"></pd-dag>
+
+    <pd-stepper>
+      <pd-phase n="1" title="Filter + CLI core (walking skeleton)"
+                files="internal/filter/filter.go,cmd/root.go"
+                status="todo">
+        <md><script type="text/plain">
+Implement the minimal end-to-end path so all three bugs are fixed and the binary accepts the new inputs.
+
+**Steps:**
+
+1. Edit `internal/filter/filter.go`:
+   - Update `ParseSince`: before calling `time.ParseDuration`, check for a trailing `d` (digits + "d") and expand to `<N>*24h`, and `w` to `<N>*168h`. Reject mixed suffixes gracefully.
+   - Add `ParseAbsoluteTime(s string) (time.Time, error)`: try `time.RFC3339` first; if that fails and the string matches `YYYY-MM-DD`, parse with `time.DateOnly` and return the resulting UTC midnight.
+   - Update `NewTimeFilterAbsolute` to call `ParseAbsoluteTime` instead of `time.Parse(time.RFC3339, …)` directly.
+
+2. Edit `cmd/root.go` — replace `buildTimeFilter`:
+   - If `sinceFlag != ""` and `afterFlag != ""`: return error "cannot combine --since with --after".
+   - If `sinceFlag != ""`: parse since duration, build `TimeFilter{After: now-d}`. If `beforeFlag != ""`, also parse it with `ParseAbsoluteTime` and set `Before`.
+   - Otherwise fall through to the existing absolute-only branch.
+   - Update `--since` flag description: add `1d`, `1w` to examples. Update `--after`/`--before` descriptions: add "or plain date (YYYY-MM-DD)".
+   - Update the `Example:` block in `rootCmd`.
+
+3. Build: `go build -o jlogs .`
+4. Smoke-test manually:
+   - `jlogs --since 1d --app dummy 2>&1` — expect no "invalid duration" error (may get "no PM2 files" which is fine).
+   - `jlogs --since 2h --after 2026-03-13T12:00:00Z --app dummy 2>&1` — expect conflict error.
+5. Commit.
+        </script></md>
+      </pd-phase>
+
+      <pd-phase n="2" title="Tests + docs"
+                files="internal/filter/filter_test.go,README.md"
+                status="todo"
+                depends-on="1">
+        <md><script type="text/plain">
+Add unit tests covering every new code path and update the README.
+
+**Steps:**
+
+1. Edit `internal/filter/filter_test.go`:
+   - Extend `TestParseSince` table: add `{"1d", 24*time.Hour, false}`, `{"2d", 48*time.Hour, false}`, `{"1w", 168*time.Hour, false}`, `{"1d2h", 0, true}` (mixed unsupported), `{"0d", 0, true}` (zero not useful but valid — check behaviour).
+   - Add `TestParseAbsoluteTime` table: RFC3339 round-trip, plain date `"2026-03-13"` → `time.Date(2026,3,13,0,0,0,0,time.UTC)`, invalid string errors.
+   - Extend `TestNewTimeFilterAbsolute`: add plain-date cases for both `after` and `before`.
+
+2. Edit `README.md` — Time filtering section:
+   - `--since` table row: change "Supported units: `s`, `m`, `h`" to add `d` (days) and `w` (weeks).
+   - `--after`/`--before` paragraph: add plain-date note and example.
+   - Quick-start code block: replace one example with `--since 1d`.
+   - Flags table: update `--since` description and `--after`/`--before` description.
+
+3. Run: `go test ./internal/filter/ -v` — all pass.
+4. Run: `go test ./...` — all pass.
+5. Run: `gofmt -w .` — no diff.
+6. Commit.
+        </script></md>
+      </pd-phase>
+    </pd-stepper>
+
+    <pd-section id="success-criteria" title="Success Criteria">
+      <md><script type="text/plain">
+AC-1 through AC-7 all pass:
+- `ParseSince("1d")` and `ParseSince("1w")` return correct durations without error (AC-1, AC-2).
+- `buildTimeFilter` with `sinceFlag="2h"` + `beforeFlag="2026-03-13T15:00:00Z"` sets both bounds (AC-3).
+- `buildTimeFilter` with `sinceFlag="2h"` + `afterFlag="2026-03-13T12:00:00Z"` returns an error (AC-4).
+- `ParseAbsoluteTime("2026-03-13")` returns midnight UTC with no error (AC-5, AC-6).
+- `--help` output and README both mention `d`/`w` units and plain dates (AC-7).
+      </script></md>
+    </pd-section>
+  </pd-tab>
+
+</pd-doc>
+</body>
+</html>

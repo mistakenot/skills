@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>001: fix-insert-pk-indexerror</title>
+  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.9.0/pd-components/dist/pd.min.js" defer></script>
+</head>
+<body>
+  <script type="application/json" id="pd-meta">
+    {
+      "id": "001",
+      "name": "fix-insert-pk-indexerror",
+      "status": "planning",
+      "created": "2026-09-24"
+    }
+  </script>
+
+  <!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
+  <pd-doc title="001: fix-insert-pk-indexerror" status="draft" pr="pending" generated="2026-09-24">
+
+    <!-- ═══════════════════════════════════════════════════
+         TAB 1: REQUIREMENTS
+         ═══════════════════════════════════════════════════ -->
+    <pd-tab name="Requirements">
+      <pd-scope></pd-scope>
+
+      <pd-section id="problem" title="Problem">
+        <md><script type="text/plain">
+`Table.insert(..., pk='id', ignore=True)` raises an `IndexError` when the SQLite
+connection has previously written rows to a *different* table. After an `INSERT OR IGNORE`
+that skips a duplicate row, `result.lastrowid` is non-zero (it reflects the last successful
+insert across the entire connection), so the guard `if self.last_rowid` is truthy. The code
+then queries `rowid = result.lastrowid` against the *target* table — which never had a row
+with that rowid — and `[0]` on an empty list raises `IndexError`.
+
+Affected code: `sqlite_utils/db.py` line 4390–4392.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="goals" title="Goals">
+        <md><script type="text/plain">
+- Fix the `IndexError` so `insert(..., pk=..., ignore=True)` does not crash when other
+  tables have been written to first.
+- Preserve existing behaviour: `last_pk` is set correctly when a row *is* inserted.
+- Add a regression test that reproduces the exact scenario from issue #554.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="out-of-scope" title="Out of Scope">
+        <md><script type="text/plain">
+- Setting `last_pk` to a useful value when an insert is ignored (e.g. looking up the
+  existing row's pk). This is a separate improvement and can be addressed separately.
+- Any changes to `upsert`, `replace`, or batch-insert code paths.
+- SQLite version compatibility shims beyond the `rowcount` check.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="open-questions" title="Open Questions">
+        <md><script type="text/plain">
+**Assumptions (comfortable proceeding on):**
+
+- [ ] `cursor.rowcount` is 0 when `INSERT OR IGNORE` skips a duplicate row in Python's
+  `sqlite3` module. (Well-documented CPython behaviour; confirmed by SQLite spec.)
+- [ ] `last_pk` can remain whatever the `else` branch sets it to (`self.last_rowid`) when
+  an insert is ignored. No existing test asserts a specific value after an ignored insert.
+        </script></md>
+      </pd-section>
+    </pd-tab>
+
+    <!-- ═══════════════════════════════════════════════════
+         TAB 2: VERIFICATION
+         ═══════════════════════════════════════════════════ -->
+    <pd-tab name="Verification">
+
+      <pd-section id="test-strategy" title="Test Strategy">
+        <md><script type="text/plain">
+The project uses **pytest** with a `fresh_db` fixture that provides an in-memory
+`sqlite_utils.Database`. The primary insert tests live in `tests/test_create.py`.
+
+Strategy:
+- Add one regression test that reproduces the exact sequence from issue #554.
+- Run the full test suite to confirm no regressions.
+- No mocks: tests hit the real in-process SQLite engine.
+        </script></md>
+      </pd-section>
+
+      <pd-ac id="AC-1" title="insert with pk+ignore does not crash after cross-table inserts" phases="1" tests="tests/test_create.py">
+        <md><script type="text/plain">
+- **Given** a fresh database where table `users` has had one row inserted with `pk="id"`
+  **And** table `comments` has been written to with two rows (advancing the connection-wide rowid counter)
+- **When** `users.insert(same_row, pk="id", ignore=True)` is called
+- **Then** no exception is raised
+- **And** `users` still contains exactly one row with the original data
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-2" title="last_pk is set correctly when a row IS inserted with pk" phases="1" tests="tests/test_create.py">
+        <md><script type="text/plain">
+- **Given** a fresh database
+- **When** `table.insert({"id": "abc", "name": "x"}, pk="id")` is called
+- **Then** `table.last_pk` equals `"abc"`
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-3" title="existing test_insert_ignore still passes" phases="1" tests="tests/test_create.py">
+        <md><script type="text/plain">
+- **Given** the existing `test_insert_ignore` test in `tests/test_create.py`
+- **When** the test suite runs
+- **Then** the test passes (no regression in single-table ignore behaviour)
+        </script></md>
+      </pd-ac>
+
+      <pd-section id="verification-gaps" title="Known Gaps &amp; Risks">
+        <md><script type="text/plain">
+- The value of `last_pk` after an ignored insert is **not** asserted; it may be
+  confusing (it ends up as `result.lastrowid` from the global cursor). This is an
+  existing ambiguity kept out of scope.
+- The `extracts` code path (which also advances the global rowid inside
+  `build_insert_queries_and_params`) is another trigger for the same bug but is not
+  separately tested here; the same one-line fix covers it.
+        </script></md>
+      </pd-section>
+    </pd-tab>
+
+    <!-- ═══════════════════════════════════════════════════
+         TAB 3: SOLUTION
+         ═══════════════════════════════════════════════════ -->
+    <pd-tab name="Solution">
+
+      <pd-section id="approach" title="Approach">
+        <md><script type="text/plain">
+Add `result.rowcount` to the existing guard at `db.py:4390`.
+
+**Current code:**
+```python
+self.last_rowid = result.lastrowid
+if (hash_id or pk) and self.last_rowid:
+    row = list(self.rows_where("rowid = ?", [self.last_rowid]))[0]
+```
+
+**Fixed code:**
+```python
+self.last_rowid = result.lastrowid
+if (hash_id or pk) and self.last_rowid and result.rowcount:
+    row = list(self.rows_where("rowid = ?", [self.last_rowid]))[0]
+```
+
+**Why `result.rowcount`?**
+`cursor.rowcount` is 0 when `INSERT OR IGNORE` skips a duplicate row and 1 when a row
+is actually written. Unlike `lastrowid`, it is scoped to the *current* statement, not
+the connection. Adding it to the guard prevents the rowid lookup when nothing was
+inserted, regardless of what the global `lastrowid` happens to be.
+
+The existing comment `# self.last_rowid will be 0 if a "INSERT OR IGNORE" happened` is
+updated to reflect the new, correct condition.
+        </script></md>
+      </pd-section>
+
+      <pd-files>
+        <pd-file path="sqlite_utils/db.py" change="edit">Add `result.rowcount` to the INSERT OR IGNORE guard at line 4390</pd-file>
+        <pd-file path="tests/test_create.py" change="edit">Add regression test for issue #554</pd-file>
+      </pd-files>
+
+      <pd-section id="rejected-alternatives" title="Rejected Alternatives">
+        <md><script type="text/plain">
+- **Wrap `rows_where` call and check for empty list**: `rows = list(...); if rows: row = rows[0]`.
+  Handles the crash but doesn't use the most semantically correct signal — `rowcount`
+  directly says "did an insert happen?". Also leaves a subtle fallthrough into
+  `self.last_pk = self.last_rowid` with a foreign-table rowid value.
+
+- **Compare `result.lastrowid` against the table's max rowid before the insert**: Requires
+  an extra query and a race if concurrent writes are possible. Over-engineered for this fix.
+
+- **Set `last_pk = None` when insert is ignored**: More correct semantically, but changes
+  observable API behaviour and may break callers that rely on `last_pk` being set after
+  an ignored insert (even if that value is currently arbitrary). Out of scope for a bug fix.
+        </script></md>
+      </pd-section>
+
+      <pd-decision id="D-1" title="Use result.rowcount rather than a try/except or an empty-list check"
+        status="accepted" by="agent"
+        summary="rowcount is the right semantic signal for 'did an insert happen?'">
+        <md><script type="text/plain">
+**Context:** The existing guard (`self.last_rowid != 0`) relied on SQLite returning 0 for
+ignored inserts, which is no longer reliable in modern SQLite when other tables have been
+written to in the same connection.
+
+**Decision:** Use `result.rowcount` as the authoritative signal. It is always 0 for an
+ignored row and 1 for an inserted row, regardless of other tables or connection state.
+
+**Alternatives:** try/except IndexError (hides other bugs), empty-list check (symptom fix,
+not root cause), explicit `lastrowid` snapshot (extra round-trip).
+
+**Consequences:** One character change plus a comment update. No API surface changes.
+        </script></md>
+      </pd-decision>
+
+      <pd-decisions></pd-decisions>
+    </pd-tab>
+
+    <!-- ═══════════════════════════════════════════════════
+         TAB 4: PLAN
+         ═══════════════════════════════════════════════════ -->
+    <pd-tab name="Plan">
+
+      <pd-section id="summary" title="Summary">
+        <md><script type="text/plain">
+One-phase fix: add `result.rowcount` to the INSERT OR IGNORE guard in `db.py`,
+update the inline comment, and add a regression test.
+        </script></md>
+      </pd-section>
+
+      <pd-dag caption="Execution order"></pd-dag>
+
+      <pd-stepper>
+        <pd-phase n="1" title="Fix guard + add regression test"
+          files="sqlite_utils/db.py,tests/test_create.py"
+          status="todo">
+          <md><script type="text/plain">
+**Steps:**
+
+1. Edit `sqlite_utils/db.py` line 4390:
+   - Change `if (hash_id or pk) and self.last_rowid:` →
+     `if (hash_id or pk) and self.last_rowid and result.rowcount:`
+   - Update the adjacent comment from
+     `# self.last_rowid will be 0 if a "INSERT OR IGNORE" happened` →
+     `# rowcount is 0 when INSERT OR IGNORE skips a duplicate`
+
+2. Add regression test to `tests/test_create.py` after `test_insert_ignore`:
+   ```python
+   def test_insert_pk_ignore_after_cross_table_inserts(fresh_db):
+       user = {"id": "abc", "name": "david"}
+       fresh_db["users"].insert(user, pk="id")
+       fresh_db["comments"].insert_all(
+           [{"id": "def", "text": "ok"}, {"id": "ghi", "text": "great"}],
+       )
+       # Must not raise IndexError (issue #554)
+       fresh_db["users"].insert(user, ignore=True, pk="id")
+       assert list(fresh_db["users"].rows) == [user]
+   ```
+
+3. Verify:
+   - `pytest tests/test_create.py -x -q` — all pass, including the new test.
+   - `pytest tests/ -x -q` — full suite clean.
+
+4. Commit: `fix: prevent IndexError in insert when pk+ignore and cross-table rowids (fixes #554)`
+          </script></md>
+        </pd-phase>
+      </pd-stepper>
+
+      <pd-section id="success-criteria" title="Success Criteria">
+        <md><script type="text/plain">
+- AC-1, AC-2, AC-3 all pass.
+        </script></md>
+      </pd-section>
+    </pd-tab>
+
+  </pd-doc>
+</body>
+</html>

@@ -1,17 +1,18 @@
 ---
 name: request-council-review
-description: "Runs a parallel council review of task planning docs via Claude, Codex, and Grok, merges de-duplicated comments into the docs, then resolves them. Use when 'council review', 'request council review', 'review with all three', or when multiple independent reviewers are wanted before execution. Not for a single-agent review (use request-claude-review / request-codex-review / request-grok-review)."
+description: "Runs a parallel Claude, Codex and Grok council review of task planning docs or any files, merges de-duplicated comments, then resolves them. Use when 'council review', 'review with all three'. Not for one reviewer (use request-codex-review)."
 ---
 
 # Request Council Review
 
-Run a **panel of three independent reviewers** — Claude Code, Codex, and Grok — over the task planning docs in parallel. Unlike the single-agent review skills, the reviewers **never touch the docs**: each one reads the docs and codebase, gathers findings (with file + line/anchor), and hands them back to this coordinator. The coordinator de-duplicates across all three, appends one merged comment thread per real issue (markdown **and** HTML supported), then resolves them.
+Run a **panel of three independent reviewers** — Claude Code, Codex, and Grok over a target in parallel: a task's planning docs (**task mode**, the usual case) or any files (**file mode**). Unlike the single-agent review skills, the reviewers **never touch the files**: each one reads the targets and codebase, gathers findings (with file + line/anchor), and hands them back to this coordinator. The coordinator de-duplicates across all three, appends one merged comment thread per real issue (inline in markdown/HTML, or a `<file>.review.md` sidecar for anything else — see [references/review-targets.md](references/review-targets.md)), then resolves them.
 
-> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline. For the underlying headless-CLI handoff details, see [references/headless-delegation.md](references/headless-delegation.md).
+> Part of the task planning workflow. See [references/workflow-overview.md](references/workflow-overview.md) for the full pipeline.
 
 ## Input
 
-- **Task ID** (numeric, e.g. `042`)
+- **Target** — a task ID (`042`) or task folder → task mode; or one or more file/directory paths → file mode
+- **Focus** (optional, file mode) — what to look for, e.g. `"error handling"`
 - The repository root path (absolute) -- use the current working directory if already at root
 
 ## Why reviewers don't edit
@@ -20,30 +21,79 @@ Three agents editing the same files in parallel would race and produce duplicate
 
 ## Process
 
-### Step 1: Resolve the Task Folder
+### Step 1: Resolve the Targets
 
 ```bash
-CWD="<ABSOLUTE_REPO_ROOT>"
-TASK_ID="<TASK_ID>"
-TASK_DIR=$(find "$CWD/docs/tasks" -maxdepth 1 -type d -name "${TASK_ID}-*" | head -1)
-if [ -z "$TASK_DIR" ]; then
-    echo "no task folder found for ID $TASK_ID"
-    exit 1
+cd "<ABSOLUTE_REPO_ROOT>" || exit 1
+CWD=$(pwd)
+ARGS=(<TARGET> ...)   # a task ID / task folder, or file and directory paths
+FOCUS=""              # optional file-mode focus, e.g. "error handling"
+shopt -s nullglob
+
+# Task mode: a single argument naming a task under docs/tasks/.
+TASK_DIR=""
+if [ "${#ARGS[@]}" -eq 1 ]; then
+    A="${ARGS[0]%/}"
+    if [[ "$A" =~ ^[0-9]+$ ]]; then
+        TASK_DIR=$(find "$CWD/docs/tasks" -maxdepth 1 -type d -name "${A}-*" | head -1)
+        [ -n "$TASK_DIR" ] || { echo "no task folder found for ID $A"; exit 1; }
+    elif [ -d "$CWD/docs/tasks/$A" ]; then
+        TASK_DIR="$CWD/docs/tasks/$A"
+    elif [ -d "$A" ] && [ "$(realpath "$A/..")" = "$(realpath "$CWD/docs/tasks" 2>/dev/null)" ]; then
+        TASK_DIR=$(realpath "$A")
+    fi
 fi
-TASK_NAME=$(basename "$TASK_DIR")
-echo "reviewing $TASK_NAME"
+
+TARGETS=()
+if [ -n "$TASK_DIR" ]; then
+    MODE=task
+    SLUG=$(basename "$TASK_DIR")
+    REVIEW_ARGS="$SLUG"
+    TARGETS=("$TASK_DIR"/*.md "$TASK_DIR"/*.html)
+else
+    MODE=files
+    for A in "${ARGS[@]}"; do
+        if [ -d "$A" ]; then
+            while IFS= read -r F; do TARGETS+=("$F"); done < <(rg --files "$A" | grep -v '\.review\.md$' | sort)
+        elif [ -f "$A" ]; then
+            TARGETS+=("$A")
+        else
+            echo "target not found: $A"; exit 1
+        fi
+    done
+    [ "${#TARGETS[@]}" -gt 0 ] || { echo "no files to review"; exit 1; }
+    SLUG="files-$(basename "${TARGETS[0]}" | tr -c 'A-Za-z0-9._\n' '-')-$(printf '%s\n' "${TARGETS[@]}" | sha1sum | cut -c1-8)"
+    REVIEW_ARGS="${ARGS[*]}${FOCUS:+ --focus \"$FOCUS\"}"
+fi
+
+# Comment sinks: markdown and HTML take threads inline; any other file gets a
+# <file>.review.md sidecar (it may not exist until the reviewer writes it).
+SINKS=()
+for F in "${TARGETS[@]}"; do
+    case "$F" in
+        *.md|*.markdown|*.html|*.htm) SINKS+=("$F") ;;
+        *) SINKS+=("$F.review.md") ;;
+    esac
+done
+SCOPE_FILE="/tmp/review-scope-$SLUG.txt"
+printf '%s\n' "${SINKS[@]}" > "$SCOPE_FILE"
+echo "mode=$MODE slug=$SLUG targets=${#TARGETS[@]} scope=$SCOPE_FILE"
+echo "review args: $REVIEW_ARGS"
 ```
+
+Later blocks use `CWD`, `MODE`, `SLUG`, `REVIEW_ARGS` and `SCOPE_FILE` from this
+block. If your shell does not keep state between calls, set them from its output.
 
 ### Step 2: Launch the Three Reviewers in Parallel
 
 All three run the **same read-only review prompt** and write their findings block to a per-agent file. They are launched as concurrent background jobs and waited on together, so wall-clock time is the slowest single reviewer, not the sum.
 
-The shared prompt forbids edits and pins the exact output contract:
+The shared prompt forbids edits and pins the exact output contract. Only the subject and checklist differ by mode:
 
 ```bash
-read -r -d '' REVIEW_PROMPT <<EOF
-You are one of three independent reviewers of the planning documents for task
-$TASK_NAME, located in docs/tasks/$TASK_NAME/.
+if [ "$MODE" = task ]; then
+read -r -d '' SUBJECT <<EOF
+the planning documents for task $SLUG, located in docs/tasks/$SLUG/.
 
 Read EVERY planning doc present (markdown: requirements.md, solution.md,
 context.md, plan.md — or HTML: plan.html / epic.html) and verify each claim
@@ -53,6 +103,23 @@ Review for: untestable or ambiguous acceptance criteria; missing or wrong file
 paths, types, and signatures; security / tenant-isolation gaps; test coverage
 that does not cover every AC; inaccurate context snippets or line numbers; a
 broken execution sequence or wrong commands; and cross-document inconsistencies.
+EOF
+else
+read -r -d '' SUBJECT <<EOF
+these files: ${ARGS[*]} (a directory means every non-ignored file in it).
+
+Read every target in full, plus the code that calls, tests, or is described by
+them, and verify each target against the ACTUAL codebase using your read tools.
+
+Review for: incorrect behaviour and unhandled edge cases or errors; security
+gaps; tests that do not prove what they claim; docs whose paths, commands,
+names or signatures do not match the code; stale or contradictory content; and
+inconsistencies between the targets.${FOCUS:+ Focus above all on: $FOCUS.}
+EOF
+fi
+
+read -r -d '' REVIEW_PROMPT <<EOF
+You are one of three independent reviewers of $SUBJECT
 
 CRITICAL: You are READ-ONLY. Do NOT edit, create, move, or delete ANY file.
 Your entire job is to OUTPUT findings. Do not insert comments into the docs.
@@ -61,15 +128,15 @@ Output ONLY the findings block below and nothing after it. For each real issue,
 emit one object. Use the codebase as evidence — back every finding with a fact.
 
 The "file" field MUST be the path relative to the REPOSITORY ROOT, with the full
-directory prefix — e.g. "docs/tasks/$TASK_NAME/solution.md", never just
-"solution.md". Use this same form for every finding so the coordinator can match
+directory prefix — e.g. "docs/tasks/042-x/solution.md" or "src/api/client.py",
+never just "solution.md". Use this same form for every finding so the coordinator can match
 files across reviewers without guessing.
 
 ===COUNCIL-FINDINGS-START===
 [
   {
-    "file": "<path relative to the repository root, with full directory prefix, e.g. docs/tasks/$TASK_NAME/solution.md or docs/tasks/$TASK_NAME/plan.html>",
-    "location": "<for .md: the line number the issue sits on, as a string; for .html: the id/anchor attribute of the element it discusses>",
+    "file": "<path relative to the repository root, with full directory prefix>",
+    "location": "<for .md: the line number, as a string; for pd-* .html: the id/anchor of the element; for any other file: line number plus enclosing symbol, e.g. '42 def fetch'>",
     "priority": "P1|P2|P3",
     "title": "<short issue title>",
     "detail": "<the concern with concrete evidence>"
@@ -80,9 +147,9 @@ files across reviewers without guessing.
 If you find no issues, output an empty array [] between the two sentinels.
 EOF
 
-CLAUDE_OUT="/tmp/council-$TASK_ID-claude.txt"; CLAUDE_LOG="/tmp/council-$TASK_ID-claude.log"
-CODEX_OUT="/tmp/council-$TASK_ID-codex.txt";   CODEX_LOG="/tmp/council-$TASK_ID-codex.log"
-GROK_OUT="/tmp/council-$TASK_ID-grok.txt";     GROK_LOG="/tmp/council-$TASK_ID-grok.log"
+CLAUDE_OUT="/tmp/council-$SLUG-claude.txt"; CLAUDE_LOG="/tmp/council-$SLUG-claude.log"
+CODEX_OUT="/tmp/council-$SLUG-codex.txt";   CODEX_LOG="/tmp/council-$SLUG-codex.log"
+GROK_OUT="/tmp/council-$SLUG-grok.txt";     GROK_LOG="/tmp/council-$SLUG-grok.log"
 
 # Claude Code — read-only review. `< /dev/null` gives immediate EOF so print
 # mode doesn't stall on inherited stdin.
@@ -122,10 +189,7 @@ wait $GROK_PID;   GROK_EXIT=$?
 echo "exits: claude=$CLAUDE_EXIT codex=$CODEX_EXIT grok=$GROK_EXIT"
 ```
 
-**Handoff notes** (full detail in [references/headless-delegation.md](references/headless-delegation.md)):
-- **Claude**: `--permission-mode plan` keeps it read-only (planner cannot write). `< /dev/null` is required or print mode stalls ~3s waiting for stdin.
-- **Codex**: `--sandbox read-only` blocks all writes. `-o` writes the final message to the findings file. `< /dev/null` is required or `codex exec` blocks reading stdin forever in a background launch.
-- **Grok**: no stdin redirect needed. `--single` takes the prompt as its immediate value — never place other flags between `--single` and the prompt.
+**Handoff notes** — the inline comments above carry each CLI's read-only and stdin rule; full detail in [references/headless-delegation.md](references/headless-delegation.md). For Grok, never place other flags between `--single` and the prompt.
 
 A reviewer that errors or produces no findings block does not abort the council — the coordinator proceeds with whoever succeeded and notes the gap. A degraded run (1–2 reviewers) is still useful; a 0-reviewer run is a failure (Step 6).
 
@@ -135,7 +199,7 @@ Extract the JSON array from each reviewer's output (the text between the sentine
 
 ```bash
 for AGENT in claude codex grok; do
-    OUT="/tmp/council-$TASK_ID-$AGENT.txt"
+    OUT="/tmp/council-$SLUG-$AGENT.txt"
     echo "=== $AGENT ==="
     sed -n '/===COUNCIL-FINDINGS-START===/,/===COUNCIL-FINDINGS-END===/p' "$OUT" 2>/dev/null \
         | sed '1d;$d'
@@ -157,7 +221,7 @@ Drop findings whose evidence you can disprove against the codebase. You are the 
 
 ### Step 5: Append Merged Threads to the Docs
 
-You are now the single writer. For each merged issue, insert ONE comment thread into the doc it targets, anchored by the finding's `location`. Threads are **append-only**: never edit or delete existing content or existing threads.
+You are now the single writer. For each merged issue, write ONE comment thread into the sink [references/review-targets.md](references/review-targets.md) assigns to the finding's `file`, anchored by its `location`. Threads are **append-only**: never edit or delete existing content or existing threads.
 
 Match the syntax to the file's extension — see the **Comment Format** section below.
 
@@ -177,19 +241,22 @@ Match the syntax to the file's extension — see the **Comment Format** section 
   </pd-thread>
   ```
 
-If the merged set is empty (all three reviewers came back clean), insert a single clean-review thread so the run is distinguishable from a failure — markdown at the top of `plan.md`, or after the first `<pd-section>` for HTML:
+- **Any other file** (code, config, data): append to its `<file>.review.md` sidecar — the markdown form above plus a `LOCATION: <path>:<line> <symbol>` line. Never write threads into the code itself.
+
+If the merged set is empty (all three reviewers came back clean), insert a single clean-review thread so the run is distinguishable from a failure, placed as review-targets.md describes for the mode:
 
 ```markdown
 <!-- RESOLVED(P3): Council review complete — no issues found
-REVIEW: [council: claude, codex, grok] All planning documents reviewed against the codebase by three independent reviewers. No problems detected.
+REVIEW: [council: claude, codex, grok] All targets reviewed against the codebase by three independent reviewers. No problems detected.
 -->
 ```
 
 Then verify the threads landed:
 
 ```bash
-MD_COUNT=$(rg -o "<!-- (UNRESOLVED|RESOLVED|REJECTED)\(P[123]\):" "$TASK_DIR"/*.md 2>/dev/null | wc -l)
-HTML_COUNT=$(rg -o "<pd-thread " "$TASK_DIR"/*.html 2>/dev/null | wc -l)
+mapfile -t SINKS < "$SCOPE_FILE"
+MD_COUNT=$(rg -o "<!-- (UNRESOLVED|RESOLVED|REJECTED)\(P[123]\):" "${SINKS[@]}" 2>/dev/null | wc -l)
+HTML_COUNT=$(rg -o "<pd-thread " "${SINKS[@]}" 2>/dev/null | wc -l)
 echo "threads in docs: md=$MD_COUNT html=$HTML_COUNT"
 ```
 
@@ -208,25 +275,26 @@ Report the failure to the user. Do not proceed to resolution.
 
 ### Step 7: Resolve Comments
 
-**Mandatory** after appending. Invoke `resolve-comments` in the current agent context to work through every thread the council raised:
+**Mandatory** after appending, in both modes. Invoke `resolve-comments` in the current agent context on the same target — in file mode this fixes the target files themselves:
 
 ```
-/resolve-comments $TASK_ID
+/resolve-comments $REVIEW_ARGS
 ```
 
 Do NOT resolve feedback by manually editing or deleting threads — comment handling is append-only per the review-format conventions.
 
 ### Step 8: Verify Resolution
 
-Confirm `resolve-comments` ran by checking for author replies (both formats):
+Confirm `resolve-comments` ran by checking for author replies across every sink:
 
 ```bash
-MD_REPLIES=$(rg -o "AUTHOR:" "$TASK_DIR"/*.md 2>/dev/null | wc -l)
-HTML_REPLIES=$(rg -o 'by="author"' "$TASK_DIR"/*.html 2>/dev/null | wc -l)
+mapfile -t SINKS < "$SCOPE_FILE"
+MD_REPLIES=$(rg -o "AUTHOR:" "${SINKS[@]}" 2>/dev/null | wc -l)
+HTML_REPLIES=$(rg -o 'by="author"' "${SINKS[@]}" 2>/dev/null | wc -l)
 AUTHOR_REPLY_COUNT=$((MD_REPLIES + HTML_REPLIES))
 echo "author reply count: $AUTHOR_REPLY_COUNT"
 if [ "$AUTHOR_REPLY_COUNT" -eq 0 ]; then
-    echo "resolve-comments was not applied; run /resolve-comments $TASK_ID"
+    echo "resolve-comments was not applied; run /resolve-comments $REVIEW_ARGS"
 fi
 ```
 
@@ -238,10 +306,11 @@ Summarize:
 - Consensus breakdown — how many issues were raised by 3/3, 2/3, 1/3 reviewers
 - Merged comment count by priority (P1/P2/P3)
 - How many threads were resolved, rejected, or left unresolved
+- Which files were changed, and any `.review.md` sidecars created (the user decides whether to keep them)
 - Any threads needing user input
 
 ## Comment Format
 
-Determine the format from the file extension:
-- **Markdown files** (`.md`): See [references/review-format.md](references/review-format.md)
-- **HTML files** (`.html`): See [references/review-format-html.md](references/review-format-html.md)
+- **Which file gets the thread**: [references/review-targets.md](references/review-targets.md)
+- **Markdown syntax** (`.md`, plain HTML, sidecars): [references/review-format.md](references/review-format.md)
+- **`<pd-thread>` syntax** (pd-* HTML docs): [references/review-format-html.md](references/review-format-html.md)

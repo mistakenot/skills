@@ -1,0 +1,65 @@
+{
+  "plan_id": "cc74480bd707",
+  "batch": "b20260923-infra",
+  "fixture_id": "auto-stack-skill-filter-commas",
+  "prompt": "/new-task-quick `auto skill add --skill` is exact match and repeatable, but people (and agents especially) keep passing a comma list like `--skill a,b` which silently matches nothing and installs nothing. make this friendlier - either accept comma separated names or fail loudly with a hint showing the repeatable form, your call. also when a --skill filter matches nothing at all we should say so and list what skills the source actually has. check how the other auto commands handle list flags so we stay consistent.\n\nStop after Stage 4 (self-check); do not run the Codex review.",
+  "target": "/home/vscode/src/auto-stack",
+  "start_sha": "f03feaa918c4f8ca00ead589a71fa3dd2aaeb3fa",
+  "arm_id": "skills-99f2cce8c728",
+  "skills_sha": "99f2cce8c728bca679b3a596d429aeb4abe4f4a7",
+  "model": "anthropic/claude-sonnet-4-6",
+  "run": "auto-stack-skill-filter-commas-skills-99f2cce8c728-scripted-20260923-234056",
+  "trial": "auto-stack-skill-filter-commas-s__DzqoV2A",
+  "completion": "ok",
+  "cost_usd": 2.083858,
+  "wall_ms": 661335,
+  "task_dir": "docs/tasks/065-skill-add-comma-filter",
+  "plan_path": "src/plan-review/data/plans/cc74480bd707/plan.html",
+  "context_path": "src/plan-review/data/plans/cc74480bd707/context.md",
+  "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/auto-stack-skill-filter-commas-skills-99f2cce8c728-scripted-20260923-234056/auto-stack-skill-filter-commas-s__DzqoV2A/transcript.txt",
+  "checks": {
+    "questions": 0,
+    "open_questions": 0,
+    "codex_ran": false,
+    "lint": {
+      "ok": true,
+      "codes": [],
+      "blocking": []
+    }
+  },
+  "ingested_at": "2026-09-24T14:43:00+00:00",
+  "rows": [
+    {
+      "plan_id": "cc74480bd707",
+      "batch": "b20260923-infra",
+      "fixture_id": "auto-stack-skill-filter-commas",
+      "prompt": "/new-task-quick `auto skill add --skill` is exact match and repeatable, but people (and agents especially) keep passing a comma list like `--skill a,b` which silently matches nothing and installs nothing. make this friendlier - either accept comma separated names or fail loudly with a hint showing the repeatable form, your call. also when a --skill filter matches nothing at all we should say so and list what skills the source actually has. check how the other auto commands handle list flags so we stay consistent.\n\nStop after Stage 4 (self-check); do not run the Codex review.",
+      "target": "/home/vscode/src/auto-stack",
+      "start_sha": "f03feaa918c4f8ca00ead589a71fa3dd2aaeb3fa",
+      "arm_id": "skills-99f2cce8c728",
+      "skills_sha": "99f2cce8c728bca679b3a596d429aeb4abe4f4a7",
+      "model": "anthropic/claude-sonnet-4-6",
+      "run": "auto-stack-skill-filter-commas-skills-99f2cce8c728-scripted-20260923-234056",
+      "trial": "auto-stack-skill-filter-commas-s__DzqoV2A",
+      "completion": "ok",
+      "cost_usd": 2.083858,
+      "wall_ms": 661335,
+      "task_dir": "docs/tasks/065-skill-add-comma-filter",
+      "plan_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/auto-stack-skill-filter-commas-skills-99f2cce8c728-scripted-20260923-234056/auto-stack-skill-filter-commas-s__DzqoV2A/produced/docs/tasks/065-skill-add-comma-filter/plan.html",
+      "context_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/auto-stack-skill-filter-commas-skills-99f2cce8c728-scripted-20260923-234056/auto-stack-skill-filter-commas-s__DzqoV2A/produced/docs/tasks/065-skill-add-comma-filter/context.md",
+      "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/auto-stack-skill-filter-commas-skills-99f2cce8c728-scripted-20260923-234056/auto-stack-skill-filter-commas-s__DzqoV2A/transcript.txt",
+      "checks": {
+        "questions": 0,
+        "open_questions": 0,
+        "codex_ran": false,
+        "lint": {
+          "ok": true,
+          "codes": [],
+          "blocking": []
+        }
+      },
+      "ingested_at": "2026-09-24T14:43:00+00:00"
+    }
+  ],
+  "snapshot_at": "2026-09-24T15:15:11+00:00"
+}

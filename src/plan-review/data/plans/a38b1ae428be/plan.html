@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>001: default-subcommand</title>
+  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.9.0/pd-components/dist/pd.min.js" defer></script>
+</head>
+<body>
+  <script type="application/json" id="pd-meta">
+  {
+    "id": "001",
+    "name": "default-subcommand",
+    "status": "planning",
+    "created": "2026-09-24"
+  }
+  </script>
+
+  <!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
+  <pd-doc title="001: default-subcommand" status="draft" pr="pending" generated="2026-09-24">
+
+    <!-- ═══════════════════════════ REQUIREMENTS ═══════════════════════════ -->
+    <pd-tab name="Requirements">
+
+      <pd-section id="problem" title="Problem">
+        <md><script type="text/plain">
+When a `citty` CLI has `subCommands` defined but no `run` function on the parent command, running the CLI with no arguments always throws `E_NO_COMMAND`. There is no way to specify that a particular subcommand should act as the default entry point (e.g. `farm dev` as the default for `farm`). The workaround of defining a `run` function on the parent introduces a second bug: the parent's `run` is called even when an explicit subcommand is invoked, executing the handler twice.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="goals" title="Goals">
+        <md><script type="text/plain">
+- Add a `default?: string` field to `CommandDef` that names a subcommand to run when no explicit subcommand argument is provided.
+- When `default` is set and no subcommand is given, invoke the named subcommand transparently (passing all raw args through to it).
+- When an explicit subcommand name is given, the `default` field is ignored and the explicit subcommand runs as before.
+- When `default` is not set, all existing behaviour is unchanged.
+- `resolveSubCommand` falls back to the default subcommand so that `--help` displays the correct sub-command usage.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="out-of-scope" title="Out of Scope">
+        <md><script type="text/plain">
+- Running both a parent `run` handler AND the default subcommand (the feature replaces one with the other; composing them is a separate concern).
+- Showing a "default:" badge in `--help` output (cosmetic; can be a follow-up).
+- Recursive default chains (a default subcommand that also has a `default`).
+        </script></md>
+      </pd-section>
+
+      <pd-section id="open-questions" title="Open Questions">
+        <md><script type="text/plain">
+- **Assumption**: When `default` is set and the parent also has a `run` function, the default subcommand runs and the parent `run` is **skipped** — consistent with explicit-subcommand behaviour where `run` is never called. This matches the spirit of the issue report.
+- **Assumption**: If the `default` key names a subcommand that does not exist in `subCommands`, a runtime error (`CLIError`) is thrown to fail loudly rather than silently falling through.
+        </script></md>
+      </pd-section>
+
+    </pd-tab>
+
+    <!-- ══════════════════════════ VERIFICATION ═══════════════════════════ -->
+    <pd-tab name="Verification">
+
+      <pd-section id="test-strategy" title="Test Strategy">
+        <md><script type="text/plain">
+All tests use **Vitest** (the project's existing test runner). New cases are added to `test/main.test.ts`, which already covers `runCommand` and `runMain` end-to-end flows. No separate integration harness is required — the existing suite calls `runCommand` directly and asserts on mock call counts and thrown errors.
+
+Coverage philosophy: every branch of the `default` path is exercised (default fires, explicit overrides default, no default still throws, bad default name throws).
+        </script></md>
+      </pd-section>
+
+      <pd-ac id="AC-1" title="Default subcommand runs when no args given" phases="1" tests="test/main.test.ts">
+        <md><script type="text/plain">
+**Given** a command with `subCommands: { dev }` and `default: 'dev'`
+**When** `runCommand` is called with `rawArgs: []`
+**Then** the `dev` subcommand's `run` function is called exactly once with empty args
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-2" title="Explicit subcommand overrides default" phases="2" tests="test/main.test.ts">
+        <md><script type="text/plain">
+**Given** a command with `subCommands: { dev, build }` and `default: 'dev'`
+**When** `runCommand` is called with `rawArgs: ['build']`
+**Then** `build` subcommand's `run` fires and `dev` subcommand's `run` does NOT fire
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-3" title="No default preserves existing E_NO_COMMAND error" phases="2" tests="test/main.test.ts">
+        <md><script type="text/plain">
+**Given** a command with `subCommands: { dev }` and no `default` field
+**When** `runCommand` is called with `rawArgs: []`
+**Then** a `CLIError` with code `E_NO_COMMAND` is thrown
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-4" title="Parent run is skipped when default subcommand fires" phases="2" tests="test/main.test.ts">
+        <md><script type="text/plain">
+**Given** a command with `subCommands: { dev }`, `default: 'dev'`, and a parent `run` mock
+**When** `runCommand` is called with `rawArgs: []`
+**Then** `dev` subcommand runs and the parent `run` mock is NOT called
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-5" title="Unknown default name throws CLIError" phases="2" tests="test/main.test.ts">
+        <md><script type="text/plain">
+**Given** a command with `subCommands: { dev }` and `default: 'nonexistent'`
+**When** `runCommand` is called with `rawArgs: []`
+**Then** a `CLIError` is thrown (unknown command)
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-6" title="TypeScript type includes default field" phases="1" tests="">
+        <md><script type="text/plain">
+**Given** a `CommandDef` definition object
+**When** `default: 'dev'` is added as a field
+**Then** the TypeScript compiler accepts it without error (`pnpm test:types` passes)
+        </script></md>
+      </pd-ac>
+
+      <pd-section id="verification-gaps" title="Known Gaps &amp; Risks">
+        <md><script type="text/plain">
+- `resolveSubCommand` (used by `--help` lookup) is not tested for the default path; the Plan covers a test for it but it may be deferred as a P2 gap.
+- No test for `default` combined with lazy-loaded subcommands (`Resolvable<CommandDef>`); assumed covered by the existing lazy-load mechanism.
+        </script></md>
+      </pd-section>
+
+    </pd-tab>
+
+    <!-- ════════════════════════════ SOLUTION ═════════════════════════════ -->
+    <pd-tab name="Solution">
+
+      <pd-section id="approach" title="Approach">
+        <md><script type="text/plain">
+Add `default?: string` to `CommandDef` in `src/types.ts`. In `src/command.ts`, inside `runCommand`, extend the else-branch that currently handles the "no subcommand name found" case: if `cmd.default` is set, resolve that subcommand via the existing `_findSubCommand` helper and recurse into `runCommand` with the full `rawArgs` (no slice, since there is no subcommand token to skip). If the named default does not exist, throw `CLIError` with code `E_UNKNOWN_COMMAND`.
+
+Also extend `resolveSubCommand` with the same fallback so `--help` dispatches to the right sub-command when called with no arguments on a command that has a `default`.
+
+No changes to `usage.ts` or the public re-export surface — `default` is opaque to the help renderer.
+        </script></md>
+      </pd-section>
+
+      <pd-files>
+        <pd-file path="src/types.ts" change="edit">Add `default?: string` to `CommandDef`</pd-file>
+        <pd-file path="src/command.ts" change="edit">Handle `cmd.default` in `runCommand` and `resolveSubCommand`</pd-file>
+        <pd-file path="test/main.test.ts" change="edit">Add tests for default-subcommand behaviour (AC-1 through AC-5)</pd-file>
+      </pd-files>
+
+      <pd-section id="rejected-alternatives" title="Rejected Alternatives">
+        <md><script type="text/plain">
+- **`default: CommandDef` (pass the command object directly)**: More flexible but inconsistent with how `subCommands` is keyed. String key reuses the existing lookup path (alias resolution included) for free.
+- **Run parent `run` AND default subcommand**: The issue author explicitly notes that calling `run` twice confused them; composing the two handlers is explicitly out of scope.
+- **`defaultCommand` as a separate top-level field**: No real advantage over `default`; adds a longer name for no semantic benefit. `default` mirrors the pattern the issue author proposed.
+        </script></md>
+      </pd-section>
+
+      <pd-decisions></pd-decisions>
+
+    </pd-tab>
+
+    <!--══════════════════════════════ PLAN ═══════════════════════════════ -->
+    <pd-tab name="Plan">
+
+      <pd-section id="summary" title="Summary">
+        <md><script type="text/plain">
+Two-phase vertical slice: Phase 1 wires the full end-to-end path (type → runtime → one passing test); Phase 2 fills in the remaining acceptance-criteria tests and the `resolveSubCommand` extension.
+        </script></md>
+      </pd-section>
+
+      <pd-mermaid caption="Phase dependency DAG">
+graph LR
+  P1[Phase 1: Type + Runtime] --> P2[Phase 2: Tests + resolveSubCommand]
+      </pd-mermaid>
+
+      <pd-stepper>
+
+        <pd-phase n="1" title="Type + Runtime (walking skeleton)" files="src/types.ts,src/command.ts,test/main.test.ts" status="todo">
+          <md><script type="text/plain">
+**Goal**: A thin end-to-end path: type change → runtime change → one green test.
+
+1. **`src/types.ts`** — add `default?: string` to the `CommandDef` interface (after the `subCommands` field, before `plugins`).
+2. **`src/command.ts` — `runCommand`** — in the `subCommands` branch, after the existing `else if (!cmd.run)` check, insert:
+   ```ts
+   } else if (cmd.default) {
+     const defaultSub = await _findSubCommand(subCommands, cmd.default);
+     if (!defaultSub) {
+       throw new CLIError(`Unknown default command ${cyan(cmd.default)}`, "E_UNKNOWN_COMMAND");
+     }
+     await runCommand(defaultSub, { rawArgs: opts.rawArgs });
+   } else if (!cmd.run) {
+     throw new CLIError(`No command specified.`, "E_NO_COMMAND");
+   }
+   ```
+   **Important**: the new branch must come before the `else if (!cmd.run)` check, and the parent `run` call that follows must be guarded so it does NOT execute when a default subcommand was dispatched. Introduce a `let ranDefault = false` flag set to `true` when the default branch fires; gate the `cmd.run` call with `&& !ranDefault`.
+3. **`test/main.test.ts`** — add a `describe('default subcommand')` block with one test for AC-1 (default fires with empty rawArgs).
+4. **Verify**: `pnpm test` (lint + typecheck + vitest) must pass.
+5. **Commit**: `feat(command): add default subcommand support (phase 1)`
+          </script></md>
+        </pd-phase>
+
+        <pd-phase n="2" title="Tests + resolveSubCommand" files="src/command.ts,test/main.test.ts" status="todo" depends-on="1">
+          <md><script type="text/plain">
+**Goal**: Full AC coverage and `resolveSubCommand` correctness.
+
+1. **`test/main.test.ts`** — add remaining tests in the `describe('default subcommand')` block:
+   - AC-2: explicit subcommand overrides default
+   - AC-3: no `default` still throws `E_NO_COMMAND`
+   - AC-4: parent `run` is skipped when default fires
+   - AC-5: unknown default name throws `CLIError`
+2. **`src/command.ts` — `resolveSubCommand`** — after the existing subcommand-name lookup, add a fallback for `cmd.default`:
+   ```ts
+   if (subCommands && Object.keys(subCommands).length > 0) {
+     const cmdArgs = await resolveValue(cmd.args || {});
+     const subCommandArgIndex = findSubCommandIndex(rawArgs, cmdArgs);
+     const subCommandName = rawArgs[subCommandArgIndex]!;
+     const subCommand = await _findSubCommand(subCommands, subCommandName)
+       ?? (cmd.default ? await _findSubCommand(subCommands, cmd.default) : undefined);
+     if (subCommand) {
+       return resolveSubCommand(subCommand, rawArgs.slice(subCommandArgIndex + 1), cmd);
+     }
+   }
+   ```
+3. **Verify**: `pnpm test` must pass; `pnpm test:types` clean.
+4. **Commit**: `feat(command): extend resolveSubCommand with default fallback + full tests (phase 2)`
+          </script></md>
+        </pd-phase>
+
+      </pd-stepper>
+
+      <pd-section id="success-criteria" title="Success Criteria">
+        <md><script type="text/plain">
+AC-1 through AC-6 pass. `pnpm test` exits 0 (lint + typecheck + vitest with coverage). No regressions in existing test suite.
+        </script></md>
+      </pd-section>
+
+    </pd-tab>
+
+  </pd-doc>
+</body>
+</html>

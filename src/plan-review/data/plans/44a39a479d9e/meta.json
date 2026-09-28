@@ -1,0 +1,69 @@
+{
+  "plan_id": "44a39a479d9e",
+  "batch": "b20260923-infra",
+  "fixture_id": "auto-stack-043-etl-registry-discovery",
+  "prompt": "/new-task-quick auto etl repository discovery should be done via global config files registering projects, not purely from the message trail of agents, we keep sucking in lots of unrelated project data from random github projects i pulled in.\n\nStop after Stage 4 (self-check); do not run the Codex review.",
+  "target": "/home/vscode/src/auto-stack",
+  "start_sha": "3f6a3334b30117262f559f2e66924fbc7611cb31",
+  "arm_id": "skills-99f2cce8c728",
+  "skills_sha": "99f2cce8c728bca679b3a596d429aeb4abe4f4a7",
+  "model": "anthropic/claude-sonnet-4-6",
+  "run": "auto-stack-043-etl-registry-discovery-skills-99f2cce8c728-scripted-20260923-234046",
+  "trial": "auto-stack-043-etl-registry-disc__ytuphbJ",
+  "completion": "ok",
+  "cost_usd": 0.881464,
+  "wall_ms": 282504,
+  "task_dir": "docs/tasks/045-etl-project-registry",
+  "plan_path": "src/plan-review/data/plans/44a39a479d9e/plan.html",
+  "context_path": "src/plan-review/data/plans/44a39a479d9e/context.md",
+  "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/auto-stack-043-etl-registry-discovery-skills-99f2cce8c728-scripted-20260923-234046/auto-stack-043-etl-registry-disc__ytuphbJ/transcript.txt",
+  "checks": {
+    "questions": 1,
+    "open_questions": 1,
+    "codex_ran": false,
+    "lint": {
+      "ok": false,
+      "codes": [
+        "open-question"
+      ],
+      "blocking": []
+    }
+  },
+  "ingested_at": "2026-09-24T14:43:00+00:00",
+  "rows": [
+    {
+      "plan_id": "44a39a479d9e",
+      "batch": "b20260923-infra",
+      "fixture_id": "auto-stack-043-etl-registry-discovery",
+      "prompt": "/new-task-quick auto etl repository discovery should be done via global config files registering projects, not purely from the message trail of agents, we keep sucking in lots of unrelated project data from random github projects i pulled in.\n\nStop after Stage 4 (self-check); do not run the Codex review.",
+      "target": "/home/vscode/src/auto-stack",
+      "start_sha": "3f6a3334b30117262f559f2e66924fbc7611cb31",
+      "arm_id": "skills-99f2cce8c728",
+      "skills_sha": "99f2cce8c728bca679b3a596d429aeb4abe4f4a7",
+      "model": "anthropic/claude-sonnet-4-6",
+      "run": "auto-stack-043-etl-registry-discovery-skills-99f2cce8c728-scripted-20260923-234046",
+      "trial": "auto-stack-043-etl-registry-disc__ytuphbJ",
+      "completion": "ok",
+      "cost_usd": 0.881464,
+      "wall_ms": 282504,
+      "task_dir": "docs/tasks/045-etl-project-registry",
+      "plan_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/auto-stack-043-etl-registry-discovery-skills-99f2cce8c728-scripted-20260923-234046/auto-stack-043-etl-registry-disc__ytuphbJ/produced/docs/tasks/045-etl-project-registry/plan.html",
+      "context_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/auto-stack-043-etl-registry-discovery-skills-99f2cce8c728-scripted-20260923-234046/auto-stack-043-etl-registry-disc__ytuphbJ/produced/docs/tasks/045-etl-project-registry/context.md",
+      "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/auto-stack-043-etl-registry-discovery-skills-99f2cce8c728-scripted-20260923-234046/auto-stack-043-etl-registry-disc__ytuphbJ/transcript.txt",
+      "checks": {
+        "questions": 1,
+        "open_questions": 1,
+        "codex_ran": false,
+        "lint": {
+          "ok": false,
+          "codes": [
+            "open-question"
+          ],
+          "blocking": []
+        }
+      },
+      "ingested_at": "2026-09-24T14:43:00+00:00"
+    }
+  ],
+  "snapshot_at": "2026-09-24T15:08:27+00:00"
+}

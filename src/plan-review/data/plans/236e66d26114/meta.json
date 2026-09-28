@@ -1,0 +1,65 @@
+{
+  "plan_id": "236e66d26114",
+  "batch": "corpus-2",
+  "fixture_id": "jlogs-time-filter-flags",
+  "prompt": "/new-task-quick the jlogs time flags are annoying to use. `--since 1d` errors because we just hand it to time.ParseDuration, so support days (and maybe weeks). `--since 2h --before ...` silently drops the --before because buildTimeFilter returns as soon as since is set - either combine them properly or error, don't silently ignore. and `--after 2026-03-13` gets rejected because we want full rfc3339, accept a plain date too. keep the help text / examples in cmd/root.go and the readme in sync with whatever we land on.\n\nStop after Stage 4 (self-check); do not run the Codex review.",
+  "target": "/home/vscode/src/pm2logs",
+  "start_sha": "5b1816c246d9acfcc0c8c451467c395ee0fa6622",
+  "arm_id": "skills-9b210842c6e9",
+  "skills_sha": "9b210842c6e9615ebdb35676dc4c50fc558f7a09",
+  "model": "anthropic/claude-sonnet-4-6",
+  "run": "jlogs-time-filter-flags-skills-9b210842c6e9-scripted-20260924-153044",
+  "trial": "jlogs-time-filter-flags-skills-9__R9bKV6u",
+  "completion": "ok",
+  "cost_usd": 1.061126,
+  "wall_ms": 274387,
+  "task_dir": "docs/tasks/001-improve-time-flags",
+  "plan_path": "src/plan-review/data/plans/236e66d26114/plan.html",
+  "context_path": "src/plan-review/data/plans/236e66d26114/context.md",
+  "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/jlogs-time-filter-flags-skills-9b210842c6e9-scripted-20260924-153044/jlogs-time-filter-flags-skills-9__R9bKV6u/transcript.txt",
+  "checks": {
+    "questions": 0,
+    "open_questions": 0,
+    "codex_ran": false,
+    "lint": {
+      "ok": true,
+      "codes": [],
+      "blocking": []
+    }
+  },
+  "ingested_at": "2026-09-24T15:35:21+00:00",
+  "rows": [
+    {
+      "plan_id": "236e66d26114",
+      "batch": "corpus-2",
+      "fixture_id": "jlogs-time-filter-flags",
+      "prompt": "/new-task-quick the jlogs time flags are annoying to use. `--since 1d` errors because we just hand it to time.ParseDuration, so support days (and maybe weeks). `--since 2h --before ...` silently drops the --before because buildTimeFilter returns as soon as since is set - either combine them properly or error, don't silently ignore. and `--after 2026-03-13` gets rejected because we want full rfc3339, accept a plain date too. keep the help text / examples in cmd/root.go and the readme in sync with whatever we land on.\n\nStop after Stage 4 (self-check); do not run the Codex review.",
+      "target": "/home/vscode/src/pm2logs",
+      "start_sha": "5b1816c246d9acfcc0c8c451467c395ee0fa6622",
+      "arm_id": "skills-9b210842c6e9",
+      "skills_sha": "9b210842c6e9615ebdb35676dc4c50fc558f7a09",
+      "model": "anthropic/claude-sonnet-4-6",
+      "run": "jlogs-time-filter-flags-skills-9b210842c6e9-scripted-20260924-153044",
+      "trial": "jlogs-time-filter-flags-skills-9__R9bKV6u",
+      "completion": "ok",
+      "cost_usd": 1.061126,
+      "wall_ms": 274387,
+      "task_dir": "docs/tasks/001-improve-time-flags",
+      "plan_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/jlogs-time-filter-flags-skills-9b210842c6e9-scripted-20260924-153044/jlogs-time-filter-flags-skills-9__R9bKV6u/produced/docs/tasks/001-improve-time-flags/plan.html",
+      "context_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/jlogs-time-filter-flags-skills-9b210842c6e9-scripted-20260924-153044/jlogs-time-filter-flags-skills-9__R9bKV6u/produced/docs/tasks/001-improve-time-flags/context.md",
+      "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/jlogs-time-filter-flags-skills-9b210842c6e9-scripted-20260924-153044/jlogs-time-filter-flags-skills-9__R9bKV6u/transcript.txt",
+      "checks": {
+        "questions": 0,
+        "open_questions": 0,
+        "codex_ran": false,
+        "lint": {
+          "ok": true,
+          "codes": [],
+          "blocking": []
+        }
+      },
+      "ingested_at": "2026-09-24T15:35:21+00:00"
+    }
+  ],
+  "snapshot_at": "2026-09-25T12:35:02+00:00"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "sqlite-utils-554-insert-pk-ignore",
+  "_provenance": {
+    "source": "oss",
+    "repo": "https://github.com/simonw/sqlite-utils (Python library + CLI)",
+    "issue": "https://github.com/simonw/sqlite-utils/issues/554 (title and body verbatim; the body's permalink points at an older db.py, line numbers are stale at start_sha)",
+    "reference_fix": "221774f25a53c76874b28af1c2dd170c76bbd9f1 'Fix for table.insert(..., pk=..., ignore=True), closes #554', a single commit (sqlite_utils/db.py +46 -10, tests/test_create.py +18, docs/changelog.rst +1); it is on main",
+    "start_sha_note": "parent of the fix commit"
+  },
+  "fixture": {
+    "repo_url": "https://github.com/simonw/sqlite-utils.git",
+    "start_sha": "6225eba5c8daf97a5e459e9fcce2e46bcd022f50",
+    "prompt": "/new-task-quick fix github issue #554, text below.\n\n# `IndexError` when doing `.insert(..., pk='id')` after `insert_all`\n\nI believe this is related to https://github.com/simonw/sqlite-utils/issues/98.\r\n\r\nWhen `pk` is specified by table A's `insert` call, it throws an index error if a different table has written a row with a higher rowid than exists in the first table. Here's a basic example:\r\n\r\n```py\r\nfrom sqlite_utils import Database\r\n\r\n\r\ndef test_pk_for_insert(fresh_db):\r\n    user = {\"id\": \"abc\", \"name\": \"david\"}\r\n\r\n    fresh_db[\"users\"].insert(user, pk=\"id\")\r\n\r\n    fresh_db[\"comments\"].insert_all(\r\n        [\r\n            {\"id\": \"def\", \"text\": \"ok\"},\r\n            {\"id\": \"ghi\", \"text\": \"great\"},\r\n        ],\r\n    )\r\n\r\n    fresh_db[\"users\"].insert(\r\n        user,\r\n        ignore=True,\r\n        # BUG: when specifying pk on the second insert call \r\n        # db.py goes into a block it doesn't expect and we get the error\r\n        pk=\"id\",\r\n    )\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    db = Database(\"bug.db\")\r\n    if db[\"users\"].exists():\r\n        raise ValueError(\r\n            \"bug only shows on a new database - remove bug.db before running the script\"\r\n        )\r\n    test_pk_for_insert(db)\r\n```\r\n\r\nThe error is:\r\n\r\n```py\r\n  File \"/Users/david/projects/reddit-to-sqlite/.venv/lib/python3.11/site-packages/sqlite_utils/db.py\", line 2960, in insert_chunk\r\n    row = list(self.rows_where(\"rowid = ?\", [self.last_rowid]))[0]\r\n          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^\r\nIndexError: list index out of range\r\n```\r\n\r\nThe issue is in this block: \r\n\r\nhttps://github.com/simonw/sqlite-utils/blob/2747257a3334d55e890b40ec58fada57ae8cfbfd/sqlite_utils/db.py#L2954-L2958\r\n\r\nrelevant locals are:\r\n\r\n- `pk`: `'id'`\r\n- `result.lastrowid`: `2`\r\n\r\nWhat's most interesting is the comment `# self.last_rowid will be 0 if a \"INSERT OR IGNORE\" happened`, which doesn't seem to be the case here. \n\nStop after Stage 4 (self-check); do not run the Codex review."
+  },
+  "arm": {
+    "id": "head",
+    "skills_ref": "HEAD"
+  },
+  "limits": {
+    "max_turns": 1,
+    "wall_clock_s": 3600,
+    "per_turn_timeout_s": 3600,
+    "max_budget_usd": 15
+  }
+}

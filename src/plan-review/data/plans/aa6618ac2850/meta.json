@@ -1,0 +1,65 @@
+{
+  "plan_id": "aa6618ac2850",
+  "batch": "corpus-2",
+  "fixture_id": "sqlite-utils-554-insert-pk-ignore",
+  "prompt": "/new-task-quick fix github issue #554, text below.\n\n# `IndexError` when doing `.insert(..., pk='id')` after `insert_all`\n\nI believe this is related to https://github.com/simonw/sqlite-utils/issues/98.\r\n\r\nWhen `pk` is specified by table A's `insert` call, it throws an index error if a different table has written a row with a higher rowid than exists in the first table. Here's a basic example:\r\n\r\n```py\r\nfrom sqlite_utils import Database\r\n\r\n\r\ndef test_pk_for_insert(fresh_db):\r\n    user = {\"id\": \"abc\", \"name\": \"david\"}\r\n\r\n    fresh_db[\"users\"].insert(user, pk=\"id\")\r\n\r\n    fresh_db[\"comments\"].insert_all(\r\n        [\r\n            {\"id\": \"def\", \"text\": \"ok\"},\r\n            {\"id\": \"ghi\", \"text\": \"great\"},\r\n        ],\r\n    )\r\n\r\n    fresh_db[\"users\"].insert(\r\n        user,\r\n        ignore=True,\r\n        # BUG: when specifying pk on the second insert call \r\n        # db.py goes into a block it doesn't expect and we get the error\r\n        pk=\"id\",\r\n    )\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    db = Database(\"bug.db\")\r\n    if db[\"users\"].exists():\r\n        raise ValueError(\r\n            \"bug only shows on a new database - remove bug.db before running the script\"\r\n        )\r\n    test_pk_for_insert(db)\r\n```\r\n\r\nThe error is:\r\n\r\n```py\r\n  File \"/Users/david/projects/reddit-to-sqlite/.venv/lib/python3.11/site-packages/sqlite_utils/db.py\", line 2960, in insert_chunk\r\n    row = list(self.rows_where(\"rowid = ?\", [self.last_rowid]))[0]\r\n          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^\r\nIndexError: list index out of range\r\n```\r\n\r\nThe issue is in this block: \r\n\r\nhttps://github.com/simonw/sqlite-utils/blob/2747257a3334d55e890b40ec58fada57ae8cfbfd/sqlite_utils/db.py#L2954-L2958\r\n\r\nrelevant locals are:\r\n\r\n- `pk`: `'id'`\r\n- `result.lastrowid`: `2`\r\n\r\nWhat's most interesting is the comment `# self.last_rowid will be 0 if a \"INSERT OR IGNORE\" happened`, which doesn't seem to be the case here. \n\nStop after Stage 4 (self-check); do not run the Codex review.",
+  "target": "https://github.com/simonw/sqlite-utils.git",
+  "start_sha": "6225eba5c8daf97a5e459e9fcce2e46bcd022f50",
+  "arm_id": "skills-9b210842c6e9",
+  "skills_sha": "9b210842c6e9615ebdb35676dc4c50fc558f7a09",
+  "model": "anthropic/claude-sonnet-4-6",
+  "run": "sqlite-utils-554-insert-pk-ignore-skills-9b210842c6e9-scripted-20260924-153041",
+  "trial": "sqlite-utils-554-insert-pk-ignor__ZyJgQdb",
+  "completion": "ok",
+  "cost_usd": 1.022888,
+  "wall_ms": 318405,
+  "task_dir": "docs/tasks/001-fix-insert-pk-indexerror",
+  "plan_path": "src/plan-review/data/plans/aa6618ac2850/plan.html",
+  "context_path": "src/plan-review/data/plans/aa6618ac2850/context.md",
+  "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/sqlite-utils-554-insert-pk-ignore-skills-9b210842c6e9-scripted-20260924-153041/sqlite-utils-554-insert-pk-ignor__ZyJgQdb/transcript.txt",
+  "checks": {
+    "questions": 0,
+    "open_questions": 0,
+    "codex_ran": false,
+    "lint": {
+      "ok": true,
+      "codes": [],
+      "blocking": []
+    }
+  },
+  "ingested_at": "2026-09-24T15:36:03+00:00",
+  "rows": [
+    {
+      "plan_id": "aa6618ac2850",
+      "batch": "corpus-2",
+      "fixture_id": "sqlite-utils-554-insert-pk-ignore",
+      "prompt": "/new-task-quick fix github issue #554, text below.\n\n# `IndexError` when doing `.insert(..., pk='id')` after `insert_all`\n\nI believe this is related to https://github.com/simonw/sqlite-utils/issues/98.\r\n\r\nWhen `pk` is specified by table A's `insert` call, it throws an index error if a different table has written a row with a higher rowid than exists in the first table. Here's a basic example:\r\n\r\n```py\r\nfrom sqlite_utils import Database\r\n\r\n\r\ndef test_pk_for_insert(fresh_db):\r\n    user = {\"id\": \"abc\", \"name\": \"david\"}\r\n\r\n    fresh_db[\"users\"].insert(user, pk=\"id\")\r\n\r\n    fresh_db[\"comments\"].insert_all(\r\n        [\r\n            {\"id\": \"def\", \"text\": \"ok\"},\r\n            {\"id\": \"ghi\", \"text\": \"great\"},\r\n        ],\r\n    )\r\n\r\n    fresh_db[\"users\"].insert(\r\n        user,\r\n        ignore=True,\r\n        # BUG: when specifying pk on the second insert call \r\n        # db.py goes into a block it doesn't expect and we get the error\r\n        pk=\"id\",\r\n    )\r\n\r\n\r\nif __name__ == \"__main__\":\r\n    db = Database(\"bug.db\")\r\n    if db[\"users\"].exists():\r\n        raise ValueError(\r\n            \"bug only shows on a new database - remove bug.db before running the script\"\r\n        )\r\n    test_pk_for_insert(db)\r\n```\r\n\r\nThe error is:\r\n\r\n```py\r\n  File \"/Users/david/projects/reddit-to-sqlite/.venv/lib/python3.11/site-packages/sqlite_utils/db.py\", line 2960, in insert_chunk\r\n    row = list(self.rows_where(\"rowid = ?\", [self.last_rowid]))[0]\r\n          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^\r\nIndexError: list index out of range\r\n```\r\n\r\nThe issue is in this block: \r\n\r\nhttps://github.com/simonw/sqlite-utils/blob/2747257a3334d55e890b40ec58fada57ae8cfbfd/sqlite_utils/db.py#L2954-L2958\r\n\r\nrelevant locals are:\r\n\r\n- `pk`: `'id'`\r\n- `result.lastrowid`: `2`\r\n\r\nWhat's most interesting is the comment `# self.last_rowid will be 0 if a \"INSERT OR IGNORE\" happened`, which doesn't seem to be the case here. \n\nStop after Stage 4 (self-check); do not run the Codex review.",
+      "target": "https://github.com/simonw/sqlite-utils.git",
+      "start_sha": "6225eba5c8daf97a5e459e9fcce2e46bcd022f50",
+      "arm_id": "skills-9b210842c6e9",
+      "skills_sha": "9b210842c6e9615ebdb35676dc4c50fc558f7a09",
+      "model": "anthropic/claude-sonnet-4-6",
+      "run": "sqlite-utils-554-insert-pk-ignore-skills-9b210842c6e9-scripted-20260924-153041",
+      "trial": "sqlite-utils-554-insert-pk-ignor__ZyJgQdb",
+      "completion": "ok",
+      "cost_usd": 1.022888,
+      "wall_ms": 318405,
+      "task_dir": "docs/tasks/001-fix-insert-pk-indexerror",
+      "plan_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/sqlite-utils-554-insert-pk-ignore-skills-9b210842c6e9-scripted-20260924-153041/sqlite-utils-554-insert-pk-ignor__ZyJgQdb/produced/docs/tasks/001-fix-insert-pk-indexerror/plan.html",
+      "context_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/sqlite-utils-554-insert-pk-ignore-skills-9b210842c6e9-scripted-20260924-153041/sqlite-utils-554-insert-pk-ignor__ZyJgQdb/produced/docs/tasks/001-fix-insert-pk-indexerror/context.md",
+      "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/sqlite-utils-554-insert-pk-ignore-skills-9b210842c6e9-scripted-20260924-153041/sqlite-utils-554-insert-pk-ignor__ZyJgQdb/transcript.txt",
+      "checks": {
+        "questions": 0,
+        "open_questions": 0,
+        "codex_ran": false,
+        "lint": {
+          "ok": true,
+          "codes": [],
+          "blocking": []
+        }
+      },
+      "ingested_at": "2026-09-24T15:36:03+00:00"
+    }
+  ],
+  "snapshot_at": "2026-09-28T13:00:53+00:00"
+}

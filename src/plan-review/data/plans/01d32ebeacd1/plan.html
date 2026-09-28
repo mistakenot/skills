@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>004: ts-alias-reexport-resolution</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.9.0/pd-components/dist/pd.min.js" defer></script>
+</head>
+<body>
+  <!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
+  <pd-doc title="004: ts-alias-reexport-resolution" status="draft" pr="pending" generated="2026-09-24">
+    <script type="application/json" id="pd-meta">
+    {
+      "id": "004",
+      "name": "ts-alias-reexport-resolution",
+      "status": "planning",
+      "created": "2026-09-24"
+    }
+    </script>
+
+    <pd-tab name="Requirements">
+      <pd-scope></pd-scope>
+
+      <pd-section id="problem" title="Problem">
+        <md><script type="text/plain">
+`autograph code graph` silently drops two common TypeScript import patterns, leaving up to 60% of edges missing in projects that use path aliases: (1) aliased imports defined in `tsconfig.json` `compilerOptions.paths` are not resolved to file targets, and (2) `export { X } from '...'` / `export * from '...'` re-export declarations are not captured as dependency edges.
+
+The resolver and scanner code already contain skeleton implementations for both features (added in a prior pass), but they have incomplete test coverage and at least one missing scanner pattern (`export * as ns from '...'`), leaving correctness unverified and edge cases unfixed.
+        </script></md>
+      </pd-section>
+
+      <pd-section id="goals" title="Goals">
+        <md><script type="text/plain">
+- All three re-export forms produce edges in the graph:
+  - `export { X } from '...'` and `export { X } from "..."` (named, both quote styles)
+  - `export * from '...'` (wildcard)
+  - `export type { X } from '...'` (type-only)
+  - `export * as ns from '...'` (ES2020 namespace — currently missing from scanner)
+- Aliased imports (`@/...`, `@components/...`) defined in `tsconfig.json` `paths` + `baseUrl` resolve to correct file targets
+- TypeScript CLI integration tests (`runTypeScriptGraphFixture`) exist in `code_graph_test.go`, mirroring the existing Go integration tests
+- All new code paths are covered by unit tests and the existing e2e golden file continues to pass
+        </script></md>
+      </pd-section>
+
+      <pd-section id="out-of-scope" title="Out of Scope">
+        <md><script type="text/plain">
+- `tsconfig.json` `extends` chain traversal (multi-file tsconfig inheritance) — explicitly out of scope per task 001 requirements
+- `baseUrl`-only resolution without a `paths` entry (bare imports resolved via baseUrl alone)
+- Monorepo / multi-tsconfig projects
+- JavaScript config files (`jsconfig.json`)
+- `export default X from '...'` (non-standard)
+- CSS / asset imports
+        </script></md>
+      </pd-section>
+
+      <pd-section id="open-questions" title="Open Questions">
+        <md><script type="text/plain">
+**Assumptions (comfortable proceeding on):**
+
+- [ ] ast-grep's TypeScript pattern `"$_"` (string literal wildcard) matches both single-quoted and double-quoted strings in source files. This appears to be true based on ast-grep's AST-level matching semantics, but must be verified by adding a single-quote test fixture.
+- [ ] The existing resolver correctly handles `baseUrl: "./src"` (with leading `./`) by joining it with `projectRoot`. The e2e golden file implies this works.
+- [ ] The e2e golden file (`e2e/testdata/golden/sample-project.json`) was generated from a working build — it contains 15 edges including both re-export and alias edges.
+        </script></md>
+      </pd-section>
+    </pd-tab>
+
+    <pd-tab name="Verification">
+      <pd-section id="test-strategy" title="Test Strategy">
+        <md><script type="text/plain">
+Tests operate at three layers:
+
+1. **Scanner unit tests** (`internal/scanner/typescript_test.go`) — verify ast-grep pattern matching produces correct `ImportMatch` records for each re-export style. These tests run in CI only when ast-grep is installed (skip guard already in place).
+2. **Resolver unit tests** (`internal/resolver/typescript_test.go`) — verify path alias + baseUrl resolution logic in isolation.
+3. **CLI integration tests** (`internal/cli/code_graph_test.go`) — verify the full `buildGraph` pipeline for TypeScript, mirroring `runGoGraphFixture`. Requires ast-grep; skipped if absent.
+
+E2e (`e2e/e2e_test.go`) — golden file comparison already covers the sample project; no changes needed there.
+        </script></md>
+      </pd-section>
+
+      <pd-ac id="AC-1" title="Single-quote named re-export produces a reexport edge" phases="" tests="">
+        <md><script type="text/plain">
+- **Given** a TypeScript file containing `export { X } from './target';` (single quotes)
+- **When** `autograph code graph` is run on the project
+- **Then** an edge `source → target` with `import_kind: "reexport"` is present in the graph output
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-2" title="Wildcard re-export (export * from) produces an edge" phases="" tests="">
+        <md><script type="text/plain">
+- **Given** a TypeScript file containing `export * from './target'`
+- **When** `autograph code graph` is run on the project
+- **Then** an edge `source → target` with `import_kind: "reexport"` is present
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-3" title="Type re-export (export type { X } from) produces an edge" phases="" tests="">
+        <md><script type="text/plain">
+- **Given** a TypeScript file containing `export type { X } from './target'`
+- **When** `autograph code graph` is run on the project
+- **Then** an edge `source → target` with `import_kind: "reexport"` is present
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-4" title="Namespace re-export (export * as ns from) produces an edge" phases="" tests="">
+        <md><script type="text/plain">
+- **Given** a TypeScript file containing `export * as ns from './target'`
+- **When** `autograph code graph` is run on the project
+- **Then** an edge `source → target` with `import_kind: "reexport"` is present
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-5" title="Path alias imports resolve to correct file target" phases="" tests="">
+        <md><script type="text/plain">
+- **Given** a project with `tsconfig.json` `paths: { "@/*": ["src/*"] }` and `baseUrl: "."`
+- **And** a file imports `import { X } from '@/utils/format'`
+- **When** `autograph code graph` is run
+- **Then** an edge from the importer to `src/utils/format.ts` is present in the graph
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-6" title="TypeScript CLI integration test exists and passes for path-aliases fixture" phases="" tests="">
+        <md><script type="text/plain">
+- **Given** the existing `testdata/fixtures/path-aliases` fixture (tsconfig with `@/*`)
+- **When** `runTypeScriptGraphFixture(t, "path-aliases")` is called in `code_graph_test.go`
+- **Then** the test produces the expected edges without requiring ast-grep to be hardcoded
+        </script></md>
+      </pd-ac>
+
+      <pd-ac id="AC-7" title="Re-export fixture update does not break existing TestReexport scanner test" phases="" tests="">
+        <md><script type="text/plain">
+- **Given** additional re-export styles are added to `testdata/fixtures/all-import-styles/reexport_source.ts`
+- **When** `TestAllImportStyles` and `TestReexport` run
+- **Then** all assertions still pass and new styles are also verified
+        </script></md>
+      </pd-ac>
+
+      <pd-section id="verification-gaps" title="Known Gaps and Risks">
+        <md><script type="text/plain">
+- ast-grep string pattern quote-style behavior is assumed, not verified in unit tests until Phase 1 fixtures are added.
+- The e2e test does not assert exact edge count or specific edge presence — it only checks structural validity. Adding specific edge assertions to the e2e test is out of scope here (the CLI integration tests cover this at a lower level).
+- `export * as ns from` requires a new scanner pattern; if ast-grep's pattern for namespace re-exports differs across versions, this may need adjustment.
+        </script></md>
+      </pd-section>
+    </pd-tab>
+
+    <pd-tab name="Solution">
+      <pd-section id="approach" title="Approach">
+        <md><script type="text/plain">
+The implementation is already structurally correct — the scanner has re-export patterns and the resolver has alias resolution. The task has three concrete deliverables:
+
+1. **Extend test fixtures** for re-exports: add single-quote, wildcard, type-only, and namespace re-export lines to `testdata/fixtures/all-import-styles/reexport_source.ts`, and add corresponding assertions to the scanner tests.
+2. **Add `export * as ns from` scanner pattern**: this ES2020 form is the only variant missing from `internal/scanner/typescript.go`'s `patterns` slice.
+3. **Add TypeScript CLI integration tests**: create a `runTypeScriptGraphFixture` helper in `code_graph_test.go` (mirroring `runGoGraphFixture`) and add tests for the `path-aliases` and `all-import-styles` fixtures that verify edge presence end-to-end.
+
+No changes to the resolver are needed — `TestAliasResolve` already passes and the e2e golden file confirms alias resolution works for the sample project's `baseUrl: "./src"` configuration.
+        </script></md>
+      </pd-section>
+
+      <pd-files>
+        <pd-file path="auto-graph/testdata/fixtures/all-import-styles/reexport_source.ts" change="edit">
+          Add single-quote, wildcard, type-only, and namespace re-export lines alongside the existing double-quote named re-export.
+        </pd-file>
+        <pd-file path="auto-graph/internal/scanner/typescript.go" change="edit">
+          Add `export * as $_ from "$_"` pattern to the `patterns` slice with kind `"reexport"`.
+        </pd-file>
+        <pd-file path="auto-graph/internal/scanner/typescript_test.go" change="edit">
+          Extend `TestAllImportStyles` and `TestReexport` to assert all five re-export styles (named double-quote, named single-quote, wildcard, type-only, namespace).
+        </pd-file>
+        <pd-file path="auto-graph/internal/cli/code_graph_test.go" change="edit">
+          Add `runTypeScriptGraphFixture` helper (skips if ast-grep absent), plus `TestTypeScriptFixturePathAliases` and `TestTypeScriptFixtureReexports` test functions.
+        </pd-file>
+      </pd-files>
+
+      <pd-section id="rejected-alternatives" title="Rejected Alternatives">
+        <md><script type="text/plain">
+- **Use `tsconfig-paths` npm library via subprocess**: Overkill for what the resolver already does in pure Go. No new dependency, simpler to maintain.
+- **Regex-based re-export scanning instead of ast-grep patterns**: Would remove the ast-grep dependency for re-exports but lose structural accuracy. Rejected because ast-grep is already a required dependency.
+- **Rewrite the resolver to use TypeScript's compiler API**: Would be more accurate for complex `paths` configurations but requires Node.js as a runtime dependency. Out of scope.
+        </script></md>
+      </pd-section>
+
+      <pd-decisions></pd-decisions>
+    </pd-tab>
+
+    <pd-tab name="Plan">
+      <pd-section id="summary" title="Summary">
+        <md><script type="text/plain">
+Extend test fixtures for all five re-export forms, add the missing `export * as ns` scanner pattern, and add TypeScript CLI integration tests — building a thin verified path through the scanner → resolver → buildGraph pipeline before expanding coverage.
+        </script></md>
+      </pd-section>
+
+      <pd-dag caption="Phase execution order"></pd-dag>
+
+      <pd-stepper>
+        <pd-phase n="1" title="Extend re-export fixtures and add namespace pattern"
+          files="auto-graph/testdata/fixtures/all-import-styles/reexport_source.ts,auto-graph/internal/scanner/typescript.go,auto-graph/internal/scanner/typescript_test.go"
+          status="todo">
+          <md><script type="text/plain">
+**Goal**: A thin verified path — all five re-export forms produce `ImportMatch` records with kind `"reexport"`.
+
+Steps:
+1. Edit `testdata/fixtures/all-import-styles/reexport_source.ts` — add four lines:
+   - `export { something } from './single_quote_target';` (single-quote named)
+   - `export * from './wildcard_target';` (wildcard)
+   - `export type { Something } from './type_target';` (type-only)
+   - `export * as ns from './ns_target';` (namespace)
+2. Create stub target files: `single_quote_target.ts`, `wildcard_target.ts`, `ns_target.ts` (empty TS files with a placeholder export so the resolver can find them).
+   - `type_target.ts` already exists in the fixture.
+3. Add the missing scanner pattern to `internal/scanner/typescript.go`:
+   ```go
+   {pattern: `export * as $_ from "$_"`, kind: "reexport"},
+   ```
+   Insert after the existing `export * from "$_"` pattern entry.
+4. Run `go build ./...` to verify compilation.
+5. Extend `TestAllImportStyles` in `internal/scanner/typescript_test.go` to include the four new expected entries (single-quote named, wildcard, type-only, namespace).
+6. Run `go test ./internal/scanner/...` (requires ast-grep; skip verified if not present).
+7. **Verify**: `TestReexport` and `TestAllImportStyles` pass; all five re-export kinds appear with `kind: "reexport"`.
+8. Commit: `test(scanner): extend re-export fixtures for all five export forms`.
+          </script></md>
+        </pd-phase>
+
+        <pd-phase n="2" title="Add TypeScript CLI integration tests"
+          files="auto-graph/internal/cli/code_graph_test.go"
+          status="todo" depends-on="1">
+          <md><script type="text/plain">
+**Goal**: End-to-end verification that scanner → resolver → buildGraph produces correct edges for both path aliases and re-exports.
+
+Steps:
+1. Add `runTypeScriptGraphFixture` helper to `internal/cli/code_graph_test.go`:
+   - Mirrors `runGoGraphFixture` but uses `"typescript"` lang and skips test if ast-grep not installed (`requireAstGrep`-style guard using `exec.LookPath("ast-grep")`).
+2. Add `TestTypeScriptFixturePathAliases`:
+   - Calls `runTypeScriptGraphFixture(t, "path-aliases")`
+   - Asserts: at least 1 node, at least 1 edge, edge from `src/index.ts` to `src/components/Button.ts` is present (this is the alias-resolved edge).
+3. Add `TestTypeScriptFixtureReexports`:
+   - Calls `runTypeScriptGraphFixture(t, "all-import-styles")`
+   - Asserts: edge from `reexport_source.ts` exists for each of the five re-export targets added in Phase 1 (all with `import_kind: "reexport"`).
+4. Run `go build ./...` to verify compilation.
+5. Run `go test ./internal/cli/...` (skipped if ast-grep absent).
+6. **Verify**: both new tests pass, all expected edges are present.
+7. Commit: `test(cli): add TypeScript integration tests for path aliases and re-exports`.
+          </script></md>
+        </pd-phase>
+      </pd-stepper>
+
+      <pd-section id="success-criteria" title="Success Criteria">
+        <md><script type="text/plain">
+- AC-1 through AC-4: all re-export forms produce `import_kind: "reexport"` edges (verified by Phase 1 scanner tests + Phase 2 CLI integration test)
+- AC-5: alias imports resolve to correct file targets (verified by Phase 2 `TestTypeScriptFixturePathAliases`)
+- AC-6: `runTypeScriptGraphFixture` helper exists and `TestTypeScriptFixturePathAliases` passes (Phase 2)
+- AC-7: existing `TestAllImportStyles` and `TestReexport` continue to pass after Phase 1 fixture changes
+- `go build ./...` succeeds after each phase
+- `go vet ./...` reports no issues
+        </script></md>
+      </pd-section>
+    </pd-tab>
+  </pd-doc>
+</body>
+</html>

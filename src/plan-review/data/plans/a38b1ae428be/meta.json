@@ -1,0 +1,65 @@
+{
+  "plan_id": "a38b1ae428be",
+  "batch": "corpus-2",
+  "fixture_id": "citty-153-default-subcommand",
+  "prompt": "/new-task-quick implement github issue #153, text below.\n\n# Setup a default behavior when no subcommand used\n\n### Describe the feature\n\nHi! Sometimes, if our CLI tool get no args, it should work the same as one of it's subCommands, like `farm` and `vite`, Vite and Farm both open a development server if no args is given. This works the same as `farm dev` and `vite dev`.\r\n\r\nNow `citty` will throw an error if there is no args and `run` function is not defined for main. But if `run` function for main is defined, and you're using a subcommand, `citty` will call the `run` function defined in main repeatly after called `run` function defined in subCommand. This confused me, I think it shouldn't call the main handler function when using a subcommand.\r\n\r\nTherefore, can we provide a api to setup a default bahavior with no subcommand used?\r\n\r\nSuch as:\r\n\r\n```ts\r\nsubCommands: {\r\n    dev,\r\n},\r\ndefault: 'dev'\r\n```\r\n\r\nIf so, I'd like to work with this issue :)\n\n### Additional information\n\n- [X] Would you be willing to help implement this feature?\n\nStop after Stage 4 (self-check); do not run the Codex review.",
+  "target": "https://github.com/unjs/citty.git",
+  "start_sha": "033daea3c9fb9c1efebf95e95ce694ed8b0ab924",
+  "arm_id": "skills-9b210842c6e9",
+  "skills_sha": "9b210842c6e9615ebdb35676dc4c50fc558f7a09",
+  "model": "anthropic/claude-sonnet-4-6",
+  "run": "citty-153-default-subcommand-skills-9b210842c6e9-scripted-20260924-153042",
+  "trial": "citty-153-default-subcommand-ski__UmZ3BrW",
+  "completion": "ok",
+  "cost_usd": 0.79628,
+  "wall_ms": 220371,
+  "task_dir": "docs/tasks/001-default-subcommand",
+  "plan_path": "src/plan-review/data/plans/a38b1ae428be/plan.html",
+  "context_path": "src/plan-review/data/plans/a38b1ae428be/context.md",
+  "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/citty-153-default-subcommand-skills-9b210842c6e9-scripted-20260924-153042/citty-153-default-subcommand-ski__UmZ3BrW/transcript.txt",
+  "checks": {
+    "questions": 0,
+    "open_questions": 0,
+    "codex_ran": false,
+    "lint": {
+      "ok": true,
+      "codes": [],
+      "blocking": []
+    }
+  },
+  "ingested_at": "2026-09-24T15:34:25+00:00",
+  "rows": [
+    {
+      "plan_id": "a38b1ae428be",
+      "batch": "corpus-2",
+      "fixture_id": "citty-153-default-subcommand",
+      "prompt": "/new-task-quick implement github issue #153, text below.\n\n# Setup a default behavior when no subcommand used\n\n### Describe the feature\n\nHi! Sometimes, if our CLI tool get no args, it should work the same as one of it's subCommands, like `farm` and `vite`, Vite and Farm both open a development server if no args is given. This works the same as `farm dev` and `vite dev`.\r\n\r\nNow `citty` will throw an error if there is no args and `run` function is not defined for main. But if `run` function for main is defined, and you're using a subcommand, `citty` will call the `run` function defined in main repeatly after called `run` function defined in subCommand. This confused me, I think it shouldn't call the main handler function when using a subcommand.\r\n\r\nTherefore, can we provide a api to setup a default bahavior with no subcommand used?\r\n\r\nSuch as:\r\n\r\n```ts\r\nsubCommands: {\r\n    dev,\r\n},\r\ndefault: 'dev'\r\n```\r\n\r\nIf so, I'd like to work with this issue :)\n\n### Additional information\n\n- [X] Would you be willing to help implement this feature?\n\nStop after Stage 4 (self-check); do not run the Codex review.",
+      "target": "https://github.com/unjs/citty.git",
+      "start_sha": "033daea3c9fb9c1efebf95e95ce694ed8b0ab924",
+      "arm_id": "skills-9b210842c6e9",
+      "skills_sha": "9b210842c6e9615ebdb35676dc4c50fc558f7a09",
+      "model": "anthropic/claude-sonnet-4-6",
+      "run": "citty-153-default-subcommand-skills-9b210842c6e9-scripted-20260924-153042",
+      "trial": "citty-153-default-subcommand-ski__UmZ3BrW",
+      "completion": "ok",
+      "cost_usd": 0.79628,
+      "wall_ms": 220371,
+      "task_dir": "docs/tasks/001-default-subcommand",
+      "plan_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/citty-153-default-subcommand-skills-9b210842c6e9-scripted-20260924-153042/citty-153-default-subcommand-ski__UmZ3BrW/produced/docs/tasks/001-default-subcommand/plan.html",
+      "context_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/citty-153-default-subcommand-skills-9b210842c6e9-scripted-20260924-153042/citty-153-default-subcommand-ski__UmZ3BrW/produced/docs/tasks/001-default-subcommand/context.md",
+      "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/citty-153-default-subcommand-skills-9b210842c6e9-scripted-20260924-153042/citty-153-default-subcommand-ski__UmZ3BrW/transcript.txt",
+      "checks": {
+        "questions": 0,
+        "open_questions": 0,
+        "codex_ran": false,
+        "lint": {
+          "ok": true,
+          "codes": [],
+          "blocking": []
+        }
+      },
+      "ingested_at": "2026-09-24T15:34:25+00:00"
+    }
+  ],
+  "snapshot_at": "2026-09-28T12:59:07+00:00"
+}

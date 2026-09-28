@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>065: skill-add-comma-filter</title>
+  <script src="https://cdn.jsdelivr.net/gh/mistakenot/skills@pd-v0.9.0/pd-components/dist/pd.min.js" defer></script>
+</head>
+<body>
+
+<script type="application/json" id="pd-meta">
+{
+  "id": "065",
+  "name": "skill-add-comma-filter",
+  "status": "planning",
+  "created": "2026-09-23"
+}
+</script>
+
+<!-- AI: When a PR is created for this work, update pr="pending" below with the PR URL -->
+<pd-doc title="065: skill-add-comma-filter" status="draft" pr="pending" generated="2026-09-23">
+
+  <pd-tab name="Requirements">
+
+    <pd-section id="problem" title="Problem">
+      <md><script type="text/plain">
+`auto skill add --skill` is declared with `StringArrayVar`, so cobra treats each
+`--skill` value verbatim — no comma splitting. Users (and agents especially) commonly
+pass `--skill a,b` expecting two skills to be installed. Cobra puts the literal string
+`"a,b"` into the filter, which matches nothing and returns the error
+`skill(s) not found: a,b; available: …`. That message names the wrong skill and gives
+no hint that the correct form is `--skill a --skill b`.
+
+A secondary gap: when the `--skill` filter produces no matches, the available-skills
+list is buried in the same error line with no guidance, making it easy to overlook.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="goals" title="Goals">
+      <md><script type="text/plain">
+- **Accept comma-separated names**: `--skill a,b` installs both `a` and `b`, identical
+  to `--skill a --skill b`. Aligns with `auto-etl`'s `--only` flag (already uses
+  `StringSliceVar`).
+- **Fail loudly with a hint** when `--skill` values don't match any skill in the
+  source: the error lists available skills and shows the repeatable flag form as an
+  example.
+- **Stay consistent** with how other auto commands handle list flags (no new
+  patterns introduced).
+      </script></md>
+    </pd-section>
+
+    <pd-section id="out-of-scope" title="Out of Scope">
+      <md><script type="text/plain">
+- Changing `--path` (also `StringArrayVar`) — no reported pain there.
+- Changing `sync --target` — separate command, not mentioned in the request.
+- Fuzzy / prefix matching for skill names.
+- Any changes to the `update` command's positional-args skill name handling.
+      </script></md>
+    </pd-section>
+
+    <pd-section id="open-questions" title="Open Questions">
+      <md><script type="text/plain">
+- **Assumption**: skill names are always kebab-case `^[a-z0-9]+(?:-[a-z0-9]+)*$` — commas
+  are never valid in a skill name, so splitting on commas is lossless. Confirmed from
+  `CLAUDE.md` and validation code.
+- **Assumption**: `StringSliceVar` (cobra's CSV type) is the right vehicle — it handles
+  both `--skill a,b` and `--skill a --skill b` and is already used for `auto-etl --only`.
+  No custom parsing needed.
+      </script></md>
+    </pd-section>
+
+  </pd-tab>
+
+  <pd-tab name="Verification">
+
+    <pd-section id="test-strategy" title="Test Strategy">
+      <md><script type="text/plain">
+The fix is a one-file CLI layer change (`StringArrayVar` → `StringSliceVar`) plus a
+small error-message improvement in `add/add.go`. The existing integration test suite
+in `cli_integration_test.go` drives the real CLI binary via `runCLI`; we add two new
+cases there:
+
+1. **Comma-separated `--skill` succeeds** — source has skills `alpha` and `beta`;
+   `--skill alpha,beta` installs both.
+2. **Comma-separated `--skill` with one unknown** — source has `alpha`; `--skill alpha,missing`
+   fails, error mentions "missing" and lists "alpha" as available, and the hint shows
+   the repeatable form.
+
+Existing `TestAddSkillNotFound` continues to pass (it tests single-name not-found;
+the error message changes slightly to add the hint, so the assertion is updated).
+      </script></md>
+    </pd-section>
+
+    <pd-ac id="AC-1" title="--skill a,b installs both skills" phases="1" tests="auto-skill/internal/cli/cli_integration_test.go">
+      <md><script type="text/plain">
+**Given** a source with skills `alpha` and `beta`
+**When** `auto skill add <source> --skill alpha,beta` is run
+**Then** both `alpha` and `beta` are written to lock.json and the exit code is 0
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-2" title="--skill a --skill b still works unchanged" phases="1" tests="auto-skill/internal/cli/cli_integration_test.go">
+      <md><script type="text/plain">
+**Given** a source with skills `alpha` and `beta`
+**When** `auto skill add <source> --skill alpha --skill beta` is run
+**Then** both are installed (regression guard — existing behaviour must not break)
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-3" title="--skill a,missing fails loudly with hint" phases="1" tests="auto-skill/internal/cli/cli_integration_test.go">
+      <md><script type="text/plain">
+**Given** a source with skill `alpha` only
+**When** `auto skill add <source> --skill alpha,missing` is run
+**Then** exit code is non-zero, stderr contains "missing" (the not-found name),
+stderr contains "alpha" (available skill), and stderr contains "--skill" (the hint)
+      </script></md>
+    </pd-ac>
+
+    <pd-ac id="AC-4" title="single not-found error still lists available skills" phases="1" tests="auto-skill/internal/cli/cli_integration_test.go">
+      <md><script type="text/plain">
+**Given** a source with skill `alpha`
+**When** `auto skill add <source> --skill nonexistent` is run
+**Then** exit code is non-zero and stderr contains "alpha" (regression guard on
+existing `TestAddSkillNotFound`)
+      </script></md>
+    </pd-ac>
+
+    <pd-section id="verification-gaps" title="Known Gaps &amp; Risks">
+      <md><script type="text/plain">
+- `StringSliceVar` parses values as CSV, which means a value like `"a, b"` (space
+  after comma) would produce `["a", " b"]`. The existing normalisation
+  `strings.TrimSpace(s)` in `applySelection` already handles leading/trailing spaces,
+  so this is safe.
+- No harness-level (Docker) test is added for this change — the integration test suite
+  covers it adequately; a harness scenario would duplicate coverage without adding
+  signal.
+      </script></md>
+    </pd-section>
+
+  </pd-tab>
+
+  <pd-tab name="Solution">
+
+    <pd-section id="approach" title="Approach">
+      <md><script type="text/plain">
+Two small changes:
+
+**1. `cli/add.go` — change flag type**
+
+Replace `StringArrayVar` with `StringSliceVar` for `--skill`. Cobra's `StringSliceVar`
+parses each value as CSV, so `--skill a,b` splits to `["a", "b"]` and
+`--skill a --skill b` produces `["a", "b"]` — identical result either way.
+Update the flag description to say "comma-separated or repeatable".
+
+This is consistent with `auto-etl`'s `--only` flag (also `StringSliceVar`), making
+the two projects' list-flag behaviour uniform.
+
+**2. `add/add.go` — improve not-found error message**
+
+The existing message is:
+```
+skill(s) not found: a,b; available: X, Y, Z
+```
+Replace with a two-line format:
+```
+skill(s) not found: a; available: X, Y, Z
+hint: use --skill X --skill Y to install multiple skills
+```
+The hint is appended only when the available list is non-empty (it always is in
+the not-found branch, since we checked discovered is non-empty above). This
+surfaces the repeatable form in the one place users are most likely to read
+when something goes wrong.
+      </script></md>
+    </pd-section>
+
+    <pd-files>
+      <pd-file path="auto-skill/internal/cli/add.go" change="edit">Change `--skill` flag from `StringArrayVar` to `StringSliceVar`; update description</pd-file>
+      <pd-file path="auto-skill/internal/add/add.go" change="edit">Improve `applySelection` not-found error message to include repeatable-form hint</pd-file>
+      <pd-file path="auto-skill/internal/cli/cli_integration_test.go" change="edit">Add `TestAddSkillCommaFilter` and update `TestAddSkillNotFound` assertion</pd-file>
+    </pd-files>
+
+    <pd-section id="rejected-alternatives" title="Rejected Alternatives">
+      <md><script type="text/plain">
+- **Keep `StringArrayVar`, add manual comma-splitting in `applySelection`**: works but
+  puts CLI parsing logic in the business layer. `StringSliceVar` is the standard cobra
+  pattern and the right layer.
+- **Fail loudly with a hint (no acceptance of commas)**: the task asked us to choose;
+  accepting commas is strictly more friendly and requires no extra code path.
+- **Change `--path` and `sync --target` at the same time**: no user pain reported there;
+  scope creep without a concrete need.
+      </script></md>
+    </pd-section>
+
+    <pd-decisions></pd-decisions>
+
+  </pd-tab>
+
+  <pd-tab name="Plan">
+
+    <pd-section id="summary" title="Summary">
+      <md><script type="text/plain">
+One walking-skeleton phase: change the flag type in the CLI layer, improve the error
+message in the add library, and add integration test coverage — all three files land
+together since they're tightly coupled (test verifies both changes).
+      </script></md>
+    </pd-section>
+
+    <pd-section id="execution-sequence" title="Execution Sequence">
+      <pd-mermaid caption="Phase dependency DAG">
+        <script type="text/plain">
+graph LR
+  P1[Phase 1: Flag + error + tests]
+        </script>
+      </pd-mermaid>
+    </pd-section>
+
+    <pd-stepper>
+      <pd-phase n="1" title="Flag type, error message, and tests"
+                files="auto-skill/internal/cli/add.go,auto-skill/internal/add/add.go,auto-skill/internal/cli/cli_integration_test.go"
+                status="todo">
+        <md><script type="text/plain">
+**Step 1 — Change flag type in `cli/add.go`**
+
+At line 122, replace:
+```go
+cmd.Flags().StringArrayVar(&skills, "skill", nil, "exact-match skill filter (repeatable; '*' for all)")
+```
+with:
+```go
+cmd.Flags().StringSliceVar(&skills, "skill", nil, "skill filter: comma-separated or repeatable (e.g. --skill a,b or --skill a --skill b); '*' for all")
+```
+No import change needed — both live in `github.com/spf13/cobra`.
+
+Run `go build ./...` in `auto-skill/`.
+
+**Step 2 — Improve not-found error in `add/add.go`**
+
+In `applySelection` at lines 578–583, replace:
+```go
+return nil, &AddError{
+    Code:    CodeSkillNotFound,
+    Message: fmt.Sprintf("skill(s) not found: %s; available: %s", strings.Join(missing, ", "), strings.Join(available, ", ")),
+}
+```
+with:
+```go
+return nil, &AddError{
+    Code: CodeSkillNotFound,
+    Message: fmt.Sprintf(
+        "skill(s) not found: %s; available: %s\nhint: to install multiple skills, use --skill a --skill b or --skill a,b",
+        strings.Join(missing, ", "),
+        strings.Join(available, ", "),
+    ),
+}
+```
+This always appends a usage hint showing both the repeatable and comma-separated forms.
+
+Run `go build ./...` in `auto-skill/`.
+
+**Step 3 — Add integration tests in `cli_integration_test.go`**
+
+Add two new tests after `TestAddSkillNotFound`:
+```go
+func TestAddSkillCommaFilter(t *testing.T) {
+    fixture := makeAddFixture(t, map[string]string{
+        "skills/alpha": addSkillMD("alpha", "Use when testing alpha."),
+        "skills/beta":  addSkillMD("beta", "Use when testing beta."),
+    })
+    root := t.TempDir()
+
+    // comma-separated installs both skills
+    stdout, _, code := runCLI(t, "--root", root, "add", fixture, "--skill", "alpha,beta", "--text")
+    if code != 0 {
+        t.Fatal("expected success for comma-separated --skill filter")
+    }
+    if !strings.Contains(stdout, "alpha") {
+        t.Errorf("expected 'alpha' in output, got: %s", stdout)
+    }
+    if !strings.Contains(stdout, "beta") {
+        t.Errorf("expected 'beta' in output, got: %s", stdout)
+    }
+}
+
+func TestAddSkillCommaFilterPartialMiss(t *testing.T) {
+    fixture := makeAddFixture(t, map[string]string{
+        "skills/alpha": addSkillMD("alpha", "Use when testing alpha."),
+    })
+    root := t.TempDir()
+
+    _, stderr, code := runCLI(t, "--root", root, "add", fixture, "--skill", "alpha,missing")
+    if code == 0 {
+        t.Fatal("expected error when one comma-separated skill is not found")
+    }
+    if !strings.Contains(stderr, "missing") {
+        t.Fatalf("expected not-found name 'missing' in error, got: %s", stderr)
+    }
+    if !strings.Contains(stderr, "alpha") {
+        t.Fatalf("expected available skill 'alpha' in error, got: %s", stderr)
+    }
+    if !strings.Contains(stderr, "--skill") {
+        t.Fatalf("expected '--skill' hint in error, got: %s", stderr)
+    }
+}
+```
+
+Update `TestAddSkillNotFound` to also assert the hint:
+```go
+if !strings.Contains(stderr, "--skill") {
+    t.Fatalf("expected '--skill' hint in error, got: %s", stderr)
+}
+```
+
+**Step 4 — Verify**
+
+```bash
+cd /app/auto-skill && go build ./... && go test ./internal/cli/... -run TestAddSkill
+```
+
+**Step 5 — Commit**
+
+```bash
+git add auto-skill/internal/cli/add.go auto-skill/internal/add/add.go auto-skill/internal/cli/cli_integration_test.go
+# use /contextual-commit
+```
+        </script></md>
+      </pd-phase>
+    </pd-stepper>
+
+    <pd-section id="success-criteria" title="Success Criteria">
+      <md><script type="text/plain">
+AC-1 through AC-4 pass. `go build ./...` exits 0. `go test ./internal/cli/... -run TestAddSkill` passes.
+      </script></md>
+    </pd-section>
+
+  </pd-tab>
+
+</pd-doc>
+</body>
+</html>

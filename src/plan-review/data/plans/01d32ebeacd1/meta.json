@@ -1,0 +1,65 @@
+{
+  "plan_id": "01d32ebeacd1",
+  "batch": "corpus-2",
+  "fixture_id": "auto-stack-005-code-graph-alias-reexports",
+  "prompt": "/new-task-quick fix this: # autograph code graph: path aliases and re-exports not resolved\n\n## Summary\n\n`autograph code graph` fails to resolve two common TypeScript import patterns, resulting in only ~40% of actual import edges being captured in projects that use path aliases.\n\n## Environment\n\n- `autograph` latest (installed via `auto-stack`)\n- TypeScript project with `tsconfig.json` path aliases\n- ast-grep installed and passing `autograph doctor`\n\n## Bug 1: `tsconfig.json` path aliases are not resolved (critical)\n\nPath aliases defined in `tsconfig.json` `compilerOptions.paths` are not resolved to file targets. The import is silently dropped -- no edge is created and no warning is emitted.\n\n### Reproduction\n\nGiven this `tsconfig.json`:\n\n```json\n{\n  \"compilerOptions\": {\n    \"baseUrl\": \".\",\n    \"paths\": {\n      \"@/*\": [\"./src/*\"]\n    }\n  }\n}\n```\n\nAnd these files:\n\n```ts\n// src/utils/format.ts\nexport function formatDate(d: Date): string {\n  return d.toISOString();\n}\n```\n\n```ts\n// src/routes/dashboard.tsx\nimport { formatDate } from '@/utils/format';     // <-- uses path alias\nimport { Header } from '../components/Header';    // <-- uses relative path\n\nexport function Dashboard() {\n  return <div><Header />{formatDate(new Date())}</div>;\n}\n```\n\nRunning `autograph code graph .` produces:\n\n```json\n{\n  \"edges\": [\n    {\n      \"source\": \"src/routes/dashboard.tsx\",\n      \"target\": \"src/components/Header.tsx\",\n      \"kind\": \"import\",\n      \"attrs\": { \"import_kind\": \"static\", \"raw\": \"../components/Header\" }\n    }\n  ]\n}\n```\n\n**Expected**: An additional edge from `src/routes/dashboard.tsx` to `src/utils/format.ts` for the `@/utils/format` import.\n\n**Actual**: The `@/` import is silently dropped. No edge, no warning.\n\n### Impact\n\nIn projects where `@/` is the dominant import style (common in Next.js, Vite, TanStack projects), the majority of edges are missing. In a real-world project tested:\n\n- ~2,700 imports use `@/` aliases\n- ~1,900 imports use relative paths\n- The graph only captures the relative-path subset (40% coverage)\n- 274 out of 1,342 file nodes are completely disconnected (zero edges in or out)\n- 153 out of 165 route files appear as orphans\n\nThis also affects dynamic imports using aliases:\n\n```ts\n// Not captured:\nconst mod = await import('@/services/heavy-service');\n```\n\n## Bug 2: Re-exports (`export ... from`) are not captured (moderate)\n\nThe `export { X } from './path'` and `export * from './path'` syntax creates a dependency but is not detected. Only `import` statements are matched by the ast-grep patterns.\n\n### Reproduction\n\n```ts\n// src/client/my-feature/Widget.tsx\nexport function Widget() { return <div>widget</div>; }\n```\n\n```ts\n// src/client/my-feature/index.ts  (barrel file)\nexport { Widget } from './Widget';\nexport type { WidgetProps } from './Widget';\nexport * from './widget.utils';\n```\n\nRunning `autograph code graph .` produces zero edges from `src/client/my-feature/index.ts`, even though it clearly depends on `./Widget` and `./widget.utils`.\n\n**Expected**: Edges from `index.ts` to each re-exported module.\n\n**Actual**: No edges. The barrel file appears as a disconnected orphan.\n\n### Impact\n\nBarrel files (`index.ts`) are the public API surface of modules in many TypeScript projects. Missing these edges means:\n- Module boundaries are invisible in the graph\n- Any analysis of which modules depend on which public APIs breaks down\n\n## What works correctly\n\nFor reference, these patterns are handled well:\n- Static imports with relative paths (`import { X } from '../foo'`)\n- Dynamic imports with relative paths (`await import('./bar')`)\n- `import type` distinguished as `import_kind: \"type\"`\n- `.ts` / `.tsx` extension resolution\n- File discovery (all source files appear as nodes)\n- JSON / DOT / Mermaid output formats\n\n## Suggested fix\n\n1. **Path aliases**: Read `tsconfig.json` `compilerOptions.paths` (and `baseUrl`) and resolve aliased specifiers to file paths before creating edges. Consider using TypeScript's own module resolution or a library like [`tsconfig-paths`](https://github.com/dividab/tsconfig-paths) for correctness across edge cases (multiple mappings, `baseUrl` without `paths`, etc.).\n\n2. **Re-exports**: Extend the ast-grep pattern to also match `export { ... } from '...'`, `export * from '...'`, and `export type { ... } from '...'` in addition to `import` declarations.\n\nStop after Stage 4 (self-check); do not run the Codex review.",
+  "target": "/home/vscode/src/auto-stack",
+  "start_sha": "8a22803f1373dd26acece6539be7b49b80c80839",
+  "arm_id": "skills-9b210842c6e9",
+  "skills_sha": "9b210842c6e9615ebdb35676dc4c50fc558f7a09",
+  "model": "anthropic/claude-sonnet-4-6",
+  "run": "auto-stack-005-code-graph-alias-reexports-skills-9b210842c6e9-scripted-20260924-153043",
+  "trial": "auto-stack-005-code-graph-alias__u6CzD9J",
+  "completion": "ok",
+  "cost_usd": 1.749226,
+  "wall_ms": 411291,
+  "task_dir": "docs/tasks/004-ts-alias-reexport-resolution",
+  "plan_path": "src/plan-review/data/plans/01d32ebeacd1/plan.html",
+  "context_path": "src/plan-review/data/plans/01d32ebeacd1/context.md",
+  "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/auto-stack-005-code-graph-alias-reexports-skills-9b210842c6e9-scripted-20260924-153043/auto-stack-005-code-graph-alias__u6CzD9J/transcript.txt",
+  "checks": {
+    "questions": 0,
+    "open_questions": 0,
+    "codex_ran": false,
+    "lint": {
+      "ok": true,
+      "codes": [],
+      "blocking": []
+    }
+  },
+  "ingested_at": "2026-09-24T15:37:37+00:00",
+  "rows": [
+    {
+      "plan_id": "01d32ebeacd1",
+      "batch": "corpus-2",
+      "fixture_id": "auto-stack-005-code-graph-alias-reexports",
+      "prompt": "/new-task-quick fix this: # autograph code graph: path aliases and re-exports not resolved\n\n## Summary\n\n`autograph code graph` fails to resolve two common TypeScript import patterns, resulting in only ~40% of actual import edges being captured in projects that use path aliases.\n\n## Environment\n\n- `autograph` latest (installed via `auto-stack`)\n- TypeScript project with `tsconfig.json` path aliases\n- ast-grep installed and passing `autograph doctor`\n\n## Bug 1: `tsconfig.json` path aliases are not resolved (critical)\n\nPath aliases defined in `tsconfig.json` `compilerOptions.paths` are not resolved to file targets. The import is silently dropped -- no edge is created and no warning is emitted.\n\n### Reproduction\n\nGiven this `tsconfig.json`:\n\n```json\n{\n  \"compilerOptions\": {\n    \"baseUrl\": \".\",\n    \"paths\": {\n      \"@/*\": [\"./src/*\"]\n    }\n  }\n}\n```\n\nAnd these files:\n\n```ts\n// src/utils/format.ts\nexport function formatDate(d: Date): string {\n  return d.toISOString();\n}\n```\n\n```ts\n// src/routes/dashboard.tsx\nimport { formatDate } from '@/utils/format';     // <-- uses path alias\nimport { Header } from '../components/Header';    // <-- uses relative path\n\nexport function Dashboard() {\n  return <div><Header />{formatDate(new Date())}</div>;\n}\n```\n\nRunning `autograph code graph .` produces:\n\n```json\n{\n  \"edges\": [\n    {\n      \"source\": \"src/routes/dashboard.tsx\",\n      \"target\": \"src/components/Header.tsx\",\n      \"kind\": \"import\",\n      \"attrs\": { \"import_kind\": \"static\", \"raw\": \"../components/Header\" }\n    }\n  ]\n}\n```\n\n**Expected**: An additional edge from `src/routes/dashboard.tsx` to `src/utils/format.ts` for the `@/utils/format` import.\n\n**Actual**: The `@/` import is silently dropped. No edge, no warning.\n\n### Impact\n\nIn projects where `@/` is the dominant import style (common in Next.js, Vite, TanStack projects), the majority of edges are missing. In a real-world project tested:\n\n- ~2,700 imports use `@/` aliases\n- ~1,900 imports use relative paths\n- The graph only captures the relative-path subset (40% coverage)\n- 274 out of 1,342 file nodes are completely disconnected (zero edges in or out)\n- 153 out of 165 route files appear as orphans\n\nThis also affects dynamic imports using aliases:\n\n```ts\n// Not captured:\nconst mod = await import('@/services/heavy-service');\n```\n\n## Bug 2: Re-exports (`export ... from`) are not captured (moderate)\n\nThe `export { X } from './path'` and `export * from './path'` syntax creates a dependency but is not detected. Only `import` statements are matched by the ast-grep patterns.\n\n### Reproduction\n\n```ts\n// src/client/my-feature/Widget.tsx\nexport function Widget() { return <div>widget</div>; }\n```\n\n```ts\n// src/client/my-feature/index.ts  (barrel file)\nexport { Widget } from './Widget';\nexport type { WidgetProps } from './Widget';\nexport * from './widget.utils';\n```\n\nRunning `autograph code graph .` produces zero edges from `src/client/my-feature/index.ts`, even though it clearly depends on `./Widget` and `./widget.utils`.\n\n**Expected**: Edges from `index.ts` to each re-exported module.\n\n**Actual**: No edges. The barrel file appears as a disconnected orphan.\n\n### Impact\n\nBarrel files (`index.ts`) are the public API surface of modules in many TypeScript projects. Missing these edges means:\n- Module boundaries are invisible in the graph\n- Any analysis of which modules depend on which public APIs breaks down\n\n## What works correctly\n\nFor reference, these patterns are handled well:\n- Static imports with relative paths (`import { X } from '../foo'`)\n- Dynamic imports with relative paths (`await import('./bar')`)\n- `import type` distinguished as `import_kind: \"type\"`\n- `.ts` / `.tsx` extension resolution\n- File discovery (all source files appear as nodes)\n- JSON / DOT / Mermaid output formats\n\n## Suggested fix\n\n1. **Path aliases**: Read `tsconfig.json` `compilerOptions.paths` (and `baseUrl`) and resolve aliased specifiers to file paths before creating edges. Consider using TypeScript's own module resolution or a library like [`tsconfig-paths`](https://github.com/dividab/tsconfig-paths) for correctness across edge cases (multiple mappings, `baseUrl` without `paths`, etc.).\n\n2. **Re-exports**: Extend the ast-grep pattern to also match `export { ... } from '...'`, `export * from '...'`, and `export type { ... } from '...'` in addition to `import` declarations.\n\nStop after Stage 4 (self-check); do not run the Codex review.",
+      "target": "/home/vscode/src/auto-stack",
+      "start_sha": "8a22803f1373dd26acece6539be7b49b80c80839",
+      "arm_id": "skills-9b210842c6e9",
+      "skills_sha": "9b210842c6e9615ebdb35676dc4c50fc558f7a09",
+      "model": "anthropic/claude-sonnet-4-6",
+      "run": "auto-stack-005-code-graph-alias-reexports-skills-9b210842c6e9-scripted-20260924-153043",
+      "trial": "auto-stack-005-code-graph-alias__u6CzD9J",
+      "completion": "ok",
+      "cost_usd": 1.749226,
+      "wall_ms": 411291,
+      "task_dir": "docs/tasks/004-ts-alias-reexport-resolution",
+      "plan_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/auto-stack-005-code-graph-alias-reexports-skills-9b210842c6e9-scripted-20260924-153043/auto-stack-005-code-graph-alias__u6CzD9J/produced/docs/tasks/004-ts-alias-reexport-resolution/plan.html",
+      "context_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/auto-stack-005-code-graph-alias-reexports-skills-9b210842c6e9-scripted-20260924-153043/auto-stack-005-code-graph-alias__u6CzD9J/produced/docs/tasks/004-ts-alias-reexport-resolution/context.md",
+      "transcript_path": "/home/vscode/src/skills/src/planning-eval-harbor/runs/auto-stack-005-code-graph-alias-reexports-skills-9b210842c6e9-scripted-20260924-153043/auto-stack-005-code-graph-alias__u6CzD9J/transcript.txt",
+      "checks": {
+        "questions": 0,
+        "open_questions": 0,
+        "codex_ran": false,
+        "lint": {
+          "ok": true,
+          "codes": [],
+          "blocking": []
+        }
+      },
+      "ingested_at": "2026-09-24T15:37:37+00:00"
+    }
+  ],
+  "snapshot_at": "2026-09-24T16:51:50+00:00"
+}

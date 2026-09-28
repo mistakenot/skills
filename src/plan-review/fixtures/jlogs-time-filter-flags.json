@@ -1,0 +1,23 @@
+{
+  "id": "jlogs-time-filter-flags",
+  "_provenance": {
+    "source": "authored",
+    "repo": "/home/vscode/src/pm2logs (github.com/mistakenot/jlogs, operator's own small Go/Cobra CLI, ~3k lines)",
+    "note": "Written for plan-review in the operator's voice. Grounded in real, unfixed behaviour at start_sha: internal/filter/filter.go ParseSince delegates to time.ParseDuration, so --since 1d / 2d fail; cmd/root.go buildTimeFilter returns the --since filter as soon as --since is set, silently ignoring --after/--before; NewTimeFilterAbsolute only accepts strict RFC 3339, so date-only values like 2026-03-13 are rejected. README.md and the root command's Long/Example help text document these flags and would need updating."
+  },
+  "fixture": {
+    "target_repo": "/home/vscode/src/pm2logs",
+    "start_sha": "5b1816c246d9acfcc0c8c451467c395ee0fa6622",
+    "prompt": "/new-task-quick the jlogs time flags are annoying to use. `--since 1d` errors because we just hand it to time.ParseDuration, so support days (and maybe weeks). `--since 2h --before ...` silently drops the --before because buildTimeFilter returns as soon as since is set - either combine them properly or error, don't silently ignore. and `--after 2026-03-13` gets rejected because we want full rfc3339, accept a plain date too. keep the help text / examples in cmd/root.go and the readme in sync with whatever we land on.\n\nStop after Stage 4 (self-check); do not run the Codex review."
+  },
+  "arm": {
+    "id": "head",
+    "skills_ref": "HEAD"
+  },
+  "limits": {
+    "max_turns": 1,
+    "wall_clock_s": 3600,
+    "per_turn_timeout_s": 3600,
+    "max_budget_usd": 15
+  }
+}

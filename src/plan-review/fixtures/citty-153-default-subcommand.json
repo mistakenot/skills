@@ -1,0 +1,25 @@
+{
+  "id": "citty-153-default-subcommand",
+  "_provenance": {
+    "source": "oss",
+    "repo": "https://github.com/unjs/citty (TypeScript CLI builder library)",
+    "issue": "https://github.com/unjs/citty/issues/153 (title and body verbatim, including the issue-template headings and checkbox)",
+    "reference_fix": "f40f1a25dbf269aa827543ae1a958046a98d65a8 'feat(default): support default sub command (#156)', squash-merged PR #156 which closes #153 (src/command.ts +28 -6, src/types.ts +1, test/main.test.ts +108)",
+    "start_sha_note": "parent of the fix commit. The issue dates from 2024-07 and the fix landed 2026-04; the issue's second complaint (main run() also firing after a subcommand) is left for the planner to check against start_sha"
+  },
+  "fixture": {
+    "repo_url": "https://github.com/unjs/citty.git",
+    "start_sha": "033daea3c9fb9c1efebf95e95ce694ed8b0ab924",
+    "prompt": "/new-task-quick implement github issue #153, text below.\n\n# Setup a default behavior when no subcommand used\n\n### Describe the feature\n\nHi! Sometimes, if our CLI tool get no args, it should work the same as one of it's subCommands, like `farm` and `vite`, Vite and Farm both open a development server if no args is given. This works the same as `farm dev` and `vite dev`.\r\n\r\nNow `citty` will throw an error if there is no args and `run` function is not defined for main. But if `run` function for main is defined, and you're using a subcommand, `citty` will call the `run` function defined in main repeatly after called `run` function defined in subCommand. This confused me, I think it shouldn't call the main handler function when using a subcommand.\r\n\r\nTherefore, can we provide a api to setup a default bahavior with no subcommand used?\r\n\r\nSuch as:\r\n\r\n```ts\r\nsubCommands: {\r\n    dev,\r\n},\r\ndefault: 'dev'\r\n```\r\n\r\nIf so, I'd like to work with this issue :)\n\n### Additional information\n\n- [X] Would you be willing to help implement this feature?\n\nStop after Stage 4 (self-check); do not run the Codex review."
+  },
+  "arm": {
+    "id": "head",
+    "skills_ref": "HEAD"
+  },
+  "limits": {
+    "max_turns": 1,
+    "wall_clock_s": 3600,
+    "per_turn_timeout_s": 3600,
+    "max_budget_usd": 15
+  }
+}
