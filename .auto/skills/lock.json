@@ -1,4 +1,16 @@
 {
   "version": 1,
-  "skills": {}
+  "skills": {
+    "error-discovery": {
+      "source": "https://github.com/ai-evals-course/evals-skills",
+      "url": "https://github.com/ai-evals-course/evals-skills",
+      "version_spec": "latest",
+      "ref": "2edbc5b1b0dc91f74fcfa8fd8f7eaeb302e052ab",
+      "commit": "2edbc5b1b0dc91f74fcfa8fd8f7eaeb302e052ab",
+      "subpath": "skills/error-discovery",
+      "private": false,
+      "local": false,
+      "state": "resolved"
+    }
+  }
 }

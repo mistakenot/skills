@@ -43,11 +43,16 @@ If no prompt is given, ask the user what they'd like to delegate.
 
 | Role | Runs in | Named | Use for |
 | ---- | ------- | ----- | ------- |
-| **worker** | a fresh git worktree on its own branch (`task/<slug>` unless `--branch`) | `work-<slug>` | anything that edits files: it stays isolated and reviewable, and opens a PR |
-| **planner** | the primary checkout, which must be on `main`/`master` | `plan-<slug>` | analysis, research, writing planning docs that commit straight to main |
+| **worker** | a fresh git worktree on its own branch (`task/<slug>` unless `--branch`); its own Space **nested under the repo's Space** in the sidebar | `work-<slug>` | anything that edits files: it stays isolated and reviewable, and opens a PR |
+| **planner** | the primary checkout, which must be on `main`/`master`; a **new tab in the repo's Space** | `plan-<slug>` | analysis, research, writing planning docs that commit straight to main |
 
 When in doubt, `worker`. A planner that starts editing code is working in the
 primary checkout, which the pool model forbids.
+
+Placement is fixed by the script, never chosen per launch: `--repo` may be any
+path in the repo (even a linked worktree) and is resolved to the primary
+checkout first. Never create the pane yourself with `workspace create`,
+`tab create` or `pane split` — each gives a different sidebar layout.
 
 ## Dispatch workflow
 
@@ -103,7 +108,7 @@ blocks for the work itself. Success looks like:
 | `error` | Meaning | Do |
 | ------- | ------- | -- |
 | `worktree_exists`, `name_in_use` | something is already on that branch/name | do **not** launch a second one; report what is there |
-| `not_on_main`, `not_primary_checkout` | planner invariants violated | tell the user; do not launch a planner elsewhere |
+| `not_on_main` | planner invariant violated | tell the user; do not launch a planner elsewhere |
 | `agent_not_ready` | startup interstitial (trust prompt, update prompt) | read the snapshot, answer it deliberately per `references/herdr/unblock-worker.md` and `references/agent-conventions.md`, then `verify` and `prompt` |
 | `kickoff_failed` with `agent_blocked` | the agent is at a dialog | same as above, then `prompt` again (`references/herdr/send-prompt.md`) |
 | `kickoff_failed` with `kickoff_not_observed` | the prompt may not have landed | read the pane before retrying `prompt` — never send it twice blind |
@@ -133,7 +138,7 @@ bash <skill-dir>/scripts/herdr-worker.sh reap   --name work-<slug> [--force]
 `reap` removes a worker's worktree **before** closing its workspace and refuses
 if there is dirty or unpushed work unless `--force`; the branch is left for you
 to delete once merged (`references/herdr/reap-worker.md`). A planner reap
-closes just its workspace. Status semantics (`done` is the normal resting
+closes just its tab, leaving the repo's Space open. Status semantics (`done` is the normal resting
 state; `idle` never appears for a CLI-driven agent) are in
 `references/herdr/wait-for-ready.md`; display labels in
 `references/herdr/label-worker.md`.

@@ -6,4 +6,6 @@ commit_targets: true
 trusted_hosts: []
 shared:
     version: latest
-skills: {}
+skills:
+    error-discovery:
+        version: latest

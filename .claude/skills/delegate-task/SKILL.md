@@ -72,7 +72,8 @@ bash <skill-dir>/scripts/herdr-worker.sh worker \
 ```
 
 This names the agent and its tab `work-$ID`, creates the worktree off
-`origin/main`, launches with the mandatory flags, verifies argv and cwd, sends
+`origin/main` in a Space nested under the repo's Space (from the primary
+checkout, whatever `--repo` path you pass), launches with the mandatory flags, verifies argv and cwd, sends
 the prompt, and returns in a few seconds once `working` is observed. It
 **refuses** (`worktree_exists`) if a worktree already exists on `task/$ID` —
 two workers on one task means two PRs and a merge conflict — so there is no

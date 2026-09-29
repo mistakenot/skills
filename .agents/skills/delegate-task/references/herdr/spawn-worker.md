@@ -90,6 +90,22 @@ herdr agent start task-NNN --kind claude --pane "$PANE" --timeout 90000 \
 The agent lives in the worktree's **own** workspace with `cwd` = worktree — one
 worktree ↔ one workspace ↔ one agent.
 
+### Sidebar placement (verified live, herdr 0.9.0)
+
+| Call | Sidebar result |
+| ---- | -------------- |
+| `worktree create --cwd <primary checkout or any subdir>` | Space **nested** under the repo's Space; opens that parent Space first if it is not open |
+| `worktree create --workspace <repo's primary Space>` | nested, same as above |
+| `worktree create --cwd <linked worktree>` / `--workspace <child Space>` | **fails** `linked_worktree_source` — creation must start from the primary |
+| `worktree open --path <existing linked worktree>` | nested |
+| `workspace create --cwd <repo>` | an unrelated **top-level** Space (no worktree provenance) |
+| `tab create --workspace <repo's Space>` | a tab inside the repo's Space (the planner shape) |
+
+`herdr worktree list --cwd <any path in the repo>` returns
+`.result.source.source_checkout_path` (the primary) and, when it is open,
+`.source_workspace_id` — even when called from a linked worktree. The script
+resolves this before every launch, which is what keeps placement consistent.
+
 `worktree create` accepts `[--workspace ID | --cwd PATH] [--branch NAME]
 [--base REF] [--path PATH] [--label TEXT] [--focus|--no-focus]` and returns
 `root_pane`, `tab`, `workspace`, and `worktree` in its JSON. The pane it creates

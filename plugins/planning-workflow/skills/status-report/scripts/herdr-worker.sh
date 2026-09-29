@@ -4,8 +4,13 @@
 #
 # Two launch shapes, chosen by the caller:
 #
-#   worker   a fresh git worktree on its own branch; tab + agent named work-<slug>
-#   planner  the primary checkout, which must be on main/master; named plan-<slug>
+#   worker   a fresh git worktree on its own branch, in its own Space nested
+#            under the repo's primary Space; tab + agent named work-<slug>
+#   planner  the primary checkout, which must be on main/master, as a new tab in
+#            the repo's primary Space; named plan-<slug>
+#
+# --repo may be any path in the repo, including a linked worktree: launches
+# always resolve the primary checkout first, so placement never varies.
 #
 #   herdr-worker.sh worker  --slug S --prompt TEXT [--repo PATH] [--agent claude|codex]
 #                           [--branch NAME] [--base REF] [--timeout MS]
@@ -73,6 +78,16 @@ is_linked_worktree() { # <path>
   gd=$(git -C "$1" rev-parse --git-dir 2>/dev/null) || return 1
   cd=$(git -C "$1" rev-parse --git-common-dir 2>/dev/null) || return 1
   [ "$(cd "$1" && realpath "$gd")" != "$(cd "$1" && realpath "$cd")" ]
+}
+
+# herdr groups a worktree Space under its repo's primary Space only when the
+# worktree is created from the primary checkout; from a linked worktree it fails
+# with linked_worktree_source. So every launch resolves the primary first.
+repo_source() { # <path in repo> -> {source_checkout_path, source_workspace_id?}
+  local src
+  src=$(herdr worktree list --cwd "$1" 2>/dev/null | jq -c '.result.source // empty' || true)
+  [ -n "$src" ] || die not_a_herdr_repo --arg repo "$1" --arg hint "herdr worktree list could not resolve this repo"
+  echo "$src"
 }
 
 check_prereqs() {
@@ -259,6 +274,8 @@ cmd_worker() {
   fi
   git -C "$repo" fetch -q origin 2>/dev/null || true   # workers branch from origin/main
 
+  # Always from the primary checkout, so the worker nests under the repo's Space.
+  repo=$(repo_source "$repo" | jq -r .source_checkout_path)
   local created pane workspace tab wt_path
   created=$(herdr_json worktree create --cwd "$repo" --branch "$branch" --base "$base" --label "$name" --no-focus)
   [ -z "$(herdr_err_code "$created")" ] || die worktree_create_failed --argjson herdr_error "$(echo "$created" | jq .error)" --arg branch "$branch" --arg base "$base"
@@ -279,16 +296,22 @@ cmd_planner() {
   check_prereqs; check_integration "$kind"
   [ -z "$(agent_by_name "$name")" ] || die name_in_use --arg name "$name" --argjson agent "$(agent_by_name "$name")"
 
-  # Planner invariants: primary checkout, on main or master.
-  if is_linked_worktree "$repo"; then
-    die not_primary_checkout --arg repo "$repo" --arg hint "pass --repo <primary checkout>; planners never run in a worktree"
-  fi
+  # Planner invariants: primary checkout (resolved even from a worktree), on main or master.
+  local src; src=$(repo_source "$repo")
+  repo=$(echo "$src" | jq -r .source_checkout_path)
   local head; head=$(git -C "$repo" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
   case "$head" in main|master) ;; *) die not_on_main --arg repo "$repo" --arg branch "$head" --arg hint "check out main/master in the primary checkout first" ;; esac
 
-  local created pane workspace tab
-  created=$(herdr_json workspace create --cwd "$repo" --label "$name" --no-focus)
-  [ -z "$(herdr_err_code "$created")" ] || die workspace_create_failed --argjson herdr_error "$(echo "$created" | jq .error)"
+  # A tab in the repo's primary Space; open that Space first if it is not open.
+  # (workspace create per planner would add an unrelated top-level Space.)
+  local created pane workspace tab parent
+  parent=$(echo "$src" | jq -r '.source_workspace_id // empty')
+  if [ -n "$parent" ]; then
+    created=$(herdr_json tab create --workspace "$parent" --cwd "$repo" --label "$name" --no-focus)
+  else
+    created=$(herdr_json workspace create --cwd "$repo" --label "$(basename "$repo")" --no-focus)
+  fi
+  [ -z "$(herdr_err_code "$created")" ] || die planner_tab_create_failed --argjson herdr_error "$(echo "$created" | jq .error)"
   pane=$(echo "$created" | jq -r .result.root_pane.pane_id)
   workspace=$(echo "$created" | jq -r .result.root_pane.workspace_id)
   tab=$(echo "$created" | jq -r .result.root_pane.tab_id)
@@ -372,9 +395,9 @@ cmd_reap() {
   done
   [ -n "$name" ] || die missing_argument --arg argument "--name"
   check_prereqs
-  local rec pane ws cwd
+  local rec pane ws tab cwd
   rec=$(agent_by_name "$name"); [ -n "$rec" ] || die no_such_worker --arg name "$name"
-  pane=$(echo "$rec" | jq -r .pane_id); ws=$(echo "$rec" | jq -r .workspace_id); cwd=$(echo "$rec" | jq -r .cwd)
+  pane=$(echo "$rec" | jq -r .pane_id); ws=$(echo "$rec" | jq -r .workspace_id); tab=$(echo "$rec" | jq -r .tab_id); cwd=$(echo "$rec" | jq -r .cwd)
   [ "$(echo "$rec" | jq -r .agent_status)" != working ] || $force \
     || die worker_busy --arg name "$name" --arg hint "it is mid-turn; pass --force to reap anyway"
 
@@ -382,7 +405,8 @@ cmd_reap() {
     local dirty unpushed
     dirty=$(git -C "$cwd" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
     unpushed=$(git -C "$cwd" log --oneline '@{u}..HEAD' 2>/dev/null | wc -l | tr -d ' ') \
-      || unpushed=$(git -C "$cwd" log --oneline "$DEFAULT_BASE..HEAD" 2>/dev/null | wc -l | tr -d ' ')
+      || unpushed=$(git -C "$cwd" log --oneline "$DEFAULT_BASE..HEAD" 2>/dev/null | wc -l | tr -d ' ') \
+      || unpushed=$(git -C "$cwd" log --oneline HEAD --not --remotes 2>/dev/null | wc -l | tr -d ' ')   # no origin/main
     if { [ "$dirty" -gt 0 ] || [ "${unpushed:-0}" -gt 0 ]; } && ! $force; then
       die unsaved_work --arg name "$name" --arg worktree "$cwd" --argjson dirty_files "$dirty" --argjson unpushed_commits "${unpushed:-0}" \
           --arg hint "push or discard first, or pass --force to lose it"
@@ -394,8 +418,9 @@ cmd_reap() {
       '{ok:true,name:$n,workspace_id:$ws,worktree_path:$wt,removed_worktree:($removed|test("worktree_removed")),
         note:"branch left in place; delete it once merged or abandoned"}'
   else
-    herdr workspace close "$ws" >/dev/null 2>&1 || herdr pane close "$pane" >/dev/null
-    jq -cn --arg n "$name" --arg ws "$ws" '{ok:true,name:$n,workspace_id:$ws,closed:"workspace (planner, no worktree)"}'
+    # The planner's tab lives in the repo's primary Space: close only the tab.
+    herdr tab close "$tab" >/dev/null 2>&1 || herdr pane close "$pane" >/dev/null
+    jq -cn --arg n "$name" --arg ws "$ws" --arg tab "$tab" '{ok:true,name:$n,workspace_id:$ws,tab_id:$tab,closed:"tab (planner, no worktree)"}'
   fi
 }
 
