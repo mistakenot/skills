@@ -52,17 +52,17 @@
       "render_version": "1"
     },
     "delegate": {
-      "template_hash": "70c035ea3a3622277c92476d31fa74ebfaac6297b28c36ec611ee636c066a536",
+      "template_hash": "0af26c16c287a285b05a47b88fbf618eb36a3a6a825227ca246fc69c815ecb40",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "ee1a554b73df015dd0e5b0402ddec6b26b1ee5794f39de60e4d6c07fec67030c",
+      "skill_version": "4c30751bdec1b7ed520927cf8068fcffb8a9fe967cac29321527c4012393e6e8",
       "render_version": "1"
     },
     "delegate-task": {
-      "template_hash": "96269d9bfdd3a0699179fb853cfe15c55ad4dc0c0c4251d6483dee50713b427d",
+      "template_hash": "2f7e3eb572b420022fc936fdbb716f9c371230335c8a838f26b6727c1b6359b8",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "e37f11c18714d5a86c3f4a9ab35077f4a3dadf932fee5ddb3ed463ad41e0cfb5",
+      "skill_version": "cabee122c4dabbe9bd5e9f17376940cbf2b6ba1655e2cc32d8e0ff42f18ad29b",
       "render_version": "1"
     },
     "domain-modelling": {
@@ -70,6 +70,13 @@
       "replacements": {},
       "file_refs": [],
       "skill_version": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
+      "render_version": "1"
+    },
+    "error-discovery": {
+      "template_hash": "e125c9b764b7aa658ea8c9104fb2856b67b40c0604e73d5bfe142e0dd5d10149",
+      "replacements": {},
+      "file_refs": [],
+      "skill_version": "aacd873987a8e0c4c97c37994bb50b365c8d276c53f7513f30336e26987d4f0b",
       "render_version": "1"
     },
     "eval-engineer": {
@@ -199,45 +206,45 @@
       "render_version": "1"
     },
     "request-claude-review": {
-      "template_hash": "946ef8b162c48601050a3f37bdc00bdfcf76afff3ae1b4db3bf536aafcc41051",
+      "template_hash": "24e582b1c09882882b8fa0985fe4e3db16996b1c84740e112373fefcab4f7256",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "2784e8fa57a962ad20389f1d6f43d3c1796d4a6b5f242240a31836ff6739c3bf",
+      "skill_version": "a9aec3cdb008fbdefe0e1728ce5303609bec4b5ce8ecb81f549adff2410b05dc",
       "render_version": "1"
     },
     "request-codex-review": {
-      "template_hash": "4a2635ce3bc9ba8c2d420240c3b72325286efffc76e5c28485612fda4b09619f",
+      "template_hash": "1043a9c73bcd34ca3ca9dbbf54f89eab0ae8416cd842ab069dc578c4c765cd81",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "99b1b8e58228c2a132aaddd3a711520bc9982abffc12c3b0f8c24e5dc8b6e6af",
+      "skill_version": "cc62585c6858ca653645aadd6db56163579b67009ae8e0f81ff9f4b3cf2d00a6",
       "render_version": "1"
     },
     "request-council-review": {
-      "template_hash": "ef0c42cd3e7569acdd6a6fcaf144de88f4f001e330470bc91193cf6085a074e2",
+      "template_hash": "d5aac27fc10820e4543f03b92544348973767c521fd266b90638f3dbc070eb53",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "a3d0b23786fc66f70201c08f8d4ea088b1e8d0ac2707d44213123f090cb2f1d0",
+      "skill_version": "82e8789c19211c98f37132c1961e0e569913c515d3ceb9ec6db7f9933e635858",
       "render_version": "1"
     },
     "request-grok-review": {
-      "template_hash": "851798af3c55c36d28fa92bb21847ae982f223a0806e6320e1b468bd1f084a63",
+      "template_hash": "2a0df725a818ba9699eeff0ec4518dae5a0b5557e09ee9301cc587c0a249d834",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "649958daa80d8517d7f840a4294f350d509396c1d9ad0d9c89662e3688c3e5f4",
+      "skill_version": "f7884cb79b731c391afbbb831c386c91c7f5b80d6cc45870aac4e3e1593d6658",
       "render_version": "1"
     },
     "resolve-comments": {
-      "template_hash": "d69f785c04bbe81fe17cf73badf59c6da95d40d70e30cd3d235e88df28694186",
+      "template_hash": "5fec4cfb07fbfc801772dd9bcbecbf08d83ee90f13cb57a7eb7670742804f245",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "bfdd995fc4c614e4640a2a6f086b33f4bb59aae7c9afc67f1af377776580d1fe",
+      "skill_version": "01b20cbd63632acc60d4f88ef7fc2878df31b632ef58b46c9bc9f290d3113ca9",
       "render_version": "1"
     },
     "review-task": {
-      "template_hash": "a396fde06a2561ea3cc1c03f53549e5b3c3fb5b8f35b76f5cd64a6d4642487c9",
+      "template_hash": "0a295d35411a95a23347b422584481cd17ed397c48a715df211a6c50a2178b0e",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "bc9312413ddcd0975cb5e18837917a6916441c2c7c6280c396097a5e3ac6b6ac",
+      "skill_version": "7664c60fd6a87cf02fba92675a9d3d8ccde8293122cba1df940e587a9ec868da",
       "render_version": "1"
     },
     "revise-readme": {
@@ -265,7 +272,7 @@
       "template_hash": "6034618c4556fd34743356fd326d9d2495f814c3d7b062f95b48a646287a6a03",
       "replacements": {},
       "file_refs": [],
-      "skill_version": "85f346c310608c312a64747289bda170f9a3951eaeed9e6f431bc35193835ffd",
+      "skill_version": "eed2f9380b63662ac1770bf115a77cddee4df387d888d0be56d888d98e021afd",
       "render_version": "1"
     },
     "task-feedback-analyser": {
@@ -293,9 +300,10 @@
         "commit-task": "7de0c2f70a513e55b8b18109989973bc4c88a34c8675956b6f71a6d30e15a7c7",
         "complete-task": "fa534ad5fbb40cc51e03c53231ada74fa4603234b929ae588048a1f97be2bbc7",
         "consult-the-council": "aaa50e4581ab1dd9111af3fbb71ef08195d57a5b539d7d1aebf9355403f2a30d",
-        "delegate": "ee1a554b73df015dd0e5b0402ddec6b26b1ee5794f39de60e4d6c07fec67030c",
-        "delegate-task": "e37f11c18714d5a86c3f4a9ab35077f4a3dadf932fee5ddb3ed463ad41e0cfb5",
+        "delegate": "4c30751bdec1b7ed520927cf8068fcffb8a9fe967cac29321527c4012393e6e8",
+        "delegate-task": "cabee122c4dabbe9bd5e9f17376940cbf2b6ba1655e2cc32d8e0ff42f18ad29b",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
+        "error-discovery": "aacd873987a8e0c4c97c37994bb50b365c8d276c53f7513f30336e26987d4f0b",
         "eval-engineer": "47d6d52225843ad3ed63108c47a17b04d4e6f4db3c4a9614178d55df5e492b55",
         "execute-task": "01676a76b754cee851bff9671f2250dea0b1ed6eb35ecd84278880ccbaafc59c",
         "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
@@ -314,16 +322,16 @@
         "playbook-refine": "2c322d39d5131cfd30776036dbc14aca2a87181f30d545810046918df905224e",
         "playbook-search": "1e86b067218a1edaaeaacc1e31610dd7bde0b4d7155b63c7a3318ca2888f93ed",
         "postmortum": "b14a3f7594be2e9247124496eb1cbcf3eab28f06d7d4df91043fe489ceb6661e",
-        "request-claude-review": "2784e8fa57a962ad20389f1d6f43d3c1796d4a6b5f242240a31836ff6739c3bf",
-        "request-codex-review": "99b1b8e58228c2a132aaddd3a711520bc9982abffc12c3b0f8c24e5dc8b6e6af",
-        "request-council-review": "a3d0b23786fc66f70201c08f8d4ea088b1e8d0ac2707d44213123f090cb2f1d0",
-        "request-grok-review": "649958daa80d8517d7f840a4294f350d509396c1d9ad0d9c89662e3688c3e5f4",
-        "resolve-comments": "bfdd995fc4c614e4640a2a6f086b33f4bb59aae7c9afc67f1af377776580d1fe",
-        "review-task": "bc9312413ddcd0975cb5e18837917a6916441c2c7c6280c396097a5e3ac6b6ac",
+        "request-claude-review": "a9aec3cdb008fbdefe0e1728ce5303609bec4b5ce8ecb81f549adff2410b05dc",
+        "request-codex-review": "cc62585c6858ca653645aadd6db56163579b67009ae8e0f81ff9f4b3cf2d00a6",
+        "request-council-review": "82e8789c19211c98f37132c1961e0e569913c515d3ceb9ec6db7f9933e635858",
+        "request-grok-review": "f7884cb79b731c391afbbb831c386c91c7f5b80d6cc45870aac4e3e1593d6658",
+        "resolve-comments": "01b20cbd63632acc60d4f88ef7fc2878df31b632ef58b46c9bc9f290d3113ca9",
+        "review-task": "7664c60fd6a87cf02fba92675a9d3d8ccde8293122cba1df940e587a9ec868da",
         "revise-readme": "f5c0a4c78fcf506521def5ad31e3bc3b742ca619cd1dcf7aa1f878e6c6c085de",
         "rich-doc": "40bd6b48546197e07f40ceb9a1c7a9c727ba7a2dc198aba9603bc5df78cbe70d",
         "skill-reviewer": "d0f30430f598da6e73384ff7b6304a4216899d110611ad9055e2d2d2811eb96b",
-        "status-report": "85f346c310608c312a64747289bda170f9a3951eaeed9e6f431bc35193835ffd",
+        "status-report": "eed2f9380b63662ac1770bf115a77cddee4df387d888d0be56d888d98e021afd",
         "task-feedback-analyser": "753743917a150966710303a2cbdd7f84378d45b08d3f047ba6e91d2133e6c942",
         "tech-spike": "1cb07d5004de3966851ed99fa8c74fc81bab28a289abf21e4bdeb72409b56182"
       }
@@ -337,9 +345,10 @@
         "commit-task": "7de0c2f70a513e55b8b18109989973bc4c88a34c8675956b6f71a6d30e15a7c7",
         "complete-task": "fa534ad5fbb40cc51e03c53231ada74fa4603234b929ae588048a1f97be2bbc7",
         "consult-the-council": "aaa50e4581ab1dd9111af3fbb71ef08195d57a5b539d7d1aebf9355403f2a30d",
-        "delegate": "ee1a554b73df015dd0e5b0402ddec6b26b1ee5794f39de60e4d6c07fec67030c",
-        "delegate-task": "e37f11c18714d5a86c3f4a9ab35077f4a3dadf932fee5ddb3ed463ad41e0cfb5",
+        "delegate": "4c30751bdec1b7ed520927cf8068fcffb8a9fe967cac29321527c4012393e6e8",
+        "delegate-task": "cabee122c4dabbe9bd5e9f17376940cbf2b6ba1655e2cc32d8e0ff42f18ad29b",
         "domain-modelling": "9013bcfed5abd6d32fba5fb0cdba297602d8afb82cb5e14506b48678f87603f8",
+        "error-discovery": "aacd873987a8e0c4c97c37994bb50b365c8d276c53f7513f30336e26987d4f0b",
         "eval-engineer": "47d6d52225843ad3ed63108c47a17b04d4e6f4db3c4a9614178d55df5e492b55",
         "execute-task": "01676a76b754cee851bff9671f2250dea0b1ed6eb35ecd84278880ccbaafc59c",
         "extract-demand-from-customer-conversation": "466c67624f8a4b4221e40161a8bc590eda21c45af2af5aa91e56b6616e21fec1",
@@ -358,16 +367,16 @@
         "playbook-refine": "2c322d39d5131cfd30776036dbc14aca2a87181f30d545810046918df905224e",
         "playbook-search": "1e86b067218a1edaaeaacc1e31610dd7bde0b4d7155b63c7a3318ca2888f93ed",
         "postmortum": "b14a3f7594be2e9247124496eb1cbcf3eab28f06d7d4df91043fe489ceb6661e",
-        "request-claude-review": "2784e8fa57a962ad20389f1d6f43d3c1796d4a6b5f242240a31836ff6739c3bf",
-        "request-codex-review": "99b1b8e58228c2a132aaddd3a711520bc9982abffc12c3b0f8c24e5dc8b6e6af",
-        "request-council-review": "a3d0b23786fc66f70201c08f8d4ea088b1e8d0ac2707d44213123f090cb2f1d0",
-        "request-grok-review": "649958daa80d8517d7f840a4294f350d509396c1d9ad0d9c89662e3688c3e5f4",
-        "resolve-comments": "bfdd995fc4c614e4640a2a6f086b33f4bb59aae7c9afc67f1af377776580d1fe",
-        "review-task": "bc9312413ddcd0975cb5e18837917a6916441c2c7c6280c396097a5e3ac6b6ac",
+        "request-claude-review": "a9aec3cdb008fbdefe0e1728ce5303609bec4b5ce8ecb81f549adff2410b05dc",
+        "request-codex-review": "cc62585c6858ca653645aadd6db56163579b67009ae8e0f81ff9f4b3cf2d00a6",
+        "request-council-review": "82e8789c19211c98f37132c1961e0e569913c515d3ceb9ec6db7f9933e635858",
+        "request-grok-review": "f7884cb79b731c391afbbb831c386c91c7f5b80d6cc45870aac4e3e1593d6658",
+        "resolve-comments": "01b20cbd63632acc60d4f88ef7fc2878df31b632ef58b46c9bc9f290d3113ca9",
+        "review-task": "7664c60fd6a87cf02fba92675a9d3d8ccde8293122cba1df940e587a9ec868da",
         "revise-readme": "f5c0a4c78fcf506521def5ad31e3bc3b742ca619cd1dcf7aa1f878e6c6c085de",
         "rich-doc": "40bd6b48546197e07f40ceb9a1c7a9c727ba7a2dc198aba9603bc5df78cbe70d",
         "skill-reviewer": "d0f30430f598da6e73384ff7b6304a4216899d110611ad9055e2d2d2811eb96b",
-        "status-report": "85f346c310608c312a64747289bda170f9a3951eaeed9e6f431bc35193835ffd",
+        "status-report": "eed2f9380b63662ac1770bf115a77cddee4df387d888d0be56d888d98e021afd",
         "task-feedback-analyser": "753743917a150966710303a2cbdd7f84378d45b08d3f047ba6e91d2133e6c942",
         "tech-spike": "1cb07d5004de3966851ed99fa8c74fc81bab28a289abf21e4bdeb72409b56182"
       }
